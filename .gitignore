@@ -1,0 +1,17 @@
+# Node.js
+/backend/node_modules/
+
+# React
+/frontend/node_modules/
+/frontend/build/
+
+# Python
+__pycache__/
+*.pyc
+/aiservice/venv/
+
+# OS and IDE files
+.DS_Store
+.env
+*.log
+*.idea
