@@ -1,8 +1,9 @@
 
+<p align="center">
+   <img src="./logo.png" alt="CareerAgent Logo" width="50%">
+</p>
+
 # CareerAgent
-
-![CareerAgent Logo](./logo.png)
-
 CareerAgent is a multi-tier application designed to streamline job-seeking processes using a **Node.js Express backend**, a **React frontend**, and a **Python AI server**. This project demonstrates the integration of modern web and AI technologies to deliver a robust and efficient solution.
 
 ---
