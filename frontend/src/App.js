@@ -1,12 +1,19 @@
 import React from 'react';
+import RegistrationForm from './components/RegistrationForm';
+import Dashboard from './pages/Dashboard';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import VerificationPage from './pages/VerificationPage';
 
 function App() {
-  return (
-    <div style={{ textAlign: 'center', marginTop: '50px' }}>
-      <h1>Welcome to CareerAgent</h1>
-      <p>Your multi-platform application is up and running!</p>
-    </div>
-  );
+    return (
+        <Router>
+            <Routes>
+                <Route path="/" element={<RegistrationForm />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/verify" element={<VerificationPage />} />
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;
