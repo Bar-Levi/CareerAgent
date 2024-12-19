@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Notification from '../components/Notification';
 
 const VerificationPage = () => {
@@ -8,6 +8,8 @@ const VerificationPage = () => {
     const [countdown, setCountdown] = useState(0);
     const [isResendDisabled, setIsResendDisabled] = useState(false);
     const [notification, setNotification] = useState(null);
+    const navigate = useNavigate();
+
 
     const email = state?.email || '';
 
@@ -41,6 +43,7 @@ const VerificationPage = () => {
 
             if (response.ok) {
                 showNotification('success', 'Your account has been verified successfully!');
+                navigate('/login');
             } else {
                 showNotification('error', data.message);
             }
@@ -71,7 +74,10 @@ const VerificationPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 p-4">
+        <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 p-4 overflow-hidden relative">
+            {/* Floating Decorative Elements */}
+            <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-200 blur-3xl opacity-20 animate-pulse" />
+            <div className="absolute bottom-20 right-1/4 w-48 h-48 bg-gradient-to-t from-gray-400 via-gray-200 to-gray-100 blur-3xl opacity-20 animate-float" />
             {/* Display notification */}
             {notification && (
                 <Notification
@@ -84,15 +90,15 @@ const VerificationPage = () => {
             {/* Form Card */}
             <form
                 onSubmit={handleSubmit}
-                className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-full max-w-md transform scale-95 hover:scale-100 transition-all duration-500 animate-slide-in"
+                className="bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 w-full max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in"
             >
-                <h2 className="text-4xl font-extrabold text-center mb-6 text-gray-700 tracking-widest animate-fade-in">
+                <h2 className="text-4xl font-extrabold text-center mb-6 text-gray-700 tracking-widest animate-slide-down">
                     Verify Your Account
                 </h2>
 
                 {/* Verification Code Field */}
                 <div className="mb-6">
-                    <label className="block text-gray-600 font-medium mb-2">
+                    <label className="block text-gray-600 font-medium mb-2 animate-fade-in">
                         Verification Code <span className="text-red-500 font-bold">*</span>
                     </label>
                     <input
@@ -108,13 +114,13 @@ const VerificationPage = () => {
                 {/* Submit Button */}
                 <button
                     type="submit"
-                    className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold tracking-wide hover:bg-gray-700 active:scale-95 transition-all duration-300"
+                    className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold tracking-wide hover:bg-gray-700 active:scale-95 transition-all duration-300 animate-fade-in"
                 >
                     Verify
                 </button>
 
                 {/* Resend Code */}
-                <div className="mt-8 text-center">
+                <div className="mt-8 text-center animate-fade-in-fast">
                     <p className="text-gray-600">
                         Didn't receive the code?{' '}
                         <button
@@ -131,7 +137,7 @@ const VerificationPage = () => {
                         </button>
                     </p>
 
-                    {isResendDisabled && (
+                    {countdown != 0 && (
                         <p className="text-gray-500 text-sm mt-3 animate-pulse">
                             Please wait {countdown} seconds
                         </p>
