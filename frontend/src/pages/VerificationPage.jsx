@@ -74,8 +74,13 @@ const VerificationPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex justify-center items-center bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 p-4 overflow-hidden relative">
-            {/* Floating Decorative Elements */}
+        <div
+            className="min-h-screen flex justify-center items-center relative overflow-hidden transition-transform duration-500 animate-slide-in"
+            style={{
+                background: 'linear-gradient(135deg, #ffffff, #a0a0a0, #999999, #ffffff, #a0a0a0, #999999)',
+                backgroundSize: 'cover', // Ensures the gradient covers the entire viewport
+            }}
+            >    {/* Floating Decorative Elements */}
             <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-200 blur-3xl opacity-20 animate-pulse" />
             <div className="absolute bottom-20 right-1/4 w-48 h-48 bg-gradient-to-t from-gray-400 via-gray-200 to-gray-100 blur-3xl opacity-20 animate-float" />
             {/* Display notification */}

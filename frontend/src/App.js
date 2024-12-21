@@ -4,15 +4,15 @@ import LoginForm from './components/LoginForm';
 import Dashboard from './pages/Dashboard';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import VerificationPage from './pages/VerificationPage';
+import AuthenticationForm from './components/AuthenticationForm';
 
 function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<RegistrationForm />} />
+                <Route path="/" element={<AuthenticationForm />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/verify" element={<VerificationPage />} />
-                <Route path="/login" element={<LoginForm />} />
             </Routes>
         </Router>
     );
