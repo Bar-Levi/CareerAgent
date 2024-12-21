@@ -15,16 +15,57 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send the verification code
-const sendVerificationCode = async (email, code) => {
+const sendVerificationCode = async (email, username, code) => {
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: 'Your CareerAgent Verification Code',
-        text: `Your verification code is: ${code}. Enter this code to verify your account.`,
+        subject: 'Verify Your Account - CareerAgent Team',
+        html: `
+        <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+            <!-- Header -->
+            <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="margin: 0; font-size: 24px;">Welcome to CareerAgent!</h1>
+            </div>
+            <!-- Body -->
+            <div style="padding: 20px; color: #333; background-color: #ffffff; line-height: 1.6;">
+                <p>Dear ${username},</p>
+                <p>Thank you for signing up with CareerAgent. To complete your registration, please verify your account by entering the verification code below:</p>
+                <!-- Code Box -->
+                <div style="text-align: center; margin: 20px 0;">
+                    <span style="
+                        display: inline-block;
+                        font-size: 24px;
+                        font-weight: bold;
+                        color: #2c2c54;
+                        background-color: #f0f0f0;
+                        border: 2px dashed #2c2c54;
+                        padding: 10px 20px;
+                        border-radius: 8px;
+                    ">
+                        ${code}
+                    </span>
+                </div>
+                <p>If you didn't sign up for CareerAgent, please ignore this email.</p>
+                <p style="margin-top: 20px;">Best regards,</p>
+                <p><strong>The CareerAgent Team</strong></p>
+                <p style="font-size: 14px; color: #555; margin-top: 20px;">
+                    <em>This verification code will expire in 1 minute.</em>
+                </p>
+            </div>
+            <!-- Footer -->
+            <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
+                <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+            </div>
+        </div>
+        `,
     };
 
     await transporter.sendMail(mailOptions);
 };
+
+
+
+
 
 // Register User Function
 const registerUser = async (req, res) => {
@@ -48,7 +89,7 @@ const registerUser = async (req, res) => {
             verificationCodeSentAt: new Date(), // Save the timestamp when the code was sent
         });
         // Send the verification code
-        await sendVerificationCode(user.email, verificationCode);
+        await sendVerificationCode(user.email,user.fullName, verificationCode);
         
         res.status(201).json({ message: 'Registration successful. Verification code sent.' });
     } catch (error) {
@@ -152,7 +193,7 @@ const resendVerificationCode = async (req, res) => {
         await user.save();
 
         // Resend the verification code via email
-        await sendVerificationCode(user.email, verificationCode);
+        await sendVerificationCode(user.email,user.fullName, verificationCode);
 
         res.status(200).json({ message: 'Verification code resent successfully.' });
     } catch (error) {
