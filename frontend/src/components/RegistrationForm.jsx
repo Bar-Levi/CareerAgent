@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Notification from './Notification';
+import OptionalDetailsForm from './OptionalDetailsForm';
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({
@@ -14,8 +15,10 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
-    const navigate = useNavigate();
     const [notification, setNotification] = useState(null);
+    const [isOptionalFormVisible, setIsOptionalFormVisible] = useState(false);
+
+    const navigate = useNavigate();
 
     // Show notification
     const showNotification = (type, message) => {
@@ -48,19 +51,9 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             return;
         }
         if (passwordStrength < 4 || formData.password.length < 8) {
-            showNotification('error', <>
-                Create a strong password by including:
-                <br />
-                - At least 1 uppercase letter
-                <br />
-                - At least 1 lowercase letter
-                <br />
-                - At least 1 number
-                <br />
-                - At least 1 special character
-                <br />
-                - A minimum of 8 characters
-            </>
+            showNotification(
+                'error',
+                'Password must include uppercase, lowercase, a number, a special character, and be at least 8 characters long.'
             );
             return;
         }
@@ -76,8 +69,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             const data = await response.json();
 
             if (response.ok) {
-                showNotification('success', 'Your account has been registered successfully!');
-                navigate('/verify', { state: { email: formData.email, verificationCodeSentAt: new Date() } });
+                showNotification('success', 'Registration successful!');
+                setIsOptionalFormVisible(true); // Flip to the optional form
             } else {
                 showNotification('error', data.message);
             }
@@ -123,8 +116,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     };
 
     return (
-        <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md">
-            {/* Display notification */}
+        <div className="relative flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md">
             {notification && (
                 <Notification
                     type={notification.type}
@@ -132,101 +124,120 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     onClose={() => setNotification(null)}
                 />
             )}
-            <h2 className="text-3xl font-bold text-gray-800 text-center font-orbitron">
-                Welcome,
-                <p className="text-gray-600">
-                    {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
-                </p>
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                    type="text"
-                    name="fullName"
-                    placeholder="Full Name *"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                    required
-                />
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email *"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                    required
-                />
-                <div className="relative">
-                    <input
-                        type={isPasswordVisible ? 'text' : 'password'}
-                        name="password"
-                        placeholder="Password *"
-                        value={formData.password}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                        required
-                    />
-                    <span
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
-                        onClick={() => setIsPasswordVisible((prev) => !prev)}
-                    >
-                        <i className={`fa ${isPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
-                    </span>
-                </div>
-                {/* Password Strength Meter */}
-                <div className="mt-2">
-                    <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">{getStrengthText()}</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-200 rounded">
-                        <div
-                            className={`h-2 rounded transition-all duration-300 ${getStrengthColor()}`}
-                            style={{ width: `${(passwordStrength / 5) * 100}%` }}
+            <div
+                className={`transform-style-preserve transition-transform duration-1000 ${
+                    isOptionalFormVisible ? 'rotateY-180' : ''
+                }`}
+            >
+                {/* Registration Form */}
+                <div className={`backface-hidden ${isOptionalFormVisible ? 'hidden' : ''}`}>
+                    <h2 className="text-3xl font-bold text-gray-800 text-center">
+                        Welcome,
+                        <p className="text-gray-600">
+                            {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
+                        </p>
+                    </h2>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <input
+                            type="text"
+                            name="fullName"
+                            placeholder="Full Name *"
+                            value={formData.fullName}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                            required
                         />
-                    </div>
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="Email *"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                            required
+                        />
+                        <div className="relative">
+                            <input
+                                type={isPasswordVisible ? 'text' : 'password'}
+                                name="password"
+                                placeholder="Password *"
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                required
+                            />
+                            <span
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
+                                onClick={() => setIsPasswordVisible((prev) => !prev)}
+                            >
+                                <i className={`fa ${isPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
+                            </span>
+                        </div>
+                        <div className="mt-2">
+                            <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-medium text-gray-700">{getStrengthText()}</span>
+                            </div>
+                            <div className="w-full h-2 bg-gray-200 rounded">
+                                <div
+                                    className={`h-2 rounded transition-all duration-300 ${getStrengthColor()}`}
+                                    style={{ width: `${(passwordStrength / 5) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <input
+                                type={isConfirmPasswordVisible ? 'text' : 'password'}
+                                name="confirmPassword"
+                                placeholder="Confirm Password *"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                required
+                            />
+                            <span
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
+                                onClick={() => setIsConfirmPasswordVisible((prev) => !prev)}
+                            >
+                                <i className={`fa ${isConfirmPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
+                            </span>
+                        </div>
+                        <select
+                            name="role"
+                            value={formData.role}
+                            onChange={(e) => {
+                                handleChange(e);
+                                setUserType(e.target.value);
+                            }}
+                            className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                        >
+                            <option value="jobseeker">Job Seeker</option>
+                            <option value="recruiter">Recruiter</option>
+                        </select>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 transition-all duration-200 ${
+                                isLoading
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
+                            }`}
+                        >
+                            {isLoading ? 'Loading...' : 'Register'}
+                        </button>
+                    </form>
                 </div>
-                <div className="relative">
-                    <input
-                        type={isConfirmPasswordVisible ? 'text' : 'password'}
-                        name="confirmPassword"
-                        placeholder="Confirm Password *"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                        required
+
+                {/* Optional Details Form */}
+                <div className={`backface-hidden rotateY-180 ${isOptionalFormVisible ? '' : 'hidden'}`}>
+                    <OptionalDetailsForm
+                        onSubmit={(optionalData) => {
+                            console.log(optionalData);
+                            showNotification('success', 'Sending verification email.');
+                        }}
+                        onBack={() => setIsOptionalFormVisible(false)} // Flip back
                     />
-                    <span
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
-                        onClick={() => setIsConfirmPasswordVisible((prev) => !prev)}
-                    >
-                        <i className={`fa ${isConfirmPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
-                    </span>
                 </div>
-                <select
-                    name="role"
-                    value={formData.role}
-                    onChange={(e) => {
-                        handleChange(e);
-                        setUserType(e.target.value);
-                    }}
-                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                >
-                    <option value="jobseeker">Job Seeker</option>
-                    <option value="recruiter">Recruiter</option>
-                </select>
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 transition-all duration-200 ${
-                        isLoading
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
-                    }`}
-                >
-                    {isLoading ? 'Loading...' : 'Register'}
-                </button>
-            </form>
+            </div>
             <button onClick={toggleForm} className="text-gray-600 hover:underline text-center">
                 Already have an account? Log in
             </button>
