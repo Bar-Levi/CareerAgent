@@ -120,15 +120,16 @@ const ResetPassword = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in">
-                {/* Display notification */}
-                {message && (
+            {/* Display notification */}
+            {message && (
                     <Notification
                         type={message.type}
                         message={message.message}
                         onClose={() => setMessage(null)}
                     />
                 )}
+            <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in">
+                
                 <h2 className="text-3xl font-bold text-gray-800 text-center font-orbitron">
                     Reset Password
                 </h2>
