@@ -1,19 +1,77 @@
 const mongoose = require('mongoose');
 
 const jobSeekerSchema = new mongoose.Schema({
-    fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    occupation: String,
-    position: String,
-    location: String,
-    linkedIn: String,
-    github: String,
-    portfolio: String,
-    phone: String,
-    cv: String,
-    profilePicture: String,
-    isVerified: { type: Boolean, default: false },
+    fullName: {
+        type: String,
+        trim: true,
+    },
+    email: {
+        type: String,
+        unique: true,
+        lowercase: true,
+        match: [
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            'Please enter a valid email address',
+        ],
+    },
+    password: {
+        type: String,
+        minlength: [6, 'Password must be at least 6 characters long'],
+    },
+    role: {
+        type: String,
+        enum: ['jobseeker'], // Fixed to 'jobseeker'
+        required: [true, 'Role is required'],
+        default: 'jobseeker', // Always set to 'jobseeker'
+    },
+    phone: {
+        type: String,
+        trim: true,
+    },
+    cv: {
+        type: String, // Path or URL to uploaded CV
+        required: false,
+    },
+    profilePic: {
+        type: String, // Path or URL to uploaded profile picture
+        required: false,
+    },
+    githubUrl: {
+        type: String,
+        trim: true,
+        required: false,
+    },
+    linkedinUrl: {
+        type: String,
+        trim: true,
+        required: false,
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationCode: {
+        type: Number,
+        required: false,
+    },
+    verificationCodeSentAt: {
+        type: Date,
+        default: Date.now, // Automatically set to current date
+    },
+    resetPasswordToken: {
+        type: String,
+    },
+    resetPasswordExpires: {
+        type: Date,
+    },
+});
+
+// Pre-save hook to update verificationCodeSentAt when verificationCode changes
+jobSeekerSchema.pre('save', function (next) {
+    if (this.isModified('verificationCode')) {
+        this.verificationCodeSentAt = new Date();
+    }
+    next();
 });
 
 module.exports = mongoose.model('JobSeeker', jobSeekerSchema);

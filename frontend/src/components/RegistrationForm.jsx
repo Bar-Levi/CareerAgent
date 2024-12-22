@@ -57,28 +57,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             );
             return;
         }
-
-        setIsLoading(true);
-
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                showNotification('success', 'Registration successful!');
-                setIsOptionalFormVisible(true); // Flip to the optional form
-            } else {
-                showNotification('error', data.message);
-            }
+            showNotification('success', 'Registration successful!');
+            setIsOptionalFormVisible(true); // Flip to the optional form
         } catch (err) {
             showNotification('error', 'An error occurred. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
+        } 
     };
 
     const getStrengthColor = () => {
@@ -112,6 +96,31 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 return 'Very Strong';
             default:
                 return 'Enter a password';
+        }
+    };
+
+    // Function to handle the optional form submission
+    const handleOptionalSubmit = async (optionalData) => {
+        try {
+            setIsLoading(true);
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...formData, ...optionalData }), // Merge registration and optional fields
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                showNotification('success', 'Verification email sent!');
+                navigate('/verify', { state: { email: formData.email, role: formData.role } }); // Pass role here
+            } else {
+                showNotification('error', data.message);
+            }
+        } catch (error) {
+            showNotification('error', 'An error occurred while submitting optional details.');
+        } 
+        finally {
+            setIsLoading(false);
         }
     };
 
@@ -229,13 +238,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
                 {/* Optional Details Form */}
                 <div className={`backface-hidden rotateY-180 ${isOptionalFormVisible ? '' : 'hidden'}`}>
-                    <OptionalDetailsForm
-                        onSubmit={(optionalData) => {
-                            console.log(optionalData);
-                            showNotification('success', 'Sending verification email.');
-                        }}
-                        onBack={() => setIsOptionalFormVisible(false)} // Flip back
-                    />
+                    <OptionalDetailsForm onSubmit={handleOptionalSubmit} />
                 </div>
             </div>
             <button onClick={toggleForm} className="text-gray-600 hover:underline text-center">
