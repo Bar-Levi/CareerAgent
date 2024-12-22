@@ -36,6 +36,8 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now, // Automatically set to current date
     },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

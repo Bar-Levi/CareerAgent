@@ -68,7 +68,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
