@@ -64,6 +64,11 @@ const jobSeekerSchema = new mongoose.Schema({
     resetPasswordExpires: {
         type: Date,
     },
+    dateOfBirth: {
+        type: Date,
+        required: false,
+    }
+    
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

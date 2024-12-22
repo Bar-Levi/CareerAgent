@@ -10,6 +10,10 @@ const recruiterSchema = new mongoose.Schema({
     companyWebsite: String,
     profilePicture: String,
     isVerified: { type: Boolean, default: false },
+    dateOfBirth: {
+        type: Date,
+        required: false,
+    }    
 });
 
 module.exports = mongoose.model('Recruiter', recruiterSchema);

@@ -57,7 +57,7 @@ const getSchemaByRole = (role) => {
 
 // Register User
 const registerUser = async (req, res) => {
-    const { fullName, email, password, role, phone, githubUrl, linkedinUrl, cv, profilePic } = req.body;
+    const { fullName, email, password, role, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
 
     try {
         // Check if email exists in either schema
@@ -87,6 +87,7 @@ const registerUser = async (req, res) => {
                 linkedinUrl,
                 cv,
                 profilePic,
+                dateOfBirth,
             });
         } else if (role === 'recruiter') {
             // Register as Recruiter
@@ -101,6 +102,7 @@ const registerUser = async (req, res) => {
                 phone,
                 profilePic,
                 linkedinUrl,
+                dateOfBirth,
             });
         } else {
             return res.status(400).json({ message: 'Invalid role specified.' });

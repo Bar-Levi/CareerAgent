@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaPhoneAlt, FaGithub, FaLinkedin } from 'react-icons/fa';
+import { FaPhoneAlt, FaGithub, FaLinkedin, FaCalendarAlt } from 'react-icons/fa';
 
 const OptionalDetailsForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
@@ -8,12 +8,29 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         profilePic: null,
         githubUrl: '',
         linkedinUrl: '',
+        dateOfBirth: '', // Add DOB field
     });
 
     const [isLoading, setIsLoading] = useState(false); // Loading state for button
+    const [error, setError] = useState(null); // Error state for under-18 logic
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        if (name === 'dateOfBirth') {
+            // Validate age (prevent under 18 from proceeding)
+            const selectedDate = new Date(value);
+            const today = new Date();
+            const age = today.getFullYear() - selectedDate.getFullYear();
+            const isUnder18 = age < 18 || (age === 18 && today < new Date(selectedDate.setFullYear(today.getFullYear())));
+
+            if (isUnder18) {
+                setError('You must be at least 18 years old to register.');
+            } else {
+                setError(null); // Clear error if age is valid
+            }
+        }
+
         setFormData({ ...formData, [name]: value });
     };
 
@@ -24,6 +41,10 @@ const OptionalDetailsForm = ({ onSubmit }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (error) {
+            // Prevent submission if there's an error
+            return;
+        }
         setIsLoading(true); // Set loading to true when the request starts
         try {
             await onSubmit(formData); // Submit form data via the parent handler
@@ -52,6 +73,21 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                         onChange={handleChange}
                         className="w-full pl-10 pr-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                     />
+                </div>
+
+                {/* Date of Birth */}
+                <div className="relative">
+                    <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    <input
+                        type="date"
+                        name="dateOfBirth"
+                        value={formData.dateOfBirth}
+                        onChange={handleChange}
+                        className={`w-full pl-10 pr-4 py-3 bg-gray-50 text-gray-800 rounded-lg border ${
+                            error ? 'border-red-500' : 'border-gray-400'
+                        } focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300`}
+                    />
+                    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 </div>
 
                 {/* CV Upload */}
@@ -126,11 +162,11 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 <button
                     type="submit"
                     className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 focus:ring-gray-500 transition-all duration-200 ${
-                        isLoading
+                        isLoading || error
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
                     }`}
-                    disabled={isLoading}
+                    disabled={isLoading || !!error}
                 >
                     {isLoading ? (
                         <div className="flex justify-center items-center">
