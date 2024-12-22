@@ -6,6 +6,7 @@ const AuthenticationForm = () => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [mouseX, setMouseX] = useState(0);
     const [mouseY, setMouseY] = useState(0);
+    const [userType, setUserType] = useState('jobseeker');
 
     useEffect(() => {
         const handleMouseMove = (e) => {
@@ -19,6 +20,35 @@ const AuthenticationForm = () => {
     const toggleForm = () => {
         setIsFlipped((prev) => !prev);
     };
+
+    const descriptions = {
+        jobseeker: {
+            login: {
+                heading: 'Your Next Career Step Awaits',
+                body: 'Dive back into your personalized dashboard and explore new job opportunities tailored just for you.',
+                cta: 'Your next career move is just a login away.',
+            },
+            register: {
+                heading: 'Step into Your Future',
+                body: 'Create an account and unlock a world of job opportunities that match your skills and goals.',
+                cta: 'Your career transformation begins now.',
+            },
+        },
+        recruiter: {
+            login: {
+                heading: 'Your Next Great Hire Awaits',
+                body: 'Access your recruiter dashboard and manage job postings with ease. Discover, review, and connect with top candidates faster than ever before.',
+                cta: 'Log in and build the future of your team today.',
+            },
+            register: {
+                heading: 'Find Your Perfect Hire',
+                body: 'Join our platform to access a pool of exceptional talents and streamline your hiring process.',
+                cta: 'Start hiring smarter today.',
+            },
+        },
+    };
+
+    const userDescriptions = descriptions[userType];
 
     // Constants for Form and Description Styling
     const formContainerStyles = {
@@ -86,7 +116,7 @@ const AuthenticationForm = () => {
                     className="absolute w-full h-full flex justify-center items-center md:p-6"
                     style={formStyles('0deg')}
                 >
-                    <LoginForm toggleForm={toggleForm} />
+                    <RegistrationForm toggleForm={toggleForm} setUserType={setUserType}/>
                 </div>
 
                 {/* Back Side - Registration */}
@@ -94,7 +124,7 @@ const AuthenticationForm = () => {
                     className="absolute w-full h-full flex justify-center items-center md:p-6"
                     style={formStyles('180deg')}
                 >
-                    <RegistrationForm toggleForm={toggleForm} />
+                    <LoginForm toggleForm={toggleForm} setUserType={setUserType}/>
                 </div>
             </div>
 
@@ -106,25 +136,25 @@ const AuthenticationForm = () => {
                 {!isFlipped ? (
                     <div className={descriptionBoxStyles.base}>
                         <h2 className={descriptionBoxStyles.heading}>
-                            Already have an account?
+                            {userDescriptions.login.heading}
                         </h2>
                         <p className={descriptionBoxStyles.paragraph}>
-                            Log in to access your personalized dashboard and continue your journey with us.
+                            {userDescriptions.login.body}
                         </p>
                         <p className={descriptionBoxStyles.italic}>
-                            Find your dream job or connect with top talents effortlessly.
+                            {userDescriptions.login.cta}
                         </p>
                     </div>
                 ) : (
                     <div className={descriptionBoxStyles.base}>
                         <h2 className={descriptionBoxStyles.heading}>
-                            New here?
+                            {userDescriptions.register.heading}
                         </h2>
                         <p className={descriptionBoxStyles.paragraph}>
-                            Create an account to unlock amazing opportunities tailored just for you.
+                            {userDescriptions.register.body}
                         </p>
                         <p className={descriptionBoxStyles.italic}>
-                            Start your journey towards success today!
+                            {userDescriptions.register.cta}
                         </p>
                     </div>
                 )}
