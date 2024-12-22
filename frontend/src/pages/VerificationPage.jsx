@@ -43,7 +43,7 @@ const VerificationPage = () => {
 
             if (response.ok) {
                 showNotification('success', 'Your account has been verified successfully!');
-                navigate('/login');
+                navigate('/dashboard');
             } else {
                 showNotification('error', data.message);
             }
