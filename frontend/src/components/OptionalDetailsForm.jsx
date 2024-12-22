@@ -10,6 +10,8 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         linkedinUrl: '',
     });
 
+    const [isLoading, setIsLoading] = useState(false); // Loading state for button
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
@@ -20,9 +22,14 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setFormData({ ...formData, [name]: files[0] });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        setIsLoading(true); // Set loading to true when the request starts
+        try {
+            await onSubmit(formData); // Submit form data via the parent handler
+        } finally {
+            setIsLoading(false); // Reset loading to false when the request completes
+        }
     };
 
     return (
@@ -118,9 +125,40 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 {/* Submit Button */}
                 <button
                     type="submit"
-                    className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                    className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 focus:ring-gray-500 transition-all duration-200 ${
+                        isLoading
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
+                    }`}
+                    disabled={isLoading}
                 >
-                    Submit and Verify Your Email
+                    {isLoading ? (
+                        <div className="flex justify-center items-center">
+                            <svg
+                                className="animate-spin h-5 w-5 text-white mr-2"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                ></circle>
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4l-2 2-2-2V4a8 8 0 010 16v-4l2-2 2 2v4a8 8 0 01-8-8z"
+                                ></path>
+                            </svg>
+                            Submitting...
+                        </div>
+                    ) : (
+                        'Submit and Verify Your Email'
+                    )}
                 </button>
             </form>
         </div>

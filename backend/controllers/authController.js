@@ -60,40 +60,60 @@ const registerUser = async (req, res) => {
     const { fullName, email, password, role, phone, githubUrl, linkedinUrl, cv, profilePic } = req.body;
 
     try {
-        const Schema = getSchemaByRole(role);
+        // Check if email exists in either schema
+        const existingJobSeeker = await JobSeeker.findOne({ email });
+        const existingRecruiter = await Recruiter.findOne({ email });
 
-        const userExists = await Schema.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists.' });
+        if (existingJobSeeker || existingRecruiter) {
+            return res.status(400).json({ message: 'Email is already registered.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
-        const newUser = new Schema({
-            fullName,
-            email,
-            password: hashedPassword,
-            role,
-            isVerified: false,
-            verificationCode,
-            verificationCodeSentAt: new Date(),
-            phone,
-            githubUrl,
-            linkedinUrl,
-            cv,
-            profilePic,
-        });
+        let user;
+        if (role === 'jobseeker') {
+            // Register as Job Seeker
+            user = await JobSeeker.create({
+                fullName,
+                email,
+                password: hashedPassword,
+                role,
+                isVerified: false,
+                verificationCode,
+                verificationCodeSentAt: new Date(),
+                phone,
+                githubUrl,
+                linkedinUrl,
+                cv,
+                profilePic,
+            });
+        } else if (role === 'recruiter') {
+            // Register as Recruiter
+            user = await Recruiter.create({
+                fullName,
+                email,
+                password: hashedPassword,
+                role,
+                isVerified: false,
+                verificationCode,
+                verificationCodeSentAt: new Date(),
+                phone,
+                profilePic,
+                linkedinUrl,
+            });
+        } else {
+            return res.status(400).json({ message: 'Invalid role specified.' });
+        }
 
-        await newUser.save();
-
-        await sendVerificationCode(newUser.email, newUser.fullName, verificationCode);
+        await sendVerificationCode(user.email, user.fullName, verificationCode);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'An error occurred during registration.' });
     }
 };
+
 
 // Verify Code
 const verifyCode = async (req, res) => {
@@ -183,25 +203,84 @@ const resendVerificationCode = async (req, res) => {
     }
 };
 
+const sendResetPasswordEmail = async (email, username, resetUrl, resetToken) => {
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Reset Your Password - CareerAgent Team',
+        html: `
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 24px;">Reset Your Password</h1>
+                </div>
+                <!-- Body -->
+                <div style="padding: 20px; color: #333; background-color: #ffffff; line-height: 1.6;">
+                    <p>Hello ${username},</p>
+                    <p>We received a request to reset your password. Please follow the instructions below:</p>
+                    <ol>
+                        <li>
+                            Copy this reset token:
+                            <span style="
+                                display: inline-block;
+                                font-size: 18px;
+                                font-weight: bold;
+                                color: #2c2c54;
+                                background-color: #f0f0f0;
+                                border: 2px dashed #2c2c54;
+                                padding: 5px 10px;
+                                border-radius: 8px;
+                                margin: 10px 0;
+                                display: inline-block;
+                            ">
+                                ${resetToken}
+                            </span>
+                        </li>
+                        <li>
+                            Click the link below to reset your password:
+                            <br />
+                            <a href="${resetUrl}" target="_blank" style="color: #2c2c54; text-decoration: none; font-weight: bold;">Reset Password</a>
+                        </li>
+                        <li>Enter the reset token and your new password on the reset password page.</li>
+                    </ol>
+                    <p>If you did not request this, please ignore this email.</p>
+                </div>
+                <!-- Footer -->
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
+                    <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+                </div>
+            </div>
+        `,
+    };
+    await transporter.sendMail(mailOptions);
+};
+
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
-    const { email, role } = req.body;
+    const { email } = req.body;
+    console.log(email);
 
     try {
-        const Schema = getSchemaByRole(role);
+        // Search in both schemas
+        const jobSeeker = await JobSeeker.findOne({ email });
+        const recruiter = await Recruiter.findOne({ email });
 
-        const user = await Schema.findOne({ email });
+        const user = jobSeeker || recruiter;
+
         if (!user) {
             return res.status(404).json({ message: 'No user found with that email.' });
         }
 
+        // Generate reset token and expiry
         const resetToken = generateResetToken();
         const tokenExpiry = Date.now() + 3600000; // 1 hour
 
+        // Save the token and expiry
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = tokenExpiry;
         await user.save();
 
+        // Send the reset email
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
         await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
 
@@ -212,22 +291,27 @@ const requestPasswordReset = async (req, res) => {
     }
 };
 
-// Reset Password
 const resetPassword = async (req, res) => {
-    const { token, newPassword, role } = req.body;
+    const { token, newPassword } = req.body;
 
     try {
-        const Schema = getSchemaByRole(role);
-
-        const user = await Schema.findOne({
+        // Search in both schemas for a valid reset token
+        const jobSeeker = await JobSeeker.findOne({
             resetPasswordToken: token,
             resetPasswordExpires: { $gt: Date.now() },
         });
+        const recruiter = await Recruiter.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        const user = jobSeeker || recruiter;
 
         if (!user) {
             return res.status(400).json({ message: 'Invalid or expired token.' });
         }
 
+        // Ensure the new password is different
         const isSamePassword = await bcrypt.compare(newPassword, user.password);
         if (isSamePassword) {
             return res.status(400).json({
@@ -235,6 +319,7 @@ const resetPassword = async (req, res) => {
             });
         }
 
+        // Hash and save the new password
         user.password = await bcrypt.hash(newPassword, 10);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
@@ -246,6 +331,7 @@ const resetPassword = async (req, res) => {
         res.status(500).json({ message: 'Failed to reset password.' });
     }
 };
+
 
 module.exports = {
     registerUser,
