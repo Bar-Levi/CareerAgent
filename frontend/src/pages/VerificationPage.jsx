@@ -34,7 +34,7 @@ const VerificationPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/api/auth/verify', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, code }),
@@ -54,7 +54,7 @@ const VerificationPage = () => {
 
     const handleResend = async () => {
         try {
-            const response = await fetch('/api/auth/resend', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/resend`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),

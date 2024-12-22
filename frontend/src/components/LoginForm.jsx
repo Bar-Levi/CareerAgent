@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
 
+
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -22,9 +23,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null); // Clear previous messages
-
         try {
-            const response = await fetch('/api/auth/request-password-reset', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/request-password-reset`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
