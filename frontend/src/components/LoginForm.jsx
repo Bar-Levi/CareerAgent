@@ -5,6 +5,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [loading, setLoading] = useState(false); // To handle loading state
+    const [message, setMessage] = useState(null); // To display success/error messages
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -13,13 +15,38 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Logging in:', formData); // Replace with API call
+        console.log('Logging in:', formData); // Replace with actual login API call
     };
 
-    const handleForgotPasswordSubmit = (e) => {
+    const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();
-        alert(`Your password has been sent to ${formData.email}`);
-        setShowForgotPassword(false); // Close the forgot password box
+        setLoading(true);
+        setMessage(null); // Clear previous messages
+
+        try {
+            const response = await fetch('/api/auth/request-password-reset', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email: formData.email }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'An error occurred.');
+            }
+
+            const data = await response.json();
+            setMessage({ type: 'success', text: data.message });
+            setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
+        } catch (error) {
+            setMessage({ type: 'error', text: error.message });
+            setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
+        } finally {
+            setLoading(false);
+            setShowForgotPassword(false); // Close the forgot password box
+        }
     };
 
     return (
@@ -94,7 +121,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         Password Recovery
                     </h3>
                     <p className="text-sm text-gray-600 mb-4">
-                        Enter your email, and we will send your password directly to your inbox.
+                        Enter your email, and we will send your password reset instructions.
                     </p>
                     <form onSubmit={handleForgotPasswordSubmit} className="space-y-2">
                         <input
@@ -109,10 +136,23 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         <button
                             type="submit"
                             className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                            disabled={loading}
                         >
-                            Send Password
+                            {loading ? 'Sending...' : 'Send Instructions'}
                         </button>
                     </form>
+                </div>
+            )}
+
+            {message && (
+                <div
+                    className={`mt-4 p-4 rounded-lg text-sm ${
+                        message.type === 'success'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                    }`}
+                >
+                    {message.text}
                 </div>
             )}
             <button

@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import VerificationPage from './pages/VerificationPage';
 import AuthenticationForm from './components/AuthenticationForm';
+import ResetPassword from './components/ResetPassword';
+
 
 function App() {
     return (
@@ -13,6 +15,7 @@ function App() {
                 <Route path="/" element={<AuthenticationForm />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/verify" element={<VerificationPage />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
             </Routes>
         </Router>
     );
