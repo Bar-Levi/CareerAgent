@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
+import { useNavigate } from 'react-router-dom';
 
 
 const LoginForm = ({ toggleForm, setUserType }) => {
@@ -8,6 +9,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [loading, setLoading] = useState(false); // To handle loading state
     const [message, setMessage] = useState(null); // To display success/error messages
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -16,7 +18,9 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Logging in:', formData); // Replace with actual login API call
+        setLoading(true);
+        navigate('/dashboard', { state: { email: formData['email'] } });
+        setLoading(false);
     };
 
     const handleForgotPasswordSubmit = async (e) => {
