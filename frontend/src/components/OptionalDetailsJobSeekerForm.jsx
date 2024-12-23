@@ -62,6 +62,33 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 </p>
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Profile Picture Upload */}
+                <div className="flex flex-col items-center space-y-4">
+                    {/* Upload Button */}
+                    <div className="relative flex justify-center items-center">
+                        <label
+                            htmlFor="profilePic"
+                            className="cursor-pointer flex justify-center items-center w-24 h-24 px-1 rounded-full bg-gray-100 border border-gray-400 text-gray-800 font-medium hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                        >
+                            {formData.profilePic ? (
+                                <span className="text-sm text-gray-600 text-center px-2">
+                                    {formData.profilePic.name}
+                                </span>
+                            ) : (
+                                <span className="text-sm text-gray-500 text-center">Profile Picture</span>
+                            )}
+                        </label>
+                        <input
+                            id="profilePic"
+                            type="file"
+                            name="profilePic"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </div>
+                </div>
+
                 {/* Phone Number */}
                 <div className="relative">
                     <FaPhoneAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
@@ -111,26 +138,6 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                     </div>
                 </div>
 
-                {/* Profile Picture Upload */}
-                <div className="relative">
-                    <label className="text-gray-700 font-medium">Upload Profile Picture</label>
-                    <div className="flex items-center space-x-4">
-                        <label
-                            htmlFor="profilePic"
-                            className="cursor-pointer w-full py-3 text-center bg-gray-100 border border-gray-400 text-gray-800 font-medium rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
-                        >
-                            {formData.profilePic ? formData.profilePic.name : 'Choose File'}
-                        </label>
-                        <input
-                            id="profilePic"
-                            type="file"
-                            name="profilePic"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="hidden"
-                        />
-                    </div>
-                </div>
 
                 {/* GitHub URL */}
                 <div className="relative">

@@ -3,6 +3,8 @@ const Recruiter = require('../models/recruiterModel'); // Import Recruiter model
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const jobSeekerModel = require('../models/jobSeekerModel');
+const recruiterModel = require('../models/recruiterModel');
 const crypto = require('crypto'); // For generating secure tokens
 require('dotenv').config();
 
@@ -98,6 +100,7 @@ const getSchemaByRole = (role) => {
 
 // Register User
 const registerJobSeeker = async (req, res) => {
+    console.log("Registering JobSeeker")
     const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
 
     try {
@@ -390,6 +393,33 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const getUserDetails = async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+
+        let user = await jobSeekerModel.findOne({ email });
+        if (!user) {
+            user = await recruiterModel.findOne({ email });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        res.status(200).json({
+            fullName: user.fullName,
+            email: user.email,
+            profilePic: user.profilePic || null,
+            cv: user.cv || null,
+        });
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        res.status(500).json({ message: 'Failed to fetch user details.' });
+    }
+}
 
 module.exports = {
     checkEmailExists,
@@ -400,4 +430,5 @@ module.exports = {
     resendVerificationCode,
     requestPasswordReset,
     resetPassword,
+    getUserDetails
 };

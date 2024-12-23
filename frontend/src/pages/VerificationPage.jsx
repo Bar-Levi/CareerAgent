@@ -44,7 +44,7 @@ const VerificationPage = () => {
 
             if (response.ok) {
                 showNotification('success', 'Your account has been verified successfully!');
-                navigate('/dashboard');
+                navigate('/dashboard', { state: { email: email } });
             } else {
                 showNotification('error', data.message);
             }

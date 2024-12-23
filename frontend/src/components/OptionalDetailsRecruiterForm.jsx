@@ -39,41 +39,87 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
         }
     };
 
+    const handleFileChange = (e) => {
+        const { name, files } = e.target;
+        setFormData({ ...formData, [name]: files[0] });
+    };
+
     return (
         <div className="flex flex-col space-y-6 w-full max-w-md">
             <h2 className="text-3xl font-bold text-gray-800 text-center font-orbitron">
                 Add Optional Details
                 <p className="text-gray-600 text-sm mt-1">Provide additional information to enhance your profile.</p>
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+                
+                {/* Profile Picture Upload */}
+                <div className="flex flex-col items-center space-y-4">
+                    {/* Upload Button */}
+                    <div className="relative flex justify-center items-center">
+                        <label
+                            htmlFor="profilePic"
+                            className="cursor-pointer flex justify-center items-center w-24 h-24 px-1 rounded-full bg-gray-100 border border-gray-400 text-gray-800 font-medium hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                        >
+                            {formData.profilePic ? (
+                                <span className="text-sm text-gray-600 text-center px-2">
+                                    {formData.profilePic.name}
+                                </span>
+                            ) : (
+                                <span className="text-sm text-gray-500">Profile Picture</span>
+                            )}
+                        </label>
+                        <input
+                            id="profilePic"
+                            type="file"
+                            name="profilePic"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </div>
+                </div>
+
                 {/* Date of Birth Field */}
                 <div className="relative">
                     <label className="block text-gray-700 font-medium mb-2">Date of Birth</label>
-                    <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                    <input
-                        type="date"
-                        name="dateOfBirth"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-3 bg-gray-50 text-gray-800 rounded-lg border ${
-                            error ? 'border-red-500' : 'border-gray-400'
-                        } focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300`}
-                    />
+                    <div className="relative">
+                        {/* Custom Icon */}
+                        <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        {/* Date Input */}
+                        <input
+                            type="date"
+                            name="dateOfBirth"
+                            value={formData.dateOfBirth}
+                            onChange={handleChange}
+                            className={`w-full pl-12 pr-4 py-3 bg-gray-50 text-gray-800 rounded-lg border ${
+                                error ? 'border-red-500' : 'border-gray-400'
+                            } focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300`}
+                            style={{
+                                appearance: 'none', // Remove browser's default date picker
+                                '-webkit-appearance': 'none', // For Safari
+                            }}
+                        />
+                    </div>
                     {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 </div>
+
 
                 {/* Company Website Field */}
                 <div className="relative">
                     <label className="block text-gray-700 font-medium mb-2">Company Website</label>
-                    <FaLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                    <input
-                        type="url"
-                        name="companyWebsite"
-                        placeholder="https://example.com"
-                        value={formData.companyWebsite}
-                        onChange={handleChange}
-                        className="w-full pl-10 pr-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                    />
+                    <div className="relative">
+                        <FaLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        <input
+                            type="url"
+                            name="companyWebsite"
+                            placeholder="https://example.com"
+                            value={formData.companyWebsite}
+                            onChange={handleChange}
+                            className="w-full pl-12 pr-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                        />
+                    </div>
                 </div>
 
                 {/* Submit Button */}
