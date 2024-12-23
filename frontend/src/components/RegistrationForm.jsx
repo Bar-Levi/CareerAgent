@@ -123,7 +123,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         }
 
         try {
-            showNotification('success', 'Registration successful!');
+            showNotification('success', 'Please continue the registration process.');
             setIsOptionalFormVisible(true); // Flip to the optional form
         } catch (err) {
             showNotification('error', 'An error occurred. Please try again.');
