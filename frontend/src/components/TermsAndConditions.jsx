@@ -35,30 +35,31 @@ const TermsAndConditions = () => {
                     3.3. You agree not to use the platform to discriminate or harass others based on race, gender, religion, or any other characteristic.
                 </p>
 
-                <h2 className="text-2xl font-semibold text-gray-800">4. Prohibited Activities</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">4. Privacy and Data Usage</h2>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                    4.1. Engaging in any activity that disrupts the functionality or security of our platform is strictly prohibited.<br />
-                    4.2. You must not engage in data scraping, unauthorized access, or any activity that infringes on the intellectual property of CareerAgent or other users.<br />
-                    4.3. The use of fake profiles or impersonation is strictly prohibited.
+                    4.1. By using CareerAgent, you consent to the collection, processing, and use of your data in accordance with our Privacy Policy.<br />
+                    4.2. We implement industry-standard security measures to protect your personal information from unauthorized access or misuse.<br />
+                    4.3. Content uploaded to the platform, such as images or documents, may be processed to enable platform functionality. Avoid uploading sensitive personal information.
                 </p>
 
-                <h2 className="text-2xl font-semibold text-gray-800">5. Data Privacy</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">5. Content Accessibility</h2>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                    5.1. By using the platform, you consent to the collection and use of your personal data as outlined in our Privacy Policy.<br />
-                    5.2. We are committed to safeguarding your personal data and ensuring its use complies with applicable laws and regulations.<br />
-                    5.3. You must not use, distribute, or exploit any information or data obtained from other users of the platform for your personal or professional advantage.
+                    5.1. Uploaded content may be publicly accessible depending on your settings.<br />
+                    5.2. You are responsible for ensuring that any content uploaded complies with applicable laws and does not infringe on third-party rights.<br />
+                    5.3. CareerAgent reserves the right to remove content deemed harmful, inappropriate, or in violation of these Terms.
                 </p>
 
-                <h2 className="text-2xl font-semibold text-gray-800">6. Termination</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">6. Data Retention and Deletion</h2>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                    6.1. CareerAgent reserves the right to terminate or suspend your account at any time if you violate these Terms or engage in unauthorized activities.<br />
-                    6.2. You may request account deactivation at any time by contacting our support team.
+                    6.1. We retain your data only as long as necessary to provide the services or comply with legal obligations.<br />
+                    6.2. Upon account termination, your data will be deleted, except where retention is required for compliance with legal or financial obligations.<br />
+                    6.3. Aggregated, non-identifiable data may be retained for analytical purposes.
                 </p>
 
-                <h2 className="text-2xl font-semibold text-gray-800">7. Limitation of Liability</h2>
+                <h2 className="text-2xl font-semibold text-gray-800">7. Termination</h2>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                    7.1. CareerAgent is not liable for any loss or damage arising from your use of the platform.<br />
-                    7.2. We do not guarantee continuous or uninterrupted access to the platform and may update or discontinue services at any time.
+                    7.1. CareerAgent reserves the right to terminate or suspend your account at any time if you violate these Terms or engage in unauthorized activities.<br />
+                    7.2. You may request account deactivation at any time by contacting our support team.
                 </p>
 
                 <h2 className="text-2xl font-semibold text-gray-800">8. Amendments</h2>
@@ -68,7 +69,7 @@ const TermsAndConditions = () => {
                 </p>
 
                 <p className="text-gray-600 text-sm leading-relaxed mt-4">
-                    If you have any questions or concerns about these Terms, please contact us at <a href="mailto:support@careeragent.com" className="text-blue-500 hover:underline">support@careeragent.com</a>.
+                    If you have any questions or concerns about these Terms, please contact us at <a href="mailto:careeragentrb@gmail.com?subject=Questions%20about%20Terms%20and%20Conditions" className="text-blue-500 hover:underline">careeragentrb@gmail.com</a>.
                 </p>
 
                 <div className="text-center">
