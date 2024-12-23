@@ -48,8 +48,6 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setIsLoading(true); // Set loading to true when the request starts
         try {
             console.dir(formData, { depth: null }); // Null allows full depth
-            formData.cv = formData.cv;
-            formData.profilePic = formData.profilePic;
             await onSubmit(formData); // Submit form data via the parent handler
         } finally {
             setIsLoading(false); // Reset loading to false when the request completes
