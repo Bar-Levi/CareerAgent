@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Notification from './Notification';
-import OptionalDetailsForm from './OptionalDetailsForm';
+import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
+import OptionalDetailsRecruiterForm from './OptionalDetailsRecruiterForm';
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({
@@ -9,7 +10,9 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'jobseeker',
+        role: 'jobseeker', // Default role
+        companyName: '', // For recruiters
+        companySize: '', // For recruiters
     });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
@@ -28,6 +31,18 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        // Ensure Company Size accepts only integers
+        if (name === 'companySize') {
+            const parsedValue = parseInt(value, 10);
+            if (!isNaN(parsedValue)) {
+                setFormData({ ...formData, companySize: parsedValue });
+            } else if (value === '') {
+                setFormData({ ...formData, companySize: '' }); // Allow empty values for resetting
+            }
+            return;
+        }
+
         setFormData({ ...formData, [name]: value });
         if (name === 'password') {
             calculatePasswordStrength(value);
@@ -44,6 +59,36 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         setPasswordStrength(strength);
     };
 
+    const checkEmailExists = async (email) => {
+        try {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                }
+            );
+    
+            if (response.status === 409) {
+                const data = await response.json();
+                showNotification('error', data.message || 'Email is already registered.');
+                return true; // Email exists
+            }
+    
+            if (response.status === 200) {
+                return false; // Email does not exist
+            }
+    
+            showNotification('error', 'Unexpected response. Please try again.');
+            return true; // Default to assuming email exists
+        } catch (error) {
+            showNotification('error', 'Error checking email. Please try again.');
+            return true; // Default to assuming email exists
+        }
+    };
+    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
@@ -57,12 +102,62 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             );
             return;
         }
+        if (formData.role === 'recruiter') {
+            if (!formData.companyName || !formData.companySize) {
+                showNotification('error', 'Company Name and Company Size are required for recruiters.');
+                return;
+            }
+            if (!Number.isInteger(formData.companySize) || formData.companySize <= 0) {
+                showNotification('error', 'Company Size must be a positive integer.');
+                return;
+            }
+        }
+
+        setIsLoading(true);
+
+        // Check if email already exists
+        const emailExists = await checkEmailExists(formData.email);
+        if (emailExists) {
+            setIsLoading(false);
+            return; // Stop registration if email exists
+        }
+
         try {
             showNotification('success', 'Registration successful!');
             setIsOptionalFormVisible(true); // Flip to the optional form
         } catch (err) {
             showNotification('error', 'An error occurred. Please try again.');
-        } 
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleOptionalSubmit = async (optionalData) => {
+        try {
+            setIsLoading(true);
+            const apiUrl =
+                formData.role === 'jobseeker'
+                    ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
+                    : `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerRecruiter`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...formData, ...optionalData }), // Merge registration and optional fields
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                showNotification('success', 'Verification email sent!');
+                navigate('/verify', { state: { email: formData.email, role: formData.role } }); // Pass role here
+            } else {
+                showNotification('error', data.message);
+            }
+        } catch (error) {
+            showNotification('error', 'An error occurred while submitting optional details.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const getStrengthColor = () => {
@@ -99,31 +194,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         }
     };
 
-    // Function to handle the optional form submission
-    const handleOptionalSubmit = async (optionalData) => {
-        try {
-            setIsLoading(true);
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, ...optionalData }), // Merge registration and optional fields
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                showNotification('success', 'Verification email sent!');
-                navigate('/verify', { state: { email: formData.email, role: formData.role } }); // Pass role here
-            } else {
-                showNotification('error', data.message);
-            }
-        } catch (error) {
-            showNotification('error', 'An error occurred while submitting optional details.');
-        } 
-        finally {
-            setIsLoading(false);
-        }
-    };
-
     return (
         <div className="relative flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md">
             {notification && (
@@ -142,7 +212,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 <div className={`backface-hidden ${isOptionalFormVisible ? 'hidden' : ''}`}>
                     <h2 className="text-3xl font-bold text-gray-800 text-center">
                         Welcome,
-                        <p className="text-gray-600">
+                        <p
+                            className="text-gray-600"
+                            style={{
+                                marginTop: formData.role === 'recruiter' ? '-5px' : '0px', // Adjust recruiter subtitle position
+                            }}
+                        >
                             {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
                         </p>
                     </h2>
@@ -165,6 +240,28 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                             required
                         />
+                        {formData.role === 'recruiter' && (
+                            <>
+                                <input
+                                    type="text"
+                                    name="companyName"
+                                    placeholder="Company Name *"
+                                    value={formData.companyName}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    name="companySize"
+                                    placeholder="Company Size *"
+                                    value={formData.companySize}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                    required
+                                />
+                            </>
+                        )}
                         <div className="relative">
                             <input
                                 type={isPasswordVisible ? 'text' : 'password'}
@@ -238,7 +335,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
                 {/* Optional Details Form */}
                 <div className={`backface-hidden rotateY-180 ${isOptionalFormVisible ? '' : 'hidden'}`}>
-                    <OptionalDetailsForm onSubmit={handleOptionalSubmit} />
+                    {formData.role === 'jobseeker' ? (
+                        <OptionalDetailsJobSeekerForm onSubmit={handleOptionalSubmit} />
+                    ) : (
+                        <OptionalDetailsRecruiterForm onSubmit={handleOptionalSubmit} />
+                    )}
                 </div>
             </div>
             <button onClick={toggleForm} className="text-gray-600 hover:underline text-center">

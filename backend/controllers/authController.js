@@ -22,20 +22,38 @@ const sendVerificationCode = async (email, username, code) => {
         to: email,
         subject: 'Verify Your Account - CareerAgent Team',
         html: `
-            <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
                 <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
                     <h1 style="margin: 0; font-size: 24px;">Welcome to CareerAgent!</h1>
                 </div>
+                <!-- Body -->
                 <div style="padding: 20px; color: #333; background-color: #ffffff; line-height: 1.6;">
                     <p>Hello ${username},</p>
-                    <p>Use the verification code below to complete your registration:</p>
+                    <p>Thank you for signing up with CareerAgent. To complete your registration, please use the verification code below:</p>
+                    <!-- Code Box -->
                     <div style="text-align: center; margin: 20px 0;">
-                        <span style="display: inline-block; font-size: 24px; font-weight: bold; color: #2c2c54; background-color: #f0f0f0; border: 2px dashed #2c2c54; padding: 10px 20px; border-radius: 8px;">
+                        <span style="
+                            display: inline-block;
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #2c2c54;
+                            background-color: #f0f0f0;
+                            border: 2px dashed #2c2c54;
+                            padding: 10px 20px;
+                            border-radius: 8px;
+                        ">
                             ${code}
                         </span>
                     </div>
-                    <p style="font-size: 14px; color: #555;"><em>This code will expire in 1 minute.</em></p>
+                    <p>If you didn’t sign up for CareerAgent, please ignore this email.</p>
+                    <p style="margin-top: 20px;">Best regards,</p>
+                    <p><strong>The CareerAgent Team</strong></p>
+                    <p style="font-size: 14px; color: #555; margin-top: 20px;">
+                        <em>This verification code will expire in 1 minute.</em>
+                    </p>
                 </div>
+                <!-- Footer -->
                 <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
                     <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
                 </div>
@@ -48,6 +66,29 @@ const sendVerificationCode = async (email, username, code) => {
 // Helper Function: Generate Reset Token
 const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 
+const checkEmailExists = async (req, res) => {
+    const { email } = req.body; // Extract the email from the request body
+    
+
+    try {
+        // Check for the email in both schemas
+        const existingJobSeeker = await JobSeeker.findOne({ email });
+        const existingRecruiter = await Recruiter.findOne({ email });
+
+        // If email exists in either schema, return a response indicating so
+        if (existingJobSeeker || existingRecruiter) {
+            return res.status(409).json({ exists: true, message: 'Email is already registered.' });
+        }
+
+        // If not found in either schema, return a response indicating it doesn't exist
+        res.status(200).json({ exists: false, message: 'Email is available for registration.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while checking the email.' });
+    }
+};
+
+
 // Helper Function: Get Schema Based on Role
 const getSchemaByRole = (role) => {
     if (role === 'jobseeker') return JobSeeker;
@@ -56,8 +97,8 @@ const getSchemaByRole = (role) => {
 };
 
 // Register User
-const registerUser = async (req, res) => {
-    const { fullName, email, password, role, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
+const registerJobSeeker = async (req, res) => {
+    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
 
     try {
         // Check if email exists in either schema
@@ -71,42 +112,59 @@ const registerUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
-        let user;
-        if (role === 'jobseeker') {
-            // Register as Job Seeker
-            user = await JobSeeker.create({
-                fullName,
-                email,
-                password: hashedPassword,
-                role,
-                isVerified: false,
-                verificationCode,
-                verificationCodeSentAt: new Date(),
-                phone,
-                githubUrl,
-                linkedinUrl,
-                cv,
-                profilePic,
-                dateOfBirth,
-            });
-        } else if (role === 'recruiter') {
-            // Register as Recruiter
-            user = await Recruiter.create({
-                fullName,
-                email,
-                password: hashedPassword,
-                role,
-                isVerified: false,
-                verificationCode,
-                verificationCodeSentAt: new Date(),
-                phone,
-                profilePic,
-                linkedinUrl,
-                dateOfBirth,
-            });
-        } else {
-            return res.status(400).json({ message: 'Invalid role specified.' });
+        const user = await JobSeeker.create({
+            fullName,
+            email,
+            password: hashedPassword,
+            role: 'jobseeker',
+            isVerified: false,
+            verificationCode,
+            verificationCodeSentAt: new Date(),
+            phone,
+            githubUrl,
+            linkedinUrl,
+            cv,
+            profilePic,
+            dateOfBirth,
+        });
+
+        await sendVerificationCode(user.email, user.fullName, verificationCode);
+        res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred during registration.' });
+    }
+};
+
+// Register Recruiter
+const registerRecruiter = async (req, res) => {
+    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth } = req.body;
+
+    try {
+        // Check if email exists in either schema
+        const existingJobSeeker = await JobSeeker.findOne({ email });
+        const existingRecruiter = await Recruiter.findOne({ email });
+
+        if (existingJobSeeker || existingRecruiter) {
+            return res.status(400).json({ message: 'Email is already registered.' });
         }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationCode = crypto.randomInt(100000, 999999);
+
+        const user = await Recruiter.create({
+            fullName,
+            email,
+            password: hashedPassword,
+            role: 'recruiter',
+            isVerified: false,
+            verificationCode,
+            verificationCodeSentAt: new Date(),
+            companyName,
+            companySize,
+            companyWebsite,
+            dateOfBirth,
+        });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
@@ -120,7 +178,6 @@ const registerUser = async (req, res) => {
 // Verify Code
 const verifyCode = async (req, res) => {
     const { email, code, role } = req.body;
-    console.log(role);
 
     try {
         const Schema = getSchemaByRole(role);
@@ -260,7 +317,6 @@ const sendResetPasswordEmail = async (email, username, resetUrl, resetToken) => 
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
-    console.log(email);
 
     try {
         // Search in both schemas
@@ -336,7 +392,9 @@ const resetPassword = async (req, res) => {
 
 
 module.exports = {
-    registerUser,
+    checkEmailExists,
+    registerRecruiter,
+    registerJobSeeker,
     verifyCode,
     loginUser,
     resendVerificationCode,
