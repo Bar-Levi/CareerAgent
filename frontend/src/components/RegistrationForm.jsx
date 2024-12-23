@@ -20,6 +20,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [notification, setNotification] = useState(null);
     const [isOptionalFormVisible, setIsOptionalFormVisible] = useState(false);
+    const [isTermsAccepted, setIsTermsAccepted] = useState(false); // Terms and conditions state
 
     const navigate = useNavigate();
 
@@ -69,17 +70,17 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     body: JSON.stringify({ email }),
                 }
             );
-    
+
             if (response.status === 409) {
                 const data = await response.json();
                 showNotification('error', data.message || 'Email is already registered.');
                 return true; // Email exists
             }
-    
+
             if (response.status === 200) {
                 return false; // Email does not exist
             }
-    
+
             showNotification('error', 'Unexpected response. Please try again.');
             return true; // Default to assuming email exists
         } catch (error) {
@@ -87,7 +88,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             return true; // Default to assuming email exists
         }
     };
-    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -319,11 +319,28 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             <option value="jobseeker">Job Seeker</option>
                             <option value="recruiter">Recruiter</option>
                         </select>
+                        {/* Terms and Conditions Checkbox */}
+                        <div className="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                checked={isTermsAccepted}
+                                onChange={(e) => setIsTermsAccepted(e.target.checked)}
+                                className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-400 rounded"
+                            />
+                            <label htmlFor="terms" className="text-sm text-gray-700">
+                                I agree to the{' '}
+                                <a href="/terms-and-conditions" target="_blank" className="text-blue-500 hover:underline">
+                                    Terms and Conditions
+                                </a>
+                                <span className="text-red-500 font-bold"> *</span>
+                            </label>
+                        </div>
                         <button
                             type="submit"
-                            disabled={isLoading}
+                            disabled={isLoading || !isTermsAccepted} // Disable if terms not accepted
                             className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 transition-all duration-200 ${
-                                isLoading
+                                isLoading || !isTermsAccepted
                                     ? 'bg-gray-400 cursor-not-allowed'
                                     : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
                             }`}

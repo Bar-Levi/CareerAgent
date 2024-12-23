@@ -20,6 +20,12 @@ module.exports = {
                 'slide-down': 'slide-down 0.8s ease-out',
                 'fade-in': 'fade-in 1s ease-in-out',
                 'fade-in-fast': 'fade-in 0.5s ease-in-out',
+
+                // Flipping and rotating animations
+                'flip': 'flip 1s ease-in-out',
+                'rotate-scale': 'rotate-scale 1s ease-in-out',
+                'scale-up': 'scale-up 0.5s ease-in-out',
+                'scale-down': 'scale-down 0.5s ease-in-out',
             },
             keyframes: {
                 // Sweeping effects
@@ -67,7 +73,48 @@ module.exports = {
                     '0%': { opacity: 0 },
                     '100%': { opacity: 1 },
                 },
+
+                // Flipping effect
+                flip: {
+                    '0%': { transform: 'rotateY(0)' },
+                    '50%': { transform: 'rotateY(90deg)' },
+                    '100%': { transform: 'rotateY(0)' },
+                },
+
+                // Rotating and scaling effect
+                'rotate-scale': {
+                    '0%': { transform: 'rotate(0deg) scale(1)' },
+                    '50%': { transform: 'rotate(180deg) scale(1.2)' },
+                    '100%': { transform: 'rotate(360deg) scale(1)' },
+                },
+
+                // Scaling up and down effects
+                'scale-up': {
+                    '0%': { transform: 'scale(0.8)' },
+                    '100%': { transform: 'scale(1)' },
+                },
+                'scale-down': {
+                    '0%': { transform: 'scale(1)' },
+                    '100%': { transform: 'scale(0.8)' },
+                },
+            },
+            colors: {
+                // Custom colors for brand or themes
+                brand: {
+                    primary: '#3b82f6',
+                    secondary: '#2563eb',
+                    accent: '#10b981',
+                },
+                gray: {
+                    100: '#f7f7f7',
+                    200: '#e5e5e5',
+                    300: '#d4d4d4',
+                    400: '#a3a3a3',
+                    500: '#6b7280',
+                    600: '#4b5563',
+                },
             },
         },
     },
+    plugins: [],
 };
