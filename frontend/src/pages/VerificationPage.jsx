@@ -10,8 +10,9 @@ const VerificationPage = () => {
     const [notification, setNotification] = useState(null);
     const navigate = useNavigate();
 
-
+    // Extract email and role from state
     const email = state?.email || '';
+    const role = state?.role || ''; // Role is extracted from the state
 
     // Timer logic for enabling the resend button
     useEffect(() => {
@@ -37,7 +38,7 @@ const VerificationPage = () => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, code }),
+                body: JSON.stringify({ email, code, role }), // Include role in the request
             });
             const data = await response.json();
 
@@ -57,7 +58,7 @@ const VerificationPage = () => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/resend`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email, role }), // Include role in the request
             });
             const data = await response.json();
 
@@ -80,7 +81,8 @@ const VerificationPage = () => {
                 background: 'linear-gradient(135deg, #ffffff, #a0a0a0, #999999, #ffffff, #a0a0a0, #999999)',
                 backgroundSize: 'cover', // Ensures the gradient covers the entire viewport
             }}
-            >    {/* Floating Decorative Elements */}
+        >
+            {/* Floating Decorative Elements */}
             <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-200 blur-3xl opacity-20 animate-pulse" />
             <div className="absolute bottom-20 right-1/4 w-48 h-48 bg-gradient-to-t from-gray-400 via-gray-200 to-gray-100 blur-3xl opacity-20 animate-float" />
             {/* Display notification */}
@@ -142,7 +144,7 @@ const VerificationPage = () => {
                         </button>
                     </p>
 
-                    {countdown != 0 && (
+                    {countdown !== 0 && (
                         <p className="text-gray-500 text-sm mt-3 animate-pulse">
                             Please wait {countdown} seconds
                         </p>

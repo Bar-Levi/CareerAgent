@@ -1,15 +1,73 @@
 const mongoose = require('mongoose');
 
 const recruiterSchema = new mongoose.Schema({
-    fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    companyName: { type: String, required: true },
-    companyOccupation: { type: String, required: true },
-    companySize: { type: String, required: true },
-    companyWebsite: String,
-    profilePicture: String,
-    isVerified: { type: Boolean, default: false },
+    fullName: {
+        type: String,
+        trim: true,
+        required: [true, 'Full name is required'],
+    },
+    email: {
+        type: String,
+        unique: true,
+        lowercase: true,
+        match: [
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+            'Please enter a valid email address',
+        ],
+        required: [true, 'Email is required'],
+    },
+    password: {
+        type: String,
+        minlength: [6, 'Password must be at least 6 characters long'],
+        required: [true, 'Password is required'],
+    },
+    role: {
+        type: String,
+        enum: ['recruiter'], // Fixed to 'recruiter'
+        required: [true, 'Role is required'],
+        default: 'recruiter', // Always set to 'recruiter'
+    },
+    companyName: {
+        type: String,
+        trim: true,
+        required: [true, 'Company name is required'],
+    },
+    companySize: {
+        type: String,
+        trim: true,
+        required: [true, 'Company size is required'],
+    },
+    companyWebsite: {
+        type: String,
+        trim: true,
+        required: false, // Optional field
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationCode: {
+        type: Number,
+        required: false,
+    },
+    verificationCodeSentAt: {
+        type: Date,
+        default: Date.now, // Automatically set to current date
+    },
+    resetPasswordToken: {
+        type: String,
+    },
+    resetPasswordExpires: {
+        type: Date,
+    },
+});
+
+// Pre-save hook to update verificationCodeSentAt when verificationCode changes
+recruiterSchema.pre('save', function (next) {
+    if (this.isModified('verificationCode')) {
+        this.verificationCodeSentAt = new Date();
+    }
+    next();
 });
 
 module.exports = mongoose.model('Recruiter', recruiterSchema);

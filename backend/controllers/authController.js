@@ -1,4 +1,5 @@
-const User = require('../models/userModel');
+const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
+const Recruiter = require('../models/recruiterModel'); // Import Recruiter model
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
@@ -14,7 +15,6 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-// Helper Function: Send Verification Code Email
 // Helper Function: Send Verification Code Email
 const sendVerificationCode = async (email, username, code) => {
     const mailOptions = {
@@ -63,11 +63,203 @@ const sendVerificationCode = async (email, username, code) => {
     await transporter.sendMail(mailOptions);
 };
 
-
 // Helper Function: Generate Reset Token
 const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 
-// Helper Function: Send Reset Password Email
+const checkEmailExists = async (req, res) => {
+    const { email } = req.body; // Extract the email from the request body
+    
+
+    try {
+        // Check for the email in both schemas
+        const existingJobSeeker = await JobSeeker.findOne({ email });
+        const existingRecruiter = await Recruiter.findOne({ email });
+
+        // If email exists in either schema, return a response indicating so
+        if (existingJobSeeker || existingRecruiter) {
+            return res.status(409).json({ exists: true, message: 'Email is already registered.' });
+        }
+
+        // If not found in either schema, return a response indicating it doesn't exist
+        res.status(200).json({ exists: false, message: 'Email is available for registration.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred while checking the email.' });
+    }
+};
+
+// Helper Function: Get Schema Based on Role
+const getSchemaByRole = (role) => {
+    if (role === 'jobseeker') return JobSeeker;
+    if (role === 'recruiter') return Recruiter;
+    throw new Error('Invalid role specified.');
+};
+
+// Register User
+const registerJobSeeker = async (req, res) => {
+    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
+
+    try {
+        // Check if email exists in either schema
+        const existingJobSeeker = await JobSeeker.findOne({ email });
+        const existingRecruiter = await Recruiter.findOne({ email });
+
+        if (existingJobSeeker || existingRecruiter) {
+            return res.status(400).json({ message: 'Email is already registered.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationCode = crypto.randomInt(100000, 999999);
+
+        const user = await JobSeeker.create({
+            fullName,
+            email,
+            password: hashedPassword,
+            role: 'jobseeker',
+            isVerified: false,
+            verificationCode,
+            verificationCodeSentAt: new Date(),
+            phone,
+            githubUrl,
+            linkedinUrl,
+            cv,
+            profilePic,
+            dateOfBirth,
+        });
+
+        await sendVerificationCode(user.email, user.fullName, verificationCode);
+        res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred during registration.' });
+    }
+};
+
+// Register Recruiter
+const registerRecruiter = async (req, res) => {
+    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth } = req.body;
+
+    try {
+        // Check if email exists in either schema
+        const existingJobSeeker = await JobSeeker.findOne({ email });
+        const existingRecruiter = await Recruiter.findOne({ email });
+
+        if (existingJobSeeker || existingRecruiter) {
+            return res.status(400).json({ message: 'Email is already registered.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationCode = crypto.randomInt(100000, 999999);
+
+        const user = await Recruiter.create({
+            fullName,
+            email,
+            password: hashedPassword,
+            role: 'recruiter',
+            isVerified: false,
+            verificationCode,
+            verificationCodeSentAt: new Date(),
+            companyName,
+            companySize,
+            companyWebsite,
+            dateOfBirth,
+        });
+
+        await sendVerificationCode(user.email, user.fullName, verificationCode);
+        res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred during registration.' });
+    }
+};
+
+// Verify Code
+const verifyCode = async (req, res) => {
+    const { email, code, role } = req.body;
+
+    try {
+        const Schema = getSchemaByRole(role);
+
+        const user = await Schema.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'No account associated with this email.' });
+        }
+
+        if (user.verificationCodeSentAt && new Date() - user.verificationCodeSentAt > 60000) {
+            user.verificationCode = null;
+            await user.save();
+            return res.status(400).json({ message: 'Verification code has expired. Request a new code.' });
+        }
+
+        if (user.verificationCode !== parseInt(code)) {
+            return res.status(400).json({ message: 'Incorrect verification code.' });
+        }
+
+        user.isVerified = true;
+        user.verificationCode = null;
+        await user.save();
+
+        res.status(200).json({ message: 'Account verified successfully!' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'An error occurred during verification.' });
+    }
+};
+
+// Login User
+const loginUser = async (req, res) => {
+    const { email, password, role } = req.body;
+
+    try {
+        const Schema = getSchemaByRole(role);
+
+        const user = await Schema.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        if (!user.isVerified) {
+            return res.status(403).json({ message: 'Please verify your email before logging in.' });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.status(200).json({ token });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Login failed. Please try again.' });
+    }
+};
+
+// Resend Verification Code
+const resendVerificationCode = async (req, res) => {
+    const { email, role } = req.body;
+
+    try {
+        const Schema = getSchemaByRole(role);
+
+        const user = await Schema.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const verificationCode = crypto.randomInt(100000, 999999);
+        user.verificationCode = verificationCode;
+        user.verificationCodeSentAt = new Date();
+        await user.save();
+
+        await sendVerificationCode(user.email, user.fullName, verificationCode);
+        res.status(200).json({ message: 'Verification code resent successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to resend verification code.' });
+    }
+};
+
 const sendResetPasswordEmail = async (email, username, resetUrl, resetToken) => {
     const mailOptions = {
         from: process.env.EMAIL_USER,
@@ -120,109 +312,62 @@ const sendResetPasswordEmail = async (email, username, resetUrl, resetToken) => 
     await transporter.sendMail(mailOptions);
 };
 
-
-// Register User
-const registerUser = async (req, res) => {
-    const { fullName, email, password, role } = req.body;
-
-    try {
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists.' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const verificationCode = crypto.randomInt(100000, 999999);
-
-        const user = await User.create({
-            fullName,
-            email,
-            password: hashedPassword,
-            role,
-            isVerified: false,
-            verificationCode,
-            verificationCodeSentAt: new Date(),
-        });
-
-        await sendVerificationCode(user.email, user.fullName, verificationCode);
-        res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
-    } catch (error) {
-        res.status(500).json({ message: 'An error occurred during registration.' });
-    }
-};
-
-// Verify Code
-const verifyCode = async (req, res) => {
-    const { email, code } = req.body;
-
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'No account associated with this email.' });
-        }
-
-        if (user.verificationCodeSentAt && new Date() - user.verificationCodeSentAt > 60000) {
-            user.verificationCode = null;
-            await user.save();
-            return res.status(400).json({ message: 'Verification code has expired. Request a new code.' });
-        }
-
-        if (user.verificationCode !== parseInt(code)) {
-            return res.status(400).json({ message: 'Incorrect verification code.' });
-        }
-
-        user.isVerified = true;
-        user.verificationCode = null;
-        await user.save();
-
-        res.status(200).json({ message: 'Account verified successfully!' });
-    } catch (error) {
-        res.status(500).json({ message: 'An error occurred during verification.' });
-    }
-};
-
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
 
     try {
-        const user = await User.findOne({ email });
+        // Search in both schemas
+        const jobSeeker = await JobSeeker.findOne({ email });
+        const recruiter = await Recruiter.findOne({ email });
+
+        const user = jobSeeker || recruiter;
+
         if (!user) {
             return res.status(404).json({ message: 'No user found with that email.' });
         }
 
+        // Generate reset token and expiry
         const resetToken = generateResetToken();
         const tokenExpiry = Date.now() + 3600000; // 1 hour
 
+        // Save the token and expiry
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = tokenExpiry;
         await user.save();
 
+        // Send the reset email
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
         await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
 
         res.status(200).json({ message: 'Password reset instructions sent to email.' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Failed to process password reset request.' });
     }
 };
 
-// Reset Password
 const resetPassword = async (req, res) => {
     const { token, newPassword } = req.body;
 
     try {
-        // Find the user with the given token and ensure the token has not expired
-        const user = await User.findOne({
+        // Search in both schemas for a valid reset token
+        const jobSeeker = await JobSeeker.findOne({
             resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }, // Ensure token is not expired
+            resetPasswordExpires: { $gt: Date.now() },
         });
+        const recruiter = await Recruiter.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        const user = jobSeeker || recruiter;
 
         if (!user) {
             return res.status(400).json({ message: 'Invalid or expired token.' });
         }
 
-        // Check if the new password matches the current password
+        // Ensure the new password is different
         const isSamePassword = await bcrypt.compare(newPassword, user.password);
         if (isSamePassword) {
             return res.status(400).json({
@@ -238,60 +383,16 @@ const resetPassword = async (req, res) => {
 
         res.status(200).json({ message: 'Password has been successfully reset.' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: 'Failed to reset password.' });
     }
 };
 
-// Login User
-const loginUser = async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        if (!user.isVerified) {
-            return res.status(403).json({ message: 'Please verify your email before logging in.' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials.' });
-        }
-
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.status(200).json({ token });
-    } catch (error) {
-        res.status(500).json({ message: 'Login failed. Please try again.' });
-    }
-};
-
-// Resend Verification Code
-const resendVerificationCode = async (req, res) => {
-    const { email } = req.body;
-
-    try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        const verificationCode = crypto.randomInt(100000, 999999);
-        user.verificationCode = verificationCode;
-        user.verificationCodeSentAt = new Date();
-        await user.save();
-
-        await sendVerificationCode(user.email, user.fullName, verificationCode);
-        res.status(200).json({ message: 'Verification code resent successfully.' });
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to resend verification code.' });
-    }
-};
 
 module.exports = {
-    registerUser,
+    checkEmailExists,
+    registerRecruiter,
+    registerJobSeeker,
     verifyCode,
     loginUser,
     resendVerificationCode,
