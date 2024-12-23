@@ -88,7 +88,6 @@ const checkEmailExists = async (req, res) => {
     }
 };
 
-
 // Helper Function: Get Schema Based on Role
 const getSchemaByRole = (role) => {
     if (role === 'jobseeker') return JobSeeker;
@@ -173,7 +172,6 @@ const registerRecruiter = async (req, res) => {
         res.status(500).json({ message: 'An error occurred during registration.' });
     }
 };
-
 
 // Verify Code
 const verifyCode = async (req, res) => {

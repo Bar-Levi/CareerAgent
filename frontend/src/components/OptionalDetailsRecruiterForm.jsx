@@ -49,7 +49,6 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                 {/* Date of Birth Field */}
                 <div className="relative">
                     <label className="block text-gray-700 font-medium mb-2">Date of Birth</label>
-                    <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                     <input
                         type="date"
                         name="dateOfBirth"
@@ -65,7 +64,6 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                 {/* Company Website Field */}
                 <div className="relative">
                     <label className="block text-gray-700 font-medium mb-2">Company Website</label>
-                    <FaLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                     <input
                         type="url"
                         name="companyWebsite"
