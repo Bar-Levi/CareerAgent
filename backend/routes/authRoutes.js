@@ -1,4 +1,5 @@
 const express = require('express');
+
 const { 
     checkEmailExists,
     registerRecruiter,
@@ -7,8 +8,10 @@ const {
     loginUser,
     resendVerificationCode,
     requestPasswordReset, 
-    resetPassword
+    resetPassword,
+    getUserDetails
 } = require('../controllers/authController');
+
 
 const router = express.Router();
 
@@ -21,7 +24,7 @@ router.post('/request-password-reset', requestPasswordReset);
 router.post('/reset-password', resetPassword);
 router.post('/check-email', checkEmailExists);
 
-
+router.get('/user-details', getUserDetails);
 
 
 

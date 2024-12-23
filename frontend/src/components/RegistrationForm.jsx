@@ -131,25 +131,65 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             setIsLoading(false);
         }
     };
-
+    
     const handleOptionalSubmit = async (optionalData) => {
         try {
             setIsLoading(true);
+    
+            // 1. Helper function to upload files to Cloudinary
+            const uploadFile = async (file, folder) => {
+                const formData = new FormData();
+                formData.append('file', file); // Attach file
+                formData.append('folder', folder); // Optional: Folder organization
+    
+                console.log('Uploading file:', formData.get('file')); // Debug file content
+    
+                console.log(`URL: ${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`);
+
+                const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
+                    method: 'POST',
+                    body: formData, // FormData automatically sets the appropriate headers
+                });
+                if (!uploadResponse.ok) {
+                    throw new Error('Failed to upload file to Cloudinary.');
+                }
+
+                const data = await uploadResponse.json();
+                return data.url; // Return the Cloudinary URL
+            };
+    
+            console.log('Starting uploads...');
+    
+            // 2. Upload CV if it exists
+            if (optionalData.cv) {
+                optionalData.cv = await uploadFile(optionalData.cv, 'cvs'); // Upload CV and get URL
+            }
+    
+            console.log('CV uploaded...');
+    
+            // 3. Upload Profile Picture if it exists
+            if (optionalData.profilePic) {
+                optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures'); // Upload Profile Pic and get URL
+            }
+    
+            console.log('Profile picture uploaded...');
+    
+            // 4. Send form data + Cloudinary URLs to MongoDB
             const apiUrl =
                 formData.role === 'jobseeker'
                     ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
                     : `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerRecruiter`;
-
+    
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, ...optionalData }), // Merge registration and optional fields
+                body: JSON.stringify({ ...formData, ...optionalData }), // Merge form and optional data
             });
-
+    
             const data = await response.json();
             if (response.ok) {
                 showNotification('success', 'Verification email sent!');
-                navigate('/verify', { state: { email: formData.email, role: formData.role } }); // Pass role here
+                navigate('/verify', { state: { email: formData.email, role: formData.role } }); // Navigate to verify page
             } else {
                 showNotification('error', data.message);
             }
@@ -159,7 +199,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             setIsLoading(false);
         }
     };
-
+    
     const getStrengthColor = () => {
         switch (passwordStrength) {
             case 1:
