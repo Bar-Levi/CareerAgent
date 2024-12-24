@@ -103,10 +103,15 @@ const VerificationPage = () => {
                     Verify Your Account
                 </h2>
 
+                {/* Instruction Text */}
+                <p className="text-gray-600 text-center mb-6 animate-fade-in">
+                    Please check your email, including your <b>Trash</b> or <b>Spam</b> folders, for the verification code.
+                </p>
+
                 {/* Verification Code Field */}
                 <div className="mb-6">
                     <label className="block text-gray-600 font-medium mb-2 animate-fade-in">
-                        Verification Code <span className="text-red-500 font-bold">*</span>
+                        Verification Code *
                     </label>
                     <input
                         type="text"

@@ -67,7 +67,7 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                                     {formData.profilePic.name}
                                 </span>
                             ) : (
-                                <span className="text-sm text-gray-500">Profile Picture</span>
+                                <span className="text-sm text-gray-500 text-center">Profile Picture</span>
                             )}
                         </label>
                         <input
