@@ -1,4 +1,6 @@
 const express = require('express');
+const { protect } = require('../middleware/authMiddleware');
+
 
 const { 
     checkEmailExists,
@@ -24,7 +26,7 @@ router.post('/request-password-reset', requestPasswordReset);
 router.post('/reset-password', resetPassword);
 router.post('/check-email', checkEmailExists);
 
-router.get('/user-details', getUserDetails);
+router.get('/user-details', protect, getUserDetails);
 
 
 

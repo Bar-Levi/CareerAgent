@@ -6,20 +6,28 @@ const Dashboard = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
-    const email = location.state?.email;
+    const email = location.state?.email; // Access email from passed state
 
     useEffect(() => {
-        if (email) {
-            fetchUserDetails(email);
+        // Check if token is available
+        const token = localStorage.getItem('token');
+        console.log(token);
+        if (!email) {
+            navigate('/');
+        } else {
+            fetchUserDetails(email, token); // Pass the token for secure API call
         }
-    }, [email]);
+    }, [email, navigate]);
 
-    const fetchUserDetails = async (email) => {
+    const fetchUserDetails = async (email, token) => {
         try {
             const response = await fetch(
                 `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(email)}`,
                 {
                     method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`, // Include the token in the request
+                    },
                 }
             );
 
@@ -28,7 +36,7 @@ const Dashboard = () => {
                 setUserData(data);
             } else if (response.status === 401) {
                 setError('Unauthorized access. Please log in again.');
-                navigate('/login');
+                navigate('/'); // Redirect if token is invalid or expired
             } else if (response.status === 404) {
                 setError('User not found.');
             } else {

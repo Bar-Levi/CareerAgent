@@ -211,11 +211,6 @@ const verifyCode = async (req, res) => {
 
 // Login User
 const loginUser = async (req, res) => {
-    console.log("\n\n\n\\n\n\n\n\n\n\n");
-    console.dir(req.body, {depth: null});
-    console.log('email: ' + req.body.email);
-    console.log('password: ' + req.body.password);
-    console.log('role: ' + req.body.role);
     const { email, password, role } = req.body;
 
     try {
@@ -235,7 +230,7 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '19s' });
         res.status(200).json({ token });
     } catch (error) {
         console.error(error);
