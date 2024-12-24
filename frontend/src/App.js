@@ -17,6 +17,7 @@ function App() {
         <Router>
             <Routes>
                 <Route path="/" element={<AuthenticationForm />} />
+                <Route path="/authentication" element={<AuthenticationForm />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/verify" element={<VerificationPage />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

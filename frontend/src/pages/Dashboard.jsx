@@ -8,11 +8,56 @@ const Dashboard = () => {
     const location = useLocation();
     const email = location.state?.email;
 
+    console.log('location.state = ');
+    console.dir(location.state, { depth: null});
+    // useEffect is user is not verified, navigate him to /verification.
+    useEffect(() => {
+        if (!email) {
+            console.log(' !email = true')
+            navigate('/authentication');
+        }
+        else if (!isUserVerified(location.email))
+            console.log('User is NOT verified - navigating to /verification');
+            navigate('/verification');
+    }, []);
+
+    // Fetch user details when email is provided.
+    // If user is not authorized, navigate him to /login.
+    // If user is not found, display an error message.
+    // If any error occurs, display an error message.
     useEffect(() => {
         if (email) {
             fetchUserDetails(email);
         }
     }, [email]);
+
+    const isUserVerified = async (email) => {
+        try {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(email)}`,
+                {
+                    method: 'GET',
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Checking verification to user:")
+                console.dir(data, { depth: null });
+                return data.isVerified;
+            } else if (response.status === 401) {
+                setError('Unauthorized access. Please log in again.');
+                navigate('/login');
+            } else if (response.status === 404) {
+                setError('User not found.');
+            } else {
+                setError('Failed to fetch user details.');
+            }
+        } catch (error) {
+            setError('An error occurred while fetching user details.');
+            console.error('Error fetching user details:', error);
+        }
+    };
 
     const fetchUserDetails = async (email) => {
         try {
