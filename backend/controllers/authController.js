@@ -211,11 +211,6 @@ const verifyCode = async (req, res) => {
 
 // Login User
 const loginUser = async (req, res) => {
-    console.log("\n\n\n\\n\n\n\n\n\n\n");
-    console.dir(req.body, {depth: null});
-    console.log('email: ' + req.body.email);
-    console.log('password: ' + req.body.password);
-    console.log('role: ' + req.body.role);
     const { email, password, role } = req.body;
 
     try {

@@ -9,10 +9,12 @@ const Dashboard = () => {
     const email = location.state?.email;
 
     useEffect(() => {
-        if (email) {
+        if (!email) {
+            navigate('/'); // Redirect to login if email is not available
+        } else {
             fetchUserDetails(email);
         }
-    }, [email]);
+    }, [email, navigate]);
 
     const fetchUserDetails = async (email) => {
         try {
