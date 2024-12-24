@@ -230,7 +230,7 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '19s' });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).json({ token });
     } catch (error) {
         console.error(error);
@@ -241,6 +241,8 @@ const loginUser = async (req, res) => {
 // Resend Verification Code
 const resendVerificationCode = async (req, res) => {
     const { email, role } = req.body;
+    console.log('\n\n\n\n\n\)');
+    console.log(`Resending Verification Code for ${email} (${role})`);
 
     try {
         const Schema = getSchemaByRole(role);
@@ -408,10 +410,20 @@ const getUserDetails = async (req, res) => {
         }
 
         res.status(200).json({
+            _id: user._id,
             fullName: user.fullName,
             email: user.email,
-            profilePic: user.profilePic || null,
+            password: user.password,
+            role: user.role,
+            phone: user.phone,
             cv: user.cv || null,
+            profilePic: user.profilePic || null,
+            githubUrl: user.githubUrl,
+            linkedinUrl: user.linkedinUrl,
+            isVerified: user.isVerified,
+            verificationCode: user.verificationCode,
+            verificationCodeSentAt: user.verificationCodeSentAt,
+            dateOfBirth: user.dateOfBirth
         });
     } catch (error) {
         console.error('Error fetching user details:', error);

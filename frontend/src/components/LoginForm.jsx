@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
@@ -16,6 +16,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
     };
 
     const handleSubmit = async (e) => {
+        console.log("Submitting...");
         e.preventDefault();
         setLoading(true);
         try {
@@ -26,12 +27,19 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 },
                 body: JSON.stringify(formData),
             });
-
+            console.log("Here");
+            console.dir(response, { depth: null });
             if (!response.ok) {
+                if (response.status === 403) { // User isn't verified.
+                    navigate('/dashboard', { state: { 
+                        email: formData.email,
+                        role: formData.role
+                } });
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
-
+            
             const { token } = await response.json();
 
             // Store the token in localStorage
@@ -120,7 +128,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         handleChange(e);
                         setUserType(e.target.value);
                     }}
-                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                    className="w-full px-4 py-3 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                 >
                     <option value="jobseeker">Job Seeker</option>
                     <option value="recruiter">Recruiter</option>
@@ -132,6 +140,19 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     {loading ? 'Logging in...' : 'Log In'}
                 </button>
             </form>
+
+            {message && (
+                <div
+                    className={`mt-4 p-4 rounded-lg text-sm ${
+                        message.type === 'success'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                    } flex justify-center items-center text-center`}
+                >
+                    {message.text}
+                </div>
+            )}
+            
             <div className="text-center">
                 <button
                     onClick={() => setShowForgotPassword(!showForgotPassword)}
@@ -141,6 +162,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </button>
             </div>
 
+            
             {/* Forgot Password Box */}
             {showForgotPassword && (
                 <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md">
@@ -171,17 +193,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </div>
             )}
 
-            {message && (
-                <div
-                    className={`mt-4 p-4 rounded-lg text-sm ${
-                        message.type === 'success'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                    }`}
-                >
-                    {message.text}
-                </div>
-            )}
             <button
                 onClick={toggleForm}
                 className="text-gray-600 hover:underline text-center"
