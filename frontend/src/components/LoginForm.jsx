@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 
 const LoginForm = ({ toggleForm, setUserType }) => {
-    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [loading, setLoading] = useState(false); // To handle loading state
@@ -13,14 +13,35 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        console.log(name, value);
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        navigate('/dashboard', { state: { email: formData['email'] } });
-        setLoading(false);
+        try {
+        console.log("Printing formData:");
+        console.dir(formData, {depth: null})
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'An error occurred.');
+            }
+        navigate('/dashboard', { state: formData });
+        } catch (error) {
+            setMessage({ type: 'error', text: error.message });
+            setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleForgotPasswordSubmit = async (e) => {
@@ -31,7 +52,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/request-password-reset`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ email: formData.email }),
             });
