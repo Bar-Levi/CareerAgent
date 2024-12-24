@@ -6,84 +6,154 @@ const Dashboard = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
-    const email = location.state?.email;
+    const email = location.state?.email; // Access email from passed state
+    const role = location.state?.role;
+    const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : '');
 
+    
     console.log('location.state = ');
     console.dir(location.state, { depth: null});
     // useEffect is user is not verified, navigate him to /verification.
     useEffect(() => {
-        if (!email) {
-            console.log(' !email = true')
-            navigate('/authentication');
-        }
-        else if (!isUserVerified(location.email))
-            console.log('User is NOT verified - navigating to /verification');
-            navigate('/verification');
-    }, []);
+        const handleUserVerification = async () => {
+            console.log('email = ' + email);
+            console.log('role ='+ role);
 
-    // Fetch user details when email is provided.
-    // If user is not authorized, navigate him to /login.
-    // If user is not found, display an error message.
-    // If any error occurs, display an error message.
-    useEffect(() => {
-        if (email) {
-            fetchUserDetails(email);
-        }
-    }, [email]);
-
-    const isUserVerified = async (email) => {
+            try {
+                if (!email) {  // User typed manually /dashboard instead of coming from /authentication
+                    console.log('Email not provided - redirecting to /authentication');
+                    navigate('/authentication');
+                    return;
+                }
+    
+                // Check if the user is verified
+                const userIsVerified = await isUserVerified(email, token);
+                if (!userIsVerified) {
+                    console.log('User is not verified - resending verification code.');
+                    await resendVerificationCode(); // Wait for resend before navigating
+                } else {
+                    console.log('User is verified - fetching user details.');
+                    setUserData(await fetchUserDetails(email, token)); // Fetch details if verified
+                }
+            } catch (error) {
+                console.error('Error in verification flow:', error);
+            }
+        };
+    
+        handleUserVerification(); // Call the async function
+    
+    }, [email, token, navigate]);
+    
+    // Functions outside the useEffect
+    const isUserVerified = async (email, token) => {
+        console.log("Checking if user is verified...");
+        console.log('Email:', email);
+    
         try {
             const response = await fetch(
                 `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(email)}`,
                 {
                     method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`, // Include the token in the request
+                    },
                 }
             );
-
+    
             if (response.ok) {
                 const data = await response.json();
-                console.log("Checking verification to user:")
-                console.dir(data, { depth: null });
-                return data.isVerified;
+                console.log("User data received:", data);
+                return data.isVerified; // Return the verification status
             } else if (response.status === 401) {
-                setError('Unauthorized access. Please log in again.');
-                navigate('/login');
+                console.error('Unauthorized - Redirecting to login');
+                navigate('/authentication');
             } else if (response.status === 404) {
-                setError('User not found.');
+                console.error('User not found.');
             } else {
-                setError('Failed to fetch user details.');
+                console.error('Failed to fetch user details.');
             }
         } catch (error) {
-            setError('An error occurred while fetching user details.');
-            console.error('Error fetching user details:', error);
+            console.error('Error fetching user verification:', error);
+        }
+    
+        return false; // Default to not verified in case of error
+    };
+    
+    const resendVerificationCode = async () => {
+        console.log("Resending verification code...");
+        try {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/resend`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`, // Include the token in the request
+                    },
+                    body: JSON.stringify({ email, role }),
+                }
+            );
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'An error occurred.');
+            }
+    
+            console.log('Verification code resent. Navigating to /verify.');
+
+            localStorage.setItem('countdown', 60);
+            navigate('/verify', {
+                state: {
+                    email,
+                    role,
+                    notificationType: 'error',
+                    notificationMessage: 'Please verify your email address before logging in',
+                    notificationSource: 'Unverified Login'
+                },
+            });
+        } catch (error) {
+            console.error('Error resending verification code:', error);
         }
     };
-
-    const fetchUserDetails = async (email) => {
+    
+    const fetchUserDetails = async (email, token) => {
+        console.log("Fetching user details...");
         try {
             const response = await fetch(
                 `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(email)}`,
                 {
                     method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
             );
-
+    
             if (response.ok) {
                 const data = await response.json();
-                setUserData(data);
+                console.log('User data fetched:', data);
+                return data;
             } else if (response.status === 401) {
+                console.error('Unauthorized - Redirecting to login');
                 setError('Unauthorized access. Please log in again.');
-                navigate('/login');
+                navigate('/authentication');
             } else if (response.status === 404) {
+                console.error('User not found.');
                 setError('User not found.');
             } else {
+                console.error('Failed to fetch user details.');
                 setError('Failed to fetch user details.');
             }
         } catch (error) {
-            setError('An error occurred while fetching user details.');
             console.error('Error fetching user details:', error);
+            setError('An error occurred while fetching user details.');
         }
     };
+    
+
+    
+
+    
 
     if (error) {
         return (

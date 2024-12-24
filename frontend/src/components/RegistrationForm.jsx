@@ -256,6 +256,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             className="text-gray-600"
                             style={{
                                 marginTop: formData.role === 'recruiter' ? '-5px' : '0px', // Adjust recruiter subtitle position
+                                paddingBottom: '10px'
                             }}
                         >
                             {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
@@ -268,7 +269,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             placeholder="Full Name *"
                             value={formData.fullName}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                            className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                             required
                         />
                         <input
@@ -277,7 +278,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             placeholder="Email *"
                             value={formData.email}
                             onChange={handleChange}
-                            className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                            className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                             required
                         />
                         {formData.role === 'recruiter' && (
@@ -288,7 +289,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                     placeholder="Company Name *"
                                     value={formData.companyName}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                    className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                     required
                                 />
                                 <input
@@ -297,7 +298,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                     placeholder="Company Size *"
                                     value={formData.companySize}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                    className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                     required
                                 />
                             </>
@@ -309,7 +310,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 placeholder="Password *"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                 required
                             />
                             <span
@@ -337,7 +338,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 placeholder="Confirm Password *"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                                className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                 required
                             />
                             <span
@@ -354,7 +355,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 handleChange(e);
                                 setUserType(e.target.value);
                             }}
-                            className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                            className="w-full px-4 py-2.5 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                         >
                             <option value="jobseeker">Job Seeker</option>
                             <option value="recruiter">Recruiter</option>

@@ -4,21 +4,34 @@ import Notification from '../components/Notification';
 
 const VerificationPage = () => {
     const { state } = useLocation();
-    const [code, setCode] = useState('');
-    const [countdown, setCountdown] = useState(0);
-    const [isResendDisabled, setIsResendDisabled] = useState(false);
-    const [notification, setNotification] = useState(null);
     const navigate = useNavigate();
 
-    // Extract email and role from state
+    // Extract email, role, and notification from state
     const email = state?.email || '';
-    const role = state?.role || ''; // Role is extracted from the state
+    const role = state?.role || ''; 
+    const notificationType = state?.notificationType || null;
+    const notificationMessage = state?.notificationMessage || null;
+    const notificationSource = state?.notificationSource || null;
+
+    // State variables
+    const [code, setCode] = useState('');
+    const [countdown, setCountdown] = useState(localStorage.getItem('countdown') - 2);
+    const [isResendDisabled, setIsResendDisabled] = useState(true);
+    const [notification, setNotification] = useState(null);
+
+
+    useEffect(() => {
+        localStorage.setItem('countdown', countdown - 2);
+        if (notificationSource === 'Unverified Login')
+            showNotification(notificationType, notificationMessage);
+    }, []);
 
     // Timer logic for enabling the resend button
     useEffect(() => {
         if (countdown > 0) {
             const timer = setInterval(() => {
                 setCountdown((prev) => prev - 1);
+                localStorage.setItem('countdown', countdown);
             }, 1000);
             return () => clearInterval(timer);
         } else {
@@ -38,13 +51,14 @@ const VerificationPage = () => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, code, role }), // Include role in the request
+                body: JSON.stringify({ email, code, role }),
             });
+
             const data = await response.json();
 
             if (response.ok) {
                 showNotification('success', 'Your account has been verified successfully!');
-                navigate('/dashboard', { state: { email: email } });
+                navigate('/'); // Navigate to home after successful verification
             } else {
                 showNotification('error', data.message);
             }
@@ -58,8 +72,9 @@ const VerificationPage = () => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/resend`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, role }), // Include role in the request
+                body: JSON.stringify({ email, role }),
             });
+
             const data = await response.json();
 
             if (response.ok) {
@@ -79,12 +94,13 @@ const VerificationPage = () => {
             className="min-h-screen flex justify-center items-center relative overflow-hidden transition-transform duration-500 animate-slide-in"
             style={{
                 background: 'linear-gradient(135deg, #ffffff, #a0a0a0, #999999, #ffffff, #a0a0a0, #999999)',
-                backgroundSize: 'cover', // Ensures the gradient covers the entire viewport
+                backgroundSize: 'cover',
             }}
         >
             {/* Floating Decorative Elements */}
             <div className="absolute top-10 left-1/4 w-40 h-40 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-200 blur-3xl opacity-20 animate-pulse" />
             <div className="absolute bottom-20 right-1/4 w-48 h-48 bg-gradient-to-t from-gray-400 via-gray-200 to-gray-100 blur-3xl opacity-20 animate-float" />
+
             {/* Display notification */}
             {notification && (
                 <Notification
@@ -149,7 +165,7 @@ const VerificationPage = () => {
                         </button>
                     </p>
 
-                    {countdown !== 0 && (
+                    {countdown > 0 && (
                         <p className="text-gray-500 text-sm mt-3 animate-pulse">
                             Please wait {countdown} seconds
                         </p>

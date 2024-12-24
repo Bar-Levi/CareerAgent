@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
-import { useNavigate } from 'react-router-dom';
-
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
@@ -13,29 +12,42 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        console.log(name, value);
         setFormData({ ...formData, [name]: value });
     };
 
     const handleSubmit = async (e) => {
+        console.log("Submitting...");
         e.preventDefault();
         setLoading(true);
         try {
-        console.log("Printing formData:");
-        console.dir(formData, {depth: null})
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(formData),
             });
-
+            console.log("Here");
+            console.dir(response, { depth: null });
             if (!response.ok) {
+                if (response.status === 403) { // User isn't verified.
+                    navigate('/dashboard', { state: { 
+                        email: formData.email,
+                        role: formData.role
+                } });
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
-        navigate('/dashboard', { state: formData });
+            
+            const { token } = await response.json();
+
+            // Store the token in localStorage
+            localStorage.setItem('token', token);
+
+            // Navigate to the protected dashboard route
+            navigate('/dashboard', { state: formData });
+
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
             setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
@@ -52,7 +64,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/request-password-reset`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ email: formData.email }),
             });
@@ -64,10 +76,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             const data = await response.json();
             setMessage({ type: 'success', text: data.message });
-            setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
-            setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
         } finally {
             setLoading(false);
             setShowForgotPassword(false); // Close the forgot password box
@@ -118,7 +128,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         handleChange(e);
                         setUserType(e.target.value);
                     }}
-                    className="w-full px-4 py-3 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                    className="w-full px-4 py-3 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                 >
                     <option value="jobseeker">Job Seeker</option>
                     <option value="recruiter">Recruiter</option>
@@ -127,9 +137,22 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     type="submit"
                     className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
                 >
-                    Log In
+                    {loading ? 'Logging in...' : 'Log In'}
                 </button>
             </form>
+
+            {message && (
+                <div
+                    className={`mt-4 p-4 rounded-lg text-sm ${
+                        message.type === 'success'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                    } flex justify-center items-center text-center`}
+                >
+                    {message.text}
+                </div>
+            )}
+            
             <div className="text-center">
                 <button
                     onClick={() => setShowForgotPassword(!showForgotPassword)}
@@ -139,6 +162,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </button>
             </div>
 
+            
             {/* Forgot Password Box */}
             {showForgotPassword && (
                 <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md">
@@ -169,17 +193,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </div>
             )}
 
-            {message && (
-                <div
-                    className={`mt-4 p-4 rounded-lg text-sm ${
-                        message.type === 'success'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                    }`}
-                >
-                    {message.text}
-                </div>
-            )}
             <button
                 onClick={toggleForm}
                 className="text-gray-600 hover:underline text-center"
