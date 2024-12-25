@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
 // Helper Function: Send Verification Code Email
 const sendVerificationCode = async (email, username, code) => {
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: 'Verify Your Account - CareerAgent Team',
         html: `
@@ -267,7 +267,7 @@ const resendVerificationCode = async (req, res) => {
 
 const sendResetPasswordEmail = async (email, username, resetUrl, resetToken) => {
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: 'Reset Your Password - CareerAgent Team',
         html: `
@@ -345,7 +345,7 @@ const requestPasswordReset = async (req, res) => {
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
         await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
 
-        res.status(200).json({ message: 'Password reset instructions sent to email.' });
+        res.status(200).json({ message: "Password reset instructions sent to email.\nCheck your spam folder if the mail didn't arrive to your inbox." });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to process password reset request.' });
