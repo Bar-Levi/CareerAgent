@@ -221,16 +221,16 @@ const loginUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        if (!user.isVerified) {
-            return res.status(403).json({ message: 'Please verify your email before logging in.' });
-        }
-
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials.' });
+            return res.status(401).json({ message: 'Incorrect Password.' });
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '10s' });
+
+        if (!user.isVerified) {
+            return res.status(403).json({ message: 'Please verify your email before logging in.', token});
+        }
         res.status(200).json({ token });
     } catch (error) {
         console.error(error);

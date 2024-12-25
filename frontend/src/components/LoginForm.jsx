@@ -27,10 +27,11 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 },
                 body: JSON.stringify(formData),
             });
-            console.log("Here");
             console.dir(response, { depth: null });
             if (!response.ok) {
                 if (response.status === 403) { // User isn't verified.
+                    const data = await response.json();
+                    localStorage.setItem("token", data.token);
                     navigate('/dashboard', { state: { 
                         email: formData.email,
                         role: formData.role
