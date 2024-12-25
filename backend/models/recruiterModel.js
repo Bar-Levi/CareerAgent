@@ -27,6 +27,11 @@ const recruiterSchema = new mongoose.Schema({
         required: [true, 'Role is required'],
         default: 'recruiter', // Always set to 'recruiter'
     },
+    profilePic: {
+        type: String, // Path or URL to uploaded profile picture
+        required: false,
+        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png'
+    },
     companyName: {
         type: String,
         trim: true,

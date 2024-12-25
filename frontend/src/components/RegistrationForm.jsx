@@ -189,7 +189,14 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             const data = await response.json();
             if (response.ok) {
                 showNotification('success', 'Verification email sent!');
-                navigate('/verify', { state: { email: formData.email, role: formData.role } }); // Navigate to verify page
+                localStorage.setItem('countdown', 60);
+                navigate('/verify', { state: { 
+                    email: formData.email, 
+                    role: formData.role ,
+                    notificationType: 'success',
+                    notificationMessage: 'Registration process was successful! Please verify your email :)',
+                    notificationSource: 'Successful Registration'
+                } }); // Navigate to verify page
             } else {
                 showNotification('error', data.message);
             }
