@@ -5,7 +5,6 @@ const OptionalDetailsForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
         phone: '',
         cv: null,
-        profilePic: null,
         githubUrl: '',
         linkedinUrl: '',
         dateOfBirth: '', // Add DOB field

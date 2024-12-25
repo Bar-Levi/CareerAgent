@@ -22,7 +22,7 @@ const VerificationPage = () => {
 
     useEffect(() => {
         localStorage.setItem('countdown', countdown - 2);
-        if (notificationSource === 'Unverified Login')
+        if (notificationSource)
             showNotification(notificationType, notificationMessage);
     }, []);
 
