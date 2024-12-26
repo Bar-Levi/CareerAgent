@@ -154,26 +154,32 @@ const loginUser = async (req, res) => {
         }
 
         if (user.loginBlockExpiration && new Date() < user.loginBlockExpiration) {
-            console.log("405");
+            const retryTime = user.loginBlockExpiration.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); // Format the time
             return res.status(405).json({
-                message: "Your account is blocked. Please try again after the 1 hour block expires."
+                message: `Your account is blocked. Please try again after the block expires at ${retryTime}.`
             });
         }
+        
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             user.loginAttemptsLeft--;
             if (user.loginAttemptsLeft !== 0) {
                 await user.save();
-                return res.status(401).json({ message: `Incorrect password, you have ${user.loginAttemptsLeft} attempts left.` });
-            } else
-                user.loginBlockExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hour block.
+                return res.status(401).json({ 
+                    message: `Incorrect password, you have ${user.loginAttemptsLeft} attempts left.` 
+                });
+            } else {
+                user.loginBlockExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hour block
+                const retryTime = user.loginBlockExpiration.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); // Format the time
                 user.loginAttemptsLeft = 7;
                 await user.save();
                 return res.status(405).json({
-                    message: "You have entered the wrong password 7 times. Your account is now blocked for 1 hour.",
+                    message: `You have entered the wrong password 7 times. Your account is now blocked for 1 hour. You can try again at ${retryTime}.`,
                 });
+            }
         }
+        
 
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
