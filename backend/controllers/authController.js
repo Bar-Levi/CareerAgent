@@ -153,12 +153,29 @@ const loginUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Incorrect Password.' });
+        if (user.loginBlockExpiration && new Date() < user.loginBlockExpiration) {
+            console.log("405");
+            return res.status(405).json({
+                message: "Your account is blocked. Please try again after the 1 hour block expires."
+            });
         }
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '10s' });
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            user.loginAttemptsLeft--;
+            if (user.loginAttemptsLeft !== 0) {
+                await user.save();
+                return res.status(401).json({ message: `Incorrect password, you have ${user.loginAttemptsLeft} attempts left.` });
+            } else
+                user.loginBlockExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hour block.
+                user.loginAttemptsLeft = 7;
+                await user.save();
+                return res.status(405).json({
+                    message: "You have entered the wrong password 7 times. Your account is now blocked for 1 hour.",
+                });
+        }
+
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         if (!user.isVerified) {
             return res.status(403).json({ message: 'Please verify your email before logging in.', token });
@@ -281,20 +298,79 @@ const getUserDetails = async (req, res) => {
         }
 
         res.status(200).json({
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            password: user.password,
-            role: user.role,
-            phone: user.phone,
+            _id: user._id || null,
+            fullName: user.fullName || null,
+            email: user.email || null,
+            password: user.password || null,
+            role: user.role || null,
+            phone: user.phone || null,
             cv: user.cv || null,
             profilePic: user.profilePic || null,
-            githubUrl: user.githubUrl,
-            linkedinUrl: user.linkedinUrl,
-            isVerified: user.isVerified,
-            verificationCode: user.verificationCode,
-            verificationCodeSentAt: user.verificationCodeSentAt,
-            dateOfBirth: user.dateOfBirth,
+            githubUrl: user.githubUrl || null,
+            linkedinUrl: user.linkedinUrl || null,
+            isVerified: user.isVerified || null,
+            verificationCode: user.verificationCode || null,
+            verificationCodeSentAt: user.verificationCodeSentAt || null,
+            dateOfBirth: user.dateOfBirth || null,
+            companyName: user.companyName || null,
+            companySize: user.companySize|| null,
+            companyWebsite: user.companyWebsite|| null,
+            loginAttemptsLeft: user.loginAttemptsLeft || null,
+        });
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        res.status(500).json({ message: 'Failed to fetch user details.' });
+    }
+};
+
+// Get User Details
+const getUserLoginAttempts = async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+
+        let user = await JobSeeker.findOne({ email });
+        if (!user) {
+            user = await Recruiter.findOne({ email });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        res.status(200).json({
+            loginAttemptsLeft: user.loginAttemptsLeft || null,
+        });
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        res.status(500).json({ message: 'Failed to fetch user details.' });
+    }
+};
+
+// Get User Details
+const resetUserLoginAttempts = async (req, res) => {
+    try {
+        const email = req.query.email;
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+
+        let user = await JobSeeker.findOne({ email });
+        if (!user) {
+            user = await Recruiter.findOne({ email });
+        }
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        user.loginAttemptsLeft = 7;
+        await user.save();
+
+        res.status(200).json({
+            loginAttemptsLeft: user.loginAttemptsLeft || null,
         });
     } catch (error) {
         console.error('Error fetching user details:', error);
@@ -312,4 +388,6 @@ module.exports = {
     requestPasswordReset,
     resetPassword,
     getUserDetails,
+    getUserLoginAttempts,
+    resetUserLoginAttempts,
 };

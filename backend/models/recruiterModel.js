@@ -65,6 +65,14 @@ const recruiterSchema = new mongoose.Schema({
     resetPasswordExpires: {
         type: Date,
     },
+    loginAttemptsLeft: {
+        type: Number,
+        required: false,
+    },
+    loginBlockExpiration: {
+        type: Date,
+        required: false,
+    },
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

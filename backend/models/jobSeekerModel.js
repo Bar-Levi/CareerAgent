@@ -68,8 +68,16 @@ const jobSeekerSchema = new mongoose.Schema({
     dateOfBirth: {
         type: Date,
         required: false,
+    },
+    loginAttemptsLeft: {
+        type: Number,
+        default: 7,
+        required: false,
+    },
+    loginBlockExpiration: {
+        type: Date,
+        required: false,
     }
-    
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

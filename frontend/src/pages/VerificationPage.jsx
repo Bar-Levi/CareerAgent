@@ -26,6 +26,8 @@ const VerificationPage = () => {
             showNotification(notificationType, notificationMessage);
     }, []);
 
+    
+
     // Timer logic for enabling the resend button
     useEffect(() => {
         if (countdown > 0) {
@@ -58,6 +60,7 @@ const VerificationPage = () => {
 
             if (response.ok) {
                 showNotification('success', 'Your account has been verified successfully!');
+                localStorage.setItem('countdown', 0);
                 navigate('/authentication', { 
                     state: { 
                         notificationSource: "Succesful Verification",
