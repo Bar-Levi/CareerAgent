@@ -21,7 +21,11 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                <Route path="/verify" element={<VerificationPage />} />
+                <Route path="/verify" element={
+                    <ProtectedRoute>
+                        <VerificationPage />
+                    </ProtectedRoute>
+                } />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             </Routes>
