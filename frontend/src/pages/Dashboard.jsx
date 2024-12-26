@@ -9,28 +9,31 @@ const Dashboard = () => {
     const email = location.state?.email; // Access email from passed state
     const role = location.state?.role;
     const [token, setToken] = useState(localStorage.getItem('token') ? localStorage.getItem('token') : '');
+    const [resendInitiated, setResendInitiated] = useState(false); // Track resend state
 
-    
     console.log('location.state = ');
-    console.dir(location.state, { depth: null});
-    // useEffect is user is not verified, navigate him to /verification.
+    console.dir(location.state, { depth: null });
+
     useEffect(() => {
         const handleUserVerification = async () => {
             console.log('email = ' + email);
-            console.log('role ='+ role);
+            console.log('role =' + role);
 
             try {
-                if (!email) {  // User typed manually /dashboard instead of coming from /authentication
+                if (!email) { // User typed manually /dashboard instead of coming from /authentication
                     console.log('Email not provided - redirecting to /authentication');
                     navigate('/authentication');
                     return;
                 }
-    
+
                 // Check if the user is verified
                 const userIsVerified = await isUserVerified(email, token);
                 if (!userIsVerified) {
                     console.log('User is not verified - resending verification code.');
-                    await resendVerificationCode(); // Wait for resend before navigating
+                    if (!resendInitiated) {
+                        setResendInitiated(true); // Prevent subsequent calls
+                        await resendVerificationCode();
+                    }
                 } else {
                     console.log('User is verified - fetching user details.');
                     setUserData(await fetchUserDetails(email, token)); // Fetch details if verified
@@ -39,16 +42,15 @@ const Dashboard = () => {
                 console.error('Error in verification flow:', error);
             }
         };
-    
+
         handleUserVerification(); // Call the async function
-    
-    }, [email, token, navigate]);
-    
-    // Functions outside the useEffect
+
+    }, [email, token, navigate, resendInitiated]);
+
     const isUserVerified = async (email, token) => {
         console.log("Checking if user is verified...");
         console.log('Email:', email);
-    
+
         try {
             const response = await fetch(
                 `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(email)}`,
@@ -59,7 +61,7 @@ const Dashboard = () => {
                     },
                 }
             );
-    
+
             if (response.ok) {
                 const data = await response.json();
                 console.log("User data received:", data);
@@ -75,10 +77,10 @@ const Dashboard = () => {
         } catch (error) {
             console.error('Error fetching user verification:', error);
         }
-    
+
         return false; // Default to not verified in case of error
     };
-    
+
     const resendVerificationCode = async () => {
         console.log("Resending verification code...");
         try {
@@ -93,12 +95,12 @@ const Dashboard = () => {
                     body: JSON.stringify({ email, role }),
                 }
             );
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
-    
+
             console.log('Verification code resent. Navigating to /verify.');
 
             localStorage.setItem('countdown', 60);
@@ -115,7 +117,7 @@ const Dashboard = () => {
             console.error('Error resending verification code:', error);
         }
     };
-    
+
     const fetchUserDetails = async (email, token) => {
         console.log("Fetching user details...");
         try {
@@ -128,7 +130,7 @@ const Dashboard = () => {
                     },
                 }
             );
-    
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('User data fetched:', data);
@@ -149,11 +151,6 @@ const Dashboard = () => {
             setError('An error occurred while fetching user details.');
         }
     };
-    
-
-    
-
-    
 
     if (error) {
         return (
