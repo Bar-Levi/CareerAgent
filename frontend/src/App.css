@@ -1,38 +1,55 @@
-.App {
-  text-align: center;
+.perspective-1000 {
+  perspective: 1000px;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.transform-style-preserve {
+  transform-style: preserve-3d;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotateY-180 {
+  transform: rotateY(180deg);
+}
+
+.transform-style-preserve {
+  transform-style: preserve-3d;
+}
+
+.rotateY-180 {
+  transform: rotateY(180deg);
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+
+@keyframes flip-slide-left {
+  0% {
+      transform: translateX(100%) rotateY(0deg) opacity(1);
+  }
+  50% {
+      transform: translateX(-50%) rotateY(90deg) opacity(0);
+  }
+  100% {
+      transform: translateX(-100%) rotateY(180deg) opacity(1);
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+@keyframes flip-slide-right {
+  0% {
+      transform: translateX(-100%) rotateY(0deg) opacity(1);
+  }
+  50% {
+      transform: translateX(50%) rotateY(90deg) opacity(0);
+  }
+  100% {
+      transform: translateX(100%) rotateY(180deg) opacity(1);
+  }
+
+  
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
