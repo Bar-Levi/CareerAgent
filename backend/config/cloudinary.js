@@ -8,5 +8,6 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET, 
 });
 
+console.log('\n- Cloudinary configuration updated successfully\n');
 // Export the configured instance
 module.exports = cloudinary;

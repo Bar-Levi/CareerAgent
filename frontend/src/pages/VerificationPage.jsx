@@ -58,7 +58,12 @@ const VerificationPage = () => {
 
             if (response.ok) {
                 showNotification('success', 'Your account has been verified successfully!');
-                navigate('/'); // Navigate to home after successful verification
+                navigate('/authentication', { 
+                    state: { 
+                        notificationSource: "Succesful Verification",
+                        notificationType: "success",
+                        notificationMessage: "Your account has been verified successfully"                 
+                    }}); // Navigate to home after successful verification
             } else {
                 showNotification('error', data.message);
             }

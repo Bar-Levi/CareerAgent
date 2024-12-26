@@ -1,14 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import RegistrationForm from './RegistrationForm';
 import LoginForm from './LoginForm';
+import { useLocation } from 'react-router-dom';
+import Notification from '../components/Notification';
+
 
 const AuthenticationForm = () => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [mouseX, setMouseX] = useState(0);
     const [mouseY, setMouseY] = useState(0);
     const [userType, setUserType] = useState('jobseeker');
+    const { state } = useLocation();
+
+    const [notification, setNotification] = useState(null);
+    const notificationSource  = state?.notificationSource;
+    const notificationType = state?.notificationType;
+    const notificationMessage = state?.notificationMessage;
+
+    // Show notification
+    const showNotification = (type, message) => {
+        setNotification({ type, message });
+        setTimeout(() => setNotification(null), 4000);
+    };
 
     useEffect(() => {
+        if (notificationSource) {
+            showNotification(notificationType, notificationMessage);
+        }
         const handleMouseMove = (e) => {
             setMouseX(e.clientX / window.innerWidth);
             setMouseY(e.clientY / window.innerHeight);
@@ -86,6 +104,13 @@ const AuthenticationForm = () => {
                 backgroundSize: 'cover',
             }}
         >
+            {notification && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(null)}
+                />
+            )}
             {/* Animated Lines */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div
