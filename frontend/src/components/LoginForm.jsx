@@ -42,9 +42,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         role: formData.role
                 } });
                 }
-                if (response.status === 401) { // Password is invalid
-                    console.log("Here");
-                    
+                if (response.status === 401) { // Password is invalid                    
                     // Use callback to ensure the latest state
                     setFormData((prevFormData) => {
                         const updatedFormData = { ...prevFormData, loginAttemptsLeft: prevFormData.loginAttemptsLeft - 1 };
@@ -72,8 +70,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
-            if (status !== 405)
-                setTimeout(() => setMessage(null), 2500); // Clear the message after 1.5 seconds
+            setTimeout(() => setMessage(null), 2300); // Clear the message after 2.3 seconds
         } finally {
             setLoading(false);
         }

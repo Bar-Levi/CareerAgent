@@ -219,6 +219,7 @@ const resendVerificationCode = async (req, res) => {
 };
 
 // Request Password Reset
+// Request Password Reset
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
 
@@ -232,6 +233,14 @@ const requestPasswordReset = async (req, res) => {
             return res.status(404).json({ message: 'No user found with that email.' });
         }
 
+        // Check if the account is blocked
+        if (user.loginBlockExpiration && new Date() < user.loginBlockExpiration) {
+            const retryTime = user.loginBlockExpiration.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            return res.status(405).json({
+                message: `Your account is blocked. You cannot reset your password until the block expires at ${retryTime}.`,
+            });
+        }
+
         const resetToken = generateResetToken();
         const tokenExpiry = Date.now() + 3600000; // 1 hour
 
@@ -242,12 +251,15 @@ const requestPasswordReset = async (req, res) => {
         const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
         await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
 
-        res.status(200).json({ message: "Password reset instructions sent to email.\nPlease check your spam folder if the mail didn't arrive to your inbox." });
+        res.status(200).json({ 
+            message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox."
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to process password reset request.' });
     }
 };
+
 
 // Reset Password
 const resetPassword = async (req, res) => {

@@ -67,6 +67,11 @@ const ResetPassword = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                if (response.status === 405) {
+                    // Handle account block error
+                    showNotification('error', errorData.message);
+                    return; // Exit early
+                }
                 throw new Error(errorData.message || 'An error occurred.');
             }
 
@@ -120,16 +125,14 @@ const ResetPassword = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            {/* Display notification */}
             {message && (
-                    <Notification
-                        type={message.type}
-                        message={message.message}
-                        onClose={() => setMessage(null)}
-                    />
-                )}
+                <Notification
+                    type={message.type}
+                    message={message.message}
+                    onClose={() => setMessage(null)}
+                />
+            )}
             <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in">
-                
                 <h2 className="text-3xl font-bold text-gray-800 text-center font-orbitron">
                     Reset Password
                 </h2>
@@ -160,7 +163,6 @@ const ResetPassword = () => {
                             <i className={`fa ${isPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
                         </span>
                     </div>
-                    {/* Password Strength Meter */}
                     <div className="mt-2">
                         <div className="flex items-center justify-between mb-1">
                             <span className="text-sm font-medium text-gray-700">{getStrengthText()}</span>
