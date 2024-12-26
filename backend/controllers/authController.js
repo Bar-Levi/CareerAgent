@@ -205,12 +205,21 @@ const resendVerificationCode = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
+        // Check if the verification code was sent recently
+        const now = new Date();
+        if (user.verificationCodeSentAt && now - user.verificationCodeSentAt < 60000) {
+            return res.status(429).json({ message: 'You can only request a new verification code once every minute.' });
+        }
+
+        // Generate a new verification code and update the user
         const verificationCode = crypto.randomInt(100000, 999999);
         user.verificationCode = verificationCode;
-        user.verificationCodeSentAt = new Date();
+        user.verificationCodeSentAt = now;
         await user.save();
 
+        // Send the verification code via email
         await sendVerificationCode(user.email, user.fullName, verificationCode);
+
         res.status(200).json({ message: 'Verification code resent successfully.' });
     } catch (error) {
         console.error(error);
@@ -218,7 +227,8 @@ const resendVerificationCode = async (req, res) => {
     }
 };
 
-// Request Password Reset
+
+
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
