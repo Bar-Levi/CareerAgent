@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
-    const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
+    const [loginAttemptsLeft, setLoginAttemptsLeft] = useState(7);
+    const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker', loginAttemptsLeft: loginAttemptsLeft});
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
-    const [loading, setLoading] = useState(false); // To handle loading state
-    const [message, setMessage] = useState(null); // To display success/error messages
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState(null);
+    const [loginDisabled, setLoginDisabled] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -19,6 +22,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         console.log("Submitting...");
         e.preventDefault();
         setLoading(true);
+        let status;
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 method: 'POST',
@@ -29,6 +33,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             });
             console.dir(response, { depth: null });
             if (!response.ok) {
+                status = response.status;
                 if (response.status === 403) { // User isn't verified.
                     const data = await response.json();
                     localStorage.setItem("token", data.token);
@@ -37,6 +42,22 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         role: formData.role
                 } });
                 }
+                if (response.status === 401) { // Password is invalid
+                    console.log("Here");
+                    
+                    // Use callback to ensure the latest state
+                    setFormData((prevFormData) => {
+                        const updatedFormData = { ...prevFormData, loginAttemptsLeft: prevFormData.loginAttemptsLeft - 1 };
+                        console.log("Prev form data: ", prevFormData);
+                        console.log("New form data: ", updatedFormData);
+                        return updatedFormData;
+                    });
+                    setLoginAttemptsLeft(formData.loginAttemptsLeft);
+                }
+                if (response.status === 405) { // User is blocked for 1 hour
+                    setLoginDisabled(true); // Disable login
+                }
+                
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
@@ -51,7 +72,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
-            setTimeout(() => setMessage(null), 1500); // Clear the message after 1.5 seconds
+            if (status !== 405)
+                setTimeout(() => setMessage(null), 2500); // Clear the message after 1.5 seconds
         } finally {
             setLoading(false);
         }
@@ -84,6 +106,28 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             setShowForgotPassword(false); // Close the forgot password box
         }
     };
+
+    useEffect(() => {
+        const getUserDetails = async () => {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-login-attempts?email=${encodeURIComponent(formData.email)}`,
+                {
+                    method: 'GET',
+                }
+            );
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log("User data received:", data);
+                setLoginAttemptsLeft(data.loginAttemptsLeft);
+            }
+            
+        };
+        if (formData.email) {
+        getUserDetails();
+        }
+    }
+    , [loading]);
 
     return (
         <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in">
@@ -121,7 +165,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                             <i className="fa fa-eye-slash"></i>
                         )}
                     </span>
-                </div>
+                </div>                 
+                
                 <select
                     name="role"
                     value={formData.role}
@@ -137,6 +182,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 <button
                     type="submit"
                     className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                    disabled={message || loginDisabled}
                 >
                     {loading ? 'Logging in...' : 'Log In'}
                 </button>

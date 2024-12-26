@@ -1,4 +1,5 @@
 export const isAuthenticated = () => {
+    
     const token = localStorage.getItem('token');
     if (!token) return false;
 
@@ -8,4 +9,5 @@ export const isAuthenticated = () => {
     } catch {
         return false; // Invalid token format
     }
+    
 };
