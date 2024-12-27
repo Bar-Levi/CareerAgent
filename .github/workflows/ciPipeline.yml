@@ -70,10 +70,10 @@ jobs:
           echo "REACT_APP_BACKEND_URL=${{ secrets.REACT_APP_BACKEND_URL }}" >> .env
         working-directory: frontend
 
-      # Step 8: Build frontend
-      - name: Build frontend
-        run: npm run build
-        working-directory: frontend
+      # # Step 8: Build frontend
+      # - name: Build frontend
+      #   run: npm run build
+      #   working-directory: frontend
 
       # Step 9: Start backend and frontend
       - name: Start backend and frontend
