@@ -186,7 +186,7 @@ const loginUser = async (req, res) => {
         if (!user.isVerified) {
             return res.status(403).json({ message: 'Please verify your email before logging in.', token });
         }
-        res.status(200).json({ token });
+        res.status(200).json({ message: 'Login successful.', token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Login failed. Please try again.' });
