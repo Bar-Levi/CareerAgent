@@ -1,4 +1,4 @@
-name: Backend CI Workflow
+name: CI Workflow
 
 on:
   push:
@@ -28,11 +28,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js
-      - name: Set up Node.js
+      # Step 2: Set up Node.js for backend
+      - name: Set up Node.js for backend
         uses: actions/setup-node@v3
         with:
           node-version: "16"
+        working-directory: backend
 
       # Step 3: Install backend dependencies
       - name: Install backend dependencies
@@ -59,23 +60,30 @@ jobs:
         run: npm test
         working-directory: backend
 
-      # Step 6: Install frontend dependencies
+      # Step 6: Set up Node.js for frontend
+      - name: Set up Node.js for frontend
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+        working-directory: frontend
+
+      # Step 7: Install frontend dependencies
       - name: Install frontend dependencies
         run: npm install
         working-directory: frontend
 
-      # Step 7: Set frontend environment variables
+      # Step 8: Set frontend environment variables
       - name: Set frontend environment variables
         run: |
           echo "REACT_APP_BACKEND_URL=${{ secrets.REACT_APP_BACKEND_URL }}" >> .env
         working-directory: frontend
 
-      # # Step 8: Build frontend
-      # - name: Build frontend
-      #   run: npm run build
-      #   working-directory: frontend
+      # Step 9: Build frontend
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend
 
-      # Step 9: Start backend and frontend
+      # Step 10: Start backend and frontend
       - name: Start backend and frontend
         run: |
           npm start &
