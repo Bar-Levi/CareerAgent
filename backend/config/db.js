@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI);
-        console.log(`\n- MongoDB Connected.\n`);
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('\n- MongoDB Connected.\n');
     } catch (error) {
         console.error(`Error: ${error.message}`);
-        process.exit(1);
+        if (process.env.NODE_ENV !== 'test') {
+            process.exit(1); // Only exit in non-test environments
+        } else {
+            throw new Error(error); // Allow Jest to catch the error
+        }
     }
 };
 
 module.exports = connectDB;
+
