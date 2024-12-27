@@ -1,4 +1,4 @@
-name: Backend CI Workflow
+name: CI Workflow
 
 on:
   push:
@@ -72,7 +72,9 @@ jobs:
 
       # Step 8: Build frontend
       - name: Build frontend
-        run: npm run build
+        run:
+          npm install --save-dev @babel/plugin-proposal-private-property-in-object &&
+          CI=false npm run build
         working-directory: frontend
 
       # Step 9: Start backend and frontend

@@ -3,7 +3,6 @@ const { protect } = require('../middleware/authMiddleware');
 
 
 const { 
-    checkEmailExists,
     registerRecruiter,
     registerJobSeeker,
     verifyCode,
@@ -26,7 +25,6 @@ router.post('/login', loginUser);
 router.post('/resend', resendVerificationCode);
 router.post('/request-password-reset', requestPasswordReset);
 router.post('/reset-password', resetPassword);
-router.post('/check-email', checkEmailExists);
 router.post('/reset-user-login-attempts', resetUserLoginAttempts);
 
 
