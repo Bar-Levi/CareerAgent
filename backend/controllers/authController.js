@@ -13,24 +13,6 @@ const getSchemaByRole = (role) => {
     throw new Error('Invalid role specified.');
 };
 
-// Check Email Existence
-const checkEmailExists = async (req, res) => {
-    const { email } = req.body;
-
-    try {
-        const existingJobSeeker = await JobSeeker.findOne({ email });
-        const existingRecruiter = await Recruiter.findOne({ email });
-
-        if (existingJobSeeker || existingRecruiter) {
-            return res.status(409).json({ exists: true, message: 'Email is already registered.' });
-        }
-
-        res.status(200).json({ exists: false, message: 'Email is available for registration.' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'An error occurred while checking the email.' });
-    }
-};
 
 // Register JobSeeker
 const registerJobSeeker = async (req, res) => {
@@ -404,7 +386,6 @@ const resetUserLoginAttempts = async (req, res) => {
 };
 
 module.exports = {
-    checkEmailExists,
     registerRecruiter,
     registerJobSeeker,
     verifyCode,
