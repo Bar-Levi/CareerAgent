@@ -227,8 +227,6 @@ const resendVerificationCode = async (req, res) => {
     }
 };
 
-
-
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
     const { email } = req.body;
@@ -269,7 +267,6 @@ const requestPasswordReset = async (req, res) => {
         res.status(500).json({ message: 'Failed to process password reset request.' });
     }
 };
-
 
 // Reset Password
 const resetPassword = async (req, res) => {
