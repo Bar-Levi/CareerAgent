@@ -60,34 +60,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         setPasswordStrength(strength);
     };
 
-    const checkEmailExists = async (email) => {
-        try {
-            const response = await fetch(
-                `${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email }),
-                }
-            );
-
-            if (response.status === 409) {
-                const data = await response.json();
-                showNotification('error', data.message || 'Email is already registered.');
-                return true; // Email exists
-            }
-
-            if (response.status === 200) {
-                return false; // Email does not exist
-            }
-
-            showNotification('error', 'Unexpected response. Please try again.');
-            return true; // Default to assuming email exists
-        } catch (error) {
-            showNotification('error', 'Error checking email. Please try again.');
-            return true; // Default to assuming email exists
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -114,13 +86,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         }
 
         setIsLoading(true);
-
-        // Check if email already exists
-        const emailExists = await checkEmailExists(formData.email);
-        if (emailExists) {
-            setIsLoading(false);
-            return; // Stop registration if email exists
-        }
 
         try {
             showNotification('success', 'Please continue the registration process.');
@@ -199,9 +164,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 } }); // Navigate to verify page
             } else {
                 showNotification('error', data.message);
+                setIsOptionalFormVisible(false); // Flip from the optional form
             }
         } catch (error) {
             showNotification('error', 'An error occurred while submitting optional details.');
+            setIsOptionalFormVisible(false); // Flip from the optional form
         } finally {
             setIsLoading(false);
         }
