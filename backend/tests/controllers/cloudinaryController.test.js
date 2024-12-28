@@ -1,6 +1,5 @@
 const { uploadFileToCloudinary } = require('../../controllers/cloudinaryController');
 const cloudinary = require('../../config/cloudinary');
-const streamifier = require('streamifier');
 
 // Mock Cloudinary for testing
 jest.mock('../../config/cloudinary', () => ({
