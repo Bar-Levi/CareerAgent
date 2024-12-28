@@ -132,6 +132,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <input
+                    id="login-email"
+                    data-cy="login-email"
                     type="email"
                     name="email"
                     placeholder="Email *"
@@ -142,6 +144,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 />
                 <div className="relative">
                     <input
+                        data-cy="login-password"
                         type={isPasswordVisible ? 'text' : 'password'}
                         name="password"
                         placeholder="Password *"
@@ -174,6 +177,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     <option value="recruiter">Recruiter</option>
                 </select>
                 <button
+                    data-cy="login-submit"
                     type="submit"
                     className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
                     disabled={loading}

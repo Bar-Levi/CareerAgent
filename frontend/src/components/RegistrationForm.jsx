@@ -240,6 +240,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             required
                         />
                         <input
+                            data-cy="registration-email"
                             type="email"
                             name="email"
                             placeholder="Email *"
