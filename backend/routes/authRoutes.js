@@ -3,7 +3,6 @@ const { protect } = require('../middleware/authMiddleware');
 const { generalLimiter, strictLimiter } = require('../middleware/rateLimiters');
 
 const { 
-    checkEmailExists,
     registerRecruiter,
     registerJobSeeker,
     verifyCode,

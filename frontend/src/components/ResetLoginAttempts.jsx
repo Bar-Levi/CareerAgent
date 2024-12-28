@@ -4,11 +4,12 @@ import { useSearchParams } from 'react-router-dom';
 const ResetLoginAttempts = () => {
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
+    const [countdown, setCountdown] = useState(3);
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
         const resetAttempts = async () => {
-            const token = searchParams.get('token'); // Get token from URL
+            const token = searchParams.get('token');
             if (!token) {
                 setMessage('Invalid or missing token.');
                 setLoading(false);
@@ -41,14 +42,41 @@ const ResetLoginAttempts = () => {
         resetAttempts();
     }, [searchParams]);
 
+    useEffect(() => {
+        if (!loading && countdown > 0) {
+            const timer = setInterval(() => {
+                setCountdown((prev) => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [loading, countdown]);
+
+    useEffect(() => {
+        if (countdown === 0) {
+            window.close();
+        }
+    }, [countdown]);
+
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <div className="bg-white p-6 rounded shadow-md">
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-gray-800">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl max-w-md transform hover:scale-105 transition-transform duration-500 animate-fade-in">
+                <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+                    Reset Login Attempts
+                </h1>
+                <p className="text-center text-gray-600 mb-4">
+                    {loading
+                        ? 'Processing your request...'
+                        : message.includes('success')
+                        ? 'Your login attempts have been reset successfully!'
+                        : message}
+                </p>
                 {loading ? (
-                    <p className="text-gray-700">Processing your request...</p>
+                    <div className="flex items-center justify-center">
+                        <div className="h-8 w-8 border-4 border-gray-300 border-t-gray-500 rounded-full animate-spin"></div>
+                    </div>
                 ) : (
-                    <p className={`text-lg ${message.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-                        {message}
+                    <p className="text-center text-gray-500 text-sm">
+                        Closing this page in <span className="font-bold text-gray-700">{countdown}</span> seconds...
                     </p>
                 )}
             </div>

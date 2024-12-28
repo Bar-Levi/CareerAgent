@@ -20,7 +20,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
-        let status;
 
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
@@ -32,12 +31,12 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             });
 
             if (!response.ok) {
-                status = response.status;
                 const errorData = await response.json();
                 if (response.status === 405) {
+                    console.log("405");
                     setMessage({
                         type: 'error',
-                        text: 'Your account is blocked. Check your email for a reset link.',
+                        text: errorData.message,
                     });
                 } else if (response.status === 401) {
                     setMessage({
@@ -47,7 +46,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 } else {
                     throw new Error(errorData.message || 'An error occurred.');
                 }
-                setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
                 return;
             }
 
@@ -56,16 +54,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             localStorage.setItem('token', token);
             navigate('/dashboard', { state: { email: formData.email, role: formData.role } });
         } catch (error) {
-            // Handle 429 errors specifically
-            if (status === 429) {
-                setMessage({
-                    type: 'error',
-                    text: 'Too many requests. Please wait and try again later.',
-                });
-            } else {
-                setMessage({ type: 'error', text: error.message || 'An unexpected error occurred.' });
-            }
-            setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
+            setMessage({ type: 'error', text: error.message });
         } finally {
             setLoading(false);
         }
@@ -76,7 +65,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         setLoading(true);
         setMessage(null);
 
-        let status;
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/request-password-reset`, {
                 method: 'POST',
@@ -87,25 +75,14 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             });
 
             if (!response.ok) {
-                status = response.status;
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
 
             const data = await response.json();
             setMessage({ type: 'success', text: data.message });
-            setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
         } catch (error) {
-            // Handle 429 errors specifically
-            if (status === 429) {
-                setMessage({
-                    type: 'error',
-                    text: 'Too many requests. Please wait and try again later.',
-                });
-            } else {
-                setMessage({ type: 'error', text: error.message || 'An unexpected error occurred.' });
-            }
-            setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
+            setMessage({ type: 'error', text: error.message });
         } finally {
             setLoading(false);
             setShowForgotPassword(false);
@@ -123,14 +100,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('User data received:', data);
-                if (data.loginAttemptsLeft <= 0) {
-                    setMessage({
-                        type: 'error',
-                        text: 'Your account is blocked. Check your email for a reset link.',
-                    });
-                    setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
-                }
             }
         };
 

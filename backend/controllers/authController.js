@@ -138,21 +138,14 @@ const loginUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // Check if account is currently locked
+       // Check if account is currently locked
         if (new Date() < user.loginBlockExpiration) {
-            // Generate a new reset token
-            user.resetLoginAttemptsToken = crypto.randomBytes(32).toString('hex');
-            const resetLink = `${process.env.FRONTEND_URL}/reset-login-attempts?token=${user.resetLoginAttemptsToken}`;
-            await user.save();
-
-            // Send reset email
-            await sendResetLoginAttemptsEmail(user.email, user.fullName, resetLink);
-
-            console.log(`[Login] Account locked. Reset email sent to ${user.email}`);
+            const expirationTime = new Date(user.loginBlockExpiration).toLocaleString(); // Convert to human-readable format
             return res.status(405).json({
-                message: 'Your account is blocked. A new reset link has been sent to your email.',
+                message: `Your account is currently blocked. The reset attempts mail is active until ${expirationTime}.`,
             });
         }
+
 
         // Check password validity
         const isMatch = await bcrypt.compare(password, user.password);
@@ -168,7 +161,6 @@ const loginUser = async (req, res) => {
                 await user.save();
                 await sendResetLoginAttemptsEmail(user.email, user.fullName, resetLink);
 
-                console.log(`[Login] Account locked after failed attempts. Reset email sent to ${user.email}`);
                 return res.status(405).json({
                     message: 'Too many failed attempts. Your account is now blocked for 1 hour. Check your email for a reset link.',
                 });
@@ -189,7 +181,7 @@ const loginUser = async (req, res) => {
         user.resetLoginAttemptsToken = undefined; // Invalidate the token
         user.loginBlockExpiration = undefined; // Clear lock state
         await user.save();
-        
+
         // Generate JWT token for successful login
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).json({ message: 'Login successful.', token });
