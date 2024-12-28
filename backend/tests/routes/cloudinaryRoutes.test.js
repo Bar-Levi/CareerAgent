@@ -1,6 +1,13 @@
 const path = require('path');
 const request = require('supertest');
 const app = require('../../app'); // Your app's entry point
+const mongoose = require('mongoose');
+
+
+afterAll(async () => {
+    await mongoose.disconnect();
+});
+
 
 describe('Cloudinary Routes', () => {
     it('should upload a file to Cloudinary', async () => {
