@@ -4,15 +4,21 @@ import { useNavigate } from 'react-router-dom';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
+    const [forgotPasswordEmail, setForgotPasswordEmail] = useState(''); // Separate state for forgot password form
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); // Login form loading state
+    const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false); // Forgot password form loading state
     const [message, setMessage] = useState(null);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+    };
+
+    const handleForgotPasswordEmailChange = (e) => {
+        setForgotPasswordEmail(e.target.value); // Update forgot password email only
     };
 
     const handleSubmit = async (e) => {
@@ -32,7 +38,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 405) {
-                    console.log('405');
                     setMessage({
                         type: 'error',
                         text: errorData.message,
@@ -45,7 +50,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 } else {
                     throw new Error(errorData.message || 'An error occurred.');
                 }
-                // Clear message after 2.5 seconds
                 setTimeout(() => setMessage(null), 2500);
                 return;
             }
@@ -56,7 +60,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             navigate('/dashboard', { state: { email: formData.email, role: formData.role } });
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
-            // Clear message after 2.5 seconds
             setTimeout(() => setMessage(null), 2500);
         } finally {
             setLoading(false);
@@ -65,7 +68,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
     const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setForgotPasswordLoading(true); // Set separate loading state for forgot password form
         setMessage(null);
 
         try {
@@ -74,7 +77,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: formData.email }),
+                body: JSON.stringify({ email: forgotPasswordEmail }), // Use the separate forgot password email state
             });
 
             if (!response.ok) {
@@ -84,14 +87,12 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             const data = await response.json();
             setMessage({ type: 'success', text: data.message });
-            // Clear message after 2.5 seconds
             setTimeout(() => setMessage(null), 2500);
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
-            // Clear message after 2.5 seconds
             setTimeout(() => setMessage(null), 2500);
         } finally {
-            setLoading(false);
+            setForgotPasswordLoading(false); // Reset forgot password loading state
             setShowForgotPassword(false);
         }
     };
@@ -184,19 +185,18 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     <form onSubmit={handleForgotPasswordSubmit} className="space-y-2">
                         <input
                             type="email"
-                            name="email"
                             placeholder="Your registered email"
-                            value={formData.email}
-                            onChange={handleChange}
+                            value={forgotPasswordEmail} // Bind to forgot password email state
+                            onChange={handleForgotPasswordEmailChange} // Use the separate handler
                             className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                             required
                         />
                         <button
                             type="submit"
                             className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
-                            disabled={loading}
+                            disabled={forgotPasswordLoading} // Use the forgot password loading state
                         >
-                            {loading ? 'Sending...' : 'Send Instructions'}
+                            {forgotPasswordLoading ? 'Sending...' : 'Send Instructions'}
                         </button>
                     </form>
                 </div>
