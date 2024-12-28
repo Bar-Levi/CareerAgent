@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
@@ -33,7 +32,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 405) {
-                    console.log("405");
+                    console.log('405');
                     setMessage({
                         type: 'error',
                         text: errorData.message,
@@ -46,6 +45,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 } else {
                     throw new Error(errorData.message || 'An error occurred.');
                 }
+                // Clear message after 2.5 seconds
+                setTimeout(() => setMessage(null), 2500);
                 return;
             }
 
@@ -55,6 +56,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             navigate('/dashboard', { state: { email: formData.email, role: formData.role } });
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
+            // Clear message after 2.5 seconds
+            setTimeout(() => setMessage(null), 2500);
         } finally {
             setLoading(false);
         }
@@ -81,32 +84,17 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             const data = await response.json();
             setMessage({ type: 'success', text: data.message });
+            // Clear message after 2.5 seconds
+            setTimeout(() => setMessage(null), 2500);
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
+            // Clear message after 2.5 seconds
+            setTimeout(() => setMessage(null), 2500);
         } finally {
             setLoading(false);
             setShowForgotPassword(false);
         }
     };
-
-    useEffect(() => {
-        const getUserDetails = async () => {
-            const response = await fetch(
-                `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-login-attempts?email=${encodeURIComponent(formData.email)}`,
-                {
-                    method: 'GET',
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-            }
-        };
-
-        if (formData.email) {
-            getUserDetails();
-        }
-    }, [loading]);
 
     return (
         <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in">

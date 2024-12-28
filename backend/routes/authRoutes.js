@@ -11,7 +11,6 @@ const {
     requestPasswordReset, 
     resetPassword,
     getUserDetails,
-    getUserLoginAttempts,
     resetLoginAttempts
 } = require('../controllers/authController');
 
@@ -31,6 +30,6 @@ router.post('/reset-password', generalLimiter, resetPassword);
 
 // Protected routes with generalLimiter
 router.get('/user-details', protect, generalLimiter, getUserDetails);
-router.get('/user-login-attempts', generalLimiter, getUserLoginAttempts);
+
 
 module.exports = router;

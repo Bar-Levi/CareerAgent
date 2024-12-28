@@ -371,31 +371,7 @@ const getUserDetails = async (req, res) => {
     }
 };
 
-// Get User Details
-const getUserLoginAttempts = async (req, res) => {
-    try {
-        const email = req.query.email;
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required.' });
-        }
 
-        let user = await JobSeeker.findOne({ email });
-        if (!user) {
-            user = await Recruiter.findOne({ email });
-        }
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        res.status(200).json({
-            loginAttemptsLeft: user.loginAttemptsLeft || null,
-        });
-    } catch (error) {
-        console.error('Error fetching user details:', error);
-        res.status(500).json({ message: 'Failed to fetch user details.' });
-    }
-};
 
 
 module.exports = {
@@ -407,6 +383,5 @@ module.exports = {
     requestPasswordReset,
     resetPassword,
     getUserDetails,
-    getUserLoginAttempts,
     resetLoginAttempts,
 };
