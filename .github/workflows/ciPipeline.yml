@@ -1,0 +1,88 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - feature/*
+      - development
+  pull_request:
+    branches:
+      - feature/*
+      - development
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+
+      # Step 3: Install backend dependencies
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: backend
+
+      # Step 4: Set environment variables for backend
+      - name: Set backend environment variables
+        run: |
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
+          echo "EMAIL_USER=${{ secrets.EMAIL_USER }}" >> .env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+          echo "CLOUDINARY_URL=${{ secrets.CLOUDINARY_URL }}" >> .env
+          echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" >> .env
+          echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
+          echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
+        working-directory: backend
+
+      # Step 5: Run backend tests
+      - name: Run backend tests
+        run: npm test
+        working-directory: backend
+
+      # Step 6: Install frontend dependencies
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend
+
+      # Step 7: Set frontend environment variables
+      - name: Set frontend environment variables
+        run: |
+          echo "REACT_APP_BACKEND_URL=${{ secrets.REACT_APP_BACKEND_URL }}" >> .env
+        working-directory: frontend
+
+      # Step 8: Build frontend
+      - name: Build frontend
+        run:
+          npm install --save-dev @babel/plugin-proposal-private-property-in-object &&
+          CI=false npm run build
+        working-directory: frontend
+
+      # Step 9: Start backend and frontend
+      - name: Start backend and frontend
+        run: |
+          npm start &
+          cd ../frontend && npm start &
+        working-directory: backend

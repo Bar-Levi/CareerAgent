@@ -1,9 +1,8 @@
 const express = require('express');
 const { protect } = require('../middleware/authMiddleware');
-
+const { generalLimiter, strictLimiter } = require('../middleware/rateLimiters');
 
 const { 
-    checkEmailExists,
     registerRecruiter,
     registerJobSeeker,
     verifyCode,
@@ -12,28 +11,25 @@ const {
     requestPasswordReset, 
     resetPassword,
     getUserDetails,
-    getUserLoginAttempts,
-    resetUserLoginAttempts
+    resetLoginAttempts
 } = require('../controllers/authController');
-
 
 const router = express.Router();
 
-router.post('/registerJobSeeker', registerJobSeeker);
-router.post('/registerRecruiter', registerRecruiter);
-router.post('/verify', verifyCode);
-router.post('/login', loginUser);
-router.post('/resend', resendVerificationCode);
-router.post('/request-password-reset', requestPasswordReset);
-router.post('/reset-password', resetPassword);
-router.post('/check-email', checkEmailExists);
-router.post('/reset-user-login-attempts', resetUserLoginAttempts);
+// Apply strictLimiter to critical routes
+router.post('/registerJobSeeker', strictLimiter, registerJobSeeker);
+router.post('/registerRecruiter', strictLimiter, registerRecruiter);
+router.post('/verify', strictLimiter, verifyCode);
+router.post('/login', strictLimiter, loginUser);
+router.post('/resend', strictLimiter, resendVerificationCode);
+router.post('/reset-login-attempts', strictLimiter, resetLoginAttempts);
 
+// Apply generalLimiter to less critical routes
+router.post('/request-password-reset', generalLimiter, requestPasswordReset);
+router.post('/reset-password', generalLimiter, resetPassword);
 
-router.get('/user-details', protect, getUserDetails);
-router.get('/user-login-attempts', getUserLoginAttempts);
-
-
+// Protected routes with generalLimiter
+router.get('/user-details', protect, generalLimiter, getUserDetails);
 
 
 module.exports = router;

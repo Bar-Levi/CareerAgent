@@ -60,34 +60,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         setPasswordStrength(strength);
     };
 
-    const checkEmailExists = async (email) => {
-        try {
-            const response = await fetch(
-                `${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email }),
-                }
-            );
-
-            if (response.status === 409) {
-                const data = await response.json();
-                showNotification('error', data.message || 'Email is already registered.');
-                return true; // Email exists
-            }
-
-            if (response.status === 200) {
-                return false; // Email does not exist
-            }
-
-            showNotification('error', 'Unexpected response. Please try again.');
-            return true; // Default to assuming email exists
-        } catch (error) {
-            showNotification('error', 'Error checking email. Please try again.');
-            return true; // Default to assuming email exists
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -115,13 +87,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
         setIsLoading(true);
 
-        // Check if email already exists
-        const emailExists = await checkEmailExists(formData.email);
-        if (emailExists) {
-            setIsLoading(false);
-            return; // Stop registration if email exists
-        }
-
         try {
             showNotification('success', 'Please continue the registration process.');
             setIsOptionalFormVisible(true); // Flip to the optional form
@@ -142,10 +107,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 formData.append('file', file); // Attach file
                 formData.append('folder', folder); // Optional: Folder organization
     
-                console.log('Uploading file:', formData.get('file')); // Debug file content
-    
-                console.log(`URL: ${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`);
-
                 const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
                     method: 'POST',
                     body: formData, // FormData automatically sets the appropriate headers
@@ -158,21 +119,18 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 return data.url; // Return the Cloudinary URL
             };
     
-            console.log('Starting uploads...');
     
             // 2. Upload CV if it exists
             if (optionalData.cv) {
                 optionalData.cv = await uploadFile(optionalData.cv, 'cvs'); // Upload CV and get URL
             }
     
-            console.log('CV uploaded...');
     
             // 3. Upload Profile Picture if it exists
             if (optionalData.profilePic) {
                 optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures'); // Upload Profile Pic and get URL
             }
     
-            console.log('Profile picture uploaded...');
     
             // 4. Send form data + Cloudinary URLs to MongoDB
             const apiUrl =
@@ -199,9 +157,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 } }); // Navigate to verify page
             } else {
                 showNotification('error', data.message);
+                setIsOptionalFormVisible(false); // Flip from the optional form
             }
         } catch (error) {
             showNotification('error', 'An error occurred while submitting optional details.');
+            setIsOptionalFormVisible(false); // Flip from the optional form
         } finally {
             setIsLoading(false);
         }
@@ -393,7 +353,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                     : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
                             }`}
                         >
-                            {isLoading ? 'Loading...' : 'Register'}
+                            {isLoading ? 'Loading...' : 'Continue Registration'}
                         </button>
                     </form>
                 </div>
