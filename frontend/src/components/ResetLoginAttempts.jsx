@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 const ResetLoginAttempts = () => {
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
-    const [countdown, setCountdown] = useState(3);
+    const [countdown, setCountdown] = useState(7);
     const [searchParams] = useSearchParams();
 
     useEffect(() => {
@@ -67,8 +67,8 @@ const ResetLoginAttempts = () => {
                     {loading
                         ? 'Processing your request...'
                         : message.includes('success')
-                        ? 'Your login attempts have been reset successfully!'
-                        : message}
+                        ? <span className="text-green-500 font-bold">Your login attempts have been reset successfully!</span>
+                        : <span className="text-red-500 font-bold">{message}</span>}
                 </p>
                 {loading ? (
                     <div className="flex items-center justify-center">

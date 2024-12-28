@@ -60,8 +60,10 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     throw new Error(errorData.message || 'An error occurred.');
                 }
     
-                // Clear the message after 2.5 seconds
-                setTimeout(() => setMessage(null), 2500);
+                // Clear the message with set timeout.
+                const timeout = response.status === 405 ? 10000 : 2500;
+
+                setTimeout(() => setMessage(null), timeout);
                 return; // Stop further execution for error cases
             }
     

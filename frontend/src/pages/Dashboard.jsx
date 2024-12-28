@@ -146,7 +146,7 @@ const Dashboard = () => {
             {userData ? (
                 <div className="bg-white shadow rounded-lg p-6 w-full max-w-lg">
                     <img
-                        className="w-24 h-24 rounded-full mx-auto"
+                        className="p-1 w-24 h-24 rounded-full mx-auto border border-black"
                         src={userData.profilePic}
                         alt={`${userData.fullName}'s Profile`}
                     />

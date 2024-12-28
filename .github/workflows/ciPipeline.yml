@@ -3,10 +3,10 @@ name: CI Workflow
 on:
   push:
     branches:
-      - feature/ci-pipeline-start
+      - feature/fixing-login-attempts
   pull_request:
     branches:
-      - feature/ci-pipeline-start
+      - feature/fixing-login-attempts
 
 jobs:
   build-and-test:
