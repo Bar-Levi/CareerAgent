@@ -20,22 +20,22 @@ const jobSeekerSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['jobseeker'], // Fixed to 'jobseeker'
+        enum: ['jobseeker'],
         required: [true, 'Role is required'],
-        default: 'jobseeker', // Always set to 'jobseeker'
+        default: 'jobseeker',
     },
     phone: {
         type: String,
         trim: true,
     },
     cv: {
-        type: String, // Path or URL to uploaded CV
+        type: String,
         required: false,
     },
     profilePic: {
-        type: String, // Path or URL to uploaded profile picture
+        type: String,
         required: false,
-        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png'
+        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png',
     },
     githubUrl: {
         type: String,
@@ -57,13 +57,17 @@ const jobSeekerSchema = new mongoose.Schema({
     },
     verificationCodeSentAt: {
         type: Date,
-        default: Date.now, // Automatically set to current date
+        default: Date.now,
     },
     resetPasswordToken: {
         type: String,
     },
     resetPasswordExpires: {
         type: Date,
+    },
+    resetLoginAttemptsToken: {
+        type: String, // New field for login attempts reset token
+        required: false,
     },
     dateOfBirth: {
         type: Date,
@@ -77,7 +81,7 @@ const jobSeekerSchema = new mongoose.Schema({
     loginBlockExpiration: {
         type: Date,
         required: false,
-    }
+    },
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

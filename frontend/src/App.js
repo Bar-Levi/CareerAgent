@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import VerificationPage from './pages/VerificationPage';
 import ResetPassword from './components/ResetPassword';
 import TermsAndConditions from './components/TermsAndConditions';
+import ResetLoginAttempts from './components/ResetLoginAttempts';
+
 
 function App() {
     return (
@@ -13,6 +15,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<AuthenticationForm />} />
                 <Route path="/authentication" element={<AuthenticationForm />} />
+                <Route path="/reset-login-attempts" element={<ResetLoginAttempts />} />
                 <Route
                     path="/dashboard"
                     element={

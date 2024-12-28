@@ -4,13 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
-    const [loginAttemptsLeft, setLoginAttemptsLeft] = useState(7);
-    const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker', loginAttemptsLeft: loginAttemptsLeft});
+    const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
-    const [loginDisabled, setLoginDisabled] = useState(false);
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -19,10 +17,11 @@ const LoginForm = ({ toggleForm, setUserType }) => {
     };
 
     const handleSubmit = async (e) => {
-        console.log("Submitting...");
         e.preventDefault();
         setLoading(true);
+        setMessage(null);
         let status;
+
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 method: 'POST',
@@ -31,46 +30,42 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 },
                 body: JSON.stringify(formData),
             });
-            console.dir(response, { depth: null });
+
             if (!response.ok) {
                 status = response.status;
-                if (response.status === 403) { // User isn't verified.
-                    const data = await response.json();
-                    localStorage.setItem("token", data.token);
-                    navigate('/dashboard', { state: { 
-                        email: formData.email,
-                        role: formData.role
-                } });
-                }
-                if (response.status === 401) { // Password is invalid                    
-                    // Use callback to ensure the latest state
-                    setFormData((prevFormData) => {
-                        const updatedFormData = { ...prevFormData, loginAttemptsLeft: prevFormData.loginAttemptsLeft - 1 };
-                        console.log("Prev form data: ", prevFormData);
-                        console.log("New form data: ", updatedFormData);
-                        return updatedFormData;
-                    });
-                    setLoginAttemptsLeft(formData.loginAttemptsLeft);
-                }
-                if (response.status === 405) { // User is blocked for 1 hour
-                    setLoginDisabled(true); // Disable login
-                }
-                
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'An error occurred.');
+                if (response.status === 405) {
+                    setMessage({
+                        type: 'error',
+                        text: 'Your account is blocked. Check your email for a reset link.',
+                    });
+                } else if (response.status === 401) {
+                    setMessage({
+                        type: 'error',
+                        text: errorData.message || 'Invalid login credentials.',
+                    });
+                } else {
+                    throw new Error(errorData.message || 'An error occurred.');
+                }
+                setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
+                return;
             }
-            
+
             const { token } = await response.json();
 
-            // Store the token in localStorage
             localStorage.setItem('token', token);
-
-            // Navigate to the protected dashboard route
-            navigate('/dashboard', { state: formData });
-
+            navigate('/dashboard', { state: { email: formData.email, role: formData.role } });
         } catch (error) {
-            setMessage({ type: 'error', text: error.message });
-            setTimeout(() => setMessage(null), 2300); // Clear the message after 2.3 seconds
+            // Handle 429 errors specifically
+            if (status === 429) {
+                setMessage({
+                    type: 'error',
+                    text: 'Too many requests. Please wait and try again later.',
+                });
+            } else {
+                setMessage({ type: 'error', text: error.message || 'An unexpected error occurred.' });
+            }
+            setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
         } finally {
             setLoading(false);
         }
@@ -79,7 +74,9 @@ const LoginForm = ({ toggleForm, setUserType }) => {
     const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setMessage(null); // Clear previous messages
+        setMessage(null);
+
+        let status;
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/request-password-reset`, {
                 method: 'POST',
@@ -90,17 +87,28 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             });
 
             if (!response.ok) {
+                status = response.status;
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'An error occurred.');
             }
 
             const data = await response.json();
             setMessage({ type: 'success', text: data.message });
+            setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
         } catch (error) {
-            setMessage({ type: 'error', text: error.message });
+            // Handle 429 errors specifically
+            if (status === 429) {
+                setMessage({
+                    type: 'error',
+                    text: 'Too many requests. Please wait and try again later.',
+                });
+            } else {
+                setMessage({ type: 'error', text: error.message || 'An unexpected error occurred.' });
+            }
+            setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
         } finally {
             setLoading(false);
-            setShowForgotPassword(false); // Close the forgot password box
+            setShowForgotPassword(false);
         }
     };
 
@@ -112,19 +120,24 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     method: 'GET',
                 }
             );
-    
+
             if (response.ok) {
                 const data = await response.json();
-                console.log("User data received:", data);
-                setLoginAttemptsLeft(data.loginAttemptsLeft);
+                console.log('User data received:', data);
+                if (data.loginAttemptsLeft <= 0) {
+                    setMessage({
+                        type: 'error',
+                        text: 'Your account is blocked. Check your email for a reset link.',
+                    });
+                    setTimeout(() => setMessage(null), 2000); // Clear message after 2 seconds
+                }
             }
-            
         };
+
         if (formData.email) {
-        getUserDetails();
+            getUserDetails();
         }
-    }
-    , [loading]);
+    }, [loading]);
 
     return (
         <div className="flex flex-col space-y-6 w-full bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md transform hover:scale-105 transition-transform duration-500 animate-slide-in">
@@ -162,8 +175,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                             <i className="fa fa-eye-slash"></i>
                         )}
                     </span>
-                </div>                 
-                
+                </div>
                 <select
                     name="role"
                     value={formData.role}
@@ -179,7 +191,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 <button
                     type="submit"
                     className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
-                    disabled={message || loginDisabled}
+                    disabled={loading}
                 >
                     {loading ? 'Logging in...' : 'Log In'}
                 </button>
@@ -196,7 +208,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     {message.text}
                 </div>
             )}
-            
+
             <div className="text-center">
                 <button
                     onClick={() => setShowForgotPassword(!showForgotPassword)}
@@ -206,13 +218,9 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </button>
             </div>
 
-            
-            {/* Forgot Password Box */}
             {showForgotPassword && (
                 <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                        Password Recovery
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Password Recovery</h3>
                     <p className="text-sm text-gray-600 mb-4">
                         Enter your email, and we will send your password reset instructions.
                     </p>

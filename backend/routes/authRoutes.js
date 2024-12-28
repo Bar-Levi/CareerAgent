@@ -13,7 +13,7 @@ const {
     resetPassword,
     getUserDetails,
     getUserLoginAttempts,
-    resetUserLoginAttempts
+    resetLoginAttempts
 } = require('../controllers/authController');
 
 const router = express.Router();
@@ -24,7 +24,7 @@ router.post('/registerRecruiter', strictLimiter, registerRecruiter);
 router.post('/verify', strictLimiter, verifyCode);
 router.post('/login', strictLimiter, loginUser);
 router.post('/resend', strictLimiter, resendVerificationCode);
-router.post('/reset-user-login-attempts', strictLimiter, resetUserLoginAttempts);
+router.post('/reset-login-attempts', strictLimiter, resetLoginAttempts);
 
 // Apply generalLimiter to less critical routes
 router.post('/request-password-reset', generalLimiter, requestPasswordReset);
