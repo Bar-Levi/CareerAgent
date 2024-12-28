@@ -23,14 +23,14 @@ const recruiterSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['recruiter'], // Fixed to 'recruiter'
+        enum: ['recruiter'],
         required: [true, 'Role is required'],
-        default: 'recruiter', // Always set to 'recruiter'
+        default: 'recruiter',
     },
     profilePic: {
-        type: String, // Path or URL to uploaded profile picture
+        type: String,
         required: false,
-        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png'
+        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png',
     },
     companyName: {
         type: String,
@@ -45,7 +45,7 @@ const recruiterSchema = new mongoose.Schema({
     companyWebsite: {
         type: String,
         trim: true,
-        required: false, // Optional field
+        required: false,
     },
     isVerified: {
         type: Boolean,
@@ -57,7 +57,7 @@ const recruiterSchema = new mongoose.Schema({
     },
     verificationCodeSentAt: {
         type: Date,
-        default: Date.now, // Automatically set to current date
+        default: Date.now,
     },
     resetPasswordToken: {
         type: String,
@@ -65,8 +65,13 @@ const recruiterSchema = new mongoose.Schema({
     resetPasswordExpires: {
         type: Date,
     },
+    resetLoginAttemptsToken: {
+        type: String, // New field for login attempts reset token
+        required: false,
+    },
     loginAttemptsLeft: {
         type: Number,
+        default: 7,
         required: false,
     },
     loginBlockExpiration: {

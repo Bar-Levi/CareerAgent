@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // For generating secure tokens
-const { sendVerificationCode, sendResetPasswordEmail, generateResetToken } = require('../utils/emailService');
+const { sendVerificationCode, sendResetPasswordEmail, generateResetToken, sendResetLoginAttemptsEmail  } = require('../utils/emailService');
 const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
 const Recruiter = require('../models/recruiterModel'); // Import Recruiter model
 require('dotenv').config();
@@ -124,54 +124,95 @@ const verifyCode = async (req, res) => {
 };
 
 // Login User
+const LOGIN_BLOCK_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+
 const loginUser = async (req, res) => {
     const { email, password, role } = req.body;
 
     try {
+        // Resolve schema by role (jobseeker or recruiter)
         const Schema = getSchemaByRole(role);
-
         const user = await Schema.findOne({ email });
+
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        if (user.loginBlockExpiration && new Date() < user.loginBlockExpiration) {
-            const retryTime = user.loginBlockExpiration.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); // Format the time
+       // Check if account is currently locked
+        if (new Date() < user.loginBlockExpiration) {
+            const expirationTime = new Date(user.loginBlockExpiration).toLocaleString(); // Convert to human-readable format
             return res.status(405).json({
-                message: `Your account is blocked. Please try again after the block expires at ${retryTime}.`
+                message: `Your account is currently blocked. The reset attempts mail is active until ${expirationTime}.`,
             });
         }
-        
 
+
+        // Check password validity
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             user.loginAttemptsLeft--;
-            if (user.loginAttemptsLeft !== 0) {
+
+            // Lock account if no attempts remain
+            if (user.loginAttemptsLeft <= 0) {
+                user.loginBlockExpiration = new Date(Date.now() + LOGIN_BLOCK_DURATION); // Set lockout duration
+                user.resetLoginAttemptsToken = crypto.randomBytes(32).toString('hex');
+                const resetLink = `${process.env.FRONTEND_URL}/reset-login-attempts?token=${user.resetLoginAttemptsToken}`;
+
                 await user.save();
-                return res.status(401).json({ 
-                    message: `Incorrect password, you have ${user.loginAttemptsLeft} attempts left.` 
-                });
-            } else {
-                user.loginBlockExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hour block
-                const retryTime = user.loginBlockExpiration.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); // Format the time
-                user.loginAttemptsLeft = 7;
-                await user.save();
+                await sendResetLoginAttemptsEmail(user.email, user.fullName, resetLink);
+
                 return res.status(405).json({
-                    message: `You have entered the wrong password 7 times. Your account is now blocked for 1 hour. You can try again at ${retryTime}.`,
+                    message: 'Too many failed attempts. Your account is now blocked for 1 hour. Check your email for a reset link.',
                 });
             }
+
+            await user.save();
+            return res.status(401).json({ message: `Incorrect password. You have ${user.loginAttemptsLeft} attempts remaining.` });
         }
-        
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
+        // Check account verification
         if (!user.isVerified) {
+            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
             return res.status(403).json({ message: 'Please verify your email before logging in.', token });
         }
+
+        // Reset login attempts after successful login
+        user.loginAttemptsLeft = 7;
+        user.resetLoginAttemptsToken = undefined; // Invalidate the token
+        user.loginBlockExpiration = undefined; // Clear lock state
+        await user.save();
+
+        // Generate JWT token for successful login
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.status(200).json({ message: 'Login successful.', token });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Login failed. Please try again.' });
+        console.error(`[Login] Error occurred: ${error.message}`);
+        res.status(500).json({ message: 'Login failed. Please try again later.' });
+    }
+};
+
+// Reset Login Attempts
+const resetLoginAttempts = async (req, res) => {
+    const { token } = req.body;
+    try {
+        const jobSeeker = await JobSeeker.findOne({ resetLoginAttemptsToken: token });
+        const recruiter = await Recruiter.findOne({ resetLoginAttemptsToken: token });
+
+        const user = jobSeeker || recruiter;
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token.' });
+        }
+
+        user.loginAttemptsLeft = 7;
+        user.resetLoginAttemptsToken = undefined; // Invalidate the token
+        user.loginBlockExpiration = undefined; // Clear lock state
+        await user.save();
+
+        res.status(200).json({ message: 'Login attempts have been reset successfully.' });
+    } catch (error) {
+        console.error('Error resetting login attempts:', error);
+        res.status(500).json({ message: 'Failed to reset login attempts.' });
     }
 };
 
@@ -190,7 +231,7 @@ const resendVerificationCode = async (req, res) => {
         // Check if the verification code was sent recently
         const now = new Date();
         if (user.verificationCodeSentAt && now - user.verificationCodeSentAt < 60000) {
-            return res.status(429).json({ message: 'You can only request a new verification code once every minute.' });
+            return res.status(444).json({ message: 'You can only request a new verification code once every minute.' });
         }
 
         // Generate a new verification code and update the user
@@ -330,60 +371,8 @@ const getUserDetails = async (req, res) => {
     }
 };
 
-// Get User Details
-const getUserLoginAttempts = async (req, res) => {
-    try {
-        const email = req.query.email;
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required.' });
-        }
 
-        let user = await JobSeeker.findOne({ email });
-        if (!user) {
-            user = await Recruiter.findOne({ email });
-        }
 
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        res.status(200).json({
-            loginAttemptsLeft: user.loginAttemptsLeft || null,
-        });
-    } catch (error) {
-        console.error('Error fetching user details:', error);
-        res.status(500).json({ message: 'Failed to fetch user details.' });
-    }
-};
-
-// Get User Details
-const resetUserLoginAttempts = async (req, res) => {
-    try {
-        const email = req.query.email;
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required.' });
-        }
-
-        let user = await JobSeeker.findOne({ email });
-        if (!user) {
-            user = await Recruiter.findOne({ email });
-        }
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        user.loginAttemptsLeft = 7;
-        await user.save();
-
-        res.status(200).json({
-            loginAttemptsLeft: user.loginAttemptsLeft || null,
-        });
-    } catch (error) {
-        console.error('Error fetching user details:', error);
-        res.status(500).json({ message: 'Failed to fetch user details.' });
-    }
-};
 
 module.exports = {
     registerRecruiter,
@@ -394,6 +383,5 @@ module.exports = {
     requestPasswordReset,
     resetPassword,
     getUserDetails,
-    getUserLoginAttempts,
-    resetUserLoginAttempts,
+    resetLoginAttempts,
 };
