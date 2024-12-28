@@ -34,10 +34,19 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 },
                 body: JSON.stringify(formData),
             });
-
+    
             if (!response.ok) {
                 const errorData = await response.json();
-                if (response.status === 405) {
+    
+                if (response.status === 403) { // User isn't verified
+                    localStorage.setItem('token', errorData.token); // Save the new token
+                    navigate('/dashboard', {
+                        state: {
+                            email: formData.email,
+                            role: formData.role,
+                        },
+                    });
+                } else if (response.status === 405) {
                     setMessage({
                         type: 'error',
                         text: errorData.message,
@@ -50,21 +59,37 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 } else {
                     throw new Error(errorData.message || 'An error occurred.');
                 }
+    
+                // Clear the message after 2.5 seconds
                 setTimeout(() => setMessage(null), 2500);
-                return;
+                return; // Stop further execution for error cases
             }
-
+    
+            // Success case: Get the token and navigate to the dashboard
             const { token } = await response.json();
-
             localStorage.setItem('token', token);
-            navigate('/dashboard', { state: { email: formData.email, role: formData.role } });
+    
+            navigate('/dashboard', {
+                state: {
+                    email: formData.email,
+                    role: formData.role,
+                },
+            });
         } catch (error) {
-            setMessage({ type: 'error', text: error.message });
+            // Handle general errors
+            setMessage({
+                type: 'error',
+                text: error.message,
+            });
+    
+            // Clear the message after 2.5 seconds
             setTimeout(() => setMessage(null), 2500);
         } finally {
+            // Stop loading spinner or perform cleanup
             setLoading(false);
         }
     };
+
 
     const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();

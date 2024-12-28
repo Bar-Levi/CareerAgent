@@ -231,7 +231,7 @@ const resendVerificationCode = async (req, res) => {
         // Check if the verification code was sent recently
         const now = new Date();
         if (user.verificationCodeSentAt && now - user.verificationCodeSentAt < 60000) {
-            return res.status(429).json({ message: 'You can only request a new verification code once every minute.' });
+            return res.status(444).json({ message: 'You can only request a new verification code once every minute.' });
         }
 
         // Generate a new verification code and update the user
