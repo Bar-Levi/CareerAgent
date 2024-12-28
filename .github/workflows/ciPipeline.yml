@@ -3,10 +3,13 @@ name: CI Workflow
 on:
   push:
     branches:
-      - feature/fixing-login-attempts
+      - feature/*
+      - development
   pull_request:
     branches:
-      - feature/fixing-login-attempts
+      - feature/*
+      - development
+      - main
 
 jobs:
   build-and-test:
