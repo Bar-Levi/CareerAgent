@@ -45,7 +45,7 @@ jobs:
       # Step 4: Set environment variables for backend
       - name: Set backend environment variables
         run: |
-          echo "PORT=4000" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
           echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           echo "EMAIL_PASS=${{ secrets.EMAIL_PASS }}" >> .env
@@ -70,8 +70,8 @@ jobs:
       # Step 7: Set frontend environment variables
       - name: Set frontend environment variables
         run: |
-          echo "REACT_APP_BACKEND_URL=http://localhost:4000" >> .env
-          echo "PORT=3000" >> .env
+          echo "REACT_APP_BACKEND_URL=${{ secrets.REACT_APP_BACKEND_URL }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
         working-directory: frontend
 
       # Step 8: Build frontend
@@ -86,7 +86,7 @@ jobs:
         run: npm start &
         working-directory: backend
 
-      # Step 10: Wait for backend
+      # Step 10: Wait for backend to initialize
       - name: Wait for backend to initialize
         run: sleep 5
 
@@ -95,7 +95,7 @@ jobs:
         run: npm start &
         working-directory: frontend
 
-      # Step 12: Wait for frontend
+      # Step 12: Wait for frontend to initialize
       - name: Wait for frontend to initialize
         run: sleep 5
 
