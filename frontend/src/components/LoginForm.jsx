@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
 import { useNavigate } from 'react-router-dom';
 import ForgotPasswordForm from './ForgotPasswordForm';
+import Swal from 'sweetalert2';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
@@ -52,11 +53,59 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         },
                     });
                 } else if (response.status === 405) {
-                    setMessage({
-                        type: 'error',
-                        text: errorData.message,
+                    // Show the alert asking for the secret PIN
+                    const { value: pin } = await Swal.fire({
+                        title: 'Account Blocked',
+                        text: `Please enter your secret PIN to reset your login attempts.`,
+                        input: 'password',
+                        inputPlaceholder: 'Enter your secret PIN',
+                        inputAttributes: {
+                            maxlength: 6,
+                            autocapitalize: 'off',
+                            autocorrect: 'off',
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Submit',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        preConfirm: (pin) => {
+                            if (!pin) {
+                                Swal.showValidationMessage('Please enter your secret PIN');
+                            }
+                            return pin;
+                        },
                     });
-                } else if (response.status === 401) {
+                
+                    console.log("Here!");
+
+                    if (pin) {
+                        // Send the secret PIN to reset login attempts
+                        const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pin, email: formData.email }), // Include email or any other necessary identifiers
+                        });
+                
+                        const resetData = await resetResponse.json();
+                
+                        if (resetResponse.ok) {
+                            await Swal.fire({
+                                title: 'Success!',
+                                text: resetData.message,
+                                icon: 'success',
+                                confirmButtonColor: '#3085d6',
+                            });
+                        } else {
+                            await Swal.fire({
+                                title: 'Error',
+                                text: resetData.message,
+                                icon: 'error',
+                                confirmButtonColor: '#d33',
+                            });
+                        }
+                    }
+                }
+                 else if (response.status === 401) {
                     setMessage({
                         type: 'error',
                         text: errorData.message || 'Invalid login credentials.',

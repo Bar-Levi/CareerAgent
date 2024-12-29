@@ -159,15 +159,9 @@ const loginUser = async (req, res) => {
 
             // Lock account if no attempts remain
             if (user.loginAttemptsLeft <= 0) {
-                user.loginBlockExpiration = new Date(Date.now() + LOGIN_BLOCK_DURATION); // Set lockout duration
-                user.resetLoginAttemptsToken = crypto.randomBytes(32).toString('hex');
-                const resetLink = `${process.env.FRONTEND_URL}/reset-login-attempts?token=${user.resetLoginAttemptsToken}`;
-
-                await user.save();
-                await sendResetLoginAttemptsEmail(user.email, user.fullName, resetLink);
-
+                
                 return res.status(405).json({
-                    message: 'Too many failed attempts. Your account is now blocked for 1 hour. Check your email for a reset link.',
+                    message: 'Too many failed attempts. Your account is now blocked - Please enter your PIN in order to reset your login attempts.',
                 });
             }
 
@@ -198,20 +192,28 @@ const loginUser = async (req, res) => {
 
 // Reset Login Attempts
 const resetLoginAttempts = async (req, res) => {
-    const { token } = req.body;
+    const { email, pin } = req.body; // Extract email and PIN from the request body
+    console.log("email: " + email, "pin: " + pin);
     try {
-        const jobSeeker = await JobSeeker.findOne({ resetLoginAttemptsToken: token });
-        const recruiter = await Recruiter.findOne({ resetLoginAttemptsToken: token });
+        // Find the user (either job seeker or recruiter) based on email
+        const jobSeeker = await JobSeeker.findOne({ email });
+        const recruiter = await Recruiter.findOne({ email });
 
         const user = jobSeeker || recruiter;
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired token.' });
+            return res.status(404).json({ message: 'User not found.' });
         }
 
-        user.loginAttemptsLeft = 7;
-        user.resetLoginAttemptsToken = undefined; // Invalidate the token
-        user.loginBlockExpiration = undefined; // Clear lock state
+        // Verify the PIN
+        const isPinValid = await bcrypt.compare(pin, user.pin); // Assuming hashedPin is stored in the database
+        if (!isPinValid) {
+            return res.status(401).json({ message: 'Invalid PIN. Access denied.' });
+        }
+
+        // Reset login attempts and clear lock state
+        user.loginAttemptsLeft = 7; // Reset to the default allowed attempts
+        user.loginBlockExpiration = undefined; // Clear block expiration if any
         await user.save();
 
         res.status(200).json({ message: 'Login attempts have been reset successfully.' });
