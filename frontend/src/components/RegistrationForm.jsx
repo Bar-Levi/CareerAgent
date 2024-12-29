@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Notification from './Notification';
 import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
 import OptionalDetailsRecruiterForm from './OptionalDetailsRecruiterForm';
+import Swal from 'sweetalert2';
+
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({
@@ -12,7 +14,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         confirmPassword: '',
         role: 'jobseeker', // Default role
         companyName: '', // For recruiters
-        companySize: '', // For recruiters
+        companySize: '', // For recruiters,
+        pin: Math.floor(Math.random() * 900000) + 100000
     });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
@@ -60,6 +63,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+    
         if (formData.password !== formData.confirmPassword) {
             showNotification('error', 'Passwords do not match.');
             return;
@@ -81,10 +85,10 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 return;
             }
         }
-
+    
         setIsLoading(true);
-
-        try {
+    
+        try {    
             showNotification('success', 'Please continue the registration process.');
             setIsOptionalFormVisible(true);
         } catch (err) {
@@ -93,6 +97,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             setIsLoading(false);
         }
     };
+    
+    
 
     const handleOptionalSubmit = async (optionalData) => {
         try {
@@ -137,6 +143,40 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             const data = await response.json();
             if (response.ok) {
                 showNotification('success', 'Verification email sent!');
+                // Show PIN alert with copy functionality
+                await Swal.fire({
+                    title: 'Important: Save Your PIN',
+                    html: `
+                        <p>Your personal 6-digit PIN is:</p>
+                        <h2 style="display: inline-block; font-size: 2rem; font-weight: bold;" id="pin-text">${formData.pin}</h2>
+                        <button
+                            id="copy-pin-btn"
+                            style="margin-left: 10px; padding: 5px 10px; font-size: 0.9rem; border: none; background-color: #3085d6; color: white; border-radius: 5px; cursor: pointer;"
+                        >
+                            Copy PIN
+                        </button>
+                        <p style="margin-top: 10px;">You will need this PIN in the future. This PIN and message will appear only once.</p>
+                        <p>If you lose the PIN or accidentally close this window, refer to the <a href="/terms-and-conditions" target="_blank">Terms and Conditions</a> on how to regain your PIN.</p>
+                    `,
+                    icon: 'info',
+                    confirmButtonText: 'Continue to verification',
+                    confirmButtonColor: '#3085d6',
+                    didRender: () => {
+                        // Attach the event listener to the "Copy PIN" button after the modal renders
+                        const copyButton = document.getElementById('copy-pin-btn');
+                        const pinText = document.getElementById('pin-text').textContent;
+                
+                        copyButton.addEventListener('click', () => {
+                            navigator.clipboard.writeText(pinText).then(() => {
+                                Swal.fire('Copied!', 'The PIN has been copied to your clipboard.', 'success');
+                            }).catch(err => {
+                                console.error('Failed to copy PIN:', err);
+                                Swal.fire('Error', 'Unable to copy the PIN. Please try again.', 'error');
+                            });
+                        });
+                    },
+                });
+                
                 localStorage.setItem('countdown', 60);
                 navigate('/verify', {
                     state: {
