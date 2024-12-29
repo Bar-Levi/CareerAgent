@@ -71,6 +71,7 @@ jobs:
       - name: Set frontend environment variables
         run: |
           echo "REACT_APP_BACKEND_URL=${{ secrets.REACT_APP_BACKEND_URL }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
         working-directory: frontend
 
       # Step 8: Build frontend
@@ -83,6 +84,15 @@ jobs:
       # Step 9: Start backend and frontend
       - name: Start backend and frontend
         run: |
-          npm start &
-          cd ../frontend && npm start &
+          npm start & # Start backend
+          cd ../frontend && npm start & # Start frontend
         working-directory: backend
+
+      # Step 10: Wait for 15 seconds
+      - name: Wait for services to start
+        run: sleep 15
+
+      # Step 11: Run Cypress tests
+      - name: Run Cypress tests
+        run: npx cypress run
+        working-directory: frontend

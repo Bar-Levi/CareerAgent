@@ -20,11 +20,10 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [notification, setNotification] = useState(null);
     const [isOptionalFormVisible, setIsOptionalFormVisible] = useState(false);
-    const [isTermsAccepted, setIsTermsAccepted] = useState(false); // Terms and conditions state
+    const [isTermsAccepted, setIsTermsAccepted] = useState(false);
 
     const navigate = useNavigate();
 
-    // Show notification
     const showNotification = (type, message) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 4000);
@@ -33,13 +32,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Ensure Company Size accepts only integers
         if (name === 'companySize') {
             const parsedValue = parseInt(value, 10);
             if (!isNaN(parsedValue)) {
                 setFormData({ ...formData, companySize: parsedValue });
             } else if (value === '') {
-                setFormData({ ...formData, companySize: '' }); // Allow empty values for resetting
+                setFormData({ ...formData, companySize: '' });
             }
             return;
         }
@@ -52,14 +50,13 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const calculatePasswordStrength = (password) => {
         let strength = 0;
-        if (password.length >= 8) strength += 1; // Length
-        if (/[A-Z]/.test(password)) strength += 1; // Uppercase
-        if (/[a-z]/.test(password)) strength += 1; // Lowercase
-        if (/[0-9]/.test(password)) strength += 1; // Numbers
-        if (/[^A-Za-z0-9]/.test(password)) strength += 1; // Special characters
+        if (password.length >= 8) strength += 1;
+        if (/[A-Z]/.test(password)) strength += 1;
+        if (/[a-z]/.test(password)) strength += 1;
+        if (/[0-9]/.test(password)) strength += 1;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 1;
         setPasswordStrength(strength);
     };
-
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -89,84 +86,79 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
         try {
             showNotification('success', 'Please continue the registration process.');
-            setIsOptionalFormVisible(true); // Flip to the optional form
+            setIsOptionalFormVisible(true);
         } catch (err) {
             showNotification('error', 'An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
-    
+
     const handleOptionalSubmit = async (optionalData) => {
         try {
             setIsLoading(true);
-    
-            // 1. Helper function to upload files to Cloudinary
+
             const uploadFile = async (file, folder) => {
                 const formData = new FormData();
-                formData.append('file', file); // Attach file
-                formData.append('folder', folder); // Optional: Folder organization
-    
+                formData.append('file', file);
+                formData.append('folder', folder);
+
                 const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
                     method: 'POST',
-                    body: formData, // FormData automatically sets the appropriate headers
+                    body: formData,
                 });
                 if (!uploadResponse.ok) {
                     throw new Error('Failed to upload file to Cloudinary.');
                 }
 
                 const data = await uploadResponse.json();
-                return data.url; // Return the Cloudinary URL
+                return data.url;
             };
-    
-    
-            // 2. Upload CV if it exists
+
             if (optionalData.cv) {
-                optionalData.cv = await uploadFile(optionalData.cv, 'cvs'); // Upload CV and get URL
+                optionalData.cv = await uploadFile(optionalData.cv, 'cvs');
             }
-    
-    
-            // 3. Upload Profile Picture if it exists
+
             if (optionalData.profilePic) {
-                optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures'); // Upload Profile Pic and get URL
+                optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures');
             }
-    
-    
-            // 4. Send form data + Cloudinary URLs to MongoDB
+
             const apiUrl =
                 formData.role === 'jobseeker'
                     ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
                     : `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerRecruiter`;
-    
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, ...optionalData }), // Merge form and optional data
+                body: JSON.stringify({ ...formData, ...optionalData }),
             });
-    
+
             const data = await response.json();
             if (response.ok) {
                 showNotification('success', 'Verification email sent!');
                 localStorage.setItem('countdown', 60);
-                navigate('/verify', { state: { 
-                    email: formData.email, 
-                    role: formData.role ,
-                    notificationType: 'success',
-                    notificationMessage: 'Registration process was successful! Please verify your email :)',
-                    notificationSource: 'Successful Registration'
-                } }); // Navigate to verify page
+                navigate('/verify', {
+                    state: {
+                        email: formData.email,
+                        role: formData.role,
+                        notificationType: 'success',
+                        notificationMessage: 'Registration process was successful! Please verify your email :)',
+                        notificationSource: 'Successful Registration',
+                    },
+                });
             } else {
                 showNotification('error', data.message);
-                setIsOptionalFormVisible(false); // Flip from the optional form
+                setIsOptionalFormVisible(false);
             }
         } catch (error) {
             showNotification('error', 'An error occurred while submitting optional details.');
-            setIsOptionalFormVisible(false); // Flip from the optional form
+            setIsOptionalFormVisible(false);
         } finally {
             setIsLoading(false);
         }
     };
-    
+
     const getStrengthColor = () => {
         switch (passwordStrength) {
             case 1:
@@ -215,15 +207,14 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     isOptionalFormVisible ? 'rotateY-180' : ''
                 }`}
             >
-                {/* Registration Form */}
                 <div className={`backface-hidden ${isOptionalFormVisible ? 'hidden' : ''}`}>
                     <h2 className="text-3xl font-bold text-gray-800 text-center">
                         Welcome,
                         <p
                             className="text-gray-600"
                             style={{
-                                marginTop: formData.role === 'recruiter' ? '-5px' : '0px', // Adjust recruiter subtitle position
-                                paddingBottom: '10px'
+                                marginTop: formData.role === 'recruiter' ? '-5px' : '0px',
+                                paddingBottom: '10px',
                             }}
                         >
                             {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
@@ -233,6 +224,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         <input
                             type="text"
                             name="fullName"
+                            data-cy="registration-fullName"
                             placeholder="Full Name *"
                             value={formData.fullName}
                             onChange={handleChange}
@@ -254,6 +246,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 <input
                                     type="text"
                                     name="companyName"
+                                    data-cy="registration-companyName"
                                     placeholder="Company Name *"
                                     value={formData.companyName}
                                     onChange={handleChange}
@@ -263,6 +256,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 <input
                                     type="number"
                                     name="companySize"
+                                    data-cy="registration-companySize"
                                     placeholder="Company Size *"
                                     value={formData.companySize}
                                     onChange={handleChange}
@@ -275,6 +269,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             <input
                                 type={isPasswordVisible ? 'text' : 'password'}
                                 name="password"
+                                data-cy="registration-password"
                                 placeholder="Password *"
                                 value={formData.password}
                                 onChange={handleChange}
@@ -303,6 +298,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             <input
                                 type={isConfirmPasswordVisible ? 'text' : 'password'}
                                 name="confirmPassword"
+                                data-cy="registration-confirmPassword"
                                 placeholder="Confirm Password *"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
@@ -318,6 +314,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         </div>
                         <select
                             name="role"
+                            data-cy="registration-role"
                             value={formData.role}
                             onChange={(e) => {
                                 handleChange(e);
@@ -328,11 +325,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             <option value="jobseeker">Job Seeker</option>
                             <option value="recruiter">Recruiter</option>
                         </select>
-                        {/* Terms and Conditions Checkbox */}
                         <div className="flex items-center space-x-2">
                             <input
                                 type="checkbox"
                                 id="terms"
+                                data-cy="registration-terms"
                                 checked={isTermsAccepted}
                                 onChange={(e) => setIsTermsAccepted(e.target.checked)}
                                 className="h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-400 rounded"
@@ -347,7 +344,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         </div>
                         <button
                             type="submit"
-                            disabled={isLoading || !isTermsAccepted} // Disable if terms not accepted
+                            data-cy="registration-submit"
+                            disabled={isLoading || !isTermsAccepted}
                             className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 transition-all duration-200 ${
                                 isLoading || !isTermsAccepted
                                     ? 'bg-gray-400 cursor-not-allowed'
@@ -359,7 +357,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     </form>
                 </div>
 
-                {/* Optional Details Form */}
                 <div className={`backface-hidden rotateY-180 ${isOptionalFormVisible ? '' : 'hidden'}`}>
                     {formData.role === 'jobseeker' ? (
                         <OptionalDetailsJobSeekerForm onSubmit={handleOptionalSubmit} />
@@ -368,7 +365,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     )}
                 </div>
             </div>
-            <button onClick={toggleForm} className="text-gray-600 hover:underline text-center">
+            <button
+                onClick={toggleForm}
+                data-cy="registration-toggle-login"
+                className="text-gray-600 hover:underline text-center"
+            >
                 Already have an account? Log in
             </button>
         </div>

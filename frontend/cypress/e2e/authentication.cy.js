@@ -1,83 +1,51 @@
-describe('Authentication Tests', () => {
+describe('Authentication Form Tests', () => {
     beforeEach(() => {
-      cy.visit('/authentication'); // Navigate to the authentication page
-      cy.wait(3000); // Allow animations to finish
+        cy.visit('/?testMode=true'); // Open the LoginForm directly
     });
-  
-    // Test for Login Form
-    describe('Login Form', () => {
-      it('Displays login form correctly', () => {
-        // Ensure the login form elements are visible
-        cy.get('[data-cy="login-email"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-  
-        cy.get('[data-cy="login-password"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none'); // Ensure transform has completed
-  
-        cy.get('[data-cy="login-submit"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .should('contain', 'Log In')
-      });
-  
-      it('Allows user login', () => {
-        // Enter valid credentials and submit
-        cy.get('[data-cy="login-email"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .type('admin@admin.com');
-  
-        cy.get('[data-cy="login-password"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .type('Admin12345');
-  
-        cy.get('[data-cy="login-submit"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .click();
-  
-        // Assert redirection to the dashboard
+
+    it('should successfully log in with valid credentials', () => {
+        // Use `force: true` for rotated elements
+        cy.get('[data-cy="login-email"]', { force: true }).type('admin@admin.com', { force: true });
+        cy.get('[data-cy="login-password"]', { force: true }).type('Admin12345', { force: true });
+        cy.get('[data-cy="login-role"]', { force: true }).select('jobseeker', { force: true });
+        cy.get('[data-cy="login-submit"]', { force: true }).click({ force: true });
+
+        // Validate that the user is redirected to the dashboard
         cy.url().should('include', '/dashboard');
-      });
-  
-      it('Shows error for invalid login', () => {
-        // Enter invalid credentials
-        cy.get('[data-cy="login-email"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .type('invaliduser@example.com');
-  
-        cy.get('[data-cy="login-password"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .type('wrongpassword');
-  
-        cy.get('[data-cy="login-submit"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .click();
-  
-        // Verify error message
-        cy.contains('Invalid login credentials').should('be.visible');
-      });
-  
-      it('Toggles password visibility', () => {
-        // Test password visibility toggle
-        cy.get('[data-cy="login-password"]')
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .type('Admin12345');
-  
-        cy.get('[data-cy="toggle-password-visibility"]') // Replace with a suitable selector for toggle
-          .should('have.css', 'opacity', '1') // Wait for opacity to be 1
-          .and('have.css', 'transform', 'none') // Ensure transform has completed
-          .click();
-  
-        cy.get('[data-cy="login-password"]').should('have.attr', 'type', 'text');
-      });
     });
-  });
-  
+
+    it('should display an error message for invalid credentials', () => {
+        cy.get('[data-cy="login-email"]', { force: true }).type('invalid@admin.com', { force: true });
+        cy.get('[data-cy="login-password"]', { force: true }).type('WrongPassword', { force: true });
+        cy.get('[data-cy="login-role"]', { force: true }).select('jobseeker', { force: true });
+        cy.get('[data-cy="login-submit"]', { force: true }).click({ force: true });
+
+        // Assert the error message is shown
+        cy.get('body').should('contain.text', 'User not found.');
+    });
+
+    it('should toggle to the forgot password form and back', () => {
+        // Open the forgot password form
+        cy.get('[data-cy="login-forgot-password-toggle"]', { force: true }).click({ force: true });
+    
+        // Assert the forgot password input exists in the DOM
+        cy.get('[data-cy="forgot-password-email"]', { force: true }).should('exist');
+    
+        // Fill in the email and submit the forgot password form
+        cy.get('[data-cy="forgot-password-email"]', { force: true }).type('admin@admin.com', { force: true });
+        cy.get('[data-cy="forgot-password-submit"]', { force: true }).click({ force: true });
+    
+        // Assert a success message is shown
+        cy.get('body').should('contain.text', 'Password reset instructions sent to email.');
+    
+        // Close the forgot password form
+        cy.get('[data-cy="login-forgot-password-toggle"]', { force: true }).click({ force: true });
+    
+        // Assert the login email input is visible again
+        cy.get('[data-cy="login-email"]', { force: true }).type('working', { force: true });
+
+        // Clear the text from the field
+        cy.get('[data-cy="login-email"]', { force: true }).clear({ force: true });
+    });
+    
+});

@@ -34,12 +34,12 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 },
                 body: JSON.stringify(formData),
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
-    
-                if (response.status === 403) { // User isn't verified
-                    localStorage.setItem('token', errorData.token); // Save the new token
+
+                if (response.status === 403) {
+                    localStorage.setItem('token', errorData.token);
                     navigate('/dashboard', {
                         state: {
                             email: formData.email,
@@ -59,18 +59,15 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 } else {
                     throw new Error(errorData.message || 'An error occurred.');
                 }
-    
-                // Clear the message with set timeout.
-                const timeout = response.status === 405 ? 10000 : 2500;
 
+                const timeout = response.status === 405 ? 10000 : 2500;
                 setTimeout(() => setMessage(null), timeout);
-                return; // Stop further execution for error cases
+                return;
             }
-    
-            // Success case: Get the token and navigate to the dashboard
+
             const { token } = await response.json();
             localStorage.setItem('token', token);
-    
+
             navigate('/dashboard', {
                 state: {
                     email: formData.email,
@@ -78,24 +75,19 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 },
             });
         } catch (error) {
-            // Handle general errors
             setMessage({
                 type: 'error',
                 text: error.message,
             });
-    
-            // Clear the message after 2.5 seconds
             setTimeout(() => setMessage(null), 2500);
         } finally {
-            // Stop loading spinner or perform cleanup
             setLoading(false);
         }
     };
 
-
     const handleForgotPasswordSubmit = async (e) => {
         e.preventDefault();
-        setForgotPasswordLoading(true); // Set separate loading state for forgot password form
+        setForgotPasswordLoading(true);
         setMessage(null);
 
         try {
@@ -104,7 +96,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: forgotPasswordEmail }), // Use the separate forgot password email state
+                body: JSON.stringify({ email: forgotPasswordEmail }),
             });
 
             if (!response.ok) {
@@ -119,7 +111,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             setMessage({ type: 'error', text: error.message });
             setTimeout(() => setMessage(null), 2500);
         } finally {
-            setForgotPasswordLoading(false); // Reset forgot password loading state
+            setForgotPasswordLoading(false);
             setShowForgotPassword(false);
         }
     };
@@ -166,6 +158,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </div>
                 <select
                     name="role"
+                    data-cy="login-role"
                     value={formData.role}
                     onChange={(e) => {
                         handleChange(e);
@@ -201,6 +194,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
             <div className="text-center">
                 <button
                     onClick={() => setShowForgotPassword(!showForgotPassword)}
+                    data-cy="login-forgot-password-toggle"
                     className="text-gray-600 hover:underline"
                 >
                     Forgot Password? Click here
@@ -216,16 +210,18 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     <form onSubmit={handleForgotPasswordSubmit} className="space-y-2">
                         <input
                             type="email"
+                            data-cy="forgot-password-email"
                             placeholder="Your registered email"
-                            value={forgotPasswordEmail} // Bind to forgot password email state
-                            onChange={handleForgotPasswordEmailChange} // Use the separate handler
+                            value={forgotPasswordEmail}
+                            onChange={handleForgotPasswordEmailChange}
                             className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                             required
                         />
                         <button
+                            data-cy="forgot-password-submit"
                             type="submit"
                             className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
-                            disabled={forgotPasswordLoading} // Use the forgot password loading state
+                            disabled={forgotPasswordLoading}
                         >
                             {forgotPasswordLoading ? 'Sending...' : 'Send Instructions'}
                         </button>
@@ -235,6 +231,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             <button
                 onClick={toggleForm}
+                data-cy="login-toggle-register"
                 className="text-gray-600 hover:underline text-center"
             >
                 Don't have an account? Register
