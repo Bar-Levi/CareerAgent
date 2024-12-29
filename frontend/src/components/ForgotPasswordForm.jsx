@@ -1,16 +1,37 @@
 import React from 'react';
 
-const ForgotPasswordForm = () => (
-    <div className="max-w-md mx-auto bg-white shadow-md p-6 rounded">
-        <h2 className="text-2xl font-bold mb-4">Forgot Password</h2>
-        <form>
+const ForgotPasswordForm = ({ onSubmit, onChange, formData, loading }) => (
+    <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">Password Recovery</h3>
+        <p className="text-sm text-gray-600 mb-4">
+            Enter your email, and we will send your password reset instructions.
+        </p>
+        <form onSubmit={onSubmit} className="space-y-2">
             <input
+                name="forgot_password_email"
                 type="email"
-                placeholder="Enter your email"
-                className="w-full p-2 border rounded mb-4"
+                placeholder="Your registered email"
+                value={formData.forgot_password_email}
+                onChange={onChange}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                required
             />
-            <button className="w-full bg-blue-500 text-white py-2 rounded">
-                Send Reset Link
+            <input
+                name="forgot_password_PIN"
+                type="password"
+                placeholder="Enter your secret PIN"
+                value={formData.forgot_password_PIN}
+                onChange={onChange}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                required
+            />
+            <button
+                type="submit"
+                data-cy="forgot-password-submit"
+                className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                disabled={loading}
+            >
+                {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
         </form>
     </div>

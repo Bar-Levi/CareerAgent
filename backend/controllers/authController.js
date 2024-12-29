@@ -16,7 +16,7 @@ const getSchemaByRole = (role) => {
 
 // Register JobSeeker
 const registerJobSeeker = async (req, res) => {
-    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
+    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth, pin } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -27,6 +27,8 @@ const registerJobSeeker = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
         const user = await JobSeeker.create({
@@ -43,6 +45,7 @@ const registerJobSeeker = async (req, res) => {
             cv,
             profilePic,
             dateOfBirth,
+            pin: hashedPin
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
@@ -55,7 +58,7 @@ const registerJobSeeker = async (req, res) => {
 
 // Register Recruiter
 const registerRecruiter = async (req, res) => {
-    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth } = req.body;
+    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth, pin } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -66,6 +69,7 @@ const registerRecruiter = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
         const user = await Recruiter.create({
@@ -80,6 +84,7 @@ const registerRecruiter = async (req, res) => {
             companySize,
             companyWebsite,
             dateOfBirth,
+            pin: hashedPin
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
@@ -252,16 +257,20 @@ const resendVerificationCode = async (req, res) => {
 
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
-    const { email } = req.body;
+    const { forgot_password_email, forgot_password_PIN } = req.body;
 
     try {
-        const jobSeeker = await JobSeeker.findOne({ email });
-        const recruiter = await Recruiter.findOne({ email });
+        const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
+        const recruiter = await Recruiter.findOne({ email: forgot_password_email });
 
         const user = jobSeeker || recruiter;
-
         if (!user) {
             return res.status(404).json({ message: 'No user found with that email.' });
+        }
+
+        const isPinMatch = await bcrypt.compare(forgot_password_PIN, user.pin);
+        if (!isPinMatch) {
+            return res.status(401).json({ message: 'Incorrect PIN.' });
         }
 
         // Check if the account is blocked

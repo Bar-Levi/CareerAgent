@@ -82,6 +82,10 @@ const jobSeekerSchema = new mongoose.Schema({
         type: Date,
         required: false,
     },
+    pin: {
+        type: String,
+        required: true,
+    },
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes
