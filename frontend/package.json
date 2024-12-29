@@ -10,6 +10,7 @@
     "animate.css": "^4.1.1",
     "axios": "^1.7.7",
     "cloudinary": "^2.5.1",
+    "dotenv": "^16.4.7",
     "mammoth": "^1.8.0",
     "multer": "^1.4.5-lts.1",
     "pdfjs-dist": "^3.7.107",
@@ -49,6 +50,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "cypress": "^13.17.0",
     "tailwindcss": "^3.4.17"
   }
 }
