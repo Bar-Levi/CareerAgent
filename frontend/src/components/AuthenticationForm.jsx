@@ -4,18 +4,16 @@ import LoginForm from './LoginForm';
 import { useLocation } from 'react-router-dom';
 import Notification from '../components/Notification';
 
-const AuthenticationForm = () => {
-    const queryParams = new URLSearchParams(window.location.search);
-    const testMode = queryParams.get('testMode') === 'true'; // Check if testMode is enabled via query params
 
-    const [isFlipped, setIsFlipped] = useState(testMode); // Directly show LoginForm if testMode is true
+const AuthenticationForm = () => {
+    const [isFlipped, setIsFlipped] = useState(false);
     const [mouseX, setMouseX] = useState(0);
     const [mouseY, setMouseY] = useState(0);
     const [userType, setUserType] = useState('jobseeker');
     const { state } = useLocation();
 
     const [notification, setNotification] = useState(null);
-    const notificationSource = state?.notificationSource;
+    const notificationSource  = state?.notificationSource;
     const notificationType = state?.notificationType;
     const notificationMessage = state?.notificationMessage;
 
@@ -29,12 +27,10 @@ const AuthenticationForm = () => {
         if (notificationSource) {
             showNotification(notificationType, notificationMessage);
         }
-
         const handleMouseMove = (e) => {
             setMouseX(e.clientX / window.innerWidth);
             setMouseY(e.clientY / window.innerHeight);
         };
-
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
@@ -75,10 +71,8 @@ const AuthenticationForm = () => {
     // Constants for Form and Description Styling
     const formContainerStyles = {
         transformStyle: 'preserve-3d',
-        transition: testMode ? 'none' : 'transform 1s ease-in-out', // Disable transition if testMode
-        animation: testMode
-            ? ''
-            : isFlipped
+        transition: 'transform 1s ease-in-out',
+        animation: isFlipped
             ? 'flipCardBack 1s ease-in-out forwards'
             : 'flipCardFront 1s ease-in-out forwards',
     };
@@ -89,9 +83,7 @@ const AuthenticationForm = () => {
     });
 
     const descriptionStyles = {
-        animation: testMode
-            ? ''
-            : isFlipped
+        animation: isFlipped
             ? 'slideFadeIn 1s ease-in-out forwards'
             : 'slideFadeOut 1s ease-in-out forwards',
     };
@@ -144,20 +136,20 @@ const AuthenticationForm = () => {
                 className="absolute h-full w-full sm:w-3/4 md:w-1/2 lg:w-1/2 flex justify-center items-center px-6 md:px-10"
                 style={formContainerStyles}
             >
-                {/* Front Side - Registration */}
+                {/* Front Side - Login */}
                 <div
                     className="absolute w-full h-full flex justify-center items-center md:p-6"
                     style={formStyles('0deg')}
                 >
-                    <RegistrationForm toggleForm={toggleForm} setUserType={setUserType} />
+                    <RegistrationForm toggleForm={toggleForm} setUserType={setUserType}/>
                 </div>
 
-                {/* Back Side - Login */}
+                {/* Back Side - Registration */}
                 <div
                     className="absolute w-full h-full flex justify-center items-center md:p-6"
                     style={formStyles('180deg')}
                 >
-                    <LoginForm toggleForm={toggleForm} setUserType={setUserType} />
+                    <LoginForm toggleForm={toggleForm} setUserType={setUserType}/>
                 </div>
             </div>
 
@@ -197,21 +189,49 @@ const AuthenticationForm = () => {
             <style>
                 {`
                 @keyframes slideFadeIn {
-                    0% { left: 100%; opacity: 0; scale: 0; }
-                    100% { left: 0%; opacity: 1; scale: 1; }
+                    0% {
+                        left: 100%;
+                        opacity: 0;
+                        scale: 0;
+                    }
+                    100% {
+                        left: 0%;
+                        opacity: 1;
+                        scale: 1;
+                    }
                 }
+
                 @keyframes slideFadeOut {
-                    0% { left: -50%; opacity: 0; scale: 0; }
-                    100% { left: 50%; opacity: 1; scale: 1; }
+                    0% {
+                        left: -50%;
+                        opacity: 0;
+                        scale: 0;
+                    }
+                    100% {
+                        left: 50%;
+                        opacity: 1;
+                        scale: 1;
+                    }
                 }
+
                 @keyframes flipCardFront {
-                    0% { transform: translateX(40%) rotateY(0deg); }
-                    100% { transform: translateX(-40%) rotateY(180deg); }
+                    0% {
+                        transform: translateX(40%) rotateY(0deg);
+                    }
+                    100% {
+                        transform: translateX(-40%) rotateY(180deg);
+                    }
                 }
+
                 @keyframes flipCardBack {
-                    0% { transform: translateX(-40%) rotateY(180deg); }
-                    100% { transform: translateX(40%) rotateY(0deg); }
+                    0% {
+                        transform: translateX(-40%) rotateY(180deg);
+                    }
+                    100% {
+                        transform: translateX(40%) rotateY(0deg);
+                    }
                 }
+
                 `}
             </style>
         </div>

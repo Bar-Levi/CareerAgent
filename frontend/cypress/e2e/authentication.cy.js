@@ -1,6 +1,6 @@
 describe('Authentication Form Tests', () => {
     beforeEach(() => {
-        cy.visit('/?testMode=true'); // Open the LoginForm directly
+        cy.visit('/'); // Open the LoginForm directly
     });
 
     it('should successfully log in with valid credentials', () => {
