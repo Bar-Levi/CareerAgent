@@ -71,7 +71,7 @@ jobs:
       - name: Set frontend environment variables
         run: |
           echo "REACT_APP_BACKEND_URL=${{ secrets.REACT_APP_BACKEND_URL }}" >> .env
-          echo "PORT=${{ secrets.FRONTEND_PORT }}" >> .env
+          echo "REACT_APP_FRONTEND_PORT=${{ secrets.REACT_APP_FRONTEND_PORT }}" >> .env
         working-directory: frontend
 
       # Step 8: Build frontend
