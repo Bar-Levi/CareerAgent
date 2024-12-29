@@ -28,24 +28,30 @@ describe('Authentication Form Tests', () => {
         // Open the forgot password form
         cy.get('[data-cy="login-forgot-password-toggle"]', { force: true }).click({ force: true });
     
-        // Assert the forgot password input exists in the DOM
+        // Assert the forgot password email input exists in the DOM
         cy.get('[data-cy="forgot-password-email"]', { force: true }).should('exist');
     
-        // Fill in the email and submit the forgot password form
+        // Assert the forgot password PIN input exists in the DOM
+        cy.get('[data-cy="forgot-password-pin"]', { force: true }).should('exist');
+    
+        // Fill in the email and PIN fields and submit the forgot password form
         cy.get('[data-cy="forgot-password-email"]', { force: true }).type('admin@admin.com', { force: true });
+        cy.get('[data-cy="forgot-password-pin"]', { force: true }).type('622076', { force: true });
         cy.get('[data-cy="forgot-password-submit"]', { force: true }).click({ force: true });
     
         // Assert a success message is shown
-        cy.get('body').should('contain.text', 'Password reset instructions sent to email.');
+        cy.get('body', { force: true }).should('contain.text', 'Password reset instructions sent to email.');
     
         // Close the forgot password form
         cy.get('[data-cy="login-forgot-password-toggle"]', { force: true }).click({ force: true });
     
         // Assert the login email input is visible again
-        cy.get('[data-cy="login-email"]', { force: true }).type('working', { force: true });
-
+        cy.get('[data-cy="login-email"]', { force: true }).should('exist').type('working', { force: true });
+    
         // Clear the text from the field
         cy.get('[data-cy="login-email"]', { force: true }).clear({ force: true });
     });
+    
+    
     
 });

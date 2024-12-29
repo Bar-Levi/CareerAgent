@@ -80,7 +80,6 @@ const recruiterSchema = new mongoose.Schema({
     },
     pin: {
         type: String,
-        required: true,
     },
 });
 

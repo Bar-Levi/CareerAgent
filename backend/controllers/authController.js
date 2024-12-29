@@ -26,6 +26,10 @@ const registerJobSeeker = async (req, res) => {
             return res.status(400).json({ message: 'Email is already registered.' });
         }
 
+        if (!/^\d{6}$/.test(pin)) {
+            return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const hashedPin = await bcrypt.hash(pin.toString(), 10);
@@ -67,6 +71,11 @@ const registerRecruiter = async (req, res) => {
         if (existingJobSeeker || existingRecruiter) {
             return res.status(400).json({ message: 'Email is already registered.' });
         }
+
+        if (!/^\d{6}$/.test(pin)) {
+            return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
+        }
+        
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const hashedPin = await bcrypt.hash(pin.toString(), 10);
@@ -129,7 +138,6 @@ const verifyCode = async (req, res) => {
 };
 
 // Login User
-const LOGIN_BLOCK_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 const loginUser = async (req, res) => {
     const { email, password, role } = req.body;
