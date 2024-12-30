@@ -78,10 +78,6 @@ const jobSeekerSchema = new mongoose.Schema({
         default: 7,
         required: false,
     },
-    loginBlockExpiration: {
-        type: Date,
-        required: false,
-    },
     pin: {
         type: String,
     },
