@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // For generating secure tokens
-const { sendVerificationCode, sendResetPasswordEmail, generateResetToken, sendResetLoginAttemptsEmail  } = require('../utils/emailService');
+const { sendVerificationCode, sendResetPasswordEmail, generateResetToken} = require('../utils/emailService');
 const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
 const Recruiter = require('../models/recruiterModel'); // Import Recruiter model
 require('dotenv').config();

@@ -115,38 +115,9 @@ const sendResetPasswordEmail = async (email, username, resetUrl, resetToken) => 
 // Generate Reset Token
 const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 
-const sendResetLoginAttemptsEmail = async (email, username, resetLink) => {
-    const mailOptions = {
-        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Account Blocked - Reset Login Attempts',
-        html: `
-            <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
-                <!-- Header -->
-                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-                    <h1 style="margin: 0; font-size: 24px;">Account Blocked - Reset Login Attempts</h1>
-                </div>
-                <!-- Body -->
-                <div style="padding: 20px; color: #333; background-color: #ffffff; line-height: 1.6;">
-                    <p>Hello ${username},</p>
-                    <p>We noticed multiple unsuccessful login attempts to your account. For security reasons, your account is temporarily blocked.</p>
-                    <p>To reset your login attempts, click the link below:</p>
-                    <a href="${resetLink}" target="_blank" style="color: #2c2c54; text-decoration: none; font-weight: bold;">Reset Login Attempts</a>
-                    <p>If you did not attempt to log in, please ignore this email.</p>
-                </div>
-                <!-- Footer -->
-                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
-                    <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
-                </div>
-            </div>
-        `,
-    };
-    await transporter.sendMail(mailOptions);
-};
 
 module.exports = {
     sendVerificationCode,
     sendResetPasswordEmail,
     generateResetToken,
-    sendResetLoginAttemptsEmail,
 };
