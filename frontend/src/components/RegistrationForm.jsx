@@ -257,7 +257,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 paddingBottom: '10px',
                             }}
                         >
-                            {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
+                            {formData.role === 'job' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
                         </p>
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -362,7 +362,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             }}
                             className="w-full px-4 py-2.5 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                         >
-                            <option value="jobseeker">Job Seeker</option>
+                            <option value="jobseeker">Job Candidate</option>
                             <option value="recruiter">Recruiter</option>
                         </select>
                         <div className="flex items-center space-x-2">

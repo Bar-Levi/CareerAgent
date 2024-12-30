@@ -151,15 +151,6 @@ const loginUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-       // Check if account is currently locked
-        if (new Date() < user.loginBlockExpiration) {
-            const expirationTime = new Date(user.loginBlockExpiration).toLocaleString(); // Convert to human-readable format
-            return res.status(405).json({
-                message: `Your account is currently blocked. The reset attempts mail is active until ${expirationTime}.`,
-            });
-        }
-
-
         // Check password validity
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -186,7 +177,6 @@ const loginUser = async (req, res) => {
         // Reset login attempts after successful login
         user.loginAttemptsLeft = 7;
         user.resetLoginAttemptsToken = undefined; // Invalidate the token
-        user.loginBlockExpiration = undefined; // Clear lock state
         await user.save();
 
         // Generate JWT token for successful login
@@ -221,7 +211,6 @@ const resetLoginAttempts = async (req, res) => {
 
         // Reset login attempts and clear lock state
         user.loginAttemptsLeft = 7; // Reset to the default allowed attempts
-        user.loginBlockExpiration = undefined; // Clear block expiration if any
         await user.save();
 
         res.status(200).json({ message: 'Login attempts have been reset successfully.' });
@@ -281,14 +270,6 @@ const requestPasswordReset = async (req, res) => {
         const isPinMatch = await bcrypt.compare(forgot_password_PIN, user.pin);
         if (!isPinMatch) {
             return res.status(401).json({ message: 'Incorrect PIN.' });
-        }
-
-        // Check if the account is blocked
-        if (user.loginBlockExpiration && new Date() < user.loginBlockExpiration) {
-            const retryTime = user.loginBlockExpiration.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            return res.status(405).json({
-                message: `Your account is blocked. You cannot reset your password until the block expires at ${retryTime}.`,
-            });
         }
 
         const resetToken = generateResetToken();
