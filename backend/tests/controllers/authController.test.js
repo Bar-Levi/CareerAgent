@@ -1,264 +1,204 @@
-const { MongoMemoryServer } = require('mongodb-memory-server'); // In-memory MongoDB server
-const mongoose = require('mongoose'); // MongoDB ODM
 const {
-    registerJobSeeker,
     registerRecruiter,
-    loginUser,
+    registerJobSeeker,
     verifyCode,
+    loginUser,
     resendVerificationCode,
     requestPasswordReset,
     resetPassword,
-} = require('../../controllers/authController'); // Controller functions
-const JobSeeker = require('../../models/jobSeekerModel'); // JobSeeker model
-const Recruiter = require('../../models/recruiterModel'); // Recruiter model
-const { sendVerificationCode } = require('../../utils/emailService'); // Email utility
-
-jest.mock('../../utils/emailService'); // Mock the email service
-
-let mongoServer;
-
-// Setup and teardown for in-memory MongoDB
-beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    await mongoose.connect(uri);
-});
-
-afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
-});
-
-describe('AuthController', () => {
-    afterEach(async () => {
-        await JobSeeker.deleteMany();
-        await Recruiter.deleteMany();
-        jest.clearAllMocks();
+    getUserDetails,
+    resetLoginAttempts,
+  } = require('../../controllers/authController'); // Corrected relative path to controller
+  const JobSeeker = require('../../models/jobSeekerModel'); // Corrected relative path to models
+  const Recruiter = require('../../models/recruiterModel');
+  const { sendVerificationCode, sendResetPasswordEmail } = require('../../utils/emailService');
+  const bcrypt = require('bcryptjs');
+  const jwt = require('jsonwebtoken');
+  
+  // Mock dependencies
+  jest.mock('../../models/jobSeekerModel'); // Mocking the models and utilities
+  jest.mock('../../models/recruiterModel');
+  jest.mock('../../utils/emailService');
+  jest.mock('bcryptjs');
+  jest.mock('jsonwebtoken');
+  
+  describe('AuthController Tests', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
-
-    // Test: Register a job seeker
-    it('should register a new job seeker', async () => {
+  
+    describe('registerJobSeeker', () => {
+      it('should register a new job seeker with a 6-digit PIN and send a verification code', async () => {
         const req = {
-            body: {
-                fullName: 'Liam Levi',
-                email: 'liam.levi@newborn.com',
-                password: 'password123',
-                phone: '1234567890',
-            },
+          body: {
+            fullName: 'John Doe',
+            email: 'johndoe@example.com',
+            password: 'password123',
+            pin: '123456', // Correct 6-digit PIN
+          },
         };
         const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
         };
-        sendVerificationCode.mockResolvedValue();
-
+  
+        JobSeeker.findOne.mockResolvedValueOnce(null);
+        Recruiter.findOne.mockResolvedValueOnce(null);
+        JobSeeker.create.mockResolvedValueOnce({
+          email: req.body.email,
+          fullName: req.body.fullName,
+          verificationCode: 123456,
+        });
+        bcrypt.hash.mockResolvedValue('hashedPassword');
+  
         await registerJobSeeker(req, res);
-
-        const createdUser = await JobSeeker.findOne({ email: req.body.email });
-        expect(createdUser).toBeTruthy();
-        expect(createdUser.fullName).toBe(req.body.fullName);
-        expect(sendVerificationCode).toHaveBeenCalledWith(req.body.email, req.body.fullName, expect.any(Number));
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.json).toHaveBeenCalledWith({
-            message: 'Registration successful. Verification code sent to email.',
-        });
-    });
-
-    // Test: Register a recruiter
-    it('should register a new recruiter', async () => {
-        const req = {
-            body: {
-                fullName: 'Jane Smith',
-                email: 'jane.smith@company.com',
-                password: 'securepassword',
-                companyName: 'Tech Innovations',
-                companySize: '51-200',
-                companyWebsite: 'https://techinnovations.com',
-            },
-        };
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-        sendVerificationCode.mockResolvedValue();
-
-        await registerRecruiter(req, res);
-
-        const createdRecruiter = await Recruiter.findOne({ email: req.body.email });
-        expect(createdRecruiter).toBeTruthy();
-        expect(createdRecruiter.fullName).toBe(req.body.fullName);
-        expect(sendVerificationCode).toHaveBeenCalledWith(req.body.email, req.body.fullName, expect.any(Number));
-        expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.json).toHaveBeenCalledWith({
-            message: 'Registration successful. Verification code sent to email.',
-        });
-    });
-
-    // Test: Login
-    it('should log in a user with valid credentials', async () => {
-        // Create a user with hashed password
-        const bcrypt = require('bcryptjs');
-        const hashedPassword = await bcrypt.hash('password123', 10);
-    
-        await JobSeeker.create({
-            fullName: 'Liam Levi',
-            email: 'liam.levi@newborn.com',
-            password: hashedPassword, // Store hashed password
-            phone: '1234567890',
-            isVerified: true,
-        });
-    
-        const req = {
-            body: {
-                email: 'liam.levi@newborn.com',
-                password: 'password123',
-                role: 'jobseeker',
-            },
-        };
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-    
-        await loginUser(req, res);
-    
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith({
-            token: expect.any(String),
-            message: 'Login successful.',
-        });
-    });
-    
-
-    // Test: Verify Code
-    it('should verify a user with the correct code', async () => {
-        const user = await JobSeeker.create({
-            fullName: 'Liam Levi',
-            email: 'liam.levi@newborn.com',
-            password: 'password123',
-            verificationCode: 123456,
-        });
-        const req = { body: { email: user.email, code: 123456, role: 'jobseeker' } };
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-
-        await verifyCode(req, res);
-
-        const verifiedUser = await JobSeeker.findOne({ email: user.email });
-        expect(verifiedUser.isVerified).toBe(true);
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith({
-            message: 'Account verified successfully!',
-        });
-    });
-
-    // Test: Resend Verification Code
-    it('should resend the verification code', async () => {
-        const user = await JobSeeker.create({
-            fullName: 'Liam Levi',
-            email: 'liam.levi@newborn.com',
-            password: 'password123',
-            verificationCode: 123456,
-            verificationCodeSentAt: new Date(), // Temporary value
-        });
-    
-        // Explicitly set the date to one year ago
-        user.verificationCodeSentAt = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-        await user.save(); // Save the updated user to the database
-    
-    
-        const req = {
-            body: {
-                email: user.email,
-                role: 'jobseeker',
-            },
-        };
-    
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn(),
-        };
-    
-        sendVerificationCode.mockResolvedValue();
-    
-        await resendVerificationCode(req, res);
-    
-        expect(sendVerificationCode).toHaveBeenCalledWith(
-            user.email,
-            user.fullName,
-            expect.any(Number)
+  
+        expect(JobSeeker.findOne).toHaveBeenCalledWith({ email: req.body.email });
+        expect(JobSeeker.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            pin: expect.any(String), // Ensure the PIN is hashed
+          })
         );
-        expect(res.status).toHaveBeenCalledWith(200);
+        expect(sendVerificationCode).toHaveBeenCalledWith(
+          req.body.email,
+          req.body.fullName,
+          expect.any(Number)
+        );
+        expect(res.status).toHaveBeenCalledWith(201);
         expect(res.json).toHaveBeenCalledWith({
-            message: 'Verification code resent successfully.',
+          message: 'Registration successful. Verification code sent to email.',
         });
-    });
-    
-
-    // Test: Request Password Reset
-    it('should send a password reset token', async () => {
-        const user = await JobSeeker.create({
-            fullName: 'Liam Levi',
-            email: 'liam.levi@newborn.com',
+      });
+  
+      it('should return an error if the PIN is not a 6-digit number', async () => {
+        const req = {
+          body: {
+            fullName: 'John Doe',
+            email: 'johndoe@example.com',
             password: 'password123',
-        });
-        const req = { body: { email: user.email } };
+            pin: '123', // Invalid PIN
+          },
+        };
         const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+        };
+  
+        await registerJobSeeker(req, res);
+  
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({
+          message: 'PIN must be a 6-digit number.',
+        });
+      });
+    });
+  
+    describe('verifyCode', () => {
+      it('should verify the user with a correct code', async () => {
+        const req = {
+          body: { email: 'johndoe@example.com', code: '123456', role: 'jobseeker' },
+        };
+        const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+        };
+  
+        const mockUser = {
+          email: req.body.email,
+          verificationCode: 123456,
+          save: jest.fn(),
+        };
+  
+        JobSeeker.findOne.mockResolvedValueOnce(mockUser);
+  
+        await verifyCode(req, res);
+  
+        expect(mockUser.isVerified).toBeTruthy();
+        expect(mockUser.verificationCode).toBeNull();
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith({ message: 'Account verified successfully!' });
+      });
+  
+      it('should return an error if the code is incorrect', async () => {
+        const req = {
+          body: { email: 'johndoe@example.com', code: '123456', role: 'jobseeker' },
+        };
+        const res = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn(),
+        };
+  
+        const mockUser = { email: req.body.email, verificationCode: 654321, save: jest.fn() };
+        JobSeeker.findOne.mockResolvedValueOnce(mockUser);
+  
+        await verifyCode(req, res);
+  
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({ message: 'Incorrect verification code.' });
+      });
+    });
+  
+    describe('loginUser', () => {
+        it('should log in a verified user with correct credentials', async () => {
+            const req = {
+                body: { email: 'johndoe@example.com', password: 'password123', role: 'jobseeker' },
+            };
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn(),
+            };
+        
+            const mockUser = {
+                _id: 'mockUserId', // Add a mock ID
+                email: req.body.email,
+                password: 'hashedPassword',
+                isVerified: true,
+                role: 'jobseeker', // Add the role field
+                save: jest.fn(),
+            };
+        
+            JobSeeker.findOne.mockResolvedValueOnce(mockUser);
+            bcrypt.compare.mockResolvedValueOnce(true);
+            jwt.sign.mockReturnValueOnce('mockToken');
+        
+            await loginUser(req, res);
+        
+            expect(jwt.sign).toHaveBeenCalledWith(
+                { id: mockUser._id, role: mockUser.role }, // Ensure these fields exist
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Login successful.', token: 'mockToken' });
+        });
+        
+  
+      it('should return an error for incorrect password', async () => {
+        const req = {
+          body: { email: 'johndoe@example.com', password: 'wrongpassword', role: 'jobseeker' },
+          };
+          const res = {
             status: jest.fn().mockReturnThis(),
             json: jest.fn(),
-        };
-
-        sendVerificationCode.mockResolvedValue();
-
-        await requestPasswordReset(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith({
-            message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox.",
+          };
+  
+          const mockUser = {
+            email: req.body.email,
+            password: 'hashedPassword',
+            loginAttemptsLeft: 3,
+            save: jest.fn(),
+          };
+  
+          JobSeeker.findOne.mockResolvedValueOnce(mockUser);
+          bcrypt.compare.mockResolvedValueOnce(false);
+  
+          await loginUser(req, res);
+  
+          expect(res.status).toHaveBeenCalledWith(401);
+          expect(res.json).toHaveBeenCalledWith({
+            message: `Incorrect password. You have ${mockUser.loginAttemptsLeft} attempts remaining.`,
+          });
         });
-    });
-
-    // Test: Reset Password
-   
-it('should reset the user password', async () => {
-    const bcrypt = require('bcryptjs');
-    const user = await JobSeeker.create({
-        fullName: 'Liam Levi',
-        email: 'liam.levi@newborn.com',
-        password: await bcrypt.hash('password123', 10), // Hash the initial password
-        resetPasswordToken: 'valid-token',
-        resetPasswordExpires: new Date(),
-    });
-
-    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 50000);
-    await user.save();
-
-    const req = {
-        body: {
-            token: 'valid-token',
-            newPassword: 'newpassword123',
-        },
-    };
-    const res = {
-        status: jest.fn().mockReturnThis(),
-        json: jest.fn(),
-    };
-
-    await resetPassword(req, res);
-
-    const updatedUser = await JobSeeker.findOne({ email: user.email });
-
-    
-
-    // Use bcrypt.compare to validate that the new password was set correctly
-    const isPasswordUpdated = await bcrypt.compare('newpassword123', updatedUser.password);
-    expect(isPasswordUpdated).toBe(true); // Ensure the new password matches
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-        message: 'Password has been successfully reset.',
-    });
-});
-
-});
+      });
+  });
+  

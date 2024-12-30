@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
 import { useNavigate } from 'react-router-dom';
+import ForgotPasswordForm from './ForgotPasswordForm';
+import Swal from 'sweetalert2';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
+    const [forgotPasswordFormData, setForgotPasswordFormData] = useState({ forgot_password_email: '', forgot_password_PIN: '' });
     const [forgotPasswordEmail, setForgotPasswordEmail] = useState(''); // Separate state for forgot password form
+    const [forgotPasswordPIN, setForgotPasswordPIN] = useState(''); // Separate
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [loading, setLoading] = useState(false); // Login form loading state
@@ -17,8 +21,10 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleForgotPasswordEmailChange = (e) => {
-        setForgotPasswordEmail(e.target.value); // Update forgot password email only
+    const handleForgotPasswordInputChange = (e) => {
+        const { name, value } = e.target;
+        setForgotPasswordFormData({ ...forgotPasswordFormData, [name]: value });
+        console.log(forgotPasswordFormData[name]);
     };
 
     const handleSubmit = async (e) => {
@@ -47,11 +53,59 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         },
                     });
                 } else if (response.status === 405) {
-                    setMessage({
-                        type: 'error',
-                        text: errorData.message,
+                    // Show the alert asking for the secret PIN
+                    const { value: pin } = await Swal.fire({
+                        title: 'Account Blocked',
+                        text: `Please enter your secret PIN to reset your login attempts.`,
+                        input: 'password',
+                        inputPlaceholder: 'Enter your secret PIN',
+                        inputAttributes: {
+                            maxlength: 6,
+                            autocapitalize: 'off',
+                            autocorrect: 'off',
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Submit',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        preConfirm: (pin) => {
+                            if (!pin) {
+                                Swal.showValidationMessage('Please enter your secret PIN');
+                            }
+                            return pin;
+                        },
                     });
-                } else if (response.status === 401) {
+                
+                    console.log("Here!");
+
+                    if (pin) {
+                        // Send the secret PIN to reset login attempts
+                        const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pin, email: formData.email }), // Include email or any other necessary identifiers
+                        });
+                
+                        const resetData = await resetResponse.json();
+                
+                        if (resetResponse.ok) {
+                            await Swal.fire({
+                                title: 'Success!',
+                                text: resetData.message,
+                                icon: 'success',
+                                confirmButtonColor: '#3085d6',
+                            });
+                        } else {
+                            await Swal.fire({
+                                title: 'Error',
+                                text: resetData.message,
+                                icon: 'error',
+                                confirmButtonColor: '#d33',
+                            });
+                        }
+                    }
+                }
+                 else if (response.status === 401) {
                     setMessage({
                         type: 'error',
                         text: errorData.message || 'Invalid login credentials.',
@@ -96,7 +150,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email: forgotPasswordEmail }),
+                body: JSON.stringify(forgotPasswordFormData),
             });
 
             if (!response.ok) {
@@ -106,7 +160,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             const data = await response.json();
             setMessage({ type: 'success', text: data.message });
-            setTimeout(() => setMessage(null), 2500);
+            setTimeout(() => setMessage(null), 10000);
         } catch (error) {
             setMessage({ type: 'error', text: error.message });
             setTimeout(() => setMessage(null), 2500);
@@ -201,33 +255,13 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 </button>
             </div>
 
-            {showForgotPassword && (
-                <div className="mt-4 p-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Password Recovery</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                        Enter your email, and we will send your password reset instructions.
-                    </p>
-                    <form onSubmit={handleForgotPasswordSubmit} className="space-y-2">
-                        <input
-                            type="email"
-                            data-cy="forgot-password-email"
-                            placeholder="Your registered email"
-                            value={forgotPasswordEmail}
-                            onChange={handleForgotPasswordEmailChange}
-                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                            required
-                        />
-                        <button
-                            data-cy="forgot-password-submit"
-                            type="submit"
-                            className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold rounded-lg hover:scale-105 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
-                            disabled={forgotPasswordLoading}
-                        >
-                            {forgotPasswordLoading ? 'Sending...' : 'Send Instructions'}
-                        </button>
-                    </form>
-                </div>
-            )}
+            {showForgotPassword && <ForgotPasswordForm
+                formData={forgotPasswordFormData}
+                onSubmit={handleForgotPasswordSubmit}
+                onChange={handleForgotPasswordInputChange}
+                loading={forgotPasswordLoading}
+                />}
+
 
             <button
                 onClick={toggleForm}

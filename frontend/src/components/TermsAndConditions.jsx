@@ -25,7 +25,10 @@ const TermsAndConditions = () => {
                 <p className="text-gray-600 text-sm leading-relaxed">
                     2.1. You are responsible for maintaining the confidentiality of your account credentials and ensuring that no unauthorized person accesses your account.<br />
                     2.2. You agree not to share your login credentials or use another person’s account without permission.<br />
-                    2.3. CareerAgent will not be held liable for any unauthorized access or use of your account.
+                    2.3. CareerAgent will not be held liable for any unauthorized access or use of your account.<br />
+                    2.4. Upon registration, a unique 6-digit PIN code will be shown to you. You must save this PIN securely, as it will not be displayed again.<br />
+                    2.5. This PIN is required for sensitive operations, such as resetting your password or login attempts.<br />
+                    2.6. In case you lose your PIN, you must contact CareerAgent. After a validation process, we will generate a new PIN for you.
                 </p>
 
                 <h2 className="text-2xl font-semibold text-gray-800">3. User Conduct</h2>

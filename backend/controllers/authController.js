@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto'); // For generating secure tokens
-const { sendVerificationCode, sendResetPasswordEmail, generateResetToken, sendResetLoginAttemptsEmail  } = require('../utils/emailService');
+const { sendVerificationCode, sendResetPasswordEmail, generateResetToken} = require('../utils/emailService');
 const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
 const Recruiter = require('../models/recruiterModel'); // Import Recruiter model
 require('dotenv').config();
@@ -16,7 +16,7 @@ const getSchemaByRole = (role) => {
 
 // Register JobSeeker
 const registerJobSeeker = async (req, res) => {
-    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth } = req.body;
+    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth, pin } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -26,7 +26,13 @@ const registerJobSeeker = async (req, res) => {
             return res.status(400).json({ message: 'Email is already registered.' });
         }
 
+        if (!/^\d{6}$/.test(pin)) {
+            return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
+
+        const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
         const user = await JobSeeker.create({
@@ -43,6 +49,7 @@ const registerJobSeeker = async (req, res) => {
             cv,
             profilePic,
             dateOfBirth,
+            pin: hashedPin
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
@@ -55,7 +62,7 @@ const registerJobSeeker = async (req, res) => {
 
 // Register Recruiter
 const registerRecruiter = async (req, res) => {
-    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth } = req.body;
+    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth, pin } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -65,7 +72,13 @@ const registerRecruiter = async (req, res) => {
             return res.status(400).json({ message: 'Email is already registered.' });
         }
 
+        if (!/^\d{6}$/.test(pin)) {
+            return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
+        }
+        
+
         const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
         const user = await Recruiter.create({
@@ -80,6 +93,7 @@ const registerRecruiter = async (req, res) => {
             companySize,
             companyWebsite,
             dateOfBirth,
+            pin: hashedPin
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
@@ -124,7 +138,6 @@ const verifyCode = async (req, res) => {
 };
 
 // Login User
-const LOGIN_BLOCK_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
 
 const loginUser = async (req, res) => {
     const { email, password, role } = req.body;
@@ -154,15 +167,9 @@ const loginUser = async (req, res) => {
 
             // Lock account if no attempts remain
             if (user.loginAttemptsLeft <= 0) {
-                user.loginBlockExpiration = new Date(Date.now() + LOGIN_BLOCK_DURATION); // Set lockout duration
-                user.resetLoginAttemptsToken = crypto.randomBytes(32).toString('hex');
-                const resetLink = `${process.env.FRONTEND_URL}/reset-login-attempts?token=${user.resetLoginAttemptsToken}`;
-
-                await user.save();
-                await sendResetLoginAttemptsEmail(user.email, user.fullName, resetLink);
-
+                
                 return res.status(405).json({
-                    message: 'Too many failed attempts. Your account is now blocked for 1 hour. Check your email for a reset link.',
+                    message: 'Too many failed attempts. Your account is now blocked - Please enter your PIN in order to reset your login attempts.',
                 });
             }
 
@@ -193,20 +200,28 @@ const loginUser = async (req, res) => {
 
 // Reset Login Attempts
 const resetLoginAttempts = async (req, res) => {
-    const { token } = req.body;
+    const { email, pin } = req.body; // Extract email and PIN from the request body
+    console.log("email: " + email, "pin: " + pin);
     try {
-        const jobSeeker = await JobSeeker.findOne({ resetLoginAttemptsToken: token });
-        const recruiter = await Recruiter.findOne({ resetLoginAttemptsToken: token });
+        // Find the user (either job seeker or recruiter) based on email
+        const jobSeeker = await JobSeeker.findOne({ email });
+        const recruiter = await Recruiter.findOne({ email });
 
         const user = jobSeeker || recruiter;
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired token.' });
+            return res.status(404).json({ message: 'User not found.' });
         }
 
-        user.loginAttemptsLeft = 7;
-        user.resetLoginAttemptsToken = undefined; // Invalidate the token
-        user.loginBlockExpiration = undefined; // Clear lock state
+        // Verify the PIN
+        const isPinValid = await bcrypt.compare(pin, user.pin); // Assuming hashedPin is stored in the database
+        if (!isPinValid) {
+            return res.status(401).json({ message: 'Invalid PIN. Access denied.' });
+        }
+
+        // Reset login attempts and clear lock state
+        user.loginAttemptsLeft = 7; // Reset to the default allowed attempts
+        user.loginBlockExpiration = undefined; // Clear block expiration if any
         await user.save();
 
         res.status(200).json({ message: 'Login attempts have been reset successfully.' });
@@ -252,16 +267,20 @@ const resendVerificationCode = async (req, res) => {
 
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
-    const { email } = req.body;
+    const { forgot_password_email, forgot_password_PIN } = req.body;
 
     try {
-        const jobSeeker = await JobSeeker.findOne({ email });
-        const recruiter = await Recruiter.findOne({ email });
+        const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
+        const recruiter = await Recruiter.findOne({ email: forgot_password_email });
 
         const user = jobSeeker || recruiter;
-
         if (!user) {
             return res.status(404).json({ message: 'No user found with that email.' });
+        }
+
+        const isPinMatch = await bcrypt.compare(forgot_password_PIN, user.pin);
+        if (!isPinMatch) {
+            return res.status(401).json({ message: 'Incorrect PIN.' });
         }
 
         // Check if the account is blocked

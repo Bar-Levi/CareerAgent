@@ -36,6 +36,7 @@ describe('Auth Routes', () => {
             email: 'john.doe@example.com',
             password: 'password123',
             phone: '1234567890',
+            pin: '123456',
         });
 
         expect(response.status).toBe(201);
