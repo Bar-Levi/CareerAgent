@@ -36,7 +36,7 @@ describe('Authentication Form Tests', () => {
     
         // Fill in the email and PIN fields and submit the forgot password form
         cy.get('[data-cy="forgot-password-email"]', { force: true }).type('admin@admin.com', { force: true });
-        cy.get('[data-cy="forgot-password-pin"]', { force: true }).type('622076', { force: true });
+        cy.get('[data-cy="forgot-password-pin"]', { force: true }).type('965860', { force: true });
         cy.get('[data-cy="forgot-password-submit"]', { force: true }).click({ force: true });
     
         // Assert a success message is shown
