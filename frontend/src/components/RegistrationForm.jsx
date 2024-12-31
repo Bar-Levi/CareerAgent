@@ -142,6 +142,16 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
             const data = await response.json();
             if (response.ok) {
+                localStorage.setItem('countdown', 60);
+                navigate('/verify', {
+                    state: {
+                        email: formData.email,
+                        role: formData.role,
+                        notificationType: 'success',
+                        notificationMessage: 'Registration process was successful! Please verify your email :)',
+                        notificationSource: 'Successful Registration',
+                    },
+                });
                 showNotification('success', 'Verification email sent!');
                 // Show PIN alert with copy functionality
                 await Swal.fire({
@@ -159,7 +169,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         <p>If you lose the PIN or accidentally close this window, refer to the <a href="/terms-and-conditions" target="_blank">Terms and Conditions</a> on how to regain your PIN.</p>
                     `,
                     icon: 'info',
-                    confirmButtonText: 'Continue to verification',
+                    confirmButtonText: 'I Understand',
                     confirmButtonColor: '#3085d6',
                     didRender: () => {
                         // Attach the event listener to the "Copy PIN" button after the modal renders
@@ -177,16 +187,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     },
                 });
                 
-                localStorage.setItem('countdown', 60);
-                navigate('/verify', {
-                    state: {
-                        email: formData.email,
-                        role: formData.role,
-                        notificationType: 'success',
-                        notificationMessage: 'Registration process was successful! Please verify your email :)',
-                        notificationSource: 'Successful Registration',
-                    },
-                });
             } else {
                 showNotification('error', data.message);
                 setIsOptionalFormVisible(false);
@@ -257,7 +257,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 paddingBottom: '10px',
                             }}
                         >
-                            {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
+                            {formData.role === 'job' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
                         </p>
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -362,7 +362,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             }}
                             className="w-full px-4 py-2.5 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                         >
-                            <option value="jobseeker">Job Seeker</option>
+                            <option value="jobseeker">Job Candidate</option>
                             <option value="recruiter">Recruiter</option>
                         </select>
                         <div className="flex items-center space-x-2">
