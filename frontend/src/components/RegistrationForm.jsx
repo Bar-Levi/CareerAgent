@@ -142,6 +142,16 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
             const data = await response.json();
             if (response.ok) {
+                localStorage.setItem('countdown', 60);
+                navigate('/verify', {
+                    state: {
+                        email: formData.email,
+                        role: formData.role,
+                        notificationType: 'success',
+                        notificationMessage: 'Registration process was successful! Please verify your email :)',
+                        notificationSource: 'Successful Registration',
+                    },
+                });
                 showNotification('success', 'Verification email sent!');
                 // Show PIN alert with copy functionality
                 await Swal.fire({
@@ -159,7 +169,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         <p>If you lose the PIN or accidentally close this window, refer to the <a href="/terms-and-conditions" target="_blank">Terms and Conditions</a> on how to regain your PIN.</p>
                     `,
                     icon: 'info',
-                    confirmButtonText: 'Continue to verification',
+                    confirmButtonText: 'I Understand',
                     confirmButtonColor: '#3085d6',
                     didRender: () => {
                         // Attach the event listener to the "Copy PIN" button after the modal renders
@@ -177,16 +187,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     },
                 });
                 
-                localStorage.setItem('countdown', 60);
-                navigate('/verify', {
-                    state: {
-                        email: formData.email,
-                        role: formData.role,
-                        notificationType: 'success',
-                        notificationMessage: 'Registration process was successful! Please verify your email :)',
-                        notificationSource: 'Successful Registration',
-                    },
-                });
             } else {
                 showNotification('error', data.message);
                 setIsOptionalFormVisible(false);
