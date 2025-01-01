@@ -15,3 +15,11 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+
+beforeEach(() => {
+    // Start a timer to fail the test after 15 seconds
+    const timeout = 15000; // 15 seconds
+    cy.wrap(null, { timeout }).then(() => {
+        throw new Error("Test exceeded maximum allowed time of 15 seconds.");
+    });
+});
