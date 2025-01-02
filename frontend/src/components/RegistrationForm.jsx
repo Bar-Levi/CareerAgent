@@ -15,7 +15,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         role: 'jobseeker', // Default role
         companyName: '', // For recruiters
         companySize: '', // For recruiters,
-        pin: Math.floor(Math.random() * 900000) + 100000
+        pin: Math.floor(Math.random() * 899999) + 100000
     });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
