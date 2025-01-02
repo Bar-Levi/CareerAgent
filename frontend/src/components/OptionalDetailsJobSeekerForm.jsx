@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaPhoneAlt, FaGithub, FaLinkedin, FaCalendarAlt } from 'react-icons/fa';
+import { extractTextFromPDF } from '../utils/pdfUtils';
 
 const OptionalDetailsForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
@@ -29,12 +30,14 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 setError(null); // Clear error if age is valid
             }
         }
-
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const { name, files } = e.target;
+        if (name === 'cv')
+            console.log(await extractTextFromPDF(files[0]));
+
         setFormData({ ...formData, [name]: files[0] });
     };
 
