@@ -35,7 +35,7 @@ const jobSeekerSchema = new mongoose.Schema({
     profilePic: {
         type: String,
         required: false,
-        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png',
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
     },
     githubUrl: {
         type: String,

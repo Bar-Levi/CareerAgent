@@ -168,6 +168,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 {/* Submit Button */}
                 <button
                     type="submit"
+                    data-cy="submit-optional-details-job-seeker"
                     className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 focus:ring-gray-500 transition-all duration-200 ${
                         isLoading || error
                             ? 'bg-gray-400 cursor-not-allowed'
