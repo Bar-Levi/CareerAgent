@@ -7,13 +7,13 @@ import Swal from 'sweetalert2';
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({
-        fullName: 'Rony Bubnovsky',
-        email: 'rony.bubnovsky@gmail.com',
-        password: 'Rony12345',
-        confirmPassword: 'Rony12345',
-        role: 'jobseeker', // Default role
-        companyName: 'sce', // For recruiters
-        companySize: '50', // For recruiters,
+        fullName: 'Rony Bubnovsky' ,
+        email:'rony.bubnovsky@gmail.com',
+        password:'Rony12345',
+        confirmPassword:'Rony12345',
+        role:'jobseeker', // Default role
+        companyName:'sce', // For recruiters
+        companySize:'50', // For recruiters,
         pin: Math.floor(Math.random() * 899999) + 100000
     });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);

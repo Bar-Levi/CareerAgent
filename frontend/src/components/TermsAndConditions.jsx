@@ -71,6 +71,12 @@ const TermsAndConditions = () => {
                     8.2. Users will be notified of significant changes to the Terms, and continued use of the platform will constitute acceptance of the updated Terms.
                 </p>
 
+                <h2 className="text-2xl font-semibold text-gray-800">9. Feedback on Missing Job Roles or Fields</h2>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                    9.1. If you notice that a specific job role or other relevant field is missing in the job search, please contact us.<br />
+                    9.2. We will review your request promptly and strive to improve the platform to meet user needs.
+                </p>
+
                 <p className="text-gray-600 text-sm leading-relaxed mt-4">
                     If you have any questions or concerns about these Terms, please contact us at <a href="mailto:careeragentrb@gmail.com?subject=Questions%20about%20Terms%20and%20Conditions" className="text-blue-500 hover:underline">careeragentrb@gmail.com</a>.
                 </p>

@@ -6,6 +6,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
         phone: '',
         cv: null,
+        analyzed_cv_content: {},
         githubUrl: '',
         linkedinUrl: '',
         dateOfBirth: '', // Add DOB field
@@ -33,13 +34,66 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setFormData({ ...formData, [name]: value });
     };
 
+
+    const processCV = async (cvFile) => {
+        try {
+            const cvContent = await extractTextFromPDF(cvFile); // Extract text from the PDF
+
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generate`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    sessionId: 1,
+                    prompt: cvContent,
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate AI CV.');
+            }
+
+            const jsonResponse = await response.json();
+
+            // Extract and clean the JSON from the response string
+            const jsonRaw = jsonResponse.response;
+
+            // Safeguard for JSON extraction in case the expected format is not met
+            const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
+            if (!match) {
+                throw new Error('Invalid JSON format in response.');
+            }
+
+            const jsonString = match[1]; // Extract JSON between code block markers
+            const prettyJson = JSON.parse(jsonString); // Parse the JSON string
+
+            return prettyJson; // Return the processed JSON
+        } catch (error) {
+            console.error('Error processing CV:', error.message);
+            throw error; // Re-throw the error for further handling
+        }
+    };
+
     const handleFileChange = async (e) => {
         const { name, files } = e.target;
-        if (name === 'cv')
-            console.log(await extractTextFromPDF(files[0]));
+    
+        if (name === 'cv') {
+            try {
 
-        setFormData({ ...formData, [name]: files[0] });
+                // Update form data state with the parsed JSON
+                setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    [name]: files[0],
+                }));
+    
+            } catch (error) {
+                console.error('Error handling file change:', error.message);
+            }
+        }
     };
+    
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -48,9 +102,25 @@ const OptionalDetailsForm = ({ onSubmit }) => {
             return;
         }
         setIsLoading(true); // Set loading to true when the request starts
+    
         try {
+            if (formData.cv) {
+            const prettyJson = await processCV(formData.cv); // Call the helper function
+
+            // Update form data state with the parsed JSON
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                analyzed_cv_content: prettyJson,
+            }));
+
+            // Log the prettified JSON
+            console.log(JSON.stringify(prettyJson, null, 2)); // Pretty print JSON
+        
+            }
             console.dir(formData, { depth: null }); // Null allows full depth
             await onSubmit(formData); // Submit form data via the parent handler
+        } catch(error) {
+            console.error('Error analyzing CV:', error.message);
         } finally {
             setIsLoading(false); // Reset loading to false when the request completes
         }
