@@ -33,7 +33,7 @@ const {
           body: {
             fullName: 'John Doe',
             email: 'johndoe@example.com',
-            password: 'password123',
+            password: 'Password123',
             pin: '123456', // Correct 6-digit PIN
           },
         };
