@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { FaPhoneAlt, FaGithub, FaLinkedin, FaCalendarAlt } from 'react-icons/fa';
 import { extractTextFromPDF } from '../utils/pdfUtils';
 
 const OptionalDetailsForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
+        profilePic: null,
         phone: '',
         cv: null,
         analyzed_cv_content: {},
@@ -12,9 +13,17 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         dateOfBirth: '', // Add DOB field
     });
 
+    let cvFile = null;
+    let profilePicFile = null;
     const [isLoading, setIsLoading] = useState(false); // Loading state for button
     const [error, setError] = useState(null); // Error state for under-18 logic
 
+    useEffect(() => {
+        cvFile = formData.cv || null;
+        profilePicFile = formData.profilePic || null;
+        console.log("cVFile: " + cvFile);
+        console.log("profilePicFile: " + profilePicFile);
+    }, [formData]);
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -78,18 +87,17 @@ const OptionalDetailsForm = ({ onSubmit }) => {
     const handleFileChange = async (e) => {
         const { name, files } = e.target;
     
-        if (name === 'cv') {
-            try {
 
-                // Update form data state with the parsed JSON
-                setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    [name]: files[0],
-                }));
-    
-            } catch (error) {
-                console.error('Error handling file change:', error.message);
-            }
+        try {
+
+            // Update form data state with the parsed JSON
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                [name]: files[0],
+            }));
+
+        } catch (error) {
+            console.error('Error handling file change:', error.message);
         }
     };
     
@@ -97,34 +105,36 @@ const OptionalDetailsForm = ({ onSubmit }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+    
         if (error) {
             // Prevent submission if there's an error
             return;
         }
+    
         setIsLoading(true); // Set loading to true when the request starts
     
         try {
+            let prettyJson = null;
+    
             if (formData.cv) {
-            const prettyJson = await processCV(formData.cv); // Call the helper function
-
-            // Update form data state with the parsed JSON
-            setFormData((prevFormData) => ({
-                ...prevFormData,
-                analyzed_cv_content: prettyJson,
-            }));
-
-            // Log the prettified JSON
-            console.log(JSON.stringify(prettyJson, null, 2)); // Pretty print JSON
-        
+                prettyJson = await processCV(formData.cv); // Process the updated CV file
             }
-            console.dir(formData, { depth: null }); // Null allows full depth
-            await onSubmit(formData); // Submit form data via the parent handler
-        } catch(error) {
+    
+            // Update the formData with analyzed_cv_content
+            const updatedFormData = {
+                ...formData,
+                analyzed_cv_content: prettyJson,
+            };
+    
+            console.dir(updatedFormData, { depth: null }); // Log updated formData
+            await onSubmit(updatedFormData); // Submit updated form data via the parent handler
+        } catch (error) {
             console.error('Error analyzing CV:', error.message);
         } finally {
             setIsLoading(false); // Reset loading to false when the request completes
         }
     };
+    
 
     return (
         <div className="flex flex-col space-y-6 w-full max-w-md">

@@ -101,6 +101,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const handleOptionalSubmit = async (optionalData) => {
         try {
+            console.dir(optionalData, { depth: null});
             setIsLoading(true);
 
             const uploadFile = async (file, folder) => {
