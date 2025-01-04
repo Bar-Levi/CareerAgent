@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { FaPhoneAlt, FaGithub, FaLinkedin, FaCalendarAlt } from 'react-icons/fa';
+import { extractTextFromPDF } from '../utils/pdfUtils';
 
 const OptionalDetailsForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
+        profilePic: null,
         phone: '',
         cv: null,
+        analyzed_cv_content: {},
         githubUrl: '',
         linkedinUrl: '',
         dateOfBirth: '', // Add DOB field
     });
 
+    let cvFile = null;
+    let profilePicFile = null;
     const [isLoading, setIsLoading] = useState(false); // Loading state for button
     const [error, setError] = useState(null); // Error state for under-18 logic
 
+    useEffect(() => {
+        cvFile = formData.cv || null;
+        profilePicFile = formData.profilePic || null;
+        console.log("cVFile: " + cvFile);
+        console.log("profilePicFile: " + profilePicFile);
+    }, [formData]);
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -29,29 +40,101 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 setError(null); // Clear error if age is valid
             }
         }
-
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleFileChange = (e) => {
-        const { name, files } = e.target;
-        setFormData({ ...formData, [name]: files[0] });
+
+    const processCV = async (cvFile) => {
+        try {
+            const cvContent = await extractTextFromPDF(cvFile); // Extract text from the PDF
+
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generate`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    sessionId: 1,
+                    prompt: cvContent,
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate AI CV.');
+            }
+
+            const jsonResponse = await response.json();
+
+            // Extract and clean the JSON from the response string
+            const jsonRaw = jsonResponse.response;
+
+            // Safeguard for JSON extraction in case the expected format is not met
+            const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
+            if (!match) {
+                throw new Error('Invalid JSON format in response.');
+            }
+
+            const jsonString = match[1]; // Extract JSON between code block markers
+            const prettyJson = JSON.parse(jsonString); // Parse the JSON string
+
+            return prettyJson; // Return the processed JSON
+        } catch (error) {
+            console.error('Error processing CV:', error.message);
+            throw error; // Re-throw the error for further handling
+        }
     };
+
+    const handleFileChange = async (e) => {
+        const { name, files } = e.target;
+    
+
+        try {
+
+            // Update form data state with the parsed JSON
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                [name]: files[0],
+            }));
+
+        } catch (error) {
+            console.error('Error handling file change:', error.message);
+        }
+    };
+    
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+    
         if (error) {
             // Prevent submission if there's an error
             return;
         }
+    
         setIsLoading(true); // Set loading to true when the request starts
+    
         try {
-            console.dir(formData, { depth: null }); // Null allows full depth
-            await onSubmit(formData); // Submit form data via the parent handler
+            let prettyJson = null;
+    
+            if (formData.cv) {
+                prettyJson = await processCV(formData.cv); // Process the updated CV file
+            }
+    
+            // Update the formData with analyzed_cv_content
+            const updatedFormData = {
+                ...formData,
+                analyzed_cv_content: prettyJson,
+            };
+    
+            console.dir(updatedFormData, { depth: null }); // Log updated formData
+            await onSubmit(updatedFormData); // Submit updated form data via the parent handler
+        } catch (error) {
+            console.error('Error analyzing CV:', error.message);
         } finally {
             setIsLoading(false); // Reset loading to false when the request completes
         }
     };
+    
 
     return (
         <div className="flex flex-col space-y-6 w-full max-w-md">

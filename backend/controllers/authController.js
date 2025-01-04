@@ -13,10 +13,31 @@ const getSchemaByRole = (role) => {
     throw new Error('Invalid role specified.');
 };
 
+const getPasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 1;
+    if (/[A-Z]/.test(password)) strength += 1;
+    if (/[a-z]/.test(password)) strength += 1;
+    if (/[0-9]/.test(password)) strength += 1;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+    return strength
+};
 
 // Register JobSeeker
 const registerJobSeeker = async (req, res) => {
-    const { fullName, email, password, phone, githubUrl, linkedinUrl, cv, profilePic, dateOfBirth, pin } = req.body;
+    const { 
+        fullName,
+        email,
+        password,
+        phone,
+        githubUrl,
+        linkedinUrl,
+        cv,
+        profilePic,
+        dateOfBirth,
+        pin,
+        analyzed_cv_content
+     } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -28,6 +49,10 @@ const registerJobSeeker = async (req, res) => {
 
         if (!/^\d{6}$/.test(pin)) {
             return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
+        }
+
+        if (getPasswordStrength(password) < 4) {
+            return res.status(400).json({ message: 'Nice try, we gothca! ;)' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -49,7 +74,8 @@ const registerJobSeeker = async (req, res) => {
             cv,
             profilePic,
             dateOfBirth,
-            pin: hashedPin
+            pin: hashedPin,
+            analyzed_cv_content
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
@@ -76,6 +102,9 @@ const registerRecruiter = async (req, res) => {
             return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
         }
         
+        if (getPasswordStrength(password) < 4) {
+            return res.status(400).json({ message: 'Nice try, we gothca! ;)' });
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const hashedPin = await bcrypt.hash(pin.toString(), 10);
@@ -364,6 +393,7 @@ const getUserDetails = async (req, res) => {
             companySize: user.companySize|| null,
             companyWebsite: user.companyWebsite|| null,
             loginAttemptsLeft: user.loginAttemptsLeft || null,
+            analyzed_cv_content: user.analyzed_cv_content || null,
         });
     } catch (error) {
         console.error('Error fetching user details:', error);

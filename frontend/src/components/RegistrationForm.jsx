@@ -5,16 +5,15 @@ import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
 import OptionalDetailsRecruiterForm from './OptionalDetailsRecruiterForm';
 import Swal from 'sweetalert2';
 
-
 const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({
-        fullName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        role: 'jobseeker', // Default role
-        companyName: '', // For recruiters
-        companySize: '', // For recruiters,
+        fullName: '' ,
+        email:'',
+        password:'',
+        confirmPassword:'',
+        role:'jobseeker', // Default role
+        companyName:'', // For recruiters
+        companySize:'', // For recruiters,
         pin: Math.floor(Math.random() * 899999) + 100000
     });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -102,6 +101,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const handleOptionalSubmit = async (optionalData) => {
         try {
+            console.dir(optionalData, { depth: null});
             setIsLoading(true);
 
             const uploadFile = async (file, folder) => {
