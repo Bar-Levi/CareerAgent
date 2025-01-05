@@ -49,7 +49,9 @@ const TermsAndConditions = () => {
                 <p className="text-gray-600 text-sm leading-relaxed">
                     5.1. Uploaded content may be publicly accessible depending on your settings.<br />
                     5.2. You are responsible for ensuring that any content uploaded complies with applicable laws and does not infringe on third-party rights.<br />
-                    5.3. CareerAgent reserves the right to remove content deemed harmful, inappropriate, or in violation of these Terms.
+                    5.3. CareerAgent reserves the right to remove content deemed harmful, inappropriate, or in violation of these Terms.<br />
+                    5.4. CareerAgent is not responsible for the accuracy or completeness of non-English CV content that is extracted.<br />
+                    5.5. The platform supports the English language only, and users are encouraged to upload CVs in English to ensure proper functionality.
                 </p>
 
                 <h2 className="text-2xl font-semibold text-gray-800">6. Data Retention and Deletion</h2>

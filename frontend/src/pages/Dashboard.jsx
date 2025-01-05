@@ -94,37 +94,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-
-// <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
-        //     {userData ? (
-        //         <div className="bg-white shadow rounded-lg p-6 w-full max-w-lg">
-        //             <img
-        //                 className="p-1 w-24 h-24 rounded-full mx-auto border border-black"
-        //                 src={userData.profilePic}
-        //                 alt={`${userData.fullName}'s Profile`}
-        //             />
-        //             <h2 className="text-center text-xl font-bold mt-4">{userData.fullName}</h2>
-        //             <p className="text-center text-gray-600">{userData.email}</p>
-        //             <div className="mt-4 text-center">
-        //                 {userData.cv ? (
-        //                     <div className="w-full h-[500px] mt-4">
-        //                         <embed
-        //                             src={userData.cv}
-        //                             type="application/pdf"
-        //                             width="100%"
-        //                             height="100%"
-        //                             className="border rounded-lg"
-        //                         />
-        //                     </div>
-        //                 ) : (
-        //                     <p className="text-gray-500">No CV uploaded</p>
-        //                 )}
-        //             </div>
-        //         </div>
-        //     ) : (
-        //         <p>Loading...</p>
-        //     )}
-
-        // </div>
