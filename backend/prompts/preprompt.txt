@@ -15,7 +15,7 @@ The JSON structure should adhere to the following format:
   "work_experience": [  // List of professional experiences
     {
       "company": String,       // Name of the company
-      "job_role": String,      // Job title or role
+      "job_title": String,      // Job title or role - free text from CV.
       "start_year": int,       // Year the job started
       "end_year": int or null  // Year the job ended (null if currently employed)
     }
@@ -37,6 +37,8 @@ Please ensure:
 3. Leave fields as `null` if the information is not available in the CV.
 4. Use consistent formatting and ensure all extracted data matches the required types (e.g., integers for years).
 5. If you don't find a correct match between the CV data and the predefined lists - put 'null' instead of guessing.
+6. On each object of 'work_experience', 'job_title' is a free text taken from the cv content, and not from a predefined list.
+7. If you see anything related to military service, append it into the 'work experience' list as well, and notice that if the 'company' isn't mentioned, set it to 'Military Service'.
 
 This structure should provide a comprehensive summary of the individual’s qualifications, skills, and experiences.
 
@@ -45,7 +47,7 @@ if you can't find any of the following fields in the text, put a null at this fi
 
 
 Use the following lists of predefined job roles to identify and categorize job experiences or skills mentioned in the CV:
-* Job Role: For each job role mentioned in the CV, match it to the closest job role(s) from the predefined list of job roles. Only job roles from the predefined list should be selected. If the job role mentioned in the CV is not part of the list, leave it out of the final extraction.
+Job Role: For each job role mentioned in the CV, match it to the closest job role(s) from the predefined list of job roles. Only job roles from the predefined list should be selected. If the job role mentioned in the CV is not part of the list, leave it out of the final extraction.
 
 Job Roles option: [
     Student,

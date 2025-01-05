@@ -36,7 +36,7 @@ const CandidateCard = ({ candidate, index }) => {
             transition={{ duration: 0.5, delay: index * 0.1 }}
         >
           {/* Title */}
-          <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
                 User Overview
             </h1>
 
@@ -86,7 +86,7 @@ const CandidateCard = ({ candidate, index }) => {
                 ) : (
                     work_experience.map((work, idx) => (
                         <p key={idx} className="text-lg text-gray-600 mb-2">
-                            <span className={dataStyle}>{work.job_role || "Unrecognized Role"}</span> at{" "}
+                            <span className={dataStyle}>{work.job_title || "Unrecognized Role"}</span> at{" "}
                             <span className={dataStyle}>{work.company || "Unknown Company"}</span> (
                             <span className={dataStyle}>{work.start_year || "Unknown Start Year"}</span> -{" "}
                             <span className={dataStyle}>{work.end_year || "Present"}</span>)
