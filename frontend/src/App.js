@@ -7,6 +7,7 @@ import VerificationPage from './pages/VerificationPage';
 import ResetPassword from './components/ResetPassword';
 import TermsAndConditions from './components/TermsAndConditions';
 import ResetLoginAttempts from './components/ResetLoginAttempts';
+import ChatsPage from './pages/ChatsPage';
 
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
                 <Route path="/verify" element={<VerificationPage />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                <Route path="/chats" element={<ChatsPage />}/>
             </Routes>
         </Router>
     );

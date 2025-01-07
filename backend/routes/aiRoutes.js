@@ -1,8 +1,12 @@
 const express = require("express");
-const aiController = require("../controllers/aiController");
+const { 
+    generateJsonFromCV,
+    sendToCareerAdvisor
+ } = require("../controllers/aiController");
 
 const router = express.Router();
 
-router.post("/generate", aiController.generateResponse);
+router.post("/generateJsonFromCV", generateJsonFromCV);
+router.post("/sendToCareerAdvisor", sendToCareerAdvisor);
 
 module.exports = router;

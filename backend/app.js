@@ -6,6 +6,7 @@ const authRoutes = require('./routes/authRoutes');
 const cloudinaryRoutes = require('./routes/cloudinaryRoutes');
 const bodyParser = require("body-parser");
 const aiRoutes = require('./routes/aiRoutes');
+const conversationRoutes = require("./routes/conversationRoutes");
 
 
 dotenv.config();
@@ -19,5 +20,6 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/ai', aiRoutes);
+app.use("/api/conversations", conversationRoutes);
 
 module.exports = app;
