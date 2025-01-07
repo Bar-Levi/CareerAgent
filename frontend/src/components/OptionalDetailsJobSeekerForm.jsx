@@ -48,7 +48,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         try {
             const cvContent = await extractTextFromPDF(cvFile); // Extract text from the PDF
 
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generate`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
                 method: 'POST',
                 body: JSON.stringify({
                     sessionId: 1,

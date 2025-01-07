@@ -1,5 +1,8 @@
 module.exports = {
-    content: ['./src/**/*.{js,jsx}', './public/index.html'],
+    content: [
+        './src/**/*.{js,jsx}',
+        './public/index.html'
+    ],
     theme: {
         extend: {
             animation: {
@@ -20,6 +23,7 @@ module.exports = {
                 'slide-down': 'slide-down 0.8s ease-out',
                 'fade-in': 'fade-in 1s ease-in-out',
                 'fade-in-fast': 'fade-in 0.5s ease-in-out',
+                "slide-up": "slide-up 0.3s ease-out",
 
                 // Flipping and rotating animations
                 'flip': 'flip 1s ease-in-out',
@@ -97,6 +101,10 @@ module.exports = {
                     '0%': { transform: 'scale(1)' },
                     '100%': { transform: 'scale(0.8)' },
                 },
+                "slide-up": {
+                    "0%": { transform: "translateY(100%)", opacity: 0 },
+                    "100%": { transform: "translateY(0)", opacity: 1 },
+                    },
             },
             colors: {
                 // Custom colors for brand or themes

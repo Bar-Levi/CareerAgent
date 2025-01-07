@@ -38,7 +38,6 @@ describe('Auth Routes', () => {
             phone: '1234567890',
             pin: '123456',
         });
-
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('Registration successful. Verification code sent to email.');
     });
