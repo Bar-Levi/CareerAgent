@@ -8,15 +8,26 @@ const sessionHistory = new Map(); // Temporary in-memory storage
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const analyzeCvPrepromptFilePath = path.resolve(__dirname, "../prompts/analyzeCvPreprompt.txt");
-const analyzeCvPreprompt = fs.readFileSync(analyzeCvPrepromptFilePath, "utf-8");
+let analyzeCvPreprompt;
+let careerAdvisorPreprompt;
+let interviewerPreprompt;
+try {
+  const analyzeCvPrepromptFilePath = path.resolve(__dirname, "../prompts/analyzeCvPreprompt.txt");
+  analyzeCvPreprompt = fs.readFileSync(analyzeCvPrepromptFilePath, "utf-8");
 
-const careerAdvisorPrepromptFilePath = path.resolve(__dirname, "../prompts/careerAdvisorPreprompt.txt");
-const careerAdvisorPreprompt = fs.readFileSync(careerAdvisorPrepromptFilePath, "utf-8");
+  const careerAdvisorPrepromptFilePath = path.resolve(__dirname, "../prompts/careerAdvisorPreprompt.txt");
+  careerAdvisorPreprompt = fs.readFileSync(careerAdvisorPrepromptFilePath, "utf-8");
 
-const interviewerPrepromptFilePath = path.resolve(__dirname, "../prompts/interviewerPreprompt.txt");
-const interviewerPreprompt = fs.readFileSync(interviewerPrepromptFilePath, "utf-8");
-
+  const interviewerPrepromptFilePath = path.resolve(__dirname, "../prompts/interviewerPreprompt.txt");
+  interviewerPreprompt = fs.readFileSync(interviewerPrepromptFilePath, "utf-8");
+} catch (e) {
+  // On CI/CD it will throw an error because preprompts aren't included
+  // in the repository.
+  console.error("Error reading prompts:", e);
+  analyzeCvPreprompt = "";
+  careerAdvisorPreprompt = "";
+  interviewerPreprompt = "";
+};
 
 const generateJsonFromCV = async (req, res) => {
   console.log('req.body: ' + JSON.stringify(req.body));
