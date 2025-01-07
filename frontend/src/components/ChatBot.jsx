@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
   const [messages, setMessages] = useState(initialMessages); // Load initial messages  
@@ -130,49 +131,38 @@ const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
   };
 
   return (
-    <div className="relative flex flex-col h-[500px] w-[400px] border border-gray-300 rounded-lg shadow-md overflow-hidden">
-      <div className="bg-green-500 text-white text-center py-3 font-bold">
+    <div className="relative flex flex-col h-full w-full border border-gray-300 rounded-lg shadow-md overflow-hidden">
+      {/* Header */}
+      <div className="bg-brand-primary text-white text-center py-3 font-bold">
         {botSettings.title}
       </div>
-      <div className="flex-1 bg-gray-100 p-4 overflow-y-auto relative">
-      {messages.map((msg, index) => (
-        <div
+  
+      {/* Message Area */}
+      <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
+        {messages.map((msg, index) => (
+          <div
             key={index}
             className={`flex flex-col ${
-            msg.sender === "user" ? "items-end" : "items-start"
+              msg.sender === "user" ? "items-end" : "items-start"
             } mb-4`}
-        >
-            <div
-            className={`max-w-[70%] p-3 rounded-lg ${
+          >
+            <ReactMarkdown
+              className={`max-w-[70%] p-3 rounded-lg ${
                 msg.sender === "user"
-                ? "bg-green-500 text-white"
-                : "bg-gray-300 text-gray-900"
-            }`}
+                  ? "bg-brand-primary text-white"
+                  : "bg-gray-300 text-gray-900"
+              }`}
             >
-            {msg.text}
-            </div>
+              {msg.text}
+            </ReactMarkdown>
             <span className="text-xs text-gray-500 mt-1">
-            {prettyDate(msg.timestamp || new Date())}
+              {prettyDate(msg.timestamp || new Date())}
             </span>
-        </div>
+          </div>
         ))}
       </div>
-      {/* Typing tooltip */}
-      {isTyping && (
-        <div className="absolute bottom-[60px] left-0 w-full flex justify-center">
-            <div className="bg-gray-300 text-gray-700 text-sm px-4 py-2 rounded-md shadow-md w-[100px] text-center">
-            Typing{typingDots}
-            </div>
-        </div>
-        )}
-      {/* Error Tooltip */}
-      {errorMessage && (
-        <div className="absolute bottom-[60px] left-0 w-full flex justify-center">
-            <div className="bg-red-500 text-white text-sm px-4 py-2 rounded-md shadow-md text-center">
-              {errorMessage}
-            </div>
-          </div>
-        )}
+  
+      {/* Input Section */}
       <div className="flex p-3 border-t bg-white">
         <input
           type="text"
@@ -184,13 +174,20 @@ const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
         />
         <button
           onClick={handleSend}
-          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 focus:outline-none"
+          className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 focus:outline-none"
         >
           Send
         </button>
       </div>
+      {/* Footer */}
+      <div className="flex items-center justify-center bg-gray-50 p-3">
+        <span className="text-xs text-center text-gray-500">
+          Our bot may occasionally make mistakes.<br />Please verify critical information.
+        </span>
+      </div>
     </div>
   );
+  
 };
 
 export default ChatBot;

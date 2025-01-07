@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
+import NavigationBar from "../components/NavigationBar";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -10,7 +11,7 @@ const ChatsPage = () => {
   const [editingChatId, setEditingChatId] = useState(null); // Currently editing chat ID
   const [editingTitle, setEditingTitle] = useState(""); // Title being edited
   const { state } = useLocation();
-  const { email } = state?.email || "";
+  const email = state?.email || "";
 
   const prettyDate = (date) => {
     return new Date(date).toLocaleString("en-US", {
@@ -169,138 +170,156 @@ const ChatsPage = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Left Pane */}
-      <div className="w-1/3 p-4 border-r border-gray-300 bg-white">
-        {/* Career Advisor Chats */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold text-lg">Career Advisor Chats</h3>
-            <button
-              onClick={() => createNewConversation("careerAdvisor")}
-              className="text-green-500 hover:text-green-700 text-xl font-bold"
-              title="Start a new Career Advisor chat"
-            >
-              +
-            </button>
-          </div>
-          <div className="h-48 overflow-y-auto border border-gray-300 rounded-lg">
-            {careerChats.slice(0, 10).map((chat) => (
-              <div
-                key={chat._id}
-                className="p-3 border-b flex justify-between items-center hover:bg-gray-200"
-              >
-                {editingChatId === chat._id ? (
-                  <input
-                    type="text"
-                    className="w-full border px-2 py-1 rounded"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
-                    onKeyDown={(e) => e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")}
-                  />
-                ) : (
-                  <div className="flex-1">
-                    <p
-                      className="font-medium cursor-pointer"
-                      onClick={() => handleChatSelection(chat, "careerAdvisor")}
-                      onDoubleClick={() => startEditingTitle(chat._id, chat.conversationId)}
-                    >
-                      {chat.conversationId || "Untitled Chat"}
-                    </p>
-                    <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
-                  </div>
-                )}
-                <button
-                  onClick={() => removeConversation(chat._id, "careerAdvisor")}
-                  className="text-red-500 hover:text-red-700 ml-2"
-                  title="Remove chat"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Interviewer Chats */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold text-lg">Interviewer Chats</h3>
-            <button
-              onClick={() => createNewConversation("interviewer")}
-              className="text-green-500 hover:text-green-700 text-xl font-bold"
-              title="Start a new Interviewer chat"
-            >
-              +
-            </button>
-          </div>
-          <div className="h-48 overflow-y-auto border border-gray-300 rounded-lg">
-            {interviewChats.slice(0, 10).map((chat) => (
-              <div
-                key={chat._id}
-                className="p-3 border-b flex justify-between items-center hover:bg-gray-200"
-              >
-                {editingChatId === chat._id ? (
-                  <input
-                    type="text"
-                    className="w-full border px-2 py-1 rounded"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onBlur={() => saveEditedTitle(chat._id, "interviewer")}
-                    onKeyDown={(e) => e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")}
-                  />
-                ) : (
-                  <div className="flex-1">
-                    <p
-                      className="font-medium cursor-pointer"
-                      onClick={() => handleChatSelection(chat, "interviewer")}
-                      onDoubleClick={() => startEditingTitle(chat._id, chat.conversationId)}
-                    >
-                      {chat.conversationId || "Untitled Chat"}
-                    </p>
-                    <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
-                  </div>
-                )}
-                <button
-                  onClick={() => removeConversation(chat._id, "interviewer")}
-                  className="text-red-500 hover:text-red-700 ml-2"
-                  title="Remove chat"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="flex flex-col h-screen">
+      {/* Navigation Bar */}
+      <div>
+        <NavigationBar />
       </div>
-
-      {/* Right Pane */}
-      <div className="flex-1 p-4">
-        {/* Chat Header */}
-        <div className="bg-gray-200 p-3 rounded-lg mb-4">
-          <h2 className="text-xl font-bold text-center">
-            {selectedChat?.conversationId || "Select a Chat to Begin"}
-          </h2>
-        </div>
-
-        {/* Chat GPT-like Interface */}
-        {selectedChat ? (
-          <ChatBot
-            key={selectedChat._id} // Force re-render
-            chatId={selectedChat._id}
-            type={chatType}
-            initialMessages={selectedChat.messages} // Pass messages to ChatBot
-            prettyDate={prettyDate} // Pass prettyDate to format message timestamps
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <p>Select a chat from the left to view the conversation</p>
+  
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Pane */}
+        <div className="w-1/3 p-4 border-r border-gray-300 bg-white overflow-y-auto">
+          {/* Career Advisor Chats */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-lg">Career Advisor Chats</h3>
+              <button
+                onClick={() => createNewConversation("careerAdvisor")}
+                className="text-green-500 hover:text-green-700 text-xl font-bold"
+                title="Start a new Career Advisor chat"
+              >
+                +
+              </button>
+            </div>
+            <div className="h-60 overflow-y-auto border border-gray-300 rounded-lg">
+              {careerChats.slice(0, 10).map((chat) => (
+                <div
+                  key={chat._id}
+                  className={`p-3 border-b flex justify-between items-center cursor-pointer rounded-lg ${
+                    selectedChat && selectedChat._id === chat._id
+                      ? "bg-gray-200 text-gray-900 font-semibold" // Active chat styling
+                      : "hover:bg-gray-100 text-gray-700" // Inactive chat styling
+                  }`}
+                >
+                  {editingChatId === chat._id ? (
+                    <input
+                      type="text"
+                      className="w-full border px-2 py-1 rounded"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
+                      }
+                    />
+                  ) : (
+                    <div className="flex-1">
+                      <p
+                        className="font-medium cursor-pointer"
+                        onClick={() => handleChatSelection(chat, "careerAdvisor")}
+                        onDoubleClick={() =>
+                          startEditingTitle(chat._id, chat.conversationId)
+                        }
+                      >
+                        {chat.conversationId || "Untitled Chat"}
+                      </p>
+                      <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => removeConversation(chat._id, "careerAdvisor")}
+                    className="text-red-500 hover:text-red-700 ml-2"
+                    title="Remove chat"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
+  
+          {/* Interviewer Chats */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-lg">Interviewer Chats</h3>
+              <button
+                onClick={() => createNewConversation("interviewer")}
+                className="text-green-500 hover:text-green-700 text-xl font-bold"
+                title="Start a new Interviewer chat"
+              >
+                +
+              </button>
+            </div>
+            <div className="h-60 overflow-y-auto border border-gray-300 rounded-lg">
+              {interviewChats.slice(0, 10).map((chat) => (
+                <div
+                  key={chat._id}
+                  className={`p-3 border-b flex justify-between items-center cursor-pointer rounded-lg ${
+                    selectedChat && selectedChat._id === chat._id
+                      ? "bg-gray-200 text-gray-900 font-semibold" // Active chat styling
+                      : "hover:bg-gray-100 text-gray-700" // Inactive chat styling
+                  }`}
+                >
+                  {editingChatId === chat._id ? (
+                    <input
+                      type="text"
+                      className="w-full border px-2 py-1 rounded"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => saveEditedTitle(chat._id, "interviewer")}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")
+                      }
+                    />
+                  ) : (
+                    <div className="flex-1">
+                      <p
+                        className="font-medium cursor-pointer"
+                        onClick={() => handleChatSelection(chat, "interviewer")}
+                        onDoubleClick={() =>
+                          startEditingTitle(chat._id, chat.conversationId)
+                        }
+                      >
+                        {chat.conversationId || "Untitled Chat"}
+                      </p>
+                      <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => removeConversation(chat._id, "interviewer")}
+                    className="text-red-500 hover:text-red-700 ml-2"
+                    title="Remove chat"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+  
+        {/* Right Pane */}
+        <div className="flex-1 flex items-center justify-center p-4">
+          {selectedChat ? (
+            <ChatBot
+              key={selectedChat._id} // Force re-render
+              chatId={selectedChat._id}
+              type={chatType}
+              initialMessages={selectedChat.messages} // Pass messages to ChatBot
+              prettyDate={prettyDate} // Pass prettyDate to format message timestamps
+            />
+          ) : (
+            <div className="text-gray-500">
+              <p>Select a chat from the left to view the conversation</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
+  
+  
 };
 
 export default ChatsPage;
