@@ -11,6 +11,8 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 let analyzeCvPreprompt;
 let careerAdvisorPreprompt;
 let interviewerPreprompt;
+
+// Read preprompts from files for each role
 try {
   const analyzeCvPrepromptFilePath = path.resolve(__dirname, "../prompts/analyzeCvPreprompt.txt");
   analyzeCvPreprompt = fs.readFileSync(analyzeCvPrepromptFilePath, "utf-8");
