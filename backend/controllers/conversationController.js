@@ -89,7 +89,7 @@ const updateConversationTitle = async (req, res) => {
 };
 
 const saveMessageToConversation = async (req, res) => {
-  const MAX_MESSAGE_COUNT = 100;
+  const MAX_MESSAGE_COUNT = 4;
   const { id } = req.params; // Conversation ID
   const { message } = req.body; // New message object
 

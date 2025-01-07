@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
+import NavigationBar from "../components/NavigationBar";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -10,7 +11,7 @@ const ChatsPage = () => {
   const [editingChatId, setEditingChatId] = useState(null); // Currently editing chat ID
   const [editingTitle, setEditingTitle] = useState(""); // Title being edited
   const { state } = useLocation();
-  const { email } = state?.email || "";
+  const email = state?.email || "";
 
   const prettyDate = (date) => {
     return new Date(date).toLocaleString("en-US", {
@@ -169,6 +170,9 @@ const ChatsPage = () => {
   }, []);
 
   return (
+    <>
+    {/* Navigation Bar */}
+    <NavigationBar />
     <div className="flex h-screen bg-gray-100">
       {/* Left Pane */}
       <div className="w-1/3 p-4 border-r border-gray-300 bg-white">
@@ -300,6 +304,7 @@ const ChatsPage = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

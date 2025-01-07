@@ -9,7 +9,7 @@ const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
   const [errorMessage, setErrorMessage] = useState(""); // Error message for tooltip
   const { state } = useLocation();
   const { email } = state?.email || "";
-  const MAX_MESSAGE_COUNT = 100;
+  const MAX_MESSAGE_COUNT = 4;
 
   // Local dictionary for chatbot adjustments
   const botConfig = {

@@ -109,9 +109,9 @@ module.exports = {
             colors: {
                 // Custom colors for brand or themes
                 brand: {
-                    primary: '#3b82f6',
-                    secondary: '#2563eb',
-                    accent: '#10b981',
+                    primary: '#425260',
+                    secondary: '#dde2e8',
+                    accent: '#edf2f6',
                 },
                 gray: {
                     100: '#f7f7f7',
