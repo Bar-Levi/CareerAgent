@@ -15,14 +15,20 @@ let interviewerPreprompt;
 let currentSessionId = null;
 let sessionHistory = []; // Initialize an array to store session history
 
-async function loadSessionHistory(convId) {
+async function loadSessionHistory(convId, token) {
     if (currentSessionId !== convId) {
       sessionHistory = [];
       currentSessionId = convId;
     }
     try {
         // Call the API endpoint exposed by getMessagesByConvId
-        const response = await fetch(`${process.env.BACKEND_URL}/api/conversations/getMessagesByConvId?convId=${convId}`);
+        const response = await fetch(`${process.env.BACKEND_URL}/api/conversations/getMessagesByConvId?convId=${convId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -66,6 +72,8 @@ const sendToBot = async (req, res) => {
   console.log('req.body: ' + JSON.stringify(req.body));
   let preprompt = null;
   const { prompt, sessionId, type} = req.body;
+  const authHeader = req.header('Authorization');
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (type === "careerAdvisor")
     preprompt = careerAdvisorPreprompt;
@@ -77,7 +85,7 @@ const sendToBot = async (req, res) => {
   }
 
   // Retrieve or initialize history for the session
-  await loadSessionHistory(sessionId);
+  await loadSessionHistory(sessionId, token);
   console.log('\n\nsessionHistory: ' + sessionHistory);
 
 

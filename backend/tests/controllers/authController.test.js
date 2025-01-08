@@ -166,7 +166,7 @@ const {
             expect(jwt.sign).toHaveBeenCalledWith(
                 { id: mockUser._id, role: mockUser.role }, // Ensure these fields exist
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '2h' }
             );
             expect(res.status).toHaveBeenCalledWith(200);
             expect(res.json).toHaveBeenCalledWith({ message: 'Login successful.', token: 'mockToken' });

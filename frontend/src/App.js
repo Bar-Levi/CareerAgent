@@ -28,7 +28,11 @@ function App() {
                 <Route path="/verify" element={<VerificationPage />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-                <Route path="/chats" element={<ChatsPage />}/>
+                <Route path="/chats" element={
+                    <ProtectedRoute>
+                    <ChatsPage />
+                    </ProtectedRoute>
+                }/>
             </Routes>
         </Router>
     );
