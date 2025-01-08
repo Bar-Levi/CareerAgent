@@ -24,6 +24,22 @@ const getConversations = async (req, res) => {
   }
 };
 
+// Get conversations for a user
+const getMessagesByConvId = async (req, res) => {
+  console.log("\n\n-req.query: ", req.query);
+  const conversationId = req.query.convId;
+  console.log("ConversationId: " + conversationId);
+
+
+  try {
+    const conversation = await Conversation.find({ conversationId });
+    console.log("Conversation: " + JSON.stringify(conversation));
+    res.status(200).json(conversation[0].messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Create a new conversation
 const createNewConversation = async (req, res) => {
   const { email, type } = req.body;
@@ -32,6 +48,9 @@ const createNewConversation = async (req, res) => {
     // Generate a conversationId based on type and current time
     const conversationId = `${type}-${Date.now()}`;
 
+    const conversations = await Conversation.find({ email, type });
+
+    if (conversations.length < 10) {
     // Initialize an empty messages array
     const newConversation = await Conversation.create({
       email,
@@ -44,7 +63,13 @@ const createNewConversation = async (req, res) => {
     newConversation.save();
 
     res.status(201).json(newConversation);
-  } catch (error) {
+
+  }
+  else {
+    const name = type === 'interviewer' ? type : 'career advisor';
+    return res.status(400).json({ message: `You have reached the maximum number of ${name} conversations. Remove some and try again.` });
+  } 
+} catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -69,12 +94,12 @@ const removeConversation = async (req, res) => {
 // Update conversation title
 const updateConversationTitle = async (req, res) => {
   const { id } = req.params;
-  const { conversationId } = req.body; // New title
-
+  const { conversationTitle } = req.body; // New title
+  console.log("Updating id and title: " + id + '\n' + conversationTitle);
   try {
     const updatedConversation = await Conversation.findByIdAndUpdate(
       id,
-      { conversationId },
+      { conversationTitle },
       { new: true } // Return the updated document
     );
 
@@ -127,5 +152,6 @@ module.exports = {
   createNewConversation,
   removeConversation,
   updateConversationTitle,
-  saveMessageToConversation
+  saveMessageToConversation,
+  getMessagesByConvId
 };

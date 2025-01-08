@@ -5,7 +5,8 @@ const {
   createNewConversation,
   removeConversation,
   updateConversationTitle,
-  saveMessageToConversation
+  saveMessageToConversation,
+  getMessagesByConvId
 } = require("../controllers/conversationController");
 
 const router = express.Router();
@@ -15,6 +16,8 @@ router.post("/save", saveConversation);
 
 // Get all conversations for a user
 router.get("/", getConversations);
+
+router.get("/getMessagesByConvId", getMessagesByConvId);
 
 // Create a new conversation
 router.post("/new", createNewConversation);
