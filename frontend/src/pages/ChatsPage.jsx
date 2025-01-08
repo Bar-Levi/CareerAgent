@@ -3,7 +3,6 @@ import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Notification from "../components/Notification";
-import { getIdToken } from "firebase/auth/cordova";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
