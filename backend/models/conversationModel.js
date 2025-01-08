@@ -15,6 +15,11 @@ const conversationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    conversationTitle: {
+      type: String,
+      required: true,
+      default: "Untitled Conversation",
+    },
     messages: [
       {
         sender: {

@@ -2,27 +2,26 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 
-const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
+const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, initialMessages = [] }) => {
+  console.log("Initial messages: " + initialMessages);
   const [messages, setMessages] = useState(initialMessages); // Load initial messages  
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState(""); // For animated typing indicator
   const [errorMessage, setErrorMessage] = useState(""); // Error message for tooltip
   const { state } = useLocation();
-  const { email } = state?.email || "";
+  const email = state?.email || "";
   const MAX_MESSAGE_COUNT = 100;
 
   // Local dictionary for chatbot adjustments
   const botConfig = {
     careerAdvisor: {
       title: "Career Advisor",
-      apiEndpoint: `${process.env.REACT_APP_BACKEND_URL}/api/ai/sendToCareerAdvisor`,
-      sessionIdSuffix: "-1",
+      apiEndpoint: `${process.env.REACT_APP_BACKEND_URL}/api/ai/sendToBot`,
     },
     interviewer: {
       title: "Interviewer",
-      apiEndpoint: `${process.env.REACT_APP_BACKEND_URL}/api/ai/sendToInterviewer`,
-      sessionIdSuffix: "-2",
+      apiEndpoint: `${process.env.REACT_APP_BACKEND_URL}/api/ai/sendToBot`,
     },
   };
 
@@ -41,14 +40,16 @@ const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
 
   const sendMessageToAPI = async (userMessage) => {
     setIsTyping(true);
-
+    console.log("email: " + email);
+    console.log("type: " + type);
     try {
       const response = await fetch(botSettings.apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: userMessage,
-          sessionId: `${email}${botSettings.sessionIdSuffix}`,
+          sessionId: `${conversationId}`,
+          type
         }),
       });
 
@@ -134,43 +135,56 @@ const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
     <div className="relative flex flex-col h-full w-full border border-gray-300 rounded-lg shadow-md overflow-hidden">
       {/* Header */}
       <div className="bg-brand-primary text-white text-center py-3 font-bold">
-        {botSettings.title}
+        {conversationTitle}
       </div>
   
       {/* Message Area */}
       <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
         {messages.map((msg, index) => (
           <div
-            key={index}
-            className={`flex flex-col ${
-              msg.sender === "user" ? "items-end" : "items-start"
-            } mb-4`}
+          key={index}
+          className={`flex flex-col ${
+            msg.sender === "user" ? "items-end" : "items-start"
+          } mb-4`}
+        >
+          <ReactMarkdown
+            className={`max-w-[70%] p-3 rounded-lg ${
+              msg.sender === "user"
+                ? "bg-brand-primary text-white"
+                : "bg-gray-300 text-gray-900"
+            }`}
+            // Enable newlines rendering
+            components={{
+              p: ({ node, children }) => <p className="whitespace-pre-wrap">{children}</p>,
+            }}
           >
-            <ReactMarkdown
-              className={`max-w-[70%] p-3 rounded-lg ${
-                msg.sender === "user"
-                  ? "bg-brand-primary text-white"
-                  : "bg-gray-300 text-gray-900"
-              }`}
-            >
-              {msg.text}
-            </ReactMarkdown>
-            <span className="text-xs text-gray-500 mt-1">
-              {prettyDate(msg.timestamp || new Date())}
-            </span>
-          </div>
+            {msg.text}
+          </ReactMarkdown>
+          <span className="text-xs text-gray-500 mt-1">
+            {prettyDate(msg.timestamp || new Date())}
+          </span>
+        </div>
+        
         ))}
       </div>
   
       {/* Input Section */}
       <div className="flex p-3 border-t bg-white">
-        <input
-          type="text"
+        <textarea
           placeholder="Type a message..."
-          className="flex-1 p-2 border border-gray-300 rounded-lg mr-2 focus:outline-none focus:ring focus:border-blue-300"
+          className="flex-1 border border-gray-300 rounded-lg p-3 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none bg-gray-100 text-gray-900 placeholder-gray-500"
           value={input}
+          rows={1} // Default rows for multiline display
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.shiftKey) {
+              e.preventDefault(); // Prevent the default behavior
+              setInput((prevInput) => prevInput + "\n"); // Append a newline
+            } else if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault(); // Prevent the default behavior
+              handleSend(); // Call the send function
+            }
+          }}
         />
         <button
           onClick={handleSend}
@@ -179,6 +193,7 @@ const ChatBot = ({ chatId, prettyDate, type, initialMessages = [] }) => {
           Send
         </button>
       </div>
+
       {/* Footer */}
       <div className="flex items-center justify-center bg-gray-50 p-3">
         <span className="text-xs text-center text-gray-500">

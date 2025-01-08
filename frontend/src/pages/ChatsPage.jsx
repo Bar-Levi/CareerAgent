@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
+import Notification from "../components/Notification";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -12,6 +13,14 @@ const ChatsPage = () => {
   const [editingTitle, setEditingTitle] = useState(""); // Title being edited
   const { state } = useLocation();
   const email = state?.email || "";
+  const [notification, setNotification] = useState(null);
+  
+
+  // Show notification
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+};
 
   const prettyDate = (date) => {
     return new Date(date).toLocaleString("en-US", {
@@ -41,8 +50,9 @@ const ChatsPage = () => {
       const careerChats = data.filter((chat) => chat.type === "careerAdvisor");
       const interviewChats = data.filter((chat) => chat.type === "interviewer");
 
-      setCareerChats(careerChats);
-      setInterviewChats(interviewChats);
+      setCareerChats(careerChats.reverse());
+      setInterviewChats(interviewChats.reverse());
+
     } catch (error) {
       console.error("Error fetching chat histories:", error);
     }
@@ -64,9 +74,15 @@ const ChatsPage = () => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to create a new conversation");
+        // Check if the response status is 400 and display the error message
+        if (response.status === 400) {
+          const errorData = await response.json();
+          showNotification('error', errorData.message);
+        } else {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        return; // Exit the function after handling the error
       }
-
       const newChat = await response.json();
 
       // Add the new conversation to the relevant chat list
@@ -132,7 +148,7 @@ const ChatsPage = () => {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            conversationId: editingTitle, // Update the title
+            conversationTitle: editingTitle, // Update the title
           }),
         }
       );
@@ -145,13 +161,13 @@ const ChatsPage = () => {
       if (type === "careerAdvisor") {
         setCareerChats((prev) =>
           prev.map((chat) =>
-            chat._id === chatId ? { ...chat, conversationId: editingTitle } : chat
+            chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
           )
         );
       } else if (type === "interviewer") {
         setInterviewChats((prev) =>
           prev.map((chat) =>
-            chat._id === chatId ? { ...chat, conversationId: editingTitle } : chat
+            chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
           )
         );
       }
@@ -167,10 +183,17 @@ const ChatsPage = () => {
   // Fetch chat histories when component mounts
   useEffect(() => {
     fetchHistoryChats();
-  }, []);
+  }, [selectedChat]);
 
   return (
     <div className="flex flex-col h-screen">
+      {notification && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(null)}
+                />
+      )}
       {/* Navigation Bar */}
       <div>
         <NavigationBar />
@@ -193,7 +216,7 @@ const ChatsPage = () => {
               </button>
             </div>
             <div className="h-60 overflow-y-auto border border-gray-300 rounded-lg">
-              {careerChats.slice(0, 10).map((chat) => (
+              {careerChats.map((chat) => (
                 <div
                   key={chat._id}
                   className={`p-3 border-b flex justify-between items-center cursor-pointer rounded-lg ${
@@ -214,15 +237,17 @@ const ChatsPage = () => {
                       }
                     />
                   ) : (
-                    <div className="flex-1">
+                    <div 
+                      className="flex-1"
+                      onClick={() => handleChatSelection(chat, "careerAdvisor")}
+                      >
                       <p
                         className="font-medium cursor-pointer"
-                        onClick={() => handleChatSelection(chat, "careerAdvisor")}
                         onDoubleClick={() =>
-                          startEditingTitle(chat._id, chat.conversationId)
+                          startEditingTitle(chat._id, chat.conversationTitle)
                         }
                       >
-                        {chat.conversationId || "Untitled Chat"}
+                        {chat.conversationTitle}
                       </p>
                       <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
                     </div>
@@ -252,7 +277,7 @@ const ChatsPage = () => {
               </button>
             </div>
             <div className="h-60 overflow-y-auto border border-gray-300 rounded-lg">
-              {interviewChats.slice(0, 10).map((chat) => (
+              {interviewChats.map((chat) => (
                 <div
                   key={chat._id}
                   className={`p-3 border-b flex justify-between items-center cursor-pointer rounded-lg ${
@@ -273,15 +298,17 @@ const ChatsPage = () => {
                       }
                     />
                   ) : (
-                    <div className="flex-1">
+                    <div
+                      className="flex-1"
+                      onClick={() => handleChatSelection(chat, "interviewer")}
+                    >
                       <p
                         className="font-medium cursor-pointer"
-                        onClick={() => handleChatSelection(chat, "interviewer")}
                         onDoubleClick={() =>
-                          startEditingTitle(chat._id, chat.conversationId)
+                          startEditingTitle(chat._id, chat.conversationTitle)
                         }
                       >
-                        {chat.conversationId || "Untitled Chat"}
+                        {chat.conversationTitle}
                       </p>
                       <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
                     </div>
@@ -305,6 +332,8 @@ const ChatsPage = () => {
             <ChatBot
               key={selectedChat._id} // Force re-render
               chatId={selectedChat._id}
+              conversationId={selectedChat.conversationId}
+              conversationTitle={selectedChat.conversationTitle}
               type={chatType}
               initialMessages={selectedChat.messages} // Pass messages to ChatBot
               prettyDate={prettyDate} // Pass prettyDate to format message timestamps
