@@ -50,7 +50,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         state: {
                             email: formData.email,
                             role: formData.role,
-                            token,
                         },
                     });
                 } else if (response.status === 405) {
