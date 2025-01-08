@@ -127,17 +127,7 @@ const generateJsonFromCV = async (req, res) => {
     return res.status(400).json({ error: "Prompt and sessionId are required" });
   }
 
-  // Retrieve or initialize history for the session
-  if (!sessionHistory.has(sessionId)) {
-    sessionHistory.set(sessionId, []);
-  }
-  const history = sessionHistory.get(sessionId);
-
-  // Construct the input with history
-  const formattedHistory = history
-    .map((entry) => `${entry.role}: ${entry.content}`)
-    .join("\n");
-  const input = `${analyzeCvPreprompt}, ${formattedHistory}. Now tell me - ${prompt}`;
+  const input = `${analyzeCvPreprompt}. Now tell me - ${prompt}`;
 
   try {
     console.log("Input: " + JSON.stringify(input));
@@ -147,12 +137,6 @@ const generateJsonFromCV = async (req, res) => {
     const responseText = result.response.text();
 
     console.log("Response: " + JSON.stringify(responseText));
-    // Append the new exchange to the history
-    history.push({ role: "user", content: prompt });
-    history.push({ role: "assistant", content: responseText });
-
-    // Save updated history
-    sessionHistory.set(sessionId, history);
 
     res.status(200).json({ response: responseText });
   } catch (error) {
