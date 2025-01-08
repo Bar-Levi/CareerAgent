@@ -13,6 +13,7 @@ const ChatsPage = () => {
   const [editingTitle, setEditingTitle] = useState(""); // Title being edited
   const { state } = useLocation();
   const email = state?.email || "";
+  const token = state?.token || "";
   const [notification, setNotification] = useState(null);
   
 
@@ -37,8 +38,15 @@ const ChatsPage = () => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/?email=${encodeURIComponent(email)}`,
-        { method: "GET" }
+        {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
+      
 
       if (!response.ok) {
         throw new Error("Failed to fetch chat histories");
@@ -65,7 +73,10 @@ const ChatsPage = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/new`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({
             email,
             type,
@@ -105,7 +116,12 @@ const ChatsPage = () => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
-        { method: "DELETE" }
+        { method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+         }
       );
 
       if (!response.ok) {
@@ -130,9 +146,34 @@ const ChatsPage = () => {
 
   // Handle editing a chat title
   const startEditingTitle = (chatId, currentTitle) => {
-    setEditingChatId(chatId);
-    setEditingTitle(currentTitle);
+    if (currentTitle.length > 0) {
+      setEditingChatId(chatId);
+      setEditingTitle(currentTitle);
+    }
   };
+
+  // Handle real-time title editing
+  const handleTitleChange = (e, chatId, type) => {
+    const newTitle = e.target.value;
+    setEditingTitle(newTitle);
+
+    // Update the chat title in the corresponding list
+    if (type === "careerAdvisor") {
+      setCareerChats((prev) =>
+        prev.map((chat) =>
+          chat._id === chatId ? { ...chat, conversationTitle: newTitle } : chat
+        )
+      );
+    } else if (type === "interviewer") {
+      setInterviewChats((prev) =>
+        prev.map((chat) =>
+          chat._id === chatId ? { ...chat, conversationTitle: newTitle } : chat
+        )
+      );
+    }
+  };
+
+
   // Handle selecting a chat
   const handleChatSelection = (chat, type) => {
     setSelectedChat(chat);
@@ -146,7 +187,10 @@ const ChatsPage = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
           body: JSON.stringify({
             conversationTitle: editingTitle, // Update the title
           }),
@@ -170,6 +214,11 @@ const ChatsPage = () => {
             chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
           )
         );
+      }
+
+      // If the updated chat is selected, update the title in the ChatBot
+      if (selectedChat && selectedChat._id === chatId) {
+        setSelectedChat((prev) => ({ ...prev, conversationTitle: editingTitle }));
       }
 
       // Stop editing
@@ -230,7 +279,7 @@ const ChatsPage = () => {
                       type="text"
                       className="w-full border px-2 py-1 rounded"
                       value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onChange={(e) => handleTitleChange(e, chat._id, 'carerrAdvisor')}
                       onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
                       onKeyDown={(e) =>
                         e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
@@ -257,7 +306,7 @@ const ChatsPage = () => {
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
-                    ✕
+                    x
                   </button>
                 </div>
               ))}
@@ -291,7 +340,7 @@ const ChatsPage = () => {
                       type="text"
                       className="w-full border px-2 py-1 rounded"
                       value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onChange={(e) => handleTitleChange(e, chat._id, 'interviewer')}
                       onBlur={() => saveEditedTitle(chat._id, "interviewer")}
                       onKeyDown={(e) =>
                         e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")

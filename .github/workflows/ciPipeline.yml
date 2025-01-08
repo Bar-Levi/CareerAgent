@@ -54,6 +54,7 @@ jobs:
           echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
           echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+          echo "BACKEND_URL=${{ secrets.BACKEND_URL }}" >> .env
         working-directory: backend
 
       # Step 5: Run backend tests

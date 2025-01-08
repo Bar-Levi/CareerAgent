@@ -199,7 +199,7 @@ const loginUser = async (req, res) => {
 
         // Check account verification
         if (!user.isVerified) {
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
             return res.status(403).json({ message: 'Please verify your email before logging in.', token });
         }
 
@@ -209,7 +209,7 @@ const loginUser = async (req, res) => {
         await user.save();
 
         // Generate JWT token for successful login
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
         res.status(200).json({ message: 'Login successful.', token });
     } catch (error) {
         console.error(`[Login] Error occurred: ${error.message}`);

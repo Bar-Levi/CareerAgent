@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import Notification from "./Notification";
 
 const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, initialMessages = [] }) => {
   console.log("Initial messages: " + initialMessages);
@@ -8,11 +9,13 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState(""); // For animated typing indicator
-  const [errorMessage, setErrorMessage] = useState(""); // Error message for tooltip
   const { state } = useLocation();
   const email = state?.email || "";
+  const token = state?.token || "";
   const MAX_MESSAGE_COUNT = 100;
-
+  const [notification, setNotification] = useState(null);
+  
+  console.log("Token: " + token);
   // Local dictionary for chatbot adjustments
   const botConfig = {
     careerAdvisor: {
@@ -26,6 +29,12 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
   };
 
   const botSettings = botConfig[type] || botConfig.careerAdvisor; // Default to careerAdvisor
+
+   // Show notification
+   const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+};
 
   // Handle animated typing indicator
   useEffect(() => {
@@ -45,7 +54,10 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
     try {
       const response = await fetch(botSettings.apiEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+      },
         body: JSON.stringify({
           prompt: userMessage,
           sessionId: `${conversationId}`,
@@ -87,7 +99,10 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
       // Save the message in the backend
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+      },
         body: JSON.stringify({
           message: userMessage,
         }),
@@ -97,8 +112,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
         if (response.status === 400) {
           const data = await response.json();
           console.log(data.error);
-          setErrorMessage(data.error); // Set error message
-          setTimeout(() => setErrorMessage(""), 5000); // Hide error tooltip after 5 seconds
+          showNotification('error', data.error); // Show error notification
           throw new Error(data.error);
         }
         throw new Error("Failed to save the user message");
@@ -113,7 +127,10 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
       // Save the bot's reply to the backend
       const botResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}/messages`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           message: botMessage,
         }),
@@ -133,6 +150,14 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
 
   return (
     <div className="relative flex flex-col h-full w-full border border-gray-300 rounded-lg shadow-md overflow-hidden">
+      {/* Error Notification */}
+      {notification && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(null)}
+                />
+      )}
       {/* Header */}
       <div className="bg-brand-primary text-white text-center py-3 font-bold">
         {conversationTitle}
@@ -142,31 +167,48 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
       <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
         {messages.map((msg, index) => (
           <div
-          key={index}
-          className={`flex flex-col ${
-            msg.sender === "user" ? "items-end" : "items-start"
-          } mb-4`}
+            key={index}
+            className={`flex flex-col ${
+              msg.sender === "user" ? "items-end" : "items-start"
+            } mb-4`}
+          >
+            <ReactMarkdown
+              className={`max-w-[70%] p-3 rounded-lg ${
+                msg.sender === "user"
+                  ? "bg-brand-primary text-white"
+                  : "bg-gray-300 text-gray-900"
+              }`}
+              // Enable newlines rendering
+              components={{
+                p: ({ node, children }) => <p className="whitespace-pre-wrap">{children}</p>,
+              }}
+            >
+              {msg.text}
+            </ReactMarkdown>
+            <span className="text-xs text-gray-500 mt-1">
+              {prettyDate(msg.timestamp || new Date())}
+            </span>
+          </div>
+        ))}
+        {/* Typing tooltip */}
+        {isTyping && (
+          <div
+          className={`flex flex-col items-start mb-4`}
         >
-          <ReactMarkdown
-            className={`max-w-[70%] p-3 rounded-lg ${
-              msg.sender === "user"
-                ? "bg-brand-primary text-white"
-                : "bg-gray-300 text-gray-900"
-            }`}
+          <div
+            className={`max-w-[70%] p-3 rounded-lg
+                bg-gray-300 text-gray-900`}
             // Enable newlines rendering
             components={{
               p: ({ node, children }) => <p className="whitespace-pre-wrap">{children}</p>,
             }}
           >
-            {msg.text}
-          </ReactMarkdown>
-          <span className="text-xs text-gray-500 mt-1">
-            {prettyDate(msg.timestamp || new Date())}
-          </span>
+            Typing{typingDots}
+          </div>
         </div>
-        
-        ))}
+        )}
       </div>
+  
   
       {/* Input Section */}
       <div className="flex p-3 border-t bg-white">
@@ -193,7 +235,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
           Send
         </button>
       </div>
-
+  
       {/* Footer */}
       <div className="flex items-center justify-center bg-gray-50 p-3">
         <span className="text-xs text-center text-gray-500">
@@ -202,6 +244,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
       </div>
     </div>
   );
+  
   
 };
 

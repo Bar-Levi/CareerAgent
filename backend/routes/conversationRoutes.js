@@ -9,25 +9,29 @@ const {
   getMessagesByConvId
 } = require("../controllers/conversationController");
 
+const {
+  protect
+} = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
 // Save a conversation
-router.post("/save", saveConversation);
+router.post("/save", protect, saveConversation);
 
 // Get all conversations for a user
-router.get("/", getConversations);
+router.get("/", protect, getConversations);
 
-router.get("/getMessagesByConvId", getMessagesByConvId);
+router.get("/getMessagesByConvId", protect, getMessagesByConvId);
 
 // Create a new conversation
-router.post("/new", createNewConversation);
+router.post("/new", protect, createNewConversation);
 
 // Remove a conversation
-router.delete("/:id", removeConversation); // Pass conversation ID in the route
+router.delete("/:id", protect, removeConversation); // Pass conversation ID in the route
 
 // Update conversation title
-router.put("/:id", updateConversationTitle); // Pass conversation ID in the route
+router.put("/:id", protect, updateConversationTitle); // Pass conversation ID in the route
 
-router.post("/:id/messages", saveMessageToConversation); // Add a message to a conversation
+router.post("/:id/messages", protect, saveMessageToConversation); // Add a message to a conversation
 
 module.exports = router;
