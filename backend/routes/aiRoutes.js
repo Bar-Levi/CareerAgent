@@ -11,7 +11,7 @@ const {
 
 const router = express.Router();
 
-router.post("/generateJsonFromCV", protect, generateJsonFromCV);
+router.post("/generateJsonFromCV", generateJsonFromCV);
 router.post("/sendToBot", protect, sendToBot);
 
 

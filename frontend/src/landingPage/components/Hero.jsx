@@ -48,7 +48,32 @@ const Hero = () => {
           >
             Learn More
           </motion.button>
+          
         </div>
+        <motion.div
+      animate={{ y: [0, 10, 0] }} // Animate y-position
+      transition={{
+        duration: 1.5, // Duration of one cycle
+        repeat: Infinity, // Repeat forever
+        repeatType: "loop", // No pause between cycles
+      }}
+      className="flex justify-center mt-8"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="white"
+        className="w-8 h-8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M19.5 12.75L12 20.25L4.5 12.75"
+        />
+      </svg>
+    </motion.div>
       </div>
     </section>
   );
