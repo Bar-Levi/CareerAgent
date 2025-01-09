@@ -19,10 +19,10 @@ const VerificationPage = () => {
     const [isResendDisabled, setIsResendDisabled] = useState(true);
     const [notification, setNotification] = useState(null);
 
-    // Redirect to dashboard if email is not provided
+    // Redirect to authentication if email is not provided
     useEffect(() => {
         if (!state?.email) {
-            navigate('/');
+            navigate('/authentication');
         }
     }, [state, navigate]);
 

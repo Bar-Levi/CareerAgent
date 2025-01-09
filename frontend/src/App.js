@@ -8,13 +8,14 @@ import ResetPassword from './components/ResetPassword';
 import TermsAndConditions from './components/TermsAndConditions';
 import ResetLoginAttempts from './components/ResetLoginAttempts';
 import ChatsPage from './pages/ChatsPage';
+import LandingPage from './landingPage/LandingPage';
 
 
 function App() {
     return (
         <Router>
             <Routes>
-                <Route path="/" element={<AuthenticationForm />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/authentication" element={<AuthenticationForm />} />
                 <Route path="/reset-login-attempts" element={<ResetLoginAttempts />} />
                 <Route
