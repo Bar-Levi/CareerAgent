@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 
 const Features = () => (
-  <section className="relative bg-gray-600 bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
+  <section className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
     {/* Particles Background */}
     <ParticlesComponent id="particles-features" />
 

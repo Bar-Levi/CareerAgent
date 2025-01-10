@@ -16,7 +16,7 @@ const Testimonials = () => {
   };
 
   return (
-    <section className="relative bg-gray-600 bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
       {/* Particles Background */}
       <ParticlesComponent id="particles-testimonials" />
 
