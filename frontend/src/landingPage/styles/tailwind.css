@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Tailwind Classes or Overrides (if needed) */
+
+/* Example: Custom button styles (Optional) */
+.btn-primary {
+  @apply bg-accent text-white py-2 px-4 rounded-lg hover:bg-green-600 transition;
+}
+
+.btn-secondary {
+  @apply border border-accent text-accent py-2 px-4 rounded-lg hover:bg-green-100 hover:text-green-600 transition;
+}

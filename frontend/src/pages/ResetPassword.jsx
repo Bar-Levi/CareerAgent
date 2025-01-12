@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Notification from './Notification';
+import Notification from '../components/Notification';
 
 const ResetPassword = () => {
     const [formData, setFormData] = useState({ token: '', newPassword: '' });
@@ -80,7 +80,7 @@ const ResetPassword = () => {
 
             // Redirect to login page after 2 seconds
             setTimeout(() => {
-                navigate('/');
+                navigate('/authentication');
             }, 2000);
         } catch (error) {
             showNotification('error', error.message);

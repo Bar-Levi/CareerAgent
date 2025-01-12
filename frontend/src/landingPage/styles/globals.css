@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Global Styles */
+body {
+  @apply bg-gray-50 text-gray-800 font-sans;
+}
+
+/* Ensures the slider takes up the full container width */
+.slick-slider {
+    overflow: hidden;
+  }
+  
+  .slick-list {
+    margin: 0 auto; /* Center the slides */
+  }
+  
+  .slick-slide {
+    display: flex;
+    justify-content: center; /* Center content inside each slide */
+  }
+  
+  .slick-dots li button:before {
+    color: white; /* Change the dot color */
+  }
+  
+  .particles-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Behind the content but above the background */
+  }
+  
+  /* Animated Gradient Background */
+.animated-bg {
+    background: linear-gradient(120deg, #007ACC, #1DB954, #F76C6C);
+    background-size: 200% 200%;
+    animation: gradient-animation 6s ease infinite;
+  }
+  
+  @keyframes gradient-animation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+
+  #particles canvas {
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+  }
+  .particles-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* Set to 0 to prevent overlapping content */
+  }
+  
+  /* Ensure the Hero content is above particles */
+  .hero-content {
+    z-index: 10;
+  }
+  

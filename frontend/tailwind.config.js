@@ -5,6 +5,10 @@ module.exports = {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ["Roboto", "sans-serif"],
+                heading: ["Montserrat", "sans-serif"],
+              },
             animation: {
                 // Faster pulse and sweep animations
                 'pulse-fast': 'pulse 2s infinite',
