@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Notification from './Notification';
+import Notification from '../components/Notification';
 
 const ResetPassword = () => {
     const [formData, setFormData] = useState({ token: '', newPassword: '' });

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
+import Chatbot from "../botpress/ChatBot";
 
 const Dashboard = () => {
     const [userData, setUserData] = useState(null);
@@ -102,6 +103,8 @@ const Dashboard = () => {
 
     return (
         <div className="h-screen flex flex-col bg-gray-100">
+        
+            <Chatbot />
           {/* Navigation Bar */}
           <NavigationBar />
     

@@ -11,7 +11,7 @@ const Hero = () => {
     return text.split("").map((char, index) => (
       <span
         key={index}
-        className="relative text-gray-900 transition-all duration-700 ease-in-out opacity-20 hover:text-gray-300 hover:opacity-100 font-sans-serif"
+        className="relative text-gray-900 transition-all duration-700 ease-in-out opacity-20 hover:text-gray-700 hover:opacity-100 hover:scale-110 font-sans-serif"
         style={{
           display: "inline-block",
           textShadow: "0 0 30px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 255, 1)",
@@ -32,10 +32,10 @@ const Hero = () => {
       <div className="text-center px-4 sm:px-8 z-10">
         {/* Title with hover effect */}
         <motion.h1
-          className="font-heading font-extrabold mb-4 text-gray-300"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
+          className="font-heading font-extrabold mb-4"
+          initial={{ opacity: 0, y: 300, scale: 0.5 }}
+          animate={{ opacity: 1, y: 0, scale: 1}}
+          transition={{ duration: 1.5 }}
           style={{
             fontSize: "clamp(2rem, 10vw, 8rem)", // Dynamically adjusts between 2rem and 8rem
             lineHeight: "1.1", // Ensure the line height matches the size

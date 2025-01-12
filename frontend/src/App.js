@@ -1,12 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
-import AuthenticationForm from './components/AuthenticationForm';
+import AuthenticationPage from './pages/AuthenticationPage';
 import Dashboard from './pages/Dashboard';
 import VerificationPage from './pages/VerificationPage';
-import ResetPassword from './components/ResetPassword';
-import TermsAndConditions from './components/TermsAndConditions';
-import ResetLoginAttempts from './components/ResetLoginAttempts';
+import ResetPassword from './pages/ResetPassword';
+import TermsAndConditions from './pages/TermsAndConditions';
+import ResetLoginAttempts from './pages/ResetLoginAttempts';
 import ChatsPage from './pages/ChatsPage';
 import LandingPage from './landingPage/LandingPage';
 
@@ -16,7 +16,7 @@ function App() {
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
-                <Route path="/authentication" element={<AuthenticationForm />} />
+                <Route path="/authentication" element={<AuthenticationPage />} />
                 <Route path="/reset-login-attempts" element={<ResetLoginAttempts />} />
                 <Route
                     path="/dashboard"
@@ -31,7 +31,7 @@ function App() {
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                 <Route path="/chats" element={
                     <ProtectedRoute>
-                    <ChatsPage />
+                        <ChatsPage />
                     </ProtectedRoute>
                 }/>
             </Routes>
