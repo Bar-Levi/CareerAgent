@@ -34,11 +34,10 @@ describe('Auth Routes', () => {
         const response = await request(app).post('/api/auth/registerJobSeeker').send({
             fullName: 'John Doe',
             email: 'john.doe@example.com',
-            password: 'password123',
+            password: 'Password123',
             phone: '1234567890',
             pin: '123456',
         });
-
         expect(response.status).toBe(201);
         expect(response.body.message).toBe('Registration successful. Verification code sent to email.');
     });

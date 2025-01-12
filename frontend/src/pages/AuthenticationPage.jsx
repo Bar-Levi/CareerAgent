@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import RegistrationForm from './RegistrationForm';
-import LoginForm from './LoginForm';
+import RegistrationForm from '../components/RegistrationForm';
+import LoginForm from '../components/LoginForm';
 import { useLocation } from 'react-router-dom';
 import Notification from '../components/Notification';
 
 
-const AuthenticationForm = () => {
+const AuthenticationPage = () => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [mouseX, setMouseX] = useState(0);
     const [mouseY, setMouseY] = useState(0);
@@ -238,4 +238,4 @@ const AuthenticationForm = () => {
     );
 };
 
-export default AuthenticationForm;
+export default AuthenticationPage;

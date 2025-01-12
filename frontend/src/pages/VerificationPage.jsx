@@ -19,10 +19,10 @@ const VerificationPage = () => {
     const [isResendDisabled, setIsResendDisabled] = useState(true);
     const [notification, setNotification] = useState(null);
 
-    // Redirect to dashboard if email is not provided
+    // Redirect to authentication if email is not provided
     useEffect(() => {
         if (!state?.email) {
-            navigate('/');
+            navigate('/authentication');
         }
     }, [state, navigate]);
 
@@ -146,6 +146,7 @@ const VerificationPage = () => {
                     </label>
                     <input
                         type="text"
+                        data-cy="verification-code"
                         placeholder="Enter verification code"
                         value={code}
                         onChange={(e) => setCode(e.target.value)}
@@ -157,6 +158,7 @@ const VerificationPage = () => {
                 {/* Submit Button */}
                 <button
                     type="submit"
+                    data-cy="verification-submit"
                     className="w-full py-3 bg-gray-800 text-white rounded-lg font-semibold tracking-wide hover:bg-gray-700 active:scale-95 transition-all duration-300 animate-fade-in"
                 >
                     Verify

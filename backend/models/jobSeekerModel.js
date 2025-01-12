@@ -35,7 +35,7 @@ const jobSeekerSchema = new mongoose.Schema({
     profilePic: {
         type: String,
         required: false,
-        default: 'https://res.cloudinary.com/demooji6w/image/upload/v1735084555/user_1_psxsus.png',
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
     },
     githubUrl: {
         type: String,
@@ -81,6 +81,10 @@ const jobSeekerSchema = new mongoose.Schema({
     pin: {
         type: String,
     },
+    analyzed_cv_content: {
+        type: {},
+        required: false,
+    }
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

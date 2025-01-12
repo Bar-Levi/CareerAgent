@@ -1,7 +1,14 @@
 module.exports = {
-    content: ['./src/**/*.{js,jsx}', './public/index.html'],
+    content: [
+        './src/**/*.{js,jsx}',
+        './public/index.html'
+    ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ["Roboto", "sans-serif"],
+                heading: ["Montserrat", "sans-serif"],
+              },
             animation: {
                 // Faster pulse and sweep animations
                 'pulse-fast': 'pulse 2s infinite',
@@ -20,6 +27,7 @@ module.exports = {
                 'slide-down': 'slide-down 0.8s ease-out',
                 'fade-in': 'fade-in 1s ease-in-out',
                 'fade-in-fast': 'fade-in 0.5s ease-in-out',
+                "slide-up": "slide-up 0.3s ease-out",
 
                 // Flipping and rotating animations
                 'flip': 'flip 1s ease-in-out',
@@ -97,13 +105,17 @@ module.exports = {
                     '0%': { transform: 'scale(1)' },
                     '100%': { transform: 'scale(0.8)' },
                 },
+                "slide-up": {
+                    "0%": { transform: "translateY(100%)", opacity: 0 },
+                    "100%": { transform: "translateY(0)", opacity: 1 },
+                    },
             },
             colors: {
                 // Custom colors for brand or themes
                 brand: {
-                    primary: '#3b82f6',
-                    secondary: '#2563eb',
-                    accent: '#10b981',
+                    primary: '#425260',
+                    secondary: '#dde2e8',
+                    accent: '#edf2f6',
                 },
                 gray: {
                     100: '#f7f7f7',
