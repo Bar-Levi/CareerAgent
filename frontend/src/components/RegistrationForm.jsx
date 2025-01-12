@@ -24,6 +24,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [isOptionalFormVisible, setIsOptionalFormVisible] = useState(false);
     const [isTermsAccepted, setIsTermsAccepted] = useState(false);
 
+    const passwordRules = "Password must include uppercase, lowercase, a number, a special character, and be at least 8 characters long.";
+
     const navigate = useNavigate();
 
     const showNotification = (type, message) => {
@@ -70,7 +72,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         if (passwordStrength < 4 || formData.password.length < 8) {
             showNotification(
                 'error',
-                'Password must include uppercase, lowercase, a number, a special character, and be at least 8 characters long.'
+                passwordRules
             );
             return;
         }
@@ -168,6 +170,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             Copy PIN
                         </button>
                         <p style="margin-top: 10px;">You will need this PIN in the future. This PIN and message will appear only once.</p>
+                        <p>For your convenience, we have saved your PIN in a file named <b>pin.txt</b> for you to download.</p>
                         <p>If you lose the PIN or accidentally close this window, refer to the <a href="/terms-and-conditions" target="_blank">Terms and Conditions</a> on how to regain your PIN.</p>
                     `,
                     icon: 'info',
@@ -188,6 +191,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         });
                     },
                 });
+
+                // Download the PIN code to a .txt file.
+                const downloadLink = document.createElement('a');
+                downloadLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(formData.pin)}`;
+                downloadLink.download = 'pin.txt';
+                downloadLink.click();
                 
             } else {
                 showNotification('error', data.message);
@@ -307,7 +316,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 />
                             </>
                         )}
-                        <div className="relative">
+
+                        <div className="relative group">
                             <input
                                 type={isPasswordVisible ? 'text' : 'password'}
                                 name="password"
@@ -318,13 +328,35 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                 required
                             />
+                            {/* Toggle visibility icon */}
                             <span
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
+                                className="absolute right-10 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
                                 onClick={() => setIsPasswordVisible((prev) => !prev)}
                             >
                                 <i className={`fa ${isPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
                             </span>
+
+                            
+                            {/* Custom Tooltip */}
+                            <span
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-lg group-hover:text-gray-700"
+                            >
+                                <i className="fa fa-info-circle" />
+                            </span>
+                            <div className="z-10 absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-3 w-64">
+                                <p>
+                                Password must:
+                                <ul className="list-disc pl-4">
+                                    <li>Be at least 8 characters long</li>
+                                    <li>Contain an uppercase letter</li>
+                                    <li>Include a number</li>
+                                    <li>Have a special character</li>
+                                </ul>
+                                </p>
+                            </div>
                         </div>
+
+
                         <div className="mt-2">
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm font-medium text-gray-700">{getStrengthText()}</span>
@@ -336,6 +368,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 />
                             </div>
                         </div>
+
                         <div className="relative">
                             <input
                                 type={isConfirmPasswordVisible ? 'text' : 'password'}
@@ -419,3 +452,4 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 };
 
 export default RegistrationForm;
+

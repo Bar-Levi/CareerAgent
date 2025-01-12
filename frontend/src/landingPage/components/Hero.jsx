@@ -101,8 +101,8 @@ const Hero = () => {
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
-            stroke="gray"
-            className="w-8 h-8"
+            stroke="white"
+            className="w-16 h-16"
           >
             <path
               strokeLinecap="round"
