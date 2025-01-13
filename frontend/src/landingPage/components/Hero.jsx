@@ -11,7 +11,7 @@ const Hero = () => {
     return text.split("").map((char, index) => (
       <span
         key={index}
-        className="relative text-gray-900 transition-all duration-700 ease-in-out opacity-20 hover:text-gray-700 hover:opacity-100 hover:scale-110 font-sans-serif"
+        className="relative text-gray-900 transition-all duration-700 ease-in-out opacity-30 hover:text-gray-700 hover:opacity-100 hover:scale-110 font-sans-serif"
         style={{
           display: "inline-block",
           textShadow: "0 0 30px rgba(255, 255, 255, 1), 0 0 30px rgba(255, 255, 255, 1)",
