@@ -9,6 +9,7 @@ import TermsAndConditions from './pages/TermsAndConditions';
 import ResetLoginAttempts from './pages/ResetLoginAttempts';
 import ChatsPage from './pages/ChatsPage';
 import LandingPage from './landingPage/LandingPage';
+import FAQ from './pages/FAQ';
 
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
                         <ChatsPage />
                     </ProtectedRoute>
                 }/>
+                <Route path="FAQ" element={<FAQ />} />
             </Routes>
         </Router>
     );

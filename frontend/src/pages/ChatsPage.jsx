@@ -306,7 +306,7 @@ const ChatsPage = () => {
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
-                    x
+                    ✕
                   </button>
                 </div>
               ))}
