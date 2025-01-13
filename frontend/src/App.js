@@ -35,7 +35,7 @@ function App() {
                         <ChatsPage />
                     </ProtectedRoute>
                 }/>
-                <Route path="FAQ" element={<FAQ />} />
+                <Route path="/FAQ" element={<FAQ />} />
             </Routes>
         </Router>
     );
