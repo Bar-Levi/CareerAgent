@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import Notification from "./Notification";
+import HeaderWithToggle from "./HeaderWithToggle";
 
 const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, initialMessages = [] }) => {
-  console.log("Initial messages: " + initialMessages);
   const [messages, setMessages] = useState(initialMessages); // Load initial messages  
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -15,7 +15,6 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
   const MAX_MESSAGE_COUNT = 100;
   const [notification, setNotification] = useState(null);
   
-  console.log("Token: " + token);
   // Local dictionary for chatbot adjustments
   const botConfig = {
     careerAdvisor: {
@@ -148,6 +147,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
     
   };
 
+  
   return (
     <div className="relative flex flex-col h-full w-full border border-gray-300 rounded-lg shadow-md overflow-hidden">
       {/* Error Notification */}
@@ -159,9 +159,8 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
                 />
       )}
       {/* Header */}
-      <div className="bg-brand-primary text-white text-center py-3 font-bold">
-        {conversationTitle}
-      </div>
+      <HeaderWithToggle conversationTitle={conversationTitle} />
+
   
       {/* Message Area */}
       <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">

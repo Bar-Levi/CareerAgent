@@ -182,6 +182,9 @@ const ChatsPage = () => {
     };
       
   const saveEditedTitle = async (chatId, type) => {
+    if (editingTitle === "") {
+      showNotification("error", "Title cannot be empty");
+    } else {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
@@ -227,6 +230,7 @@ const ChatsPage = () => {
     } catch (error) {
       console.error("Error updating conversation title:", error);
     }
+  }
   };
 
   // Fetch chat histories when component mounts
