@@ -6,6 +6,6 @@ html, body {
     margin: 0;
     padding: 0;
     height: 100%; /* Ensure the height is 100% */
-    background-color: hsl(0, 0%, 7%); /* Match the app background */
+    background-color: '#425260' /* Match the app background */
   }
   

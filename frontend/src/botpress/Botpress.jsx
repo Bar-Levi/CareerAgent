@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 
-const Chatbot = () => {
+const Botpress = () => {
 
   useEffect(() => {
     const BotpressWebchatLoader = document.createElement('script')
@@ -18,4 +18,4 @@ const Chatbot = () => {
   return <div id="webchat" />
 }
 
-export default Chatbot
+export default Botpress

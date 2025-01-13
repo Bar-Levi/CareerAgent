@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
-import Chatbot from "../botpress/ChatBot";
+import Botpress from "../botpress/Botpress";
 
 const Dashboard = () => {
     const [userData, setUserData] = useState(null);
@@ -25,8 +25,8 @@ const Dashboard = () => {
             );
 
             if (response.ok) {
-                const data = await response.json();
-                return data.isVerified; // Return the verification status
+                const user = await response.json();
+                return user.isVerified; // Return the verification status
             } else if (response.status === 401) {
                 navigate("/authentication"); // Redirect if unauthorized
             }
@@ -104,7 +104,7 @@ const Dashboard = () => {
     return (
         <div className="h-screen flex flex-col bg-gray-100">
         
-            <Chatbot />
+            <Botpress />
           {/* Navigation Bar */}
           <NavigationBar />
     

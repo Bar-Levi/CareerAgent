@@ -20,6 +20,11 @@ const conversationSchema = new mongoose.Schema(
       required: true,
       default: "Untitled Conversation",
     },
+    isProfileSynced: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     messages: [
       {
         sender: {
