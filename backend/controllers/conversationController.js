@@ -117,9 +117,9 @@ const saveMessageToConversation = async (req, res) => {
   const MAX_MESSAGE_COUNT = 100;
   const { id } = req.params; // Conversation ID
   const { message } = req.body; // New message object
-
+  console.log("Updating id and message: " + id + '\n' + JSON.stringify(message));
   try {
-    const conversation = await Conversation.findById(id);
+    const conversation = await Conversation.findOne({ conversationId: id });
 
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
@@ -179,5 +179,6 @@ module.exports = {
   removeConversation,
   updateConversationTitle,
   saveMessageToConversation,
-  getMessagesByConvId
+  getMessagesByConvId,
+  toggleProfileSynced
 };

@@ -6,7 +6,8 @@ const {
   removeConversation,
   updateConversationTitle,
   saveMessageToConversation,
-  getMessagesByConvId
+  getMessagesByConvId,
+  toggleProfileSynced
 } = require("../controllers/conversationController");
 
 const {
@@ -31,6 +32,8 @@ router.delete("/:id", protect, removeConversation); // Pass conversation ID in t
 
 // Update conversation title
 router.put("/:id", protect, updateConversationTitle); // Pass conversation ID in the route
+
+router.put("/:id/toggleProfileSynced", protect, toggleProfileSynced); // Pass conversation
 
 router.post("/:id/messages", protect, saveMessageToConversation); // Add a message to a conversation
 

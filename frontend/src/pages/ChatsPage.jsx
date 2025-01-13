@@ -387,6 +387,7 @@ const ChatsPage = () => {
               chatId={selectedChat._id}
               conversationId={selectedChat.conversationId}
               conversationTitle={selectedChat.conversationTitle}
+              isProfileSynced={selectedChat.isProfileSynced}
               type={chatType}
               initialMessages={selectedChat.messages} // Pass messages to ChatBot
               prettyDate={prettyDate} // Pass prettyDate to format message timestamps

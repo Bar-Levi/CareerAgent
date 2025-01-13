@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import Notification from "./Notification";
 import HeaderWithToggle from "./HeaderWithToggle";
 
-const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, initialMessages = [] }) => {
+const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, isProfileSynced, type, initialMessages = [] }) => {
   const [messages, setMessages] = useState(initialMessages); // Load initial messages  
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -159,12 +159,19 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, type, 
                 />
       )}
       {/* Header */}
-      <HeaderWithToggle conversationTitle={conversationTitle} />
+      <HeaderWithToggle 
+      conversationTitle={conversationTitle}
+      isProfileSynced={isProfileSynced}
+      chatId={chatId}
+      token={token}
+      email={email}
+      />
 
   
       {/* Message Area */}
       <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
         {messages.map((msg, index) => (
+          !msg.text.includes("[Syncing User Details with the Chatbot]") &&
           <div
             key={index}
             className={`flex flex-col ${

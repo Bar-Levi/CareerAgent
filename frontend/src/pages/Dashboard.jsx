@@ -25,8 +25,8 @@ const Dashboard = () => {
             );
 
             if (response.ok) {
-                const data = await response.json();
-                return data.isVerified; // Return the verification status
+                const user = await response.json();
+                return user.isVerified; // Return the verification status
             } else if (response.status === 401) {
                 navigate("/authentication"); // Redirect if unauthorized
             }
