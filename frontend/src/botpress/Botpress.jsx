@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Botpress = () => {
   const navigate = useNavigate();
-  const [isBotAvailable, setIsBotAvailable] = useState((prev) => prev); // Track Botpress availability
+  const [isBotAvailable, setIsBotAvailable] = useState(true); // Track Botpress availability
 
 
   useEffect(() => {
