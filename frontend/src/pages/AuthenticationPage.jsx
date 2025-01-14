@@ -3,6 +3,7 @@ import RegistrationForm from '../components/RegistrationForm';
 import LoginForm from '../components/LoginForm';
 import { useLocation } from 'react-router-dom';
 import Notification from '../components/Notification';
+import Botpress from '../botpress/Botpress';
 
 
 const AuthenticationPage = () => {
@@ -111,6 +112,7 @@ const AuthenticationPage = () => {
                     onClose={() => setNotification(null)}
                 />
             )}
+            <Botpress />
             {/* Animated Lines */}
             <div className="absolute inset-0 z-0 pointer-events-none">
                 <div

@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect } from "react";
+import NavigationBar from "../components/NavigationBar";
+import Botpress from "../botpress/Botpress";
 
 // Sub-component for individual FAQ item
 const FAQItem = ({ faq, onToggle }) => (
@@ -97,20 +99,29 @@ const [filteredFaqs, setFilteredFaqs] = useState(faqs);
   }, [searchQuery, faqs]);
 
   return (
-    <div className="min-h-screen bg-brand-primary text-brand-accent p-5 font-sans">
-      <header className="bg-gray-800 text-brand-accent py-4 text-center border-b border-gray-700">
-        <h1 className="text-2xl font-bold">Frequently Asked Questions</h1>
-      </header>
+    <div className="min-h-screen bg-brand-primary text-brand-accent font-sans">
+      <Botpress />
+      <NavigationBar />
+      
 
       <div className="my-6 text-center">
-        <input
-          type="text"
-          placeholder="Search FAQs..."
-          value={searchQuery}
-          onChange={handleSearch}
-          className="w-4/5 p-2 text-brand-primary text-lg bg-gray-200 rounded border border-gray-400 focus:outline-none focus:ring focus:ring-brand-accent"
-        />
-      </div>
+  {/* Header */}
+  <header className="bg-gray-900 text-white py-6 rounded-lg shadow-lg">
+    <h1 className="text-3xl font-bold tracking-wide">Frequently Asked Questions</h1>
+  </header>
+
+  {/* Search Bar */}
+  <div className="mt-6 flex justify-center">
+    <input
+      type="text"
+      placeholder="Search FAQs..."
+      value={searchQuery}
+      onChange={handleSearch}
+      className="w-11/12 max-w-lg px-6 py-3 text-lg text-gray-800 bg-white rounded-full border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+    />
+  </div>
+</div>
+
 
       <div>
         {Object.keys(filteredFaqs).map((subject) => (

@@ -3,6 +3,7 @@ import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Notification from "../components/Notification";
+import Botpress from "../botpress/Botpress";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -247,6 +248,7 @@ const ChatsPage = () => {
                     onClose={() => setNotification(null)}
                 />
       )}
+      <Botpress />
       {/* Navigation Bar */}
       <div>
         <NavigationBar />

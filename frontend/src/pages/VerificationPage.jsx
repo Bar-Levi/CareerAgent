@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Notification from '../components/Notification';
+import Botpress from '../botpress/Botpress';
 
 const VerificationPage = () => {
     const { state } = useLocation();
@@ -125,6 +126,8 @@ const VerificationPage = () => {
                 />
             )}
 
+            <Botpress />
+            
             {/* Form Card */}
             <form
                 onSubmit={handleSubmit}
