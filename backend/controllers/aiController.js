@@ -12,6 +12,7 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 let analyzeCvPreprompt;
 let careerAdvisorPreprompt;
 let interviewerPreprompt;
+let analyzeJobListingPreprompt;
 let currentSessionId = null;
 let sessionHistory = []; // Initialize an array to store session history
 
@@ -58,13 +59,16 @@ try {
 
   const interviewerPrepromptFilePath = path.resolve(__dirname, "../prompts/interviewerPreprompt.txt");
   interviewerPreprompt = fs.readFileSync(interviewerPrepromptFilePath, "utf-8");
+
+  const analyzeJobListingPrepromptFilePath = path.resolve(__dirname, "../prompts/analyzeJobListingPreprompt.txt");
+  analyzeJobListingPreprompt = fs.readFileSync(analyzeJobListingPrepromptFilePath, "utf-8");
 } catch (e) {
-  // On CI/CD it will throw an error because preprompts aren't included
-  // in the repository.
+  // On CI/CD it will throw an error because preprompts aren't included in the repository.
   console.error("Error reading prompts:", e);
   analyzeCvPreprompt = "";
   careerAdvisorPreprompt = "";
   interviewerPreprompt = "";
+  analyzeJobListingPreprompt = "";
 };
 
 
@@ -129,9 +133,9 @@ const sendToBot = async (req, res) => {
 const generateJsonFromCV = async (req, res) => {
   console.log('req.body: ' + JSON.stringify(req.body));
 
-  const { prompt, sessionId } = req.body;
+  const { prompt } = req.body;
 
-  if (!prompt || !sessionId) {
+  if (!prompt) {
     return res.status(400).json({ error: "Prompt and sessionId are required" });
   }
 
@@ -153,8 +157,37 @@ const generateJsonFromCV = async (req, res) => {
   }
 };
 
+const analyzeJobListing = async (req, res) => {
+  console.log('req.body: ' + JSON.stringify(req.body));
+
+  const { prompt } = req.body;
+
+  prompt.replace('.', ',');
+
+  if (!prompt) {
+    return res.status(400).json({ error: "Prompt and sessionId are required" });
+  }
+
+  const input = `${analyzeJobListingPreprompt}. Now tell me - ${prompt}`;
+
+  try {
+    console.log("Input: " + JSON.stringify(input));
+    // Correct the request format for the model
+    const result = await model.generateContent(input);
+
+    const responseText = result.response.text();
+
+    console.log("Response: " + JSON.stringify(responseText));
+
+    res.status(200).json({ response: responseText });
+  } catch (error) {
+    console.error("Error generating content:", error);
+    res.status(500).json({ error: "Failed to generate response" });
+  }
+};
 
 module.exports = { 
   generateJsonFromCV,
   sendToBot,
+  analyzeJobListing
 };

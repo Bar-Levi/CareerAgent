@@ -119,14 +119,16 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 return;
             }
 
-            const { token } = await response.json();
+            const { token, user } = await response.json();
             localStorage.setItem('token', token);
+
 
             navigate('/dashboard', {
                 state: {
                     email: formData.email,
                     role: formData.role,
                     token,
+                    user,
                 },
             });
         } catch (error) {

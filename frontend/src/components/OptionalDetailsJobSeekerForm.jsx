@@ -51,7 +51,6 @@ const OptionalDetailsForm = ({ onSubmit }) => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
                 method: 'POST',
                 body: JSON.stringify({
-                    sessionId: 1,
                     prompt: cvContent,
                 }),
                 headers: {

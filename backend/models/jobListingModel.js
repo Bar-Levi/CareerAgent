@@ -1,3 +1,4 @@
+const { NumberSchema } = require('firebase/vertexai');
 const mongoose = require('mongoose');
 
 const jobListingSchema = new mongoose.Schema({
@@ -33,7 +34,7 @@ const jobListingSchema = new mongoose.Schema({
         required: true
     },
     jobType: {
-        type: String,
+        type: [String],
         required: true,
         enum: ['Full Time', 'Part Time', 'Contract', 'Student']
     },
@@ -57,7 +58,7 @@ const jobListingSchema = new mongoose.Schema({
         default: null
     },
     securityClearance: {
-        type: String,
+        type: Number,
         default: null
     },
     education: {
