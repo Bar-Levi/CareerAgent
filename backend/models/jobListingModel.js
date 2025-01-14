@@ -1,4 +1,3 @@
-const { NumberSchema } = require('firebase/vertexai');
 const mongoose = require('mongoose');
 
 const jobListingSchema = new mongoose.Schema({
