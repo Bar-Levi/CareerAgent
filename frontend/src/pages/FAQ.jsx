@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import Botpress from "../botpress/Botpress";
 
 // Sub-component for individual FAQ item
 const FAQItem = ({ faq, onToggle }) => (
@@ -115,6 +116,7 @@ const [filteredFaqs, setFilteredFaqs] = useState(faqs);
       <div>
         {Object.keys(filteredFaqs).map((subject) => (
           <div key={subject} className="mb-8">
+            <Botpress />
             {/* Sticky Centered Title */}
             <h2 className="text-xl font-bold text-brand-accent mb-4 sticky top-0 bg-brand-primary py-2 z-10 text-center">
               <span className="bg-brand-secondary text-brand-primary px-3 py-3 rounded-md">

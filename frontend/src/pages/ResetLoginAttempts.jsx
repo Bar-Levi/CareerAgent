@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Botpress from '../botpress/Botpress';
 
 const ResetLoginAttempts = () => {
     const [message, setMessage] = useState('');
@@ -59,6 +60,7 @@ const ResetLoginAttempts = () => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-gray-800">
+            <Botpress />
             <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl max-w-md transform hover:scale-105 transition-transform duration-500 animate-fade-in">
                 <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
                     Reset Login Attempts
