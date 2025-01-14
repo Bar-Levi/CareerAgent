@@ -7,6 +7,7 @@ import {
   FaEnvelope,
   FaCogs,
   FaRobot,
+  FaQuestionCircle,
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
 const NavigationBar = () => {
@@ -68,6 +69,14 @@ const NavigationBar = () => {
           onClick={() => navigate("/chats", { state: location.state})}
         >
           <FaRobot className="mr-2" /> Chatbots
+        </button>
+        <button
+          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+            "/faq"
+          )}`}
+          onClick={() => navigate("/faq", { state: location.state})}
+        >
+          <FaQuestionCircle className="mr-2" /> FAQ
         </button>
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(

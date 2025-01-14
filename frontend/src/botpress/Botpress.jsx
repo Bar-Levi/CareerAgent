@@ -85,7 +85,7 @@ const Botpress = () => {
         console.log('Botpress Webchat script loaded successfully.');
 
         const CustomBotScript = document.createElement('script');
-        CustomBotScript.src = process.env.REACT_APP_CUSTOM_BOT_SCRIPT_URL+'k';
+        CustomBotScript.src = process.env.REACT_APP_CUSTOM_BOT_SCRIPT_URL;
         CustomBotScript.async = true;
 
         CustomBotScript.onload = () => {
