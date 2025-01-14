@@ -1,21 +1,37 @@
-import React, { useEffect } from 'react'
+import React, { useEffect } from 'react';
 
 const Botpress = () => {
-
   useEffect(() => {
-    const BotpressWebchatLoader = document.createElement('script')
-    BotpressWebchatLoader.src = process.env.REACT_APP_BOTPRESS_WEBCHAT_URL
-    BotpressWebchatLoader.async = true
+    const BotpressWebchatLoader = document.createElement('script');
+    BotpressWebchatLoader.src = process.env.REACT_APP_BOTPRESS_WEBCHAT_URL;
+    BotpressWebchatLoader.async = true;
 
-    const CustomBotScript = document.createElement('script')
-    CustomBotScript.src = process.env.REACT_APP_CUSTOM_BOT_SCRIPT_URL
-    CustomBotScript.async = true
+    BotpressWebchatLoader.onload = () => {
+      console.log('Botpress Webchat script loaded successfully.');
 
-    document.body.appendChild(BotpressWebchatLoader)
-    document.body.appendChild(CustomBotScript)
-  }, [])
+      const CustomBotScript = document.createElement('script');
+      CustomBotScript.src = process.env.REACT_APP_CUSTOM_BOT_SCRIPT_URL;
+      CustomBotScript.async = true;
 
-  return <div id="webchat" />
-}
+      CustomBotScript.onload = () => {
+        console.log('Custom Bot script loaded successfully.');
+      };
 
-export default Botpress
+      CustomBotScript.onerror = () => {
+        console.error('Failed to load Custom Bot script.');
+      };
+
+      document.body.appendChild(CustomBotScript);
+    };
+
+    BotpressWebchatLoader.onerror = () => {
+      console.error('Failed to load Botpress Webchat script.');
+    };
+
+    document.body.appendChild(BotpressWebchatLoader);
+  }, []);
+
+  return <div id="webchat" />;
+};
+
+export default Botpress;
