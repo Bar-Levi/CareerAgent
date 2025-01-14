@@ -139,38 +139,53 @@ const {
     });
   
     describe('loginUser', () => {
-        it('should log in a verified user with correct credentials', async () => {
-            const req = {
-                body: { email: 'johndoe@example.com', password: 'password123', role: 'jobseeker' },
-            };
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-            };
-        
-            const mockUser = {
-                _id: 'mockUserId', // Add a mock ID
-                email: req.body.email,
-                password: 'hashedPassword',
+      it('should log in a verified user with correct credentials', async () => {
+        const req = {
+            body: { email: 'johndoe@example.com', password: 'password123', role: 'jobseeker' },
+        };
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+        };
+    
+        const mockUser = {
+            _id: 'mockUserId',
+            email: req.body.email,
+            password: 'hashedPassword',
+            isVerified: true,
+            role: 'jobseeker',
+            loginAttemptsLeft: 7,
+            save: jest.fn(),
+        };
+    
+        JobSeeker.findOne.mockResolvedValueOnce(mockUser);
+        bcrypt.compare.mockResolvedValueOnce(true);
+        jwt.sign.mockReturnValueOnce('mockToken');
+    
+        await loginUser(req, res);
+    
+        expect(jwt.sign).toHaveBeenCalledWith(
+            { id: mockUser._id, role: mockUser.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '2h' }
+        );
+        expect(res.status).toHaveBeenCalledWith(200);
+        expect(res.json).toHaveBeenCalledWith({
+            message: 'Login successful.',
+            token: 'mockToken',
+            user: {
+                _id: 'mockUserId',
+                email: 'johndoe@example.com',
                 isVerified: true,
-                role: 'jobseeker', // Add the role field
-                save: jest.fn(),
-            };
-        
-            JobSeeker.findOne.mockResolvedValueOnce(mockUser);
-            bcrypt.compare.mockResolvedValueOnce(true);
-            jwt.sign.mockReturnValueOnce('mockToken');
-        
-            await loginUser(req, res);
-        
-            expect(jwt.sign).toHaveBeenCalledWith(
-                { id: mockUser._id, role: mockUser.role }, // Ensure these fields exist
-                process.env.JWT_SECRET,
-                { expiresIn: '2h' }
-            );
-            expect(res.status).toHaveBeenCalledWith(200);
-            expect(res.json).toHaveBeenCalledWith({ message: 'Login successful.', token: 'mockToken' });
+                loginAttemptsLeft: 7,
+                password: 'hashedPassword',
+                resetLoginAttemptsToken: undefined,
+                role: 'jobseeker',
+                save: expect.any(Function),
+            },
         });
+    });
+    
         
   
       it('should return an error for incorrect password', async () => {
