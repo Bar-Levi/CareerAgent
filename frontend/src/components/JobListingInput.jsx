@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Notification from "../components/Notification";
 import JobListingModal from "./JobListingModal";
+import SpeechToText from "../components/SpeechToText"; // Adjust path based on your folder structure
 
 const JobListingInput = ({ user, onPostSuccess }) => {
     const [input, setInput] = useState(""); // State to hold user input
@@ -13,6 +14,10 @@ const JobListingInput = ({ user, onPostSuccess }) => {
     const showNotification = (type, message) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 4000);
+    };
+
+    const handleSpeechToText = (text) => {
+        setInput((prev) => `${prev} ${text}`.trim());
     };
 
     const analyzeFreeText = async (freeText) => {
@@ -139,46 +144,51 @@ const JobListingInput = ({ user, onPostSuccess }) => {
     };
 
     return (
-        <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-2xl">
-            {notification && (
-                <Notification
-                    type={notification.type}
-                    message={notification.message}
-                    onClose={() => setNotification(null)}
-                />
-            )}
-            <h1 className="text-2xl font-semibold text-gray-800 mb-4">
-                What Candidate are you looking for?
-            </h1>
-            <textarea
-                className="w-full h-40 border rounded-lg p-4 text-gray-700 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                placeholder={`Describe your ideal candidate profile here...
-e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience in React.js and TypeScript for a full-time position at TechCorp Inc., based in New York City. The role requires expertise in web performance optimization and responsive design. This is a hybrid position. A Level 2 Security Clearance is required for this role.`}                    
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-            ></textarea>
-            <div className="flex justify-end mt-4">
-                <button
-                    onClick={handlePost}
-                    disabled={isPosting} // Disable while posting
-                    className={`px-6 py-2 font-semibold rounded-lg transition duration-200 ${
-                        isPosting
-                            ? "bg-gray-500 text-white cursor-not-allowed"
-                            : "bg-pink-500 text-white hover:bg-pink-600"
-                    }`}
-                >
-                    {isPosting ? "Posting..." : "POST"} {/* Change text during loading */}
-                </button>
-            </div>
+        <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl border-2 border-brand-primary">
+    {notification && (
+        <Notification
+            type={notification.type}
+            message={notification.message}
+            onClose={() => setNotification(null)}
+        />
+    )}
+    <h1 className="text-3xl font-semibold text-brand-primary mb-6 text-center">
+        Find Your Ideal Candidate
+    </h1>
+    <p className="text-gray-600 text-center mb-4">
+        Describe the profile you're looking for, and we'll help you create the perfect job listing!
+    </p>
+    <textarea
+        className="w-full h-48 border-2 border-brand-secondary rounded-lg p-4 text-gray-700 text-lg focus:outline-none focus:ring-4 focus:ring-indigo-300 resize-none placeholder-gray-400 transition-all"
+        placeholder={`Describe your ideal candidate profile here...
+e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience in React.js and TypeScript for a full-time position at TechCorp Inc., based in New York City. The role requires expertise in web performance optimization and responsive design. This is a hybrid position. A Level 2 Security Clearance is required for this role.`}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+    ></textarea>
+    <div className="flex justify-center mt-6 space-x-4">
+        <SpeechToText onTextChange={handleSpeechToText} />
+        <button
+            onClick={handlePost}
+            disabled={isPosting}
+            className={`px-6 py-3 font-semibold rounded-lg transition-all duration-200 transform ${
+                isPosting
+                    ? "bg-gray-400 text-white cursor-not-allowed scale-100"
+                    : "bg-pink-500 text-white hover:bg-pink-600 hover:scale-105"
+            }`}
+        >
+            {isPosting ? "Posting..." : "POST"}
+        </button>
+    </div>
 
-            <JobListingModal
-                isOpen={isModalOpen}
-                jobListing={jobListing}
-                onChange={(field, value) => setJobListing((prev) => ({ ...prev, [field]: value }))}
-                onSubmit={handleModalSubmit}
-                onClose={handleModalClose}
-            />
-        </div>
+    <JobListingModal
+        isOpen={isModalOpen}
+        jobListing={jobListing}
+        onChange={(field, value) => setJobListing((prev) => ({ ...prev, [field]: value }))}
+        onSubmit={handleModalSubmit}
+        onClose={handleModalClose}
+    />
+</div>
+
     );
 };
 
