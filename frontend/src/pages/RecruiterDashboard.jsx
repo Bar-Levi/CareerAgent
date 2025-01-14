@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Botpress from "../botpress/Botpress";
+import SpeechToText from "../components/SpeechToText"; // Adjust path based on your folder structure
 
 const RecruiterDashboard = () => {
     const [input, setInput] = useState(""); // State to hold user input
@@ -20,6 +21,10 @@ const RecruiterDashboard = () => {
 
         alert("Your search has been posted!");
         setInput(""); // Clear the text area
+    };
+
+    const handleSpeechToText = (text) => {
+        setInput((prev) => `${prev} ${text}`.trim());
     };
 
     return (
@@ -44,8 +49,9 @@ e.g: I'm looking for a full-time role of junior full-stack developer with 2 year
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                     ></textarea>
-                    {/* Post Button */}
-                    <div className="flex justify-end mt-4">
+                    {/* Speech to Text Button */}
+                    <div className="flex items-center mt-4 space-x-4">
+                        <SpeechToText onTextChange={handleSpeechToText} />
                         <button
                             onClick={handlePost}
                             className="px-6 py-2 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition duration-200"
