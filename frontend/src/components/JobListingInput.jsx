@@ -50,7 +50,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
 
     const saveJobListing = async (jobListingData) => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/job-listing/save`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
                 body: JSON.stringify(jobListingData),
                 headers: { "Content-Type": "application/json" },

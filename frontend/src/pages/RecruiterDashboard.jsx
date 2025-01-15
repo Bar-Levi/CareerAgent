@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Botpress from "../botpress/Botpress";
 import JobListingInput from "../components/JobListingInput";
+import JobListingCardsList from "../components/JobListingCardsList";
 
 const RecruiterDashboard = () => {
     const navigate = useNavigate();
@@ -26,6 +27,8 @@ const RecruiterDashboard = () => {
             <div className="flex justify-center items-center flex-1">
                 <JobListingInput user={user} onPostSuccess={handlePostSuccess} />
             </div>
+            <JobListingCardsList />
+
         </div>
     );
 };

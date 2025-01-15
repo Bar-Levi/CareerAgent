@@ -21,6 +21,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/ai', aiRoutes);
 app.use("/api/conversations", conversationRoutes);
-app.use("/api/job-listing", jobListingRoutes);
+app.use("/api/joblistings", jobListingRoutes);
 
 module.exports = app;

@@ -58,6 +58,90 @@ const saveJobListing = async (req, res) => {
     }
 };
 
+// Get all job listings
+const getAllJobListings = async (req, res) => {
+    try {
+        const jobListings = await JobListing.find();
+        res.status(200).json({
+            message: "Job listings fetched successfully.",
+            jobListings,
+        });
+    } catch (error) {
+        console.error("Error fetching job listings:", error.message);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+// Get a single job listing by ID
+const getJobListingById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const jobListing = await JobListing.findById(id);
+
+        if (!jobListing) {
+            return res.status(404).json({ message: "Job listing not found." });
+        }
+
+        res.status(200).json({
+            message: "Job listing fetched successfully.",
+            jobListing,
+        });
+    } catch (error) {
+        console.error("Error fetching job listing:", error.message);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+// Update a job listing by ID
+const updateJobListing = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedData = req.body;
+
+        const updatedJobListing = await JobListing.findByIdAndUpdate(id, updatedData, {
+            new: true, // Return the updated document
+            runValidators: true, // Run schema validators on the updated data
+        });
+
+        if (!updatedJobListing) {
+            return res.status(404).json({ message: "Job listing not found." });
+        }
+
+        res.status(200).json({
+            message: "Job listing updated successfully.",
+            jobListing: updatedJobListing,
+        });
+    } catch (error) {
+        console.error("Error updating job listing:", error.message);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
+// Delete a job listing by ID
+const deleteJobListing = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const deletedJobListing = await JobListing.findByIdAndDelete(id);
+
+        if (!deletedJobListing) {
+            return res.status(404).json({ message: "Job listing not found." });
+        }
+
+        res.status(200).json({
+            message: "Job listing deleted successfully.",
+            jobListing: deletedJobListing,
+        });
+    } catch (error) {
+        console.error("Error deleting job listing:", error.message);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+};
+
 module.exports = {
-    saveJobListing
+    saveJobListing,
+    getAllJobListings,
+    getJobListingById,
+    updateJobListing,
+    deleteJobListing,
 };
