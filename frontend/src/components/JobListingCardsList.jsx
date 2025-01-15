@@ -10,7 +10,7 @@ const JobListingCardsList = () => {
     // Fetch job listings from the API
     const fetchJobListings = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/joblistings`);
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings`);
         if (!response.ok) {
           throw new Error("Failed to fetch job listings.");
         }

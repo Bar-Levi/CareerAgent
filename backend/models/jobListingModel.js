@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Applicant = require('./applicantModel');
 
 const jobListingSchema = new mongoose.Schema({
     jobRole: {
@@ -75,9 +76,31 @@ const jobListingSchema = new mongoose.Schema({
     languages: {
         type: [String],
         default: []
-    }
+    },
+    applicants: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Applicant', // Reference to the Applicant model
+        },
+    ],
+    status: {
+        type: String,
+        required: true,
+        enum: ['Active', 'Paused', 'Closed'],
+        default: 'Active'
+    },
+    views: {
+        type: Number,
+        default: 0
+    },
+    isFeatured: {
+        type: Boolean,
+        default: false
+    },
 }, {
     timestamps: true
 });
+
+jobListingSchema.path('applicants').default(() => []);
 
 module.exports = mongoose.model('JobListing', jobListingSchema);

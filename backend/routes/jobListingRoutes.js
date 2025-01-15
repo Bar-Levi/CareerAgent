@@ -13,15 +13,15 @@ const router = express.Router();
 router.post('/save', saveJobListing);
 
 // Get all job listings
-router.get("/joblistings", getAllJobListings);
+router.get("/", getAllJobListings);
 
 // Get a single job listing by ID
-router.get("/joblistings/:id", getJobListingById);
+router.get("/:id", getJobListingById);
 
 // Update a job listing by ID
-router.put("/joblistings/:id", updateJobListing);
+router.put("/:id", updateJobListing);
 
 // Delete a job listing by ID
-router.delete("/joblistings/:id", deleteJobListing);
+router.delete("/:id", deleteJobListing);
 
 module.exports = router;

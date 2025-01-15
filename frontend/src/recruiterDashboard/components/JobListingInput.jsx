@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Notification from "../components/Notification";
+import Notification from "../../components/Notification";
 import JobListingModal from "./JobListingModal";
-import SpeechToText from "../components/SpeechToText"; // Adjust path based on your folder structure
+import SpeechToText from "../../components/SpeechToText"; // Adjust path based on your folder structure
 
 const JobListingInput = ({ user, onPostSuccess }) => {
     const [input, setInput] = useState(""); // State to hold user input
@@ -50,7 +50,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
 
     const saveJobListing = async (jobListingData) => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/save`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
                 body: JSON.stringify(jobListingData),
                 headers: { "Content-Type": "application/json" },
