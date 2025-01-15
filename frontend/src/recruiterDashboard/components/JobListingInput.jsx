@@ -3,7 +3,7 @@ import Notification from "../../components/Notification";
 import JobListingModal from "./JobListingModal";
 import SpeechToText from "../../components/SpeechToText"; // Adjust path based on your folder structure
 
-const JobListingInput = ({ user, onPostSuccess }) => {
+const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) => {
     const [input, setInput] = useState(""); // State to hold user input
     const [notification, setNotification] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
@@ -61,6 +61,9 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             }
 
             const result = await response.json();
+            console.log("jobListings: ", jobListings);
+            console.log("jobListingData: ", JSON.stringify(jobListingData));
+            setJobListings([...jobListings, jobListingData]);
             showNotification("success", "Job listing successfully saved in the database!");
             return result;
         } catch (error) {
@@ -124,6 +127,8 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             }, "");
 
             const analyzedData = await analyzeFreeText(combinedText);
+            console.log("analyzed data: " + JSON.stringify(analyzedData));
+            handleMissingFields(analyzedData);
             if (!analyzedData) return;
 
             const saveResult = await saveJobListing(analyzedData);

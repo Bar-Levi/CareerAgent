@@ -14,8 +14,7 @@ const SettingsMenu = ({ onRemove }) => {
     );
 };
 
-const JobListings = () => {
-    const [jobListings, setJobListings] = useState([]);
+const JobListings = ({jobListings, setJobListings}) => {
     const [menuOpen, setMenuOpen] = useState(null); // Track which menu is open
 
     // Fetch job listings from API

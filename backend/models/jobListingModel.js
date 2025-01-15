@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Applicant = require('./applicantModel');
 
 const jobListingSchema = new mongoose.Schema({
     jobRole: {
@@ -89,11 +88,18 @@ const jobListingSchema = new mongoose.Schema({
         enum: ['Active', 'Paused', 'Closed'],
         default: 'Active'
     },
+    closingTime: {
+        type: Date
+    },
     views: {
         type: Number,
         default: 0
     },
     isFeatured: {
+        type: Boolean,
+        default: false
+    },
+    isArchived: {
         type: Boolean,
         default: false
     },

@@ -82,9 +82,9 @@ const RecruiterDashboard = () => {
 
             <div className="flex flex-col items-center flex-1 p-6 space-y-8">
                 <MetricsOverview metrics={metrics} />
-                <JobListings jobListings={jobListings} />
+                <JobListings jobListings={jobListings} setJobListings={setJobListings}/>
                 <RecentApplications applications={recentApplications} />
-                <JobListingInput user={user} onPostSuccess={handlePostSuccess} />
+                <JobListingInput user={user} onPostSuccess={handlePostSuccess} jobListings={jobListings} setJobListings={setJobListings}/>
             </div>
         </div>
     );

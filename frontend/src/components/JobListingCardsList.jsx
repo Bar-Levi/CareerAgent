@@ -15,8 +15,7 @@ const JobListingCardsList = () => {
           throw new Error("Failed to fetch job listings.");
         }
         const jobListings = await response.json();
-        console.log("jobListings: " + JSON.stringify(jobListings));
-        console.log("response.data: " + JSON.stringify(response.data));
+                
         setJobListings(jobListings.jobListings);
         setLoading(false);
       } catch (err) {

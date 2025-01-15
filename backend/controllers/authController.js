@@ -220,7 +220,6 @@ const loginUser = async (req, res) => {
 // Reset Login Attempts
 const resetLoginAttempts = async (req, res) => {
     const { email, pin } = req.body; // Extract email and PIN from the request body
-    console.log("email: " + email, "pin: " + pin);
     try {
         // Find the user (either job seeker or recruiter) based on email
         const jobSeeker = await JobSeeker.findOne({ email });

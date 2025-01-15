@@ -48,8 +48,6 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, isProf
 
   const sendMessageToAPI = async (userMessage) => {
     setIsTyping(true);
-    console.log("email: " + email);
-    console.log("type: " + type);
     try {
       const response = await fetch(botSettings.apiEndpoint, {
         method: "POST",
@@ -110,7 +108,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, isProf
       if (!response.ok) {
         if (response.status === 400) {
           const data = await response.json();
-          console.log(data.error);
+    
           showNotification('error', data.error); // Show error notification
           throw new Error(data.error);
         }

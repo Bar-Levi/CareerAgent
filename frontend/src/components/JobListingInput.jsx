@@ -40,7 +40,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             if (!match) {
                 throw new Error("Invalid JSON format in response.");
             }
-            console.log(JSON.parse(match[1]));
+            
             return JSON.parse(match[1]); // Parse the extracted JSON string
         } catch (error) {
             console.error("Error analyzing free text:", error.message);
@@ -80,7 +80,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             "description",
         ];
 
-        const missingFields = requiredFields.filter((field) => !prettyJson[field]);
+        const missingFields = requiredFields.filter((field) => !prettyJson[field] || prettyJson[field].length === 0);
 
         if (missingFields.length > 0) {
             setJobListing({ ...prettyJson, missingFields });
@@ -101,7 +101,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             if (hasMissingFields) return;
 
             const saveResult = await saveJobListing(analyzedData);
-            console.log("Save result:", saveResult);
+            
             setInput(""); // Clear the input
             if (onPostSuccess) onPostSuccess();
         } catch (error) {
@@ -125,7 +125,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             if (!analyzedData) return;
 
             const saveResult = await saveJobListing(analyzedData);
-            console.log("Save result:", saveResult);
+            
 
             setIsModalOpen(false); // Close modal
             setJobListing(null); // Clear job listing state
