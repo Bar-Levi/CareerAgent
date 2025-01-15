@@ -121,7 +121,7 @@ const updateJobListing = async (req, res) => {
 const deleteJobListing = async (req, res) => {
     try {
         const { id } = req.params;
-
+        
         const deletedJobListing = await JobListing.findByIdAndDelete(id);
 
         if (!deletedJobListing) {

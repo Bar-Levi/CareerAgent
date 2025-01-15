@@ -80,8 +80,9 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             "description",
         ];
 
-        const missingFields = requiredFields.filter((field) => !prettyJson[field]);
-
+        const missingFields = requiredFields.filter(
+            (field) => !prettyJson[field] || (prettyJson[field].length === 0)
+        );
         if (missingFields.length > 0) {
             setJobListing({ ...prettyJson, missingFields });
             setIsModalOpen(true);
@@ -112,6 +113,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
     };
 
     const handleModalSubmit = async () => {
+        setIsModalOpen(false); // Close modal
         setIsPosting(true); // Start loading
         try {
             const combinedText = input + Object.entries(jobListing).reduce((acc, [key, value]) => {
@@ -127,7 +129,6 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             const saveResult = await saveJobListing(analyzedData);
             console.log("Save result:", saveResult);
 
-            setIsModalOpen(false); // Close modal
             setJobListing(null); // Clear job listing state
             if (onPostSuccess) onPostSuccess();
         } catch (error) {

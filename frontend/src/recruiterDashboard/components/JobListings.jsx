@@ -42,7 +42,7 @@ const JobListings = () => {
 
     const onRemove = async (id) => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${id}`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/${id}`, {
                 method: "DELETE",
             });
 
