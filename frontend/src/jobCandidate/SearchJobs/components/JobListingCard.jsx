@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 
-const JobListingCard = ({ jobListing }) => {
+const JobListingCard = ({ jobListing, user, setShowModal}) => {
   const {
     jobRole,
     company,
@@ -14,27 +14,92 @@ const JobListingCard = ({ jobListing }) => {
     recruiterProfileImage,
     applicantsCount,
     education,
-    skills
+    skills,
+    _id: jobId, // Extract the job ID
+    recruiterId,
   } = jobListing;
+
+  const [appliedCounter, setAppliedCounter] = useState(applicantsCount);
+
+  const handleApplyNow = async () => {
+    if (!user.cv || user.cv == "") {
+      setShowModal(true); // Show modal if CV is missing
+      return;
+    }
+    try {
+      console.log("User: " + JSON.stringify(user));
+      // Create the new applicant
+      const applicantResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/applicants`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            linkedinUrl: user.linkedinUrl,
+            githubUrl: user.githubUrl,
+            cv: user.cv,
+            jobId: jobId,
+            recruiterId: recruiterId,
+            jobSeekerId: user._id,
+            jobTitle: jobRole,
+          }),
+        }
+      );
+
+      if (applicantResponse.ok) {
+        const applicantData = await applicantResponse.json();
+        console.log("Applicant created successfully:", applicantData);
+
+        // Update the job listing's applicants list
+        const updateJobResponse = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/${jobId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              $push: { applicants: applicantData.applicant._id }, // Add the applicant to the applicants array
+            }),
+          }
+        );
+        
+        if (updateJobResponse.ok) {
+          alert("Application submitted successfully!");
+          setAppliedCounter(appliedCounter + 1);
+        } else {
+          alert("Failed to update job listing with the new applicant.");
+        }
+      } else {
+        alert("Failed to create applicant.");
+      }
+    } catch (error) {
+      console.error("Error applying for the job:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
 
   return (
     <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300">
-
       {/* Top Section: Recruiter Info */}
       <div className="flex items-center space-x-4">
         {/* Recruiter Image */}
         <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-        <img
-          src={recruiterProfileImage || "https://via.placeholder.com/48"}
-          alt="Recruiter"
-          className="w-full h-full object-cover border-2 border-black rounded-full p-1"
-        />
-
+          <img
+            src={recruiterProfileImage || "https://via.placeholder.com/48"}
+            alt="Recruiter"
+            className="w-full h-full object-cover border-2 border-black rounded-full p-1"
+          />
         </div>
 
         {/* Recruiter Name */}
         <p className="flex-grow text-sm text-gray-700">
-         Recruited by <span className="font-semibold">{recruiterName || "Unknown Recruiter"}</span> 
+          Recruited by <span className="font-semibold">{recruiterName || "Unknown Recruiter"}</span>
         </p>
 
         <button className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300">
@@ -42,9 +107,8 @@ const JobListingCard = ({ jobListing }) => {
         </button>
       </div>
 
-            {/* Divider */}
-       <hr className="border-gray-300 my-4" />
-
+      {/* Divider */}
+      <hr className="border-gray-300 my-4" />
 
       {/* Middle Section: Job Details */}
       <div className="flex items-start space-x-4">
@@ -65,42 +129,36 @@ const JobListingCard = ({ jobListing }) => {
 
           {/* Experience, Type, Remote, Education, Skills */}
           <p className="text-sm text-gray-500 mt-2">
-            {/* Experience */}
             {experienceLevel && (
               <>
-                <span className="font-semibold py-1">Experience:</span> {experienceLevel} <br/>
+                <span className="font-semibold py-1">Experience:</span> {experienceLevel} <br />
               </>
             )}
 
-            {/* Job Type */}
             {jobType?.length > 0 && (
               <>
-                <span className="font-semibold py-1">Type:</span> {jobType.join(", ")} <br/>
+                <span className="font-semibold py-1">Type:</span> {jobType.join(", ")} <br />
               </>
             )}
 
-            {/* Remote */}
             {remote && (
               <>
-                <span className="font-semibold py-1">Remote:</span> {remote} <br/>
+                <span className="font-semibold py-1">Remote:</span> {remote} <br />
               </>
             )}
 
-            {/* Education */}
             {education?.length > 0 && (
               <>
-                <span className="font-semibold py-1">Education:</span> {education.join(", ")} <br/>
+                <span className="font-semibold py-1">Education:</span> {education.join(", ")} <br />
               </>
             )}
 
-            {/* Skills */}
             {skills?.length > 0 && (
               <>
                 <span className="font-semibold py-1">Skills:</span> {skills.join(", ")}
               </>
             )}
           </p>
-
 
           {/* Company Info */}
           <p className="text-sm text-gray-500 mt-2">
@@ -125,8 +183,10 @@ const JobListingCard = ({ jobListing }) => {
 
       {/* Bottom Section: Action Buttons */}
       <div className="flex flex-wrap items-center justify-between">
-        
-        <button className="px-4 py-2 bg-gradient-to-tr from-green-300 to-green-600 text-white font-semibold rounded hover:from-green-400 hover:to-green-700 hover:shadow-lg transition-all duration-300">
+        <button
+          className="px-4 py-2 bg-gradient-to-tr from-green-300 to-green-600 text-white font-semibold rounded hover:from-green-400 hover:to-green-700 hover:shadow-lg transition-all duration-300"
+          onClick={handleApplyNow}
+        >
           Apply Now
         </button>
 
@@ -135,9 +195,8 @@ const JobListingCard = ({ jobListing }) => {
         </button>
 
         <span className="px-4 py-2 text-gray-800 font-semibold rounded cursor-default">
-          Applied: {applicantsCount || 0}
+          Applied: {appliedCounter || 0}
         </span>
-
       </div>
     </div>
   );

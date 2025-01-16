@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
 
-const JobListingCardsList = ({ filters, onJobSelect }) => {
+const JobListingCardsList = ({ filters, onJobSelect, user, setShowModal }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +46,11 @@ const JobListingCardsList = ({ filters, onJobSelect }) => {
           onClick={() => onJobSelect(jobListing)} // Handle job selection
           className="cursor-pointer"
         >
-          <JobListingCard jobListing={jobListing} />
+          <JobListingCard
+            jobListing={jobListing}
+            user={user}
+            setShowModal={setShowModal}
+          />
         </div>
       ))}
     </div>

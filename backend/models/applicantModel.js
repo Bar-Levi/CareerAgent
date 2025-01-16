@@ -13,17 +13,17 @@ const applicantSchema = new mongoose.Schema({
     phone: {
         type: String,
     },
-    linkedin_url: {
+    linkedinUrl: {
         type: String,
     },
-    github_url: {
+    githubUrl: {
         type: String,
     },
-    cv_url: {
+    cv: {
         type: String,
         required: true,
     },
-    application_date: {
+    applicationDate: {
         type: Date,
         default: Date.now,
     },
@@ -35,22 +35,22 @@ const applicantSchema = new mongoose.Schema({
     notes: {
         type: String,
     },
-    job_id: {
+    jobId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'JobListing',
         required: true,
     },
-    recruiter_id: {
+    recruiterId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Recruiter',
         required: true,
     },
-    job_seeker_id: {
+    jobSeekerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'JobSeeker',
         required: true,
     },
-    job_title: {
+    jobTitle: {
         type: String,
     },
 });

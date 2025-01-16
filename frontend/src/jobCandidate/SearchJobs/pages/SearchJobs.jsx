@@ -31,7 +31,7 @@ const SearchJobs = () => {
     if (!state.user.cv || state.user.cv == "") {
       setShowModal(true); // Show modal if CV is missing
     }
-  }, []);
+  }, [state]);
 
   const handleModalClose = () => {
     setShowModal(false);
@@ -42,21 +42,21 @@ const SearchJobs = () => {
   const handleCVUpload = async (file) => {
 
     const uploadFile = async (file, folder) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', folder);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', folder);
 
-      const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
-          method: 'POST',
-          body: formData,
-      });
-      if (!uploadResponse.ok) {
-          throw new Error('Failed to upload file to Cloudinary.');
-      }
+        const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+        if (!uploadResponse.ok) {
+            throw new Error('Failed to upload file to Cloudinary.');
+        }
 
-      const data = await uploadResponse.json();
-      return data.url;
-  };
+        const data = await uploadResponse.json();
+        return data.url;
+    };
 
     try {
       const formData = new FormData();
@@ -98,7 +98,12 @@ const SearchJobs = () => {
           <h1 className="p-4 sticky top-0 bg-brand-primary text-brand-accent text-2xl font-bold">
             Search Jobs
           </h1>
-          <JobListingCardsList filters={filters} onJobSelect={handleJobSelect} />
+          <JobListingCardsList 
+            filters={filters}
+            onJobSelect={handleJobSelect}
+            user={state.user}
+            setShowModal={setShowModal}
+            />
         </div>
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (
