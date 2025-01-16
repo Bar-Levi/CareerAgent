@@ -133,7 +133,6 @@ const getJobListingsByRecruiterId = async (req, res) => {
     }
 };
 
-
 // Update a job listing by ID
 const updateJobListing = async (req, res) => {
     try {
@@ -180,11 +179,62 @@ const deleteJobListing = async (req, res) => {
     }
 };
 
+// Filter job listings
+const filterJobListings = async (req, res) => {
+    try {
+        const {
+            jobRole,
+            company,
+            location,
+            experienceLevel,
+            companySize,
+            jobType,
+            remote,
+            skills,
+            languages,
+            securityClearance,
+            education,
+            workExperience,
+        } = req.query;
+
+        // Build the query dynamically
+        const query = {};
+        if (jobRole) query.jobRole = { $regex: jobRole, $options: "i" };
+        if (company) query.company = { $regex: company, $options: "i" };
+        if (location) query.location = { $regex: location, $options: "i" };
+        if (experienceLevel) query.experienceLevel = experienceLevel;
+        if (companySize) query.companySize = companySize;
+        if (jobType) query.jobType = { $in: jobType.split(",") };
+        if (remote) query.remote = remote;
+        if (skills) query.skills = { $all: skills.split(",").map((s) => s.trim()) };
+        if (languages) query.languages = { $all: languages.split(",").map((l) => l.trim()) };
+        if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance) };
+        if (education) query.education = { $all: education.split(",").map((e) => e.trim()) };
+        if (workExperience) query.workExperience = { $gte: parseInt(workExperience) };
+
+        // Fetch filtered results
+        const jobListings = await JobListing.find(query);
+
+        res.status(200).json({
+            message: "Job listings fetched successfully.",
+            jobListings,
+        });
+    } catch (error) {
+        console.error("Error filtering job listings:", error.message);
+        res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+};
+
+
 module.exports = {
     saveJobListing,
     getAllJobListings,
     getJobListingById,
     updateJobListing,
     deleteJobListing,
-    getJobListingsByRecruiterId
+    getJobListingsByRecruiterId,
+    filterJobListings
 };
