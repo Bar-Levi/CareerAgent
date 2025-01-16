@@ -76,6 +76,11 @@ const jobListingSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    recruiterId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Recruiter',
+        required: true,
+    },
     applicants: [
         {
             type: mongoose.Schema.Types.ObjectId,

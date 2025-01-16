@@ -2,6 +2,7 @@ const JobListing = require("../models/jobListingModel");
 
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
+    console.log("Req.BODY: " + req.body);
     try {
         // Extract job listing data from the request body
         const {
@@ -19,6 +20,7 @@ const saveJobListing = async (req, res) => {
             workExperience,
             skills,
             languages,
+            recruiterId,
         } = req.body;
 
         // Validate required fields
@@ -42,6 +44,7 @@ const saveJobListing = async (req, res) => {
             workExperience,
             skills,
             languages,
+            recruiterId,
         });
 
         // Save the job listing to the database

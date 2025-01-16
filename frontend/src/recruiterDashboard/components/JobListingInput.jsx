@@ -50,9 +50,13 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
 
     const saveJobListing = async (jobListingData) => {
         try {
+            console.log("user_id: "+ user._id);
+            const updatedJobListingData = { ...jobListingData, recruiterId: user._id };
+            console.log("updatedJobListingData: " + JSON.stringify(updatedJobListingData));
+
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
-                body: JSON.stringify(jobListingData),
+                body: JSON.stringify(updatedJobListingData),
                 headers: { "Content-Type": "application/json" },
             });
 
@@ -62,8 +66,8 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
 
             const result = await response.json();
             console.log("jobListings: ", jobListings);
-            console.log("jobListingData: ", JSON.stringify(jobListingData));
-            setJobListings([...jobListings, jobListingData]);
+            console.log("jobListingData: ", JSON.stringify(updatedJobListingData));
+            setJobListings([...jobListings, updatedJobListingData]);
             showNotification("success", "Job listing successfully saved in the database!");
             return result;
         } catch (error) {
