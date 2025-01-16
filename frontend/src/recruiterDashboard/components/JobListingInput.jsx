@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import Notification from "../components/Notification";
+import Notification from "../../components/Notification";
 import JobListingModal from "./JobListingModal";
-import SpeechToText from "../components/SpeechToText"; // Adjust path based on your folder structure
+import SpeechToText from "../../components/SpeechToText"; // Adjust path based on your folder structure
 
-const JobListingInput = ({ user, onPostSuccess }) => {
+const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) => {
     const [input, setInput] = useState(""); // State to hold user input
     const [notification, setNotification] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
@@ -50,9 +50,13 @@ const JobListingInput = ({ user, onPostSuccess }) => {
 
     const saveJobListing = async (jobListingData) => {
         try {
+            console.log("user_id: "+ user._id);
+            const updatedJobListingData = { ...jobListingData, recruiterId: user._id, recruiterName: user.fullName, recruiterProfileImage: user.profilePic};
+            console.log("updatedJobListingData: " + JSON.stringify(updatedJobListingData));
+
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
-                body: JSON.stringify(jobListingData),
+                body: JSON.stringify(updatedJobListingData),
                 headers: { "Content-Type": "application/json" },
             });
 
@@ -61,6 +65,9 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             }
 
             const result = await response.json();
+            console.log("jobListings: ", jobListings);
+            console.log("jobListingData: ", JSON.stringify(updatedJobListingData));
+            setJobListings([...jobListings, updatedJobListingData]);
             showNotification("success", "Job listing successfully saved in the database!");
             return result;
         } catch (error) {
@@ -80,8 +87,9 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             "description",
         ];
 
-        const missingFields = requiredFields.filter((field) => !prettyJson[field]);
-
+        const missingFields = requiredFields.filter(
+            (field) => !prettyJson[field] || (prettyJson[field].length === 0)
+        );
         if (missingFields.length > 0) {
             setJobListing({ ...prettyJson, missingFields });
             setIsModalOpen(true);
@@ -112,6 +120,7 @@ const JobListingInput = ({ user, onPostSuccess }) => {
     };
 
     const handleModalSubmit = async () => {
+        setIsModalOpen(false); // Close modal
         setIsPosting(true); // Start loading
         try {
             const combinedText = input + Object.entries(jobListing).reduce((acc, [key, value]) => {
@@ -122,12 +131,13 @@ const JobListingInput = ({ user, onPostSuccess }) => {
             }, "");
 
             const analyzedData = await analyzeFreeText(combinedText);
+            console.log("analyzed data: " + JSON.stringify(analyzedData));
+            handleMissingFields(analyzedData);
             if (!analyzedData) return;
 
             const saveResult = await saveJobListing(analyzedData);
             console.log("Save result:", saveResult);
 
-            setIsModalOpen(false); // Close modal
             setJobListing(null); // Clear job listing state
             if (onPostSuccess) onPostSuccess();
         } catch (error) {

@@ -1,8 +1,10 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
-import JobCandidateDashboard from "../pages/JobCandidateDashboard";
-import RecruiterDashboard from "../pages/RecruiterDashboard";
+import JobCandidateDashboard from "../jobCandidate/Dashboard/pages/JobCandidateDashboard";
+import RecruiterDashboard from "../recruiterDashboard/pages/RecruiterDashboard";
+// import RecruiterDashboard from "../pages/RecruiterDashboard";
+
 
 const Dashboard = () => {
     const {state} = useLocation(); 

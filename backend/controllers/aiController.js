@@ -37,12 +37,9 @@ async function loadSessionHistory(convId, token) {
 
         const data = await response.json();
 
-        console.log("\n\n-Data: " + JSON.stringify(data));
-
         // Append fetched messages to the sessionHistory
         sessionHistory = sessionHistory.concat(data) || [];
 
-        console.log("Session history loaded:", sessionHistory);
     } catch (error) {
         console.error("Error loading session history:", error);
     }
@@ -73,7 +70,6 @@ try {
 
 
 const sendToBot = async (req, res) => {
-  console.log('req.body: ' + JSON.stringify(req.body));
   let preprompt = null;
   const { prompt, sessionId, type} = req.body;
   const authHeader = req.header('Authorization');
@@ -90,18 +86,16 @@ const sendToBot = async (req, res) => {
 
   // Retrieve or initialize history for the session
   await loadSessionHistory(sessionId, token);
-  console.log('\n\nsessionHistory: ' + sessionHistory);
 
 
   // Construct the input with history
   const formattedHistory = sessionHistory?.map((entry) => `${entry.sender}: ${entry.text}`)
     .join("\n");
 
-  console.log('\n\nformattedHistory: ' + JSON.stringify(formattedHistory) + '\n');
   const input = `${preprompt}, ${formattedHistory}. Now tell me - ${prompt}`;
 
   try {
-    console.log("Input: " + JSON.stringify(input));
+
     // Correct the request format for the model
     const result = await model.generateContent(input);
 
@@ -131,7 +125,6 @@ const sendToBot = async (req, res) => {
 };
 
 const generateJsonFromCV = async (req, res) => {
-  console.log('req.body: ' + JSON.stringify(req.body));
 
   const { prompt } = req.body;
 
@@ -142,13 +135,13 @@ const generateJsonFromCV = async (req, res) => {
   const input = `${analyzeCvPreprompt}. Now tell me - ${prompt}`;
 
   try {
-    console.log("Input: " + JSON.stringify(input));
+
     // Correct the request format for the model
     const result = await model.generateContent(input);
 
     const responseText = result.response.text();
 
-    console.log("Response: " + JSON.stringify(responseText));
+
 
     res.status(200).json({ response: responseText });
   } catch (error) {
@@ -158,7 +151,6 @@ const generateJsonFromCV = async (req, res) => {
 };
 
 const analyzeJobListing = async (req, res) => {
-  console.log('req.body: ' + JSON.stringify(req.body));
 
   const { prompt } = req.body;
 
@@ -171,13 +163,13 @@ const analyzeJobListing = async (req, res) => {
   const input = `${analyzeJobListingPreprompt}. Now tell me - ${prompt}`;
 
   try {
-    console.log("Input: " + JSON.stringify(input));
+
     // Correct the request format for the model
     const result = await model.generateContent(input);
 
     const responseText = result.response.text();
 
-    console.log("Response: " + JSON.stringify(responseText));
+
 
     res.status(200).json({ response: responseText });
   } catch (error) {

@@ -5,6 +5,8 @@ const {
     getJobListingById,
     updateJobListing,
     deleteJobListing,
+    getJobListingsByRecruiterId,
+    filterJobListings
 } = require('../controllers/jobListingController');
 
 const router = express.Router();
@@ -13,15 +15,22 @@ const router = express.Router();
 router.post('/save', saveJobListing);
 
 // Get all job listings
-router.get("/joblistings", getAllJobListings);
+router.get("/", getAllJobListings);
 
 // Get a single job listing by ID
-router.get("/joblistings/:id", getJobListingById);
+router.get("/getJobListing/:id", getJobListingById);
+
+// Get recruiter's all job listings by recruiter ID
+router.get("/recruiter/:recruiterId", getJobListingsByRecruiterId);
 
 // Update a job listing by ID
-router.put("/joblistings/:id", updateJobListing);
+router.put("/:id", updateJobListing);
 
 // Delete a job listing by ID
-router.delete("/joblistings/:id", deleteJobListing);
+router.delete("/:id", deleteJobListing);
+
+// Filter job listings
+router.get("/filteredJobListings", filterJobListings);
+
 
 module.exports = router;

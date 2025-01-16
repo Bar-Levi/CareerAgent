@@ -2,6 +2,7 @@ const JobListing = require("../models/jobListingModel");
 
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
+    console.log("Req.BODY: " + req.body);
     try {
         // Extract job listing data from the request body
         const {
@@ -19,6 +20,9 @@ const saveJobListing = async (req, res) => {
             workExperience,
             skills,
             languages,
+            recruiterId,
+            recruiterName,
+            recruiterProfileImage,
         } = req.body;
 
         // Validate required fields
@@ -42,6 +46,9 @@ const saveJobListing = async (req, res) => {
             workExperience,
             skills,
             languages,
+            recruiterId,
+            recruiterName,
+            recruiterProfileImage,
         });
 
         // Save the job listing to the database
@@ -92,6 +99,44 @@ const getJobListingById = async (req, res) => {
     }
 };
 
+// Get all job listings by Recruiter ID
+const getJobListingsByRecruiterId = async (req, res) => {
+    try {
+        // Destructure `id` from request parameters
+        const { recruiterId } = req.params;
+
+        if (!recruiterId) {
+            return res.status(400).json({ message: "Recruiter ID is required." });
+        }
+
+        console.log(`[INFO] Fetching job listings for recruiter ID: ${recruiterId}`);
+
+        // Fetch job listings from the database
+        const jobListings = await JobListing.find({ recruiterId });
+
+        if (!jobListings || jobListings.length === 0) {
+            console.warn(`[WARN] No job listings found for recruiter ID: ${recruiterId}`);
+            return res.status(404).json({ message: "No job listings found for this recruiter." });
+        }
+
+        console.log(`[INFO] ${jobListings.length} job listing(s) found for recruiter ID: ${recruiterId}`);
+
+        // Return the job listings with success response
+        return res.status(200).json({
+            message: "Job listings fetched successfully.",
+            jobListings,
+        });
+    } catch (error) {
+        // Log and return an error response
+        console.error(`[ERROR] Error fetching job listings for recruiter ID ${req.params.id}:`, error);
+
+        return res.status(500).json({
+            message: "An error occurred while fetching job listings.",
+            error: error.message,
+        });
+    }
+};
+
 // Update a job listing by ID
 const updateJobListing = async (req, res) => {
     try {
@@ -121,7 +166,7 @@ const updateJobListing = async (req, res) => {
 const deleteJobListing = async (req, res) => {
     try {
         const { id } = req.params;
-
+        
         const deletedJobListing = await JobListing.findByIdAndDelete(id);
 
         if (!deletedJobListing) {
@@ -138,10 +183,62 @@ const deleteJobListing = async (req, res) => {
     }
 };
 
+// Filter job listings
+const filterJobListings = async (req, res) => {
+    try {
+        const {
+            jobRole,
+            company,
+            location,
+            experienceLevel,
+            companySize,
+            jobType,
+            remote,
+            skills,
+            languages,
+            securityClearance,
+            education,
+            workExperience,
+        } = req.query;
+
+        // Build the query dynamically
+        const query = {};
+        if (jobRole) query.jobRole = { $regex: jobRole, $options: "i" };
+        if (company) query.company = { $regex: company, $options: "i" };
+        if (location) query.location = { $regex: location, $options: "i" };
+        if (experienceLevel) query.experienceLevel = experienceLevel;
+        if (companySize) query.companySize = companySize;
+        if (jobType) query.jobType = { $in: jobType.split(",") };
+        if (remote) query.remote = remote;
+        if (skills) query.skills = { $all: skills.split(",").map((s) => s.trim()) };
+        if (languages) query.languages = { $all: languages.split(",").map((l) => l.trim()) };
+        if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance) };
+        if (education) query.education = { $all: education.split(",").map((e) => e.trim()) };
+        if (workExperience) query.workExperience = { $gte: parseInt(workExperience) };
+
+        // Fetch filtered results
+        const jobListings = await JobListing.find(query);
+
+        res.status(200).json({
+            message: "Job listings fetched successfully.",
+            jobListings,
+        });
+    } catch (error) {
+        console.error("Error filtering job listings:", error.message);
+        res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+};
+
+
 module.exports = {
     saveJobListing,
     getAllJobListings,
     getJobListingById,
     updateJobListing,
     deleteJobListing,
+    getJobListingsByRecruiterId,
+    filterJobListings
 };

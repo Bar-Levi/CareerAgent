@@ -21,8 +21,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
     useEffect(() => {
         cvFile = formData.cv || null;
         profilePicFile = formData.profilePic || null;
-        console.log("cVFile: " + cvFile);
-        console.log("profilePicFile: " + profilePicFile);
+        
     }, [formData]);
     const handleChange = (e) => {
         const { name, value } = e.target;
