@@ -114,7 +114,7 @@ const saveMessageToConversation = async (req, res) => {
   const { id } = req.params; // Conversation ID
   const { message } = req.body; // New message object
   try {
-    const conversation = await Conversation.findOne({ conversationId: id });
+    const conversation = await Conversation.findById(id);
 
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
@@ -143,7 +143,7 @@ const saveMessageToConversation = async (req, res) => {
 // Toggle isProfileSynced
 const toggleProfileSynced = async (req, res) => {
   const { id } = req.params;
-
+  
   try {
     // Find the conversation by ID
     const conversation = await Conversation.findById(id);
