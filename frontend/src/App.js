@@ -37,7 +37,11 @@ function App() {
                     </ProtectedRoute>
                 }/>
                 <Route path="/FAQ" element={<FAQ />} />
-                <Route path="/searchjobs" element={<SearchJobs />} />
+                <Route path="/searchjobs" element={
+                    <ProtectedRoute>
+                        <SearchJobs />
+                    </ProtectedRoute>
+                    } />
 
             </Routes>
         </Router>

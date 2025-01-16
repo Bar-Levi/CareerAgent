@@ -47,7 +47,7 @@ const SearchFilters = ({ filters, setFilters }) => {
           onChange={handleChange}
           className="w-full px-3 py-2 border rounded"
         >
-          <option value="">Experience Level</option>
+          <option value="">Choose Experience Level</option>
           <option value="Entry">Entry</option>
           <option value="Junior">Junior</option>
           <option value="Senior">Senior</option>
@@ -71,7 +71,7 @@ const SearchFilters = ({ filters, setFilters }) => {
           onChange={handleChange}
           className="w-full px-3 py-2 border rounded"
         >
-          <option value="">Job Type</option>
+          <option value="">Choose Job Type</option>
           <option value="Full Time">Full Time</option>
           <option value="Part Time">Part Time</option>
           <option value="Contract">Contract</option>
@@ -84,7 +84,7 @@ const SearchFilters = ({ filters, setFilters }) => {
           onChange={handleChange}
           className="w-full px-3 py-2 border rounded"
         >
-          <option value="">Remote</option>
+          <option value="">Choose Remote</option>
           <option value="Remote">Remote</option>
           <option value="Hybrid">Hybrid</option>
           <option value="On-Site">On-Site</option>
