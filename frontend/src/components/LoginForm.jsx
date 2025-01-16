@@ -45,11 +45,14 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 const errorData = await response.json();
 
                 if (response.status === 403) {
+                    console.log("STATUS: 403");
                     localStorage.setItem('token', errorData.token);
                     navigate('/dashboard', {
                         state: {
                             email: formData.email,
                             role: formData.role,
+                            token: errorData.token,
+                            user: errorData.user
                         },
                     });
                 } else if (response.status === 405) {

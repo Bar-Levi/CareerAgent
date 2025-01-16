@@ -72,9 +72,9 @@ const RecruiterDashboard = () => {
     };
 
     return (
-        <div className="h-screen flex flex-col bg-gray-100">
+        <div className="h-screen flex flex-col bg-gray-100 animate-fade-in">
             <Botpress />
-            <NavigationBar userType={state.user.role}/>
+            <NavigationBar userType={state?.user?.role || state?.role}/>
 
             {notification && (
                 <Notification
