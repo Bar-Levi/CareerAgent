@@ -4,7 +4,7 @@ import NavigationBar from "../../components/NavigationBar";
 import Botpress from "../../botpress/Botpress";
 import Notification from "../../components/Notification";
 import MetricsOverview from "../components/MetricsOverview";
-import JobListings from "../components/JobListings";
+import MyJobListings from "../components/MyJobListings";
 import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 
@@ -82,7 +82,7 @@ const RecruiterDashboard = () => {
 
             <div className="flex flex-col items-center flex-1 p-6 space-y-8">
                 <MetricsOverview metrics={metrics} />
-                <JobListings jobListings={jobListings} setJobListings={setJobListings}/>
+                <MyJobListings recruiterId={user._id} jobListings={jobListings} setJobListings={setJobListings}/>
                 <RecentApplications applications={recentApplications} />
                 <JobListingInput user={user} onPostSuccess={handlePostSuccess} jobListings={jobListings} setJobListings={setJobListings}/>
             </div>

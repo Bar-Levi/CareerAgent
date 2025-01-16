@@ -14,17 +14,23 @@ const SettingsMenu = ({ onRemove }) => {
     );
 };
 
-const JobListings = ({jobListings, setJobListings}) => {
+const MyJobListings = ({recruiterId, jobListings, setJobListings}) => {
     const [menuOpen, setMenuOpen] = useState(null); // Track which menu is open
-
+    
     // Fetch job listings from API
     const refreshListings = async () => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch job listings.");
-            }
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/recruiter/${recruiterId}`);
             const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    console.error(data.message); // Use 'statusText' to show the server-provided message
+                    return; // Exit early to avoid unnecessary API calls
+                }
+                throw new Error("Failed to fetch recruiter's job listings.");
+            }
+            
             setJobListings(data.jobListings);
         } catch (error) {
             console.error("Error fetching job listings:", error.message);
@@ -113,4 +119,4 @@ const JobListings = ({jobListings, setJobListings}) => {
     );
 };
 
-export default JobListings;
+export default MyJobListings;
