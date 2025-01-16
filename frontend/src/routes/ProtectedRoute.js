@@ -5,7 +5,8 @@ import { useLocation } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
     const { state } = useLocation();
-    if (!isAuthenticated() || !state) {
+    console.log("state: " + JSON.stringify(state));
+    if (!isAuthenticated(state.token) || !state) {
         return <Navigate to="/" replace />;
     }
     return children;
