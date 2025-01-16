@@ -21,6 +21,8 @@ const saveJobListing = async (req, res) => {
             skills,
             languages,
             recruiterId,
+            recruiterName,
+            recruiterProfileImage,
         } = req.body;
 
         // Validate required fields
@@ -45,6 +47,8 @@ const saveJobListing = async (req, res) => {
             skills,
             languages,
             recruiterId,
+            recruiterName,
+            recruiterProfileImage,
         });
 
         // Save the job listing to the database

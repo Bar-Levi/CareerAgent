@@ -51,7 +51,7 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
     const saveJobListing = async (jobListingData) => {
         try {
             console.log("user_id: "+ user._id);
-            const updatedJobListingData = { ...jobListingData, recruiterId: user._id };
+            const updatedJobListingData = { ...jobListingData, recruiterId: user._id, recruiterName: user.fullName, recruiterProfileImage: user.profilePic};
             console.log("updatedJobListingData: " + JSON.stringify(updatedJobListingData));
 
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {

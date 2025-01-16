@@ -28,8 +28,10 @@ const SearchJobs = () => {
   };
 
   useEffect(() => {
-    if (!state.user.cv) setShowModal(true); // Show modal if CV is missing
-  }, [state.user.cv]);
+    if (!state.user.cv || state.user.cv == "") {
+      setShowModal(true); // Show modal if CV is missing
+    }
+  }, []);
 
   const handleModalClose = () => {
     setShowModal(false);
@@ -77,6 +79,7 @@ const SearchJobs = () => {
       }
 
       alert("CV uploaded successfully!");
+      state.user.cv = filePathOnCloudinary; // Update the user's CV in the state
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error uploading CV:", error);

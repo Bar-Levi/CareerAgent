@@ -14,6 +14,20 @@ const jobListingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    companySize: {
+        type: String,
+        required: true
+    },
+    companyWebsite: {
+        type: String,
+        validate: {
+            validator: function (v) {
+                return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(v);
+            },
+            message: 'Invalid URL format.'
+        },
+        default: null
+    },
     experienceLevel: {
         type: String,
         required: true,
@@ -28,10 +42,6 @@ const jobListingSchema = new mongoose.Schema({
             'Executive'
         ]
     },
-    companySize: {
-        type: String,
-        required: true
-    },
     jobType: {
         type: [String],
         required: true,
@@ -45,16 +55,6 @@ const jobListingSchema = new mongoose.Schema({
     description: {
         type: String,
         required: true
-    },
-    companyWebsite: {
-        type: String,
-        validate: {
-            validator: function (v) {
-                return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(v);
-            },
-            message: 'Invalid URL format.'
-        },
-        default: null
     },
     securityClearance: {
         type: Number,
@@ -80,6 +80,16 @@ const jobListingSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Recruiter',
         required: true,
+    },
+    recruiterName: {
+        type: String,
+        required: true,
+        ref: 'Recruiter'
+    },
+    recruiterProfileImage: {
+        type: String,
+        required: true,
+        ref: 'Recruiter'
     },
     applicants: [
         {
