@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
-import JobCandidateDashboard from "../pages/JobCandidateDashboard";
+import JobCandidateDashboard from "../jobCandidateDashboard/pages/JobCandidateDashboard";
 import RecruiterDashboard from "../recruiterDashboard/pages/RecruiterDashboard";
 // import RecruiterDashboard from "../pages/RecruiterDashboard";
 
