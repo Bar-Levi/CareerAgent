@@ -401,7 +401,26 @@ const getUserDetails = async (req, res) => {
 };
 
 
-
+const uploadCV = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const cvPath = req.body.cv; // Path to the uploaded file
+  
+      const user = await JobSeeker.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      user.cv = cvPath; // Update CV path in the database
+      await user.save();
+  
+      res.status(200).json({ message: "CV uploaded successfully.", cv: cvPath });
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      res.status(500).json({ message: "Failed to upload CV." });
+    }
+  };
+  
 
 module.exports = {
     registerRecruiter,
@@ -413,4 +432,5 @@ module.exports = {
     resetPassword,
     getUserDetails,
     resetLoginAttempts,
+    uploadCV,
 };

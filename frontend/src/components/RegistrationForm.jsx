@@ -98,8 +98,6 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             setIsLoading(false);
         }
     };
-    
-    
 
     const handleOptionalSubmit = async (optionalData) => {
         try {
