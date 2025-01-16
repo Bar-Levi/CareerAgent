@@ -32,16 +32,20 @@ const RecruiterDashboard = () => {
      // Fetch job listings from the API
      const fetchJobListings = async () => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings`);
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/recruiter/${user._id}`);
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error(`Failed to fetch job listings: ${response.statusText}`);
+                if (response.status === 404) {
+                    console.error(data.message); // Use 'statusText' to show the server-provided message
+                    return; // Exit early to avoid unnecessary API calls
+                }
+                throw new Error("Failed to fetch recruiter's job listings.");
             }
-            const jobListings = await response.json();
-            console.log('WOW');
-            console.log("jobListings:", JSON.stringify(jobListings, null, 2));
-            setJobListings(jobListings.jobListings);
-        } catch (err) {
-            console.error("Failed to load job listings:", err.message);
+            
+            setJobListings(data.jobListings);
+        } catch (error) {
+            console.error("Error fetching job listings:", error.message);
         }
     };
 

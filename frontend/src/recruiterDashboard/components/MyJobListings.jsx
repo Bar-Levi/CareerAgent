@@ -14,32 +14,8 @@ const SettingsMenu = ({ onRemove }) => {
     );
 };
 
-const MyJobListings = ({recruiterId, jobListings, setJobListings}) => {
+const MyJobListings = ({jobListings, setJobListings}) => {
     const [menuOpen, setMenuOpen] = useState(null); // Track which menu is open
-    
-    // Fetch job listings from API
-    const refreshListings = async () => {
-        try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/recruiter/${recruiterId}`);
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    console.error(data.message); // Use 'statusText' to show the server-provided message
-                    return; // Exit early to avoid unnecessary API calls
-                }
-                throw new Error("Failed to fetch recruiter's job listings.");
-            }
-            
-            setJobListings(data.jobListings);
-        } catch (error) {
-            console.error("Error fetching job listings:", error.message);
-        }
-    };
-
-    useEffect(() => {
-        refreshListings();
-    }, []);
 
     const handleMenuToggle = (id) => {
         setMenuOpen((prev) => (prev === id ? null : id));
@@ -56,7 +32,7 @@ const MyJobListings = ({recruiterId, jobListings, setJobListings}) => {
             }
 
             console.log(`Job listing with ID ${id} deleted.`);
-            refreshListings(); // Refresh listings
+            setJobListings(jobListings.filter((listing) => listing._id!== id)); // Remove the listing from the state
         } catch (error) {
             console.error("Error removing job listing:", error.message);
         } finally {

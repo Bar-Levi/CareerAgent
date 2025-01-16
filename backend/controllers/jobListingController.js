@@ -95,25 +95,44 @@ const getJobListingById = async (req, res) => {
     }
 };
 
-// Get a single job listing by ID
+// Get all job listings by Recruiter ID
 const getJobListingsByRecruiterId = async (req, res) => {
     try {
+        // Destructure `id` from request parameters
         const { recruiterId } = req.params;
-        const jobListings = await JobListing.find(recruiterId);
-        console.log("Job listings fetched:", jobListings);
-        if (!jobListings || jobListings.length === 0) {
-            return res.status(404).json({ message: "Recruiter's job listings not found." });
+
+        if (!recruiterId) {
+            return res.status(400).json({ message: "Recruiter ID is required." });
         }
 
-        res.status(200).json({
-            message: "Recruiter's job listings fetched successfully.",
+        console.log(`[INFO] Fetching job listings for recruiter ID: ${recruiterId}`);
+
+        // Fetch job listings from the database
+        const jobListings = await JobListing.find({ recruiterId });
+
+        if (!jobListings || jobListings.length === 0) {
+            console.warn(`[WARN] No job listings found for recruiter ID: ${recruiterId}`);
+            return res.status(404).json({ message: "No job listings found for this recruiter." });
+        }
+
+        console.log(`[INFO] ${jobListings.length} job listing(s) found for recruiter ID: ${recruiterId}`);
+
+        // Return the job listings with success response
+        return res.status(200).json({
+            message: "Job listings fetched successfully.",
             jobListings,
         });
     } catch (error) {
-        console.error("Error fetching recruiter's job listing:", error.message);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
+        // Log and return an error response
+        console.error(`[ERROR] Error fetching job listings for recruiter ID ${req.params.id}:`, error);
+
+        return res.status(500).json({
+            message: "An error occurred while fetching job listings.",
+            error: error.message,
+        });
     }
 };
+
 
 // Update a job listing by ID
 const updateJobListing = async (req, res) => {

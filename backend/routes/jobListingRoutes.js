@@ -20,7 +20,7 @@ router.get("/", getAllJobListings);
 router.get("/:id", getJobListingById);
 
 // Get recruiter's all job listings by recruiter ID
-router.get("/recruiter/:id", getJobListingsByRecruiterId);
+router.get("/recruiter/:recruiterId", getJobListingsByRecruiterId);
 
 // Update a job listing by ID
 router.put("/:id", updateJobListing);
