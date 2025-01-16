@@ -10,7 +10,7 @@ import {
   FaQuestionCircle,
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
-const NavigationBar = () => {
+const NavigationBar = ({userType}) => {
   const navigate = useNavigate();
   const location = useLocation(); // Get the current route
 
@@ -24,7 +24,7 @@ const NavigationBar = () => {
     <div className="bg-brand-primary text-brand-primary flex items-center justify-between px-6 py-4">
       <div className="text-lg font-bold flex items-center">
         <img
-          src={logo} // Replace with your logo URL
+          src={logo}
           alt="Logo"
           className="h-14 mr-3 rounded"
         />
@@ -38,14 +38,18 @@ const NavigationBar = () => {
         >
           <FaTachometerAlt className="mr-2" /> Dashboard
         </button>
+
+          { userType === 'jobseeker' &&
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-            "/jobs"
+            "/searchjobs"
           )}`}
-          onClick={() => navigate("/jobs", { state: location.state})}
+          onClick={() => navigate("/searchjobs", { state: location.state})}
         >
-          <FaBriefcase className="mr-2" /> My Listed Jobs
+          <FaBriefcase className="mr-2" /> Search Jobs
         </button>
+          }
+
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
             "/notifications"

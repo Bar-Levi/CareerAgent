@@ -4,9 +4,9 @@ import JobApplications from "../components/JobApplications";
 import UpcomingEvents from "../components/UpcomingEvents";
 import PerformanceInsights from "../components/PerformanceInsights";
 import Gamification from "../components/Gamification";
-import Notification from "../../components/Notification";
-import Botpress from "../../botpress/Botpress";
-import NavigationBar from "../../components/NavigationBar";
+import Notification from "../../../components/Notification";
+import Botpress from "../../../botpress/Botpress";
+import NavigationBar from "../../../components/NavigationBar";
 import { useLocation } from "react-router-dom";
 
 const JobCandidateDashboard = () => {
@@ -19,9 +19,9 @@ const JobCandidateDashboard = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
+    <div className="h-screen flex flex-col bg-gray-100">
       <Botpress />
-      <NavigationBar />
+      <NavigationBar userType={state.user.role}/>
 
       {notification && (
         <Notification

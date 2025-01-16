@@ -74,7 +74,7 @@ const RecruiterDashboard = () => {
     return (
         <div className="h-screen flex flex-col bg-gray-100">
             <Botpress />
-            <NavigationBar />
+            <NavigationBar userType={state.user.role}/>
 
             {notification && (
                 <Notification

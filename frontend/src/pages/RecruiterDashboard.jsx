@@ -21,7 +21,7 @@ const RecruiterDashboard = () => {
             <Botpress />
 
             {/* Navigation Bar */}
-            <NavigationBar />
+            <NavigationBar userType={state.user.role}/>
 
             {/* Main Content */}
             <div className="flex justify-center items-center flex-1">

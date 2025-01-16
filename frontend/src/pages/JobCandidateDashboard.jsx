@@ -105,15 +105,15 @@ const JobCandidateDashboard = () => {
         <div className="h-screen flex flex-col bg-gray-100">
         
             <Botpress />
-          {/* Navigation Bar */}
-          <NavigationBar />
-    
-          {/* JobCandidateDashboard Content */}
-          <div className="flex justify-center items-center flex-1">
+            {/* Navigation Bar */}
+            <NavigationBar userType={state.user.role}/>
+
+            {/* JobCandidateDashboard Content */}
+            <div className="flex justify-center items-center flex-1">
             <h1 className="text-gray-800 text-2xl font-bold">
-              JobCandidateDashboard
+                JobCandidateDashboard
             </h1>
-          </div>
+            </div>
         </div>
       );
 };

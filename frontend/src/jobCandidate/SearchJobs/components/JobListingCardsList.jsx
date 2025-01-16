@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
 
-const JobListingCardsList = () => {
+const JobListingCardsList = ({ onJobSelect }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch job listings from the API
     const fetchJobListings = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings`);
@@ -15,7 +14,6 @@ const JobListingCardsList = () => {
           throw new Error("Failed to fetch job listings.");
         }
         const jobListings = await response.json();
-                
         setJobListings(jobListings.jobListings);
         setLoading(false);
       } catch (err) {
@@ -36,11 +34,16 @@ const JobListingCardsList = () => {
   }
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-4">
-      {jobListings && jobListings.map((jobListing) => (
-        <JobListingCard key={jobListing._id} jobListing={jobListing} />
+    <div className="space-y-4">
+      {jobListings.map((jobListing) => (
+        <div
+          key={jobListing._id}
+          onClick={() => onJobSelect(jobListing)}
+          className="cursor-pointer"
+        >
+          <JobListingCard jobListing={jobListing} />
+        </div>
       ))}
-
     </div>
   );
 };

@@ -251,7 +251,7 @@ const ChatsPage = () => {
       <Botpress />
       {/* Navigation Bar */}
       <div>
-        <NavigationBar />
+      <NavigationBar userType={state.user.role}/>
       </div>
   
       {/* Main Content */}

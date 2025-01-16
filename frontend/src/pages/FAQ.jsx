@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import NavigationBar from "../components/NavigationBar";
 import Botpress from "../botpress/Botpress";
+import { useLocation } from "react-router-dom";
 
 // Sub-component for individual FAQ item
 const FAQItem = ({ faq, onToggle }) => (
@@ -17,6 +18,7 @@ const FAQItem = ({ faq, onToggle }) => (
   );
 
 const FAQ = () => {
+const { state } = useLocation();
 const [searchQuery, setSearchQuery] = useState("");
 const [faqs, setFaqs] = useState({
     "Login & Registration": [
@@ -101,7 +103,7 @@ const [filteredFaqs, setFilteredFaqs] = useState(faqs);
   return (
     <div className="min-h-screen bg-brand-primary text-brand-accent font-sans">
       <Botpress />
-      <NavigationBar />
+      <NavigationBar userType={state.user.role}/>
       
 
       <div className="my-6 text-center">

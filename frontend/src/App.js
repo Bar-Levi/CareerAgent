@@ -10,6 +10,7 @@ import ResetLoginAttempts from './pages/ResetLoginAttempts';
 import ChatsPage from './pages/ChatsPage';
 import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
+import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
 
 
 function App() {
@@ -36,6 +37,8 @@ function App() {
                     </ProtectedRoute>
                 }/>
                 <Route path="/FAQ" element={<FAQ />} />
+                <Route path="/searchjobs" element={<SearchJobs />} />
+
             </Routes>
         </Router>
     );
