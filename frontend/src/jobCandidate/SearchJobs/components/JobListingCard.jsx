@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { FaCheck } from "react-icons/fa";
 
 const JobListingCard = ({ jobListing, user, setShowModal}) => {
   const {
@@ -12,14 +13,15 @@ const JobListingCard = ({ jobListing, user, setShowModal}) => {
     companyWebsite,
     recruiterName,
     recruiterProfileImage,
-    applicantsCount,
+    applicants,
     education,
     skills,
-    _id: jobId, // Extract the job ID
+    _id: jobId,
     recruiterId,
   } = jobListing;
 
-  const [appliedCounter, setAppliedCounter] = useState(applicantsCount);
+  const [appliedCounter, setAppliedCounter] = useState(applicants?.length);
+  const [applyButtonEnabled, setAppliedButtonEnabled] = useState(true);
 
   const handleApplyNow = async () => {
     if (!user.cv || user.cv == "") {
@@ -64,7 +66,10 @@ const JobListingCard = ({ jobListing, user, setShowModal}) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              $push: { applicants: applicantData.applicant._id }, // Add the applicant to the applicants array
+              $push: { applicants: {
+                applicantId: applicantData.applicant._id,
+                jobSeekerId: user._id,
+              } },
             }),
           }
         );
@@ -83,6 +88,19 @@ const JobListingCard = ({ jobListing, user, setShowModal}) => {
       alert("An error occurred. Please try again.");
     }
   };
+
+  useEffect( () => {
+    setAppliedButtonEnabled(true);
+
+    // Check if the current user has already applied for this job
+    const existingApplicant = applicants?.find(
+      (applicant) => applicant.jobSeekerId === user._id
+    );
+
+    if (existingApplicant) {
+      setAppliedButtonEnabled(false);
+    }
+  }, []);
 
   return (
     <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300">
@@ -183,12 +201,25 @@ const JobListingCard = ({ jobListing, user, setShowModal}) => {
 
       {/* Bottom Section: Action Buttons */}
       <div className="flex flex-wrap items-center justify-between">
-        <button
-          className="px-4 py-2 bg-gradient-to-tr from-green-300 to-green-600 text-white font-semibold rounded hover:from-green-400 hover:to-green-700 hover:shadow-lg transition-all duration-300"
-          onClick={handleApplyNow}
-        >
-          Apply Now
-        </button>
+
+      <button
+        className={`px-4 py-2 font-semibold rounded transition-all duration-300 ${
+          applyButtonEnabled
+            ? "bg-gradient-to-tr from-green-300 to-green-600 text-white hover:from-green-400 hover:to-green-700 hover:shadow-lg"
+            : "bg-gray-200 text-gray-700 flex items-center justify-center"
+        }`}
+        onClick={handleApplyNow}
+        disabled={!applyButtonEnabled}
+      >
+        {applyButtonEnabled ? (
+          "Apply Now"
+        ) : (
+          <span className="flex items-center">
+            <FaCheck className="mr-2 text-green-600" />
+            Applied
+          </span>
+        )}
+      </button>
 
         <button className="px-4 py-2 bg-gradient-to-tr from-red-300 to-red-600 text-white font-semibold rounded hover:from-red-400 hover:to-red-700 hover:shadow-lg transition-all duration-300">
           Integrate with Chatbot

@@ -142,7 +142,7 @@ const updateJobListing = async (req, res) => {
     try {
         const { id } = req.params;
         const updatedData = req.body;
-
+        console.log("updateJobListing", updatedData);
         const updatedJobListing = await JobListing.findByIdAndUpdate(id, updatedData, {
             new: true, // Return the updated document
             runValidators: true, // Run schema validators on the updated data
