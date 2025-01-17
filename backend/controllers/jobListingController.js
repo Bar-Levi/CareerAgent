@@ -192,8 +192,8 @@ const deleteJobListing = async (req, res) => {
     }
 };
 
-// Filter job listings
-const filterJobListings = async (req, res) => {
+// Filter from the ACTIVE job listings
+const filterActiveJobListings = async (req, res) => {
     try {
         const {
             jobRole,
@@ -211,7 +211,7 @@ const filterJobListings = async (req, res) => {
         } = req.query;
 
         // Build the query dynamically
-        const query = {};
+        const query = {status: 'Active'};
         if (jobRole) query.jobRole = { $regex: jobRole, $options: "i" };
         if (company) query.company = { $regex: company, $options: "i" };
         if (location) query.location = { $regex: location, $options: "i" };
@@ -274,6 +274,7 @@ const getMetrics = async (req, res) => {
             avgTimeToHire: avgTimeToHire,
         };
 
+        console.log("Metrics: ", metrics);
         res.status(200).json({
             message: "Job listings fetched successfully.",
             metrics,
@@ -315,7 +316,7 @@ module.exports = {
     updateJobListing,
     deleteJobListing,
     getJobListingsByRecruiterId,
-    filterJobListings,
+    filterActiveJobListings,
     getMetrics,
     getRecruiterListings
 };

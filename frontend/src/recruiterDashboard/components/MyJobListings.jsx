@@ -1,9 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
+import { FaEllipsisV } from "react-icons/fa";
 
 // Subcomponent for the settings menu
-const SettingsMenu = ({ onRemove }) => {
+const SettingsMenu = ({ onRemove, onClose }) => {
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                onClose(); // Close the menu if clicking outside
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [onClose]);
+
     return (
-        <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
+        <div
+            ref={menuRef}
+            className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50"
+        >
             <button
                 onClick={onRemove}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -14,15 +33,13 @@ const SettingsMenu = ({ onRemove }) => {
     );
 };
 
-// Subcomponent for the settings menu
 const StatusMenu = ({ currentStatus, onChangeStatus, onClose }) => {
     const menuRef = useRef(null);
 
-    // Close menu if clicking outside of it
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (menuRef.current && !menuRef.current.contains(event.target)) {
-                onClose(); // Close the menu
+                onClose();
             }
         };
 
@@ -57,10 +74,34 @@ const StatusMenu = ({ currentStatus, onChangeStatus, onClose }) => {
 };
 
 const MyJobListings = ({ jobListings, setJobListings }) => {
-    const [statusMenuOpen, setStatusMenuOpen] = useState(null); // Track which status menu is open
+    const [menuOpen, setMenuOpen] = useState(null);
+    const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
 
     const handleStatusMenuToggle = (id) => {
-        setStatusMenuOpen((prev) => (prev === id ? null : id));
+        setMenuOpen((prev) => (prev === id ? null : id));
+    };
+
+    const handleSettingsMenuToggle = (id) => {
+        setSettingsMenuOpen((prev) => (prev === id ? null : id));
+    };
+
+    const onRemove = async (id) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/${id}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to remove job listing with ID ${id}.`);
+            }
+
+            console.log(`Job listing with ID ${id} deleted.`);
+            setJobListings(jobListings.filter((listing) => listing._id !== id)); // Remove the listing from the state
+        } catch (error) {
+            console.error("Error removing job listing:", error.message);
+        } finally {
+            setMenuOpen(null); // Close menu
+        }
     };
 
     const onStatusChange = async (id, newStatus) => {
@@ -89,7 +130,7 @@ const MyJobListings = ({ jobListings, setJobListings }) => {
         } catch (error) {
             console.error("Error updating job listing status:", error.message);
         } finally {
-            setStatusMenuOpen(null); // Close status menu
+            setMenuOpen(null);
         }
     };
 
@@ -112,7 +153,7 @@ const MyJobListings = ({ jobListings, setJobListings }) => {
                                     </h3>
                                     <p className="text-sm text-gray-500">{listing.location}</p>
                                 </div>
-                                <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-4 relative">
                                     <p className="text-gray-600">
                                         Applicants: {listing.applicants?.length || 0}
                                     </p>
@@ -128,13 +169,26 @@ const MyJobListings = ({ jobListings, setJobListings }) => {
                                     >
                                         {listing.status}
                                     </button>
-                                    {statusMenuOpen === listing._id && (
+                                    {menuOpen === listing._id && (
                                         <StatusMenu
                                             currentStatus={listing.status}
                                             onChangeStatus={(newStatus) =>
                                                 onStatusChange(listing._id, newStatus)
                                             }
-                                            onClose={() => setStatusMenuOpen(null)}
+                                            onClose={() => setMenuOpen(null)}
+                                        />
+                                    )}
+
+                                    <button
+                                        onClick={() => handleSettingsMenuToggle(listing._id)}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        <FaEllipsisV />
+                                    </button>
+                                    {settingsMenuOpen === listing._id && (
+                                        <SettingsMenu
+                                            onRemove={() => onRemove(listing._id)}
+                                            onClose={() => setSettingsMenuOpen(null)}
                                         />
                                     )}
                                 </div>

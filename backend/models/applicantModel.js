@@ -22,6 +22,10 @@ const applicantSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    profilePic: {
+        type: String,
+        required: true,
+    },
     applicationDate: {
         type: Date,
         default: Date.now,

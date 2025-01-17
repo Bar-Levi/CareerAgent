@@ -67,6 +67,11 @@ const getRecruiterApplicants = async (req, res) => {
                 position: applicant.jobTitle || "Unknown Position", // Default value for position
                 date: applicant.applicationDate.toISOString().split("T")[0] || "Unknown Date", // Default to today's date if not present
                 status: applicant.status || "Pending", // Default status if not provided
+                cv: applicant.cv,
+                linkedinUrl: applicant.linkedinUrl,
+                githubUrl: applicant.githubUrl,
+                profilePic: applicant.profilePic,
+                applicationDate: applicant.applicationDate.toISOString().split("T")[0] || "Unknown Date",
             };
         });
         
