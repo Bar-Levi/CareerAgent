@@ -176,7 +176,7 @@ e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience 
         onChange={(e) => setInput(e.target.value)}
     ></textarea>
     <div className="flex justify-center mt-6 space-x-4">
-        <SpeechToText onTextChange={handleSpeechToText} />
+        <SpeechToText onTextChange={handleSpeechToText} showNotification={showNotification} />
         <button
             onClick={handlePost}
             disabled={isPosting}

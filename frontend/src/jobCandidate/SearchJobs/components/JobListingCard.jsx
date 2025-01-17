@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
-const JobListingCard = ({ jobListing, user, setUser, setShowModal }) => {
+const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification }) => {
   const {
     jobRole,
     company,
@@ -77,18 +77,18 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal }) => {
         );
 
         if (updateJobResponse.ok) {
-          alert("Application submitted successfully!");
+          showNotification("success", "Application submitted successfully!");
           setAppliedCounter((prev) => prev + 1); // Increment counter
           setApplyButtonEnabled(false); // Disable the button
         } else {
-          alert("Failed to update job listing with the new applicant.");
+          showNotification("error", "Failed to update job listing with the new applicant.");
         }
       } else {
-        alert("Failed to create applicant.");
+        showNotification("error", "Failed to create applicant.");
       }
     } catch (error) {
       console.error("Error applying for the job:", error);
-      alert("An error occurred. Please try again.");
+      showNotification("error", "An error occurred. Please try again.");
     }
   };
 

@@ -4,11 +4,20 @@ import SearchFilters from "../components/SearchFilters";
 import NavigationBar from "../../../components/NavigationBar";
 import Modal from "../components/Modal";
 import { useLocation, useNavigate } from "react-router-dom";
+import Notification from "../../../components/Notification";
+import Botpress from "../../../botpress/Botpress";
+
 
 const SearchJobs = () => {
   const { state } = useLocation();
   const [user, setUser] = useState(state.user);
   const navigate = useNavigate();
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const [filters, setFilters] = useState({
     jobRole: "",
@@ -83,7 +92,7 @@ const SearchJobs = () => {
       }
 
       state.user.cv = filePathOnCloudinary;
-      alert("CV uploaded successfully!");
+      showNotification("success", "CV uploaded successfully!");
       
       navigate('/searchjobs', { state: state })
       
@@ -91,13 +100,21 @@ const SearchJobs = () => {
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error uploading CV:", error);
-      alert("Failed to upload CV. Please try again.");
+      showNotification("error", "Failed to upload CV. Please try again.");
     }
   };
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">
       <NavigationBar userType={state.user.role} />
+      <Botpress />
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-6 max-w-7xl mx-auto overflow-hidden">
         <div className="bg-white rounded shadow lg:col-span-1 h-full overflow-y-auto">
           <SearchFilters filters={filters} setFilters={handleFilterChange} />
@@ -113,6 +130,7 @@ const SearchJobs = () => {
             user={user}
             setUser={setUser}
             setShowModal={setShowModal}
+            showNotification={showNotification}
           />
         </div>
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
@@ -142,6 +160,7 @@ const SearchJobs = () => {
           onClose={handleModalClose}
           onConfirm={handleCVUpload}
           confirmText="Upload CV"
+          showNotification={showNotification}
         />
       )}
     </div>

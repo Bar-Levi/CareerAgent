@@ -101,7 +101,7 @@ const RecruiterDashboard = () => {
 
             <div className="flex flex-col items-center flex-1 p-6 space-y-8">
                 <MetricsOverview metrics={metrics} />
-                <MyJobListings recruiterId={user._id} jobListings={jobListings} setJobListings={setJobListings}/>
+                <MyJobListings showNotification={showNotification} jobListings={jobListings} setJobListings={setJobListings}/>
                 <RecentApplications applications={recentApplications} />
                 <JobListingInput user={user} onPostSuccess={handlePostSuccess} jobListings={jobListings} setJobListings={setJobListings}/>
             </div>

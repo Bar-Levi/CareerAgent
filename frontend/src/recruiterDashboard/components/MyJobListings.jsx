@@ -73,7 +73,7 @@ const StatusMenu = ({ currentStatus, onChangeStatus, onClose }) => {
     );
 };
 
-const MyJobListings = ({ jobListings, setJobListings }) => {
+const MyJobListings = ({ jobListings, setJobListings, showNotification }) => {
     const [menuOpen, setMenuOpen] = useState(null);
     const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
 
@@ -126,7 +126,7 @@ const MyJobListings = ({ jobListings, setJobListings }) => {
                 )
             );
 
-            alert(`Status updated to ${newStatus}`);
+            showNotification("success", `Status updated to ${newStatus}`);
         } catch (error) {
             console.error("Error updating job listing status:", error.message);
         } finally {

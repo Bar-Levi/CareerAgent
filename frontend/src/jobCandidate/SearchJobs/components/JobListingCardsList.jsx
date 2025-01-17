@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
 
-const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal }) => {
+const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal, showNotification }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,6 +48,7 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal
             user={user}
             setUser={setUser}
             setShowModal={setShowModal}
+            showNotification={showNotification}
           />
         </div>
       ))}
