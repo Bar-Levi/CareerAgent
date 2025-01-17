@@ -137,12 +137,20 @@ const getJobListingsByRecruiterId = async (req, res) => {
     }
 };
 
-// Update a job listing by ID
 const updateJobListing = async (req, res) => {
     try {
         const { id } = req.params;
-        const updatedData = req.body;
+        let updatedData = req.body;
+
+        // Handle status-specific logic
+        if (updatedData.status === "Closed") {
+            updatedData.closingTime = new Date(); // Set closingTime to the current date and time
+        } else if (updatedData.status === "Active" || updatedData.status === "Paused") {
+            updatedData.closingTime = null; // Remove closingTime
+        }
+
         console.log("updateJobListing", updatedData);
+
         const updatedJobListing = await JobListing.findByIdAndUpdate(id, updatedData, {
             new: true, // Return the updated document
             runValidators: true, // Run schema validators on the updated data
@@ -161,6 +169,7 @@ const updateJobListing = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
+
 
 // Delete a job listing by ID
 const deleteJobListing = async (req, res) => {
@@ -234,18 +243,15 @@ const filterJobListings = async (req, res) => {
 
 // Filter job listings
 const getMetrics = async (req, res) => {
+    
     try {
         const recruiterId = req.params;
 
         // Fetch filtered results
         const jobListings = await JobListing.find(recruiterId);
 
-        console.log("-Job listings:", jobListings);
-
         const activeListingsCount = jobListings.filter((job) => job.status === "Active").length;
-        console.log("-Active listings:", activeListingsCount);
         const totalApplications = jobListings.map((job) => job.applicants.length).reduce((a, b) => a + b);
-        console.log("-Total applications:", totalApplications);
         const closedJobListings = jobListings.filter((job) => job.closingTime);
 
         const totalTimeToHire = closedJobListings.map((job) => {
@@ -260,9 +266,7 @@ const getMetrics = async (req, res) => {
         
             return diffInDays;
         });
-
-        const avgTimeToHire = totalTimeToHire / totalApplications.length;
-        console.log("avgTimeToHire: ", avgTimeToHire);
+        const avgTimeToHire = totalTimeToHire / closedJobListings.length;
 
         const metrics = {
             activeListings: activeListingsCount,
@@ -270,7 +274,6 @@ const getMetrics = async (req, res) => {
             avgTimeToHire: avgTimeToHire,
         };
 
-        console.log("Metrics: ", metrics);
         res.status(200).json({
             message: "Job listings fetched successfully.",
             metrics,
