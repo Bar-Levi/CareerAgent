@@ -267,7 +267,7 @@ const getMetrics = async (req, res) => {
         const metrics = {
             activeListings: activeListingsCount,
             totalApplications: totalApplications,
-            avgTimeToHire: avgTimeToHire || "Didn't close any job yet.",
+            avgTimeToHire: avgTimeToHire,
         };
 
         console.log("Metrics: ", metrics);

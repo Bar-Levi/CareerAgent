@@ -13,7 +13,11 @@ const MetricsOverview = ({ metrics }) => {
             </div>
             <div className="bg-white shadow rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-gray-800">Avg Time to Hire</h3>
-                <p className="text-2xl text-indigo-600">{metrics.avgTimeToHire || 0} days</p>
+                {metrics.avgTimeToHire ?
+                <p className="text-2xl text-indigo-600">{metrics.avgTimeToHire} days</p>
+                :
+                <p className="text-2xl text-indigo-600">Didn't close any job yet.</p>
+                }
             </div>
         </div>
     );
