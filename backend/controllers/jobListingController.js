@@ -232,6 +232,78 @@ const filterJobListings = async (req, res) => {
     }
 };
 
+// Filter job listings
+const getMetrics = async (req, res) => {
+    try {
+        const recruiterId = req.params;
+
+        // Fetch filtered results
+        const jobListings = await JobListing.find(recruiterId);
+
+        console.log("-Job listings:", jobListings);
+
+        const activeListingsCount = jobListings.filter((job) => job.status === "Active").length;
+        console.log("-Active listings:", activeListingsCount);
+        const totalApplications = jobListings.map((job) => job.applicants.length).reduce((a, b) => a + b);
+        console.log("-Total applications:", totalApplications);
+        const closedJobListings = jobListings.filter((job) => job.closingTime);
+
+        const totalTimeToHire = closedJobListings.map((job) => {
+            const closingTime = new Date(job.closingTime); // Convert to Date object
+            const createdAt = new Date(job.createdAt); // Convert to Date object
+        
+            // Calculate the difference in milliseconds
+            const diffInMilliseconds = closingTime - createdAt;
+        
+            // Convert milliseconds to days and round to nearest integer
+            const diffInDays = Math.round(diffInMilliseconds / (1000 * 60 * 60 * 24));
+        
+            return diffInDays;
+        });
+
+        const avgTimeToHire = totalTimeToHire / totalApplications.length;
+        console.log("avgTimeToHire: ", avgTimeToHire);
+
+        const metrics = {
+            activeListings: activeListingsCount,
+            totalApplications: totalApplications,
+            avgTimeToHire: avgTimeToHire || "Didn't close any job yet.",
+        };
+
+        console.log("Metrics: ", metrics);
+        res.status(200).json({
+            message: "Job listings fetched successfully.",
+            metrics,
+        });
+    } catch (error) {
+        console.error("Error filtering job listings:", error.message);
+        res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+};
+
+// Get specific recruiter job listings.
+const getRecruiterListings = async (req, res) => {
+    try {
+        const recruiterId = req.params;
+
+        // Fetch filtered results
+        const jobListings = await JobListing.find(recruiterId);
+
+        res.status(200).json({
+            message: "Job listings fetched successfully.",
+            jobListings,
+        });
+    } catch (error) {
+        console.error("Error filtering job listings:", error.message);
+        res.status(500).json({
+            message: "Internal Server Error",
+            error: error.message,
+        });
+    }
+};
 
 module.exports = {
     saveJobListing,
@@ -240,5 +312,7 @@ module.exports = {
     updateJobListing,
     deleteJobListing,
     getJobListingsByRecruiterId,
-    filterJobListings
+    filterJobListings,
+    getMetrics,
+    getRecruiterListings
 };

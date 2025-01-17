@@ -6,7 +6,9 @@ const {
     updateJobListing,
     deleteJobListing,
     getJobListingsByRecruiterId,
-    filterJobListings
+    filterJobListings,
+    getMetrics,
+    getRecruiterListings
 } = require('../controllers/jobListingController');
 
 const router = express.Router();
@@ -31,6 +33,10 @@ router.delete("/:id", deleteJobListing);
 
 // Filter job listings
 router.get("/filteredJobListings", filterJobListings);
+
+router.get("/metrics/:recruiterId", getMetrics);
+
+router.get("/getRecruiterListings/:recruiterId", getRecruiterListings);
 
 
 module.exports = router;

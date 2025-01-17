@@ -58,11 +58,15 @@ const RecruiterDashboard = () => {
     };
 
     const fetchMetrics = async () => {
-        const dashboardMetrics = {
-            activeListings: 2,
-            totalApplications: 25,
-            avgTimeToHire: 20,
-        };
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`)
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch metrics.");
+        }
+
+        const data = await response.json();
+        const dashboardMetrics = data.metrics;
+        console.log("dashboardMetrics: " + dashboardMetrics);
         setMetrics(dashboardMetrics);
     };
 
