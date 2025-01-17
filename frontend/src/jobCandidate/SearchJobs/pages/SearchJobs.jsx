@@ -3,10 +3,13 @@ import JobListingCardsList from "../components/JobListingCardsList";
 import SearchFilters from "../components/SearchFilters";
 import NavigationBar from "../../../components/NavigationBar";
 import Modal from "../components/Modal";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const SearchJobs = () => {
   const { state } = useLocation();
+  const [user, setUser] = useState(state.user);
+  const navigate = useNavigate();
+
   const [filters, setFilters] = useState({
     jobRole: "",
     location: "",
@@ -15,6 +18,13 @@ const SearchJobs = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    console.log("SearchJobs - user.cv: " + user.cv);
+    if (!user.cv || user.cv === "") {
+      setShowModal(true);
+    }
+  }, [user.cv]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prevFilters) => ({
@@ -27,44 +37,38 @@ const SearchJobs = () => {
     setSelectedJob(job);
   };
 
-  useEffect(() => {
-    if (!state.user.cv || state.user.cv == "") {
-      setShowModal(true); // Show modal if CV is missing
-    }
-  }, [state]);
-
   const handleModalClose = () => {
     setShowModal(false);
   };
 
-  
-
   const handleCVUpload = async (file) => {
-
     const uploadFile = async (file, folder) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', folder);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", folder);
 
-        const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
-            method: 'POST',
-            body: formData,
-        });
-        if (!uploadResponse.ok) {
-            throw new Error('Failed to upload file to Cloudinary.');
+      const uploadResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`,
+        {
+          method: "POST",
+          body: formData,
         }
+      );
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload file to Cloudinary.");
+      }
 
-        const data = await uploadResponse.json();
-        return data.url;
+      const data = await uploadResponse.json();
+      return data.url;
     };
 
     try {
+      const filePathOnCloudinary = await uploadFile(file, "cvs");
       const formData = new FormData();
-      const filePathOnCloudinary = await uploadFile(file, 'cvs');
       formData.append("cv", filePathOnCloudinary);
 
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/upload-cv/${state.user._id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/upload-cv/${user._id}`,
         {
           method: "PATCH",
           body: formData,
@@ -78,8 +82,12 @@ const SearchJobs = () => {
         throw new Error("Failed to upload CV.");
       }
 
+      state.user.cv = filePathOnCloudinary;
       alert("CV uploaded successfully!");
-      state.user.cv = filePathOnCloudinary; // Update the user's CV in the state
+      
+      navigate('/searchjobs', { state: state })
+      
+
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error uploading CV:", error);
@@ -98,12 +106,14 @@ const SearchJobs = () => {
           <h1 className="p-4 sticky top-0 bg-brand-primary text-brand-accent text-2xl font-bold">
             Search Jobs
           </h1>
-          <JobListingCardsList 
+          <JobListingCardsList
+            key={`${user.cv}-${JSON.stringify(filters)}`} // Unique key for dynamic updates
             filters={filters}
             onJobSelect={handleJobSelect}
-            user={state.user}
+            user={user}
+            setUser={setUser}
             setShowModal={setShowModal}
-            />
+          />
         </div>
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (

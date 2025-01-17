@@ -4,7 +4,8 @@ const {
     getApplicants, 
     getApplicantById, 
     updateApplicant, 
-    deleteApplicant 
+    deleteApplicant,
+    getRecruiterApplicants
 } = require('../controllers/applicantController');
 
 const router = express.Router();
@@ -17,6 +18,9 @@ router.get('/', getApplicants);
 
 // Get a specific applicant by ID
 router.get('/:id', getApplicantById);
+
+// Get a specific applicant by ID
+router.get('/getRecruiterApplicants/:recruiterId', getRecruiterApplicants);
 
 // Update a specific applicant by ID
 router.put('/:id', updateApplicant);

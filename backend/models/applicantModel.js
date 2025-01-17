@@ -8,7 +8,6 @@ const applicantSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true,
     },
     phone: {
         type: String,
@@ -29,8 +28,8 @@ const applicantSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['applied', 'in review', 'rejected', 'accepted'],
-        default: 'applied',
+        enum: ['Applied', 'In review', 'Rejected', 'Accepted'],
+        default: 'Applied',
     },
     notes: {
         type: String,

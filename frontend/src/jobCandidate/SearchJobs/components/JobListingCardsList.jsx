@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
 
-const JobListingCardsList = ({ filters, onJobSelect, user, setShowModal }) => {
+const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,7 +10,6 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setShowModal }) => {
     const fetchJobListings = async () => {
       try {
         const query = new URLSearchParams(filters).toString();
-        console.log('query:', query);
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/filteredJobListings?${query}`,
         );
@@ -19,14 +18,12 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setShowModal }) => {
         }
         const data = await response.json();
         setJobListings(data.jobListings);
-        console.log("Fetched job listings");
         setLoading(false);
       } catch (err) {
         setError("Failed to load job listings.");
         setLoading(false);
       }
     };
-
     fetchJobListings();
   }, [filters]);
 
@@ -49,6 +46,7 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setShowModal }) => {
           <JobListingCard
             jobListing={jobListing}
             user={user}
+            setUser={setUser}
             setShowModal={setShowModal}
           />
         </div>

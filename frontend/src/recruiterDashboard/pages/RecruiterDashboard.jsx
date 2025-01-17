@@ -50,11 +50,22 @@ const RecruiterDashboard = () => {
     };
 
     const fetchRecentApplications = async () => {
-        const applications = [
-            { id: 1, candidate: "John Doe", position: "Frontend Developer", date: "2025-01-14", status: "Screening" },
-            { id: 2, candidate: "Jane Smith", position: "Backend Developer", date: "2025-01-13", status: "Interviewing" },
-        ];
-        setRecentApplications(applications);
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applicants/getRecruiterApplicants/${user._id}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    console.error(data.message); // Use 'statusText' to show the server-provided message
+                    return; // Exit early to avoid unnecessary API calls
+                }
+                throw new Error("Failed to fetch recruiter's job listings.");
+            }
+            const applications = data.applications;
+            setRecentApplications(applications);
+        } catch (error) {
+            console.error("Error fetching job listings:", error.message);
+        }
     };
 
     const fetchMetrics = async () => {
