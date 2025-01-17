@@ -93,8 +93,16 @@ const jobListingSchema = new mongoose.Schema({
     },
     applicants: [
         {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Applicant', // Reference to the Applicant model
+            applicantId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Applicant', // Reference to the Applicant model
+                required: true,
+            },
+            jobSeekerId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'JobSeeker', // Reference to the JobSeeker model
+                required: true,
+            }
         },
     ],
     status: {

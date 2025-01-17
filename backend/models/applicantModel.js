@@ -8,49 +8,52 @@ const applicantSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true,
     },
     phone: {
         type: String,
     },
-    linkedin_url: {
+    linkedinUrl: {
         type: String,
     },
-    github_url: {
+    githubUrl: {
         type: String,
     },
-    cv_url: {
+    cv: {
         type: String,
         required: true,
     },
-    application_date: {
+    profilePic: {
+        type: String,
+        required: true,
+    },
+    applicationDate: {
         type: Date,
         default: Date.now,
     },
     status: {
         type: String,
-        enum: ['applied', 'in review', 'rejected', 'accepted'],
-        default: 'applied',
+        enum: ['Applied', 'In review', 'Rejected', 'Accepted'],
+        default: 'Applied',
     },
     notes: {
         type: String,
     },
-    job_id: {
+    jobId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'JobListing',
         required: true,
     },
-    recruiter_id: {
+    recruiterId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Recruiter',
         required: true,
     },
-    job_seeker_id: {
+    jobSeekerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'JobSeeker',
         required: true,
     },
-    job_title: {
+    jobTitle: {
         type: String,
     },
 });

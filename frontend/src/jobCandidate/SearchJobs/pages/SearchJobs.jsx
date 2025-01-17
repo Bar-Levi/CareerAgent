@@ -3,10 +3,22 @@ import JobListingCardsList from "../components/JobListingCardsList";
 import SearchFilters from "../components/SearchFilters";
 import NavigationBar from "../../../components/NavigationBar";
 import Modal from "../components/Modal";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import Notification from "../../../components/Notification";
+import Botpress from "../../../botpress/Botpress";
+
 
 const SearchJobs = () => {
   const { state } = useLocation();
+  const [user, setUser] = useState(state.user);
+  const navigate = useNavigate();
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
   const [filters, setFilters] = useState({
     jobRole: "",
     location: "",
@@ -15,6 +27,13 @@ const SearchJobs = () => {
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    console.log("SearchJobs - user.cv: " + user.cv);
+    if (!user.cv || user.cv === "") {
+      setShowModal(true);
+    }
+  }, [user.cv]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prevFilters) => ({
@@ -27,44 +46,38 @@ const SearchJobs = () => {
     setSelectedJob(job);
   };
 
-  useEffect(() => {
-    if (!state.user.cv || state.user.cv == "") {
-      setShowModal(true); // Show modal if CV is missing
-    }
-  }, []);
-
   const handleModalClose = () => {
     setShowModal(false);
   };
 
-  
-
   const handleCVUpload = async (file) => {
-
     const uploadFile = async (file, folder) => {
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('folder', folder);
+      formData.append("file", file);
+      formData.append("folder", folder);
 
-      const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
-          method: 'POST',
+      const uploadResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`,
+        {
+          method: "POST",
           body: formData,
-      });
+        }
+      );
       if (!uploadResponse.ok) {
-          throw new Error('Failed to upload file to Cloudinary.');
+        throw new Error("Failed to upload file to Cloudinary.");
       }
 
       const data = await uploadResponse.json();
       return data.url;
-  };
+    };
 
     try {
+      const filePathOnCloudinary = await uploadFile(file, "cvs");
       const formData = new FormData();
-      const filePathOnCloudinary = await uploadFile(file, 'cvs');
       formData.append("cv", filePathOnCloudinary);
 
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/upload-cv/${state.user._id}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/upload-cv/${user._id}`,
         {
           method: "PATCH",
           body: formData,
@@ -78,18 +91,30 @@ const SearchJobs = () => {
         throw new Error("Failed to upload CV.");
       }
 
-      alert("CV uploaded successfully!");
-      state.user.cv = filePathOnCloudinary; // Update the user's CV in the state
+      state.user.cv = filePathOnCloudinary;
+      showNotification("success", "CV uploaded successfully!");
+      
+      navigate('/searchjobs', { state: state })
+      
+
       setShowModal(false); // Close the modal
     } catch (error) {
       console.error("Error uploading CV:", error);
-      alert("Failed to upload CV. Please try again.");
+      showNotification("error", "Failed to upload CV. Please try again.");
     }
   };
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">
       <NavigationBar userType={state.user.role} />
+      <Botpress />
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-6 max-w-7xl mx-auto overflow-hidden">
         <div className="bg-white rounded shadow lg:col-span-1 h-full overflow-y-auto">
           <SearchFilters filters={filters} setFilters={handleFilterChange} />
@@ -98,7 +123,15 @@ const SearchJobs = () => {
           <h1 className="p-4 sticky top-0 bg-brand-primary text-brand-accent text-2xl font-bold">
             Search Jobs
           </h1>
-          <JobListingCardsList filters={filters} onJobSelect={handleJobSelect} />
+          <JobListingCardsList
+            key={`${user.cv}-${JSON.stringify(filters)}`} // Unique key for dynamic updates
+            filters={filters}
+            onJobSelect={handleJobSelect}
+            user={user}
+            setUser={setUser}
+            setShowModal={setShowModal}
+            showNotification={showNotification}
+          />
         </div>
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (
@@ -127,6 +160,7 @@ const SearchJobs = () => {
           onClose={handleModalClose}
           onConfirm={handleCVUpload}
           confirmText="Upload CV"
+          showNotification={showNotification}
         />
       )}
     </div>

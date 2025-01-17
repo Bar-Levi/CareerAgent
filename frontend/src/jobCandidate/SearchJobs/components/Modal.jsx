@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const Modal = ({ title, message, onClose, onConfirm, confirmText = "Confirm" }) => {
+const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmText = "Confirm" }) => {
   const [isVisible, setIsVisible] = useState(false); // For scale-in animation
   const [isClosing, setIsClosing] = useState(false); // For scale-out animation
   const [file, setFile] = useState(null); // State to store the selected file
@@ -20,7 +20,7 @@ const Modal = ({ title, message, onClose, onConfirm, confirmText = "Confirm" }) 
 
   const handleConfirm = () => {
     if (!file) {
-      alert("Please select a file before uploading.");
+      showNotification("error", "Please select a file before uploading.");
       return;
     }
     onConfirm(file); // Pass the selected file to the parent component

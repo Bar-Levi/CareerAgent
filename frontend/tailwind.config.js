@@ -28,7 +28,7 @@ module.exports = {
                 'fade-in': 'fade-in 1s ease-in-out',
                 'fade-in-fast': 'fade-in 0.5s ease-in-out',
                 "slide-up": "slide-up 0.3s ease-out",
-
+                
                 // Flipping and rotating animations
                 'flip': 'flip 1s ease-in-out',
                 'rotate-scale': 'rotate-scale 1s ease-in-out',

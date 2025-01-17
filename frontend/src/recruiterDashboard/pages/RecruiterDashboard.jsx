@@ -50,19 +50,34 @@ const RecruiterDashboard = () => {
     };
 
     const fetchRecentApplications = async () => {
-        const applications = [
-            { id: 1, candidate: "John Doe", position: "Frontend Developer", date: "2025-01-14", status: "Screening" },
-            { id: 2, candidate: "Jane Smith", position: "Backend Developer", date: "2025-01-13", status: "Interviewing" },
-        ];
-        setRecentApplications(applications);
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applicants/getRecruiterApplicants/${user._id}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    console.error(data.message); // Use 'statusText' to show the server-provided message
+                    return; // Exit early to avoid unnecessary API calls
+                }
+                throw new Error("Failed to fetch recruiter's job listings.");
+            }
+            const applications = data.applications;
+            setRecentApplications(applications);
+        } catch (error) {
+            console.error("Error fetching job listings:", error.message);
+        }
     };
 
     const fetchMetrics = async () => {
-        const dashboardMetrics = {
-            activeListings: 2,
-            totalApplications: 25,
-            avgTimeToHire: 20,
-        };
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`)
+
+        if (!response.ok) {
+            throw new Error("Failed to fetch metrics.");
+        }
+
+        const data = await response.json();
+        const dashboardMetrics = data.metrics;
+        console.log("dashboardMetrics: " + dashboardMetrics);
         setMetrics(dashboardMetrics);
     };
 
@@ -72,9 +87,9 @@ const RecruiterDashboard = () => {
     };
 
     return (
-        <div className="h-screen flex flex-col bg-gray-100">
+        <div className="h-screen flex flex-col bg-gray-100 animate-fade-in">
             <Botpress />
-            <NavigationBar userType={state.user.role}/>
+            <NavigationBar userType={state?.user?.role || state?.role}/>
 
             {notification && (
                 <Notification
@@ -86,7 +101,7 @@ const RecruiterDashboard = () => {
 
             <div className="flex flex-col items-center flex-1 p-6 space-y-8">
                 <MetricsOverview metrics={metrics} />
-                <MyJobListings recruiterId={user._id} jobListings={jobListings} setJobListings={setJobListings}/>
+                <MyJobListings showNotification={showNotification} jobListings={jobListings} setJobListings={setJobListings}/>
                 <RecentApplications applications={recentApplications} />
                 <JobListingInput user={user} onPostSuccess={handlePostSuccess} jobListings={jobListings} setJobListings={setJobListings}/>
             </div>

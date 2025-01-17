@@ -1,20 +1,31 @@
 const express = require('express');
+const { 
+    createApplicant, 
+    getApplicants, 
+    getApplicantById, 
+    updateApplicant, 
+    deleteApplicant,
+    getRecruiterApplicants
+} = require('../controllers/applicantController');
+
 const router = express.Router();
-const applicantController = require('../controllers/applicantController');
 
 // Create a new applicant
-router.post('/', applicantController.createApplicant);
+router.post('/', createApplicant);
 
 // Get all applicants
-router.get('/', applicantController.getAllApplicants);
+router.get('/', getApplicants);
 
-// Get a single applicant by ID
-router.get('/:id', applicantController.getApplicantById);
+// Get a specific applicant by ID
+router.get('/:id', getApplicantById);
 
-// Update an applicant
-router.put('/:id', applicantController.updateApplicant);
+// Get a specific applicant by ID
+router.get('/getRecruiterApplicants/:recruiterId', getRecruiterApplicants);
 
-// Delete an applicant
-router.delete('/:id', applicantController.deleteApplicant);
+// Update a specific applicant by ID
+router.put('/:id', updateApplicant);
+
+// Delete a specific applicant by ID
+router.delete('/:id', deleteApplicant);
 
 module.exports = router;

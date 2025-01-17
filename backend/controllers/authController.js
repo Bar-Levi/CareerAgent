@@ -200,7 +200,7 @@ const loginUser = async (req, res) => {
         // Check account verification
         if (!user.isVerified) {
             const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
-            return res.status(403).json({ message: 'Please verify your email before logging in.', token });
+            return res.status(403).json({ message: 'Please verify your email before logging in.', token, user});
         }
 
         // Reset login attempts after successful login

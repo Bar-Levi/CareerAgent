@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { FaMicrophone, FaStop } from "react-icons/fa"; // Importing icons from React Icons
 
-const SpeechToText = ({ onTextChange }) => {
+const SpeechToText = ({ onTextChange, showNotification }) => {
     const [isListening, setIsListening] = useState(false);
     const [recognition, setRecognition] = useState(null);
 
     useEffect(() => {
         if (!("webkitSpeechRecognition" in window)) {
-            alert("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
+            showNotification("error", "Speech recognition is not supported in this browser. Please use Chrome or Edge.");
             return;
         }
         const speechRecognition = new window.webkitSpeechRecognition();
@@ -23,7 +23,7 @@ const SpeechToText = ({ onTextChange }) => {
 
         speechRecognition.onerror = (event) => {
             console.error("Speech recognition error:", event.error);
-            alert("An error occurred: " + event.error);
+            showNotification("error", "An error occurred: " + event.error)
             setIsListening(false);
         };
 
