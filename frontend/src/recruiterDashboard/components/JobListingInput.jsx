@@ -10,6 +10,9 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
     const [jobListing, setJobListing] = useState(null); // State for job listing data
     const [isPosting, setIsPosting] = useState(false); // State for loading interaction
 
+    // Get token from localStorage
+    const token = localStorage.getItem("token");
+
     // Show notification
     const showNotification = (type, message) => {
         setNotification({ type, message });
@@ -25,7 +28,10 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/analyzeJobListing`, {
                 method: "POST",
                 body: JSON.stringify({ prompt: freeText }),
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) {
@@ -57,7 +63,10 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
                 body: JSON.stringify(updatedJobListingData),
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             if (!response.ok) {

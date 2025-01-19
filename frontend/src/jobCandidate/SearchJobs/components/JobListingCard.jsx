@@ -49,7 +49,8 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-          },
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
           body: JSON.stringify({
             name: user.fullName,
             email: user.email,
@@ -77,7 +78,8 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
-            },
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
             body: JSON.stringify({
               $push: {
                 applicants: {
