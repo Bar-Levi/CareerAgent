@@ -60,7 +60,7 @@ const registerJobSeeker = async (req, res) => {
         const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
-        const user = await JobSeeker.create({
+        const userData = {
             fullName,
             email,
             password: hashedPassword,
@@ -71,12 +71,21 @@ const registerJobSeeker = async (req, res) => {
             phone,
             githubUrl,
             linkedinUrl,
-            cv,
-            profilePic,
             dateOfBirth,
             pin: hashedPin,
-            analyzed_cv_content
-        });
+        };
+        
+        // Conditionally add `cv` if it's not null
+        if (cv) {
+            userData.cv = cv;
+            userData.analyzed_cv_content = analyzed_cv_content;
+        }
+
+        if (profilePic)
+            userData.profilePic = profilePic;
+        
+        const user = await JobSeeker.create(userData);
+        
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });

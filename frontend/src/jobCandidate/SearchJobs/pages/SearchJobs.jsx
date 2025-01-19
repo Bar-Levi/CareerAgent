@@ -156,7 +156,7 @@ const SearchJobs = () => {
       {showModal && (
         <Modal
           title="Upload Your CV"
-          message="To enjoy better functionality, please upload your CV."
+          message="To enjoy better experience, please upload your CV."
           onClose={handleModalClose}
           onConfirm={handleCVUpload}
           confirmText="Upload CV"
