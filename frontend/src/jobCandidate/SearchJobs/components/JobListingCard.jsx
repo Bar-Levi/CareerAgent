@@ -18,6 +18,7 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
     skills,
     _id: jobId,
     recruiterId,
+    createdAt,
   } = jobListing;
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
@@ -118,21 +119,37 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
   return (
     <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300">
       {/* Top Section: Recruiter Info */}
-      <div className="flex items-center space-x-4">
-        <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+      <div className="flex items-center justify-between space-x-4">
+        {/* Recruiter Image */}
+        <div className="flex-shrink-0">
           <img
             src={recruiterProfileImage || "https://via.placeholder.com/48"}
             alt="Recruiter"
-            className="w-full h-full object-cover border-2 border-black rounded-full p-1"
+            className="w-16 h-16 object-cover border-2 border-black rounded-full p-1"
           />
         </div>
-        <p className="flex-grow text-sm text-gray-700">
-          Recruited by <span className="font-semibold">{recruiterName || "Unknown Recruiter"}</span>
-        </p>
-        <button className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300">
-          Chat with Recruiter
-        </button>
+
+        {/* Recruiter Info */}
+        <div className="flex-grow">
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold text-gray-900">
+              Recruited by {recruiterName || "Unknown Recruiter"}
+            </span>
+            <br />
+            <span className="text-xs text-gray-500">
+              Posted on {new Date(createdAt).toLocaleDateString()}
+            </span>
+          </p>
+        </div>
+
+        {/* Chat Button */}
+        <div>
+          <button className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300">
+            Chat with Recruiter
+          </button>
+        </div>
       </div>
+
 
       <hr className="border-gray-300 my-4" />
 
@@ -180,6 +197,12 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
               Applied
             </span>
           )}
+        </button>
+
+        <button
+          className="px-4 py-2 font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg"
+        >
+          Talk with Chatbot
         </button>
 
         <span className="px-4 py-2 text-gray-800 font-semibold rounded cursor-default">

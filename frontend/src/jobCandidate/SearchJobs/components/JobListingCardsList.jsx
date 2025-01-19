@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
 import { FaSpinner } from "react-icons/fa";
+import calculateJobMatch from "../utils/calculateJobMatch";
 
-
-const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal, showNotification, setJobListingsCount }) => {
+const JobListingCardsList = ({ 
+  filters,
+  onJobSelect,
+  user,
+  setUser,
+  setShowModal,
+  showNotification,
+  setJobListingsCount,
+  sortingMethod
+}) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,6 +40,39 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
+  // Sorting by time (newest and oldest)
+  useEffect(() => {
+    const sortJobListings = () => {
+      if (sortingMethod === "newest") {
+        setJobListings((prevListings) =>
+          [...prevListings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        );
+      } else if (sortingMethod === "oldest") {
+        setJobListings((prevListings) =>
+          [...prevListings].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        );
+      } else if (sortingMethod === "relevance") {
+        console.log(jobListings);
+
+        const relevanceList = jobListings.map((jobListing) => ({
+          jobListing, // Include the job listing object
+          relevanceScore: calculateRelevanceScore(jobListing, user), // Calculate relevance score
+        }));
+        
+        // Sort by relevanceScore in descending order
+        const sortedJobListings = relevanceList
+          .sort((a, b) => b.relevanceScore - a.relevanceScore) // Descending order
+          .map((item) => item.jobListing); // Extract the sorted job listings
+        
+        console.log(sortedJobListings);
+        setJobListings(sortedJobListings);
+        
+      }
+    };
+
+    sortJobListings();
+  }, [sortingMethod, user]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -43,6 +85,75 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal
     return <p className="text-red-600">{error}</p>;
   }
 
+  function calculateRelevanceScore(jobListing, user) {
+    let score = 0;
+    const userData = user.analyzed_cv_content;
+  
+    // Job Roles match
+    if (userData.job_role) {
+      for (const job of userData.job_role) {
+        if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
+          score += 10;
+          console.log(`Matched job role: '${job}' with job listing role: '${jobListing.jobRole}' - Added 10 points.`);
+        }
+      }
+    }
+  
+    // Job Types match
+    if (userData.job_role) {
+      if (userData.job_role.includes('Student')) {
+        if (jobListing.jobType === 'Student') {
+          score += 20;
+          console.log(`User is a student, and job listing is for a student role - Added 20 points.`);
+        } else if (jobListing.jobType === 'Part Time') {
+          score += 15;
+          console.log(`User is a student, and job listing is for a part-time role - Added 15 points.`);
+        }
+      } else if (jobListing.jobType === 'Full Time') {
+        score += 20;
+        console.log(`User is not a student, and job listing is for a full-time role - Added 20 points.`);
+      }
+    }
+  
+    // Security clearance match
+    if (userData.security_clearance && jobListing.securityClearance) {
+      if (userData.security_clearance <= jobListing.securityClearance) {
+        score += 20;
+        console.log(`User's security clearance (${userData.security_clearance}) matches the job listing's requirement (${jobListing.securityClearance}) - Added 20 points.`);
+      }
+    }
+  
+    // Education match
+    if (userData.education.length > 0 && jobListing.education.length > 0) {
+      userData.education.forEach(edu => {
+        // Checking if the user has the education && the user isn't a student - meaning he FINISHED the degree.
+        if (jobListing.education.includes(edu.degree) && !(userData.job_role.includes('Student'))) {
+          score += 20;
+          console.log(`User's degree '${edu.degree}' matches the job listing education requirement - Added 20 points.`);
+        }
+      });
+    }
+  
+    // Previous work experience match
+    const experienceScore = !jobListing.workExperience ? 0 : calculateJobMatch(userData, jobListing);
+    score += experienceScore;
+    console.log(`Previous work experience match contributed ${experienceScore} points.`);
+  
+    // Skills match
+    if (user.skills) {
+      const matchedSkills = jobListing.skills.filter(skill =>
+        user.skills.includes(skill)
+      );
+      const skillsScore = matchedSkills.length * 3;
+      score += skillsScore;
+      console.log(`Matched skills: [${matchedSkills.join(', ')}] - Added ${skillsScore} points.`);
+    }
+  
+    console.log(`Final score for job role '${jobListing.jobRole}' is ${score}`);
+    return score;
+  }
+  
+  
   return (
     <div className="space-y-4 p-4">
       {jobListings.map((jobListing) => (
