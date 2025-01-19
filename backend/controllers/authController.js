@@ -60,7 +60,7 @@ const registerJobSeeker = async (req, res) => {
         const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
-        const user = await JobSeeker.create({
+        const userData = {
             fullName,
             email,
             password: hashedPassword,
@@ -71,12 +71,21 @@ const registerJobSeeker = async (req, res) => {
             phone,
             githubUrl,
             linkedinUrl,
-            cv,
-            profilePic,
             dateOfBirth,
             pin: hashedPin,
-            analyzed_cv_content
-        });
+        };
+        
+        // Conditionally add `cv` if it's not null
+        if (cv) {
+            userData.cv = cv;
+            userData.analyzed_cv_content = analyzed_cv_content;
+        }
+
+        if (profilePic)
+            userData.profilePic = profilePic;
+        
+        const user = await JobSeeker.create(userData);
+        
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
@@ -405,16 +414,20 @@ const uploadCV = async (req, res) => {
     try {
       const { id } = req.params;
       const cvPath = req.body.cv; // Path to the uploaded file
+      const analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
   
+      console.log("analyzed_cv_content: " + analyzed_cv_content);
+      console.dir(analyzed_cv_content, {depth: null})
       const user = await JobSeeker.findById(id);
       if (!user) {
         return res.status(404).json({ message: "User not found." });
       }
   
       user.cv = cvPath; // Update CV path in the database
+      user.analyzed_cv_content = analyzed_cv_content; // Update analyzed CV content in the database
       await user.save();
   
-      res.status(200).json({ message: "CV uploaded successfully.", cv: cvPath });
+      res.status(200).json({ message: "CV uploaded successfully.", cv: cvPath, analyzed_cv_content });
     } catch (error) {
       console.error("Error uploading CV:", error);
       res.status(500).json({ message: "Failed to upload CV." });

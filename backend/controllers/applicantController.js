@@ -3,7 +3,9 @@ const Applicant = require('../models/applicantModel');
 // Create a new applicant
 const createApplicant = async (req, res) => {
     try {
+        console.log("req: " + JSON.stringify(req.body));
         const newApplicant = new Applicant(req.body);
+
         const savedApplicant = await newApplicant.save();
         res.status(201).json({
             message: 'Applicant created successfully',

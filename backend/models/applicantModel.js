@@ -25,6 +25,7 @@ const applicantSchema = new mongoose.Schema({
     profilePic: {
         type: String,
         required: true,
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
     },
     applicationDate: {
         type: Date,

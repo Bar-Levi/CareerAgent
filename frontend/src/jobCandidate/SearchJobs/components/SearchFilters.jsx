@@ -1,6 +1,6 @@
 import React from "react";
 
-const SearchFilters = ({ filters, setFilters }) => {
+const SearchFilters = ({ filters, setFilters, clearFilters }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters(name, value); // Update specific filter key
@@ -8,7 +8,20 @@ const SearchFilters = ({ filters, setFilters }) => {
 
   return (
     <div className="relative bg-white shadow rounded-lg h-screen">
-        <h2 className="p-4 sticky top-0 bg-brand-primary text-brand-accent text-2xl font-bold">Filters</h2>
+      <div className="flex sticky top-0">
+        <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
+          <span>Filters</span>
+          {/* Clear Filters Button */}
+          <button
+            onClick={clearFilters}
+            className="py-1 px-2 bg-red-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
+          >
+            Clear Filters
+          </button>
+        </div>
+
+      </div>
+       
         <div className="space-y-4 overflow-y-auto p-4">
         {/* Job Role */}
         <input

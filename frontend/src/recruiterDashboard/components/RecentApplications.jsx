@@ -18,12 +18,12 @@ const RecentApplications = ({ applications }) => {
             {/* Left Section: Candidate Details */}
             <div className="flex items-start space-x-4">
                 {/* Profile Picture */}
-                <div className="w-12 h-12 rounded-full overflow-hidden">
-                    <img
+                <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                <img
                         src={app.profilePic || "https://via.placeholder.com/48"}
                         alt={`${app.candidate}'s profile`}
-                        className="w-full h-full object-cover"
-                    />
+                        className="w-full h-full object-cover border-2 border-black rounded-full p-1"
+                        />
                 </div>
 
                 {/* Candidate Info */}
