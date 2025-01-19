@@ -144,16 +144,18 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
         <div className="flex-grow">
           <h3 className="text-xl font-bold text-gray-800">{jobRole || "Unknown Role"}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {company || "Unknown Company"} - {location || "Unknown Location"}
+            {company && location ? `${company} - ${location}` : company || location || "Unknown Company/Location"}
           </p>
           <p className="text-sm text-gray-500 mt-2">
             {experienceLevel && `Experience: ${experienceLevel}`}
             {jobType?.length > 0 && ` | Type: ${jobType.join(", ")}`}
             {remote && ` | Remote: ${remote}`}
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Skills: {skills?.join(", ") || "N/A"}
-          </p>
+          {skills?.length > 0 && (
+            <p className="text-sm text-gray-500 mt-2">
+              Skills: {skills.join(", ")}
+            </p>
+          )}
         </div>
       </div>
 

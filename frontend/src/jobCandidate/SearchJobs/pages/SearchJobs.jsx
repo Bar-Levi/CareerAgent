@@ -15,6 +15,7 @@ const SearchJobs = () => {
   const [user, setUser] = useState(state.user);
   const navigate = useNavigate();
   const [notification, setNotification] = useState(null);
+  const [jobListingsCount, setJobListingsCount] = useState(0);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -23,9 +24,17 @@ const SearchJobs = () => {
 
   const [filters, setFilters] = useState({
     jobRole: "",
+    company: "",
     location: "",
     experienceLevel: "",
+    companySize: "",
     jobType: "",
+    remote: "",
+    skills: "",
+    languages: "",
+    securityClearance: "",
+    education: "",
+    workExperience: "",
   });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -42,6 +51,24 @@ const SearchJobs = () => {
       [key]: value,
     }));
   };
+
+  const handleClearFilters = () => {
+    console.log("Clear filters");
+    setFilters({
+      jobRole: "",
+      company: "",
+      location: "",
+      experienceLevel: "",
+      companySize: "",
+      jobType: "",
+      remote: "",
+      skills: "",
+      languages: "",
+      securityClearance: "",
+      education: "",
+      workExperience: "",
+    });
+  }
 
   const handleJobSelect = (job) => {
     setSelectedJob(job);
@@ -178,12 +205,27 @@ const SearchJobs = () => {
       )}
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-6 max-w-7xl mx-auto overflow-hidden">
         <div className="bg-white rounded shadow lg:col-span-1 h-full overflow-y-auto">
-          <SearchFilters filters={filters} setFilters={handleFilterChange} />
+          <SearchFilters
+            filters={filters}
+            setFilters={handleFilterChange}
+            clearFilters={handleClearFilters}
+          />
         </div>
         <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
-          <h1 className="p-4 sticky top-0 bg-brand-primary text-brand-accent text-2xl font-bold">
-            Search Jobs
-          </h1>
+
+          <div className="flex sticky top-0">
+            <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
+              <h1>Search Jobs</h1>
+              {/* Clear Filters Button */}
+              <span
+                className="py-1 px-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
+              >
+                Found {jobListingsCount} results
+              </span>
+            </div>
+
+         </div>
+
           <JobListingCardsList
             key={`${user.cv}-${JSON.stringify(filters)}`} // Unique key for dynamic updates
             filters={filters}
@@ -192,6 +234,7 @@ const SearchJobs = () => {
             setUser={setUser}
             setShowModal={setShowModal}
             showNotification={showNotification}
+            setJobListingsCount={setJobListingsCount}
           />
         </div>
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">

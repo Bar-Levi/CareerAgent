@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
+import { FaSpinner } from "react-icons/fa";
 
-const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal, showNotification }) => {
+
+const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal, showNotification, setJobListingsCount }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,6 +20,7 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal
         }
         const data = await response.json();
         setJobListings(data.jobListings);
+        setJobListingsCount(data.jobListings.length);
         setLoading(false);
       } catch (err) {
         setError("Failed to load job listings.");
@@ -25,10 +28,15 @@ const JobListingCardsList = ({ filters, onJobSelect, user, setUser, setShowModal
       }
     };
     fetchJobListings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   if (loading) {
-    return <p>Loading job listings...</p>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <FaSpinner className="animate-spin text-4xl text-blue-500" />
+      </div>
+    );
   }
 
   if (error) {
