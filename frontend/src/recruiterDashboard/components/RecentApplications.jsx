@@ -30,7 +30,7 @@ const RecentApplications = ({ applications }) => {
                 <div>
                     <h3 className="text-lg font-semibold text-gray-800">{app.candidate}</h3>
                     <p className="text-sm text-gray-500">Applied for: {app.position}</p>
-                    <p className="text-sm text-gray-400">Date: {app.applicationDate || app.date}</p>
+                    <p className="text-sm text-gray-400">Date: {new Date(app.applicationDate || app.date).toLocaleDateString()}</p>
 
                     {/* CV Link */}
                     <p className="text-sm text-gray-500 mt-2">

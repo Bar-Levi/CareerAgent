@@ -36,6 +36,8 @@ const SearchJobs = () => {
     education: "",
     workExperience: "",
   });
+
+  const [sortingMethod, setSortingMethod] = useState("relevance");
   const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -76,6 +78,10 @@ const SearchJobs = () => {
 
   const handleModalClose = () => {
     setShowModal(false);
+  };
+
+  const handleSortChange = (e) => {
+    setSortingMethod(e.target.value);
   };
 
   const handleCVUpload = async (file) => {
@@ -204,6 +210,8 @@ const SearchJobs = () => {
         />
       )}
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-6 max-w-7xl mx-auto overflow-hidden">
+
+        {/* Left Area */}
         <div className="bg-white rounded shadow lg:col-span-1 h-full overflow-y-auto">
           <SearchFilters
             filters={filters}
@@ -211,20 +219,96 @@ const SearchJobs = () => {
             clearFilters={handleClearFilters}
           />
         </div>
+
+        {/* Central Area */}
         <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
 
           <div className="flex sticky top-0">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
-              <h1>Search Jobs</h1>
-              {/* Clear Filters Button */}
+              <h1>Search Results</h1>
+
+                <div className="relative group">
+                  {/* Sorting Dropdown */}
+                  <select
+                    value={sortingMethod}
+                    onChange={handleSortChange}
+                    className="text-sm px-2 py-1 w-fit border rounded text-gray-700 bg-white shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="relevance">Relevance: Relevant First</option>
+                    <option value="newest">Posting Time: Newest First</option>
+                    <option value="oldest">Posting Time: Oldest First</option>
+                  </select>
+
+                  {/* Custom Tooltip */}
+                  <span
+                    className="cursor-pointer text-white text-lg"
+                  >
+                    <i className="ml-1 fa fa-info-circle" />
+                  </span>
+
+
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+                  <p className="text-lg font-bold mb-3 border-b pb-2">Analyzed CV Content</p>
+                  <ul className="list-none pl-0 space-y-1">
+                    {/* Job Roles */}
+                    <li>
+                      <strong className="block text-blue-600">Job Roles:</strong>
+                      <span>{user.analyzed_cv_content.job_role.join(", ")}</span>
+                    </li>
+
+                    {/* Security Clearance */}
+                    <li>
+                      <strong className="block text-blue-600">Security Clearance:</strong>
+                      <span>{user.analyzed_cv_content.security_clearance || "None"}</span>
+                    </li>
+
+                    {/* Education */}
+                    <li>
+                      <strong className="block text-blue-600">Education:</strong>
+                      {user.analyzed_cv_content.education.map((edu, index) => (
+                        <span key={index} className="block">
+                          {edu.degree} from <span className="font-medium">{edu.institution}</span>
+                        </span>
+                      ))}
+                    </li>
+
+                    {/* Work Experience */}
+                    <li>
+                      <strong className="block text-blue-600">Work Experience:</strong>
+                      {user.analyzed_cv_content.work_experience.map((exp, index) => {
+                        const yearsOfExperience = (exp.end_year || new Date().getFullYear()) - exp.start_year;
+                        return (
+                          <span key={index} className="block">
+                            {exp.job_title} <span className="font-medium">at {exp.company} ({exp.start_year} - {exp.end_year || "Present"}) - {yearsOfExperience} year(s)</span>
+                          </span>
+                        );
+                      })}
+                    </li>
+
+                    {/* Skills */}
+                    <li>
+                      <strong className="block text-blue-600">Skills:</strong>
+                      <span>{
+                        user.analyzed_cv_content.skills.length > 5
+                          ? user.analyzed_cv_content.skills.slice(0, 5).join(", ") + ", ..."
+                          : user.analyzed_cv_content.skills.join(", ")
+                      }</span>
+                    </li>
+                  </ul>
+                </div>
+
+
+
+                </div>
+
               <span
                 className="py-1 px-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
               >
                 Found {jobListingsCount} results
               </span>
             </div>
+          </div>
 
-         </div>
 
           <JobListingCardsList
             key={`${user.cv}-${JSON.stringify(filters)}`} // Unique key for dynamic updates
@@ -235,8 +319,11 @@ const SearchJobs = () => {
             setShowModal={setShowModal}
             showNotification={showNotification}
             setJobListingsCount={setJobListingsCount}
+            sortingMethod={sortingMethod}
           />
         </div>
+
+        {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (
             <div>
@@ -257,6 +344,7 @@ const SearchJobs = () => {
           )}
         </div>
       </div>
+      
       {showModal && (
         <Modal
           title="Upload Your CV"

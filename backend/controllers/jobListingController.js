@@ -243,30 +243,45 @@ const filterActiveJobListings = async (req, res) => {
 
 // Filter job listings
 const getMetrics = async (req, res) => {
-    
     try {
         const recruiterId = req.params;
 
         // Fetch filtered results
         const jobListings = await JobListing.find(recruiterId);
 
-        const activeListingsCount = jobListings.filter((job) => job.status === "Active").length;
-        const totalApplications = jobListings.map((job) => job.applicants.length).reduce((a, b) => a + b);
+        if (!jobListings || jobListings.length === 0) {
+            return res.status(200).json({
+                message: "No job listings found.",
+                metrics: {
+                    activeListings: 0,
+                    totalApplications: 0,
+                    avgTimeToHire: 0,
+                },
+            });
+        }
+
+        const activeListingsCount = jobListings.filter((job) => job.status === "Active").length || 0;
+        const totalApplications = jobListings
+            .map((job) => job.applicants.length || 0)
+            .reduce((a, b) => a + b, 0);
+
         const closedJobListings = jobListings.filter((job) => job.closingTime);
 
         const totalTimeToHire = closedJobListings.map((job) => {
             const closingTime = new Date(job.closingTime); // Convert to Date object
             const createdAt = new Date(job.createdAt); // Convert to Date object
-        
+
             // Calculate the difference in milliseconds
             const diffInMilliseconds = closingTime - createdAt;
-        
+
             // Convert milliseconds to days and round to nearest integer
-            const diffInDays = Math.round(diffInMilliseconds / (1000 * 60 * 60 * 24));
-        
-            return diffInDays;
+            return Math.round(diffInMilliseconds / (1000 * 60 * 60 * 24));
         });
-        const avgTimeToHire = totalTimeToHire / closedJobListings.length;
+
+        const avgTimeToHire =
+            closedJobListings.length > 0
+                ? totalTimeToHire.reduce((a, b) => a + b, 0) / closedJobListings.length
+                : 0;
 
         const metrics = {
             activeListings: activeListingsCount,
@@ -287,6 +302,7 @@ const getMetrics = async (req, res) => {
         });
     }
 };
+
 
 // Get specific recruiter job listings.
 const getRecruiterListings = async (req, res) => {

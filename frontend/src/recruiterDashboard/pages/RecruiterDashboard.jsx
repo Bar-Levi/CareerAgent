@@ -69,17 +69,26 @@ const RecruiterDashboard = () => {
     };
 
     const fetchMetrics = async () => {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`)
-
-        if (!response.ok) {
-            throw new Error("Failed to fetch metrics.");
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`);
+    
+            if (!response.ok) {
+                const errorMessage = `Error ${response.status}: ${response.statusText}`;
+                console.error(errorMessage);
+                throw new Error(errorMessage);
+            }
+    
+            const data = await response.json();
+            const dashboardMetrics = data.metrics;
+    
+            console.log("dashboardMetrics:", dashboardMetrics);
+            setMetrics(dashboardMetrics);
+        } catch (error) {
+            console.error("Failed to fetch metrics:", error.message);
+            showNotification("error", "Failed to fetch metrics. Please try again later.");
         }
-
-        const data = await response.json();
-        const dashboardMetrics = data.metrics;
-        console.log("dashboardMetrics: " + dashboardMetrics);
-        setMetrics(dashboardMetrics);
     };
+    
 
     const handlePostSuccess = () => {
         showNotification("success", "Job listing posted successfully!");
