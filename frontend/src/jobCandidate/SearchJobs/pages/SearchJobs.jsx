@@ -6,6 +6,8 @@ import Modal from "../components/Modal";
 import { useLocation, useNavigate } from "react-router-dom";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
+import { extractTextFromPDF } from '../../../utils/pdfUtils';
+
 
 
 const SearchJobs = () => {
@@ -29,7 +31,6 @@ const SearchJobs = () => {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    console.log("SearchJobs - user.cv: " + user.cv);
     if (!user.cv || user.cv === "") {
       setShowModal(true);
     }
@@ -51,6 +52,48 @@ const SearchJobs = () => {
   };
 
   const handleCVUpload = async (file) => {
+
+    const processCV = async (cvFile) => {
+            try {
+                const cvContent = await extractTextFromPDF(cvFile); // Extract text from the PDF
+    
+                const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        prompt: cvContent,
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+    
+                if (!response.ok) {
+                    throw new Error('Failed to generate AI CV.');
+                }
+    
+                const jsonResponse = await response.json();
+    
+                // Extract and clean the JSON from the response string
+                const jsonRaw = jsonResponse.response;
+    
+                // Safeguard for JSON extraction in case the expected format is not met
+                const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
+                if (!match) {
+                    throw new Error('Invalid JSON format in response.');
+                }
+    
+                const jsonString = match[1]; // Extract JSON between code block markers
+                const prettyJson = JSON.parse(jsonString); // Parse the JSON string
+    
+          
+                console.dir(prettyJson, {depth: null})
+                return prettyJson; // Return the processed JSON
+            } catch (error) {
+                console.error('Error processing CV:', error.message);
+                throw error; // Re-throw the error for further handling
+            }
+        };
+
     const uploadFile = async (file, folder) => {
       const formData = new FormData();
       formData.append("file", file);
@@ -72,9 +115,26 @@ const SearchJobs = () => {
     };
 
     try {
+      // Upload to cloudinary and save the cloudinary url.
       const filePathOnCloudinary = await uploadFile(file, "cvs");
       const formData = new FormData();
       formData.append("cv", filePathOnCloudinary);
+
+      // Analyze the CV and save the analyzed content.
+      let prettyJson = null;
+      try {
+
+        prettyJson = await processCV(file); // Process the updated CV file
+  
+        console.dir(prettyJson, {depth: null})
+
+        // Update the formData with analyzed_cv_content
+        formData.append('analyzed_cv_content', JSON.stringify(prettyJson));
+
+      } catch (error) {
+          console.error('Error analyzing CV:', error.message);
+      }
+        
 
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/upload-cv/${user._id}`,
@@ -92,8 +152,9 @@ const SearchJobs = () => {
       }
 
       state.user.cv = filePathOnCloudinary;
+      state.user.analyzed_cv_content = prettyJson;
       showNotification("success", "CV uploaded successfully!");
-      
+
       navigate('/searchjobs', { state: state })
       
 
