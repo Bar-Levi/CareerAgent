@@ -204,7 +204,6 @@ const filterActiveJobListings = async (req, res) => {
             jobType,
             remote,
             skills,
-            languages,
             securityClearance,
             education,
             workExperience,
@@ -238,10 +237,14 @@ const filterActiveJobListings = async (req, res) => {
         if (jobType) query.jobType = { $in: jobType.split(",").map((t) => t.trim()) };
         if (remote) query.remote = remote === 'true'; // Convert to boolean
         if (skills) query.skills = { $all: skills.split(",").map((s) => s.trim()) };
-        if (languages) query.languages = { $all: languages.split(",").map((l) => l.trim()) };
         if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance, 10) };
         if (education) query.education = { $all: education.split(",").map((e) => e.trim()) };
-        if (workExperience) query.workExperience = { $gte: parseInt(workExperience, 10) };
+
+        // Adjusted workExperience logic to filter jobs requiring at most the provided years of experience
+        if (workExperience) {
+            const maxExperience = parseInt(workExperience, 10);
+            query.workExperience = { $lte: maxExperience }; // Match jobs requiring less than or equal to the provided years
+        }
 
         // Fetch filtered results
         const jobListings = await JobListing.find(query);
@@ -258,6 +261,7 @@ const filterActiveJobListings = async (req, res) => {
         });
     }
 };
+
 
 
 
