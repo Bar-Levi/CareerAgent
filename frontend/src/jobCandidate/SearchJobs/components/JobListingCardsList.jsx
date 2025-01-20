@@ -23,7 +23,14 @@ const JobListingCardsList = ({
         const query = new URLSearchParams(filters).toString();
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/filteredJobListings?${query}`,
-        );
+          {
+              method: "GET",
+              headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+          }
+      );      
         if (!response.ok) {
           throw new Error("Failed to fetch job listings.");
         }

@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post("/generateJsonFromCV", generateJsonFromCV);
 router.post("/sendToBot", protect, sendToBot);
-router.post("/analyzeJobListing", analyzeJobListing);
+router.post("/analyzeJobListing", protect, analyzeJobListing);
 
 
 

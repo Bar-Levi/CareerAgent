@@ -32,7 +32,14 @@ const RecruiterDashboard = () => {
      // Fetch job listings from the API
      const fetchJobListings = async () => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/recruiter/${user._id}`);
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/recruiter/${user._id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+            
             const data = await response.json();
 
             if (!response.ok) {
@@ -51,7 +58,14 @@ const RecruiterDashboard = () => {
 
     const fetchRecentApplications = async () => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applicants/getRecruiterApplicants/${user._id}`);
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/applicants/getRecruiterApplicants/${user._id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+            
             const data = await response.json();
 
             if (!response.ok) {
@@ -70,8 +84,13 @@ const RecruiterDashboard = () => {
 
     const fetchMetrics = async () => {
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`);
-    
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });            
             if (!response.ok) {
                 const errorMessage = `Error ${response.status}: ${response.statusText}`;
                 console.error(errorMessage);

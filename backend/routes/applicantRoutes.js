@@ -8,24 +8,28 @@ const {
     getRecruiterApplicants
 } = require('../controllers/applicantController');
 
+const {
+    protect
+} = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
 // Create a new applicant
-router.post('/', createApplicant);
+router.post('/', protect, createApplicant);
 
 // Get all applicants
-router.get('/', getApplicants);
+router.get('/', protect, getApplicants);
 
 // Get a specific applicant by ID
-router.get('/:id', getApplicantById);
+router.get('/:id', protect, getApplicantById);
 
 // Get a specific applicant by ID
-router.get('/getRecruiterApplicants/:recruiterId', getRecruiterApplicants);
+router.get('/getRecruiterApplicants/:recruiterId', protect, getRecruiterApplicants);
 
 // Update a specific applicant by ID
-router.put('/:id', updateApplicant);
+router.put('/:id', protect, updateApplicant);
 
 // Delete a specific applicant by ID
-router.delete('/:id', deleteApplicant);
+router.delete('/:id', protect, deleteApplicant);
 
 module.exports = router;

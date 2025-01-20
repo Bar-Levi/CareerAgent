@@ -89,8 +89,11 @@ const MyJobListings = ({ jobListings, setJobListings, showNotification }) => {
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/${id}`, {
                 method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
             });
-
             if (!response.ok) {
                 throw new Error(`Failed to remove job listing with ID ${id}.`);
             }
@@ -110,6 +113,7 @@ const MyJobListings = ({ jobListings, setJobListings, showNotification }) => {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
                 body: JSON.stringify({ status: newStatus }),
             });

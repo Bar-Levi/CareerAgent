@@ -302,7 +302,7 @@ const SearchJobs = () => {
                 </div>
 
               <span
-                className="py-1 px-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
+                className="py-1 px-2 bg-green-500 text-white text-sm font-semibold rounded transition-all"
               >
                 Found {jobListingsCount} results
               </span>
