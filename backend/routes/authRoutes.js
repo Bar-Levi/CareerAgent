@@ -14,7 +14,8 @@ const {
   resetPassword,
   getUserDetails,
   resetLoginAttempts,
-  uploadCV
+  uploadCV,
+  logout
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -29,6 +30,8 @@ router.post("/verify", strictLimiter, verifyCode);
 router.post("/login", strictLimiter, loginUser);
 router.post("/resend", strictLimiter, resendVerificationCode);
 router.post("/reset-login-attempts", strictLimiter, resetLoginAttempts);
+router.post("/logout", protect,strictLimiter, logout);
+
 
 // Less critical routes with generalLimiter
 router.post("/request-password-reset", generalLimiter, requestPasswordReset);

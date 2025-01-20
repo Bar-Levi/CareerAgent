@@ -433,6 +433,11 @@ const uploadCV = async (req, res) => {
       res.status(500).json({ message: "Failed to upload CV." });
     }
   };
+
+  const logout = async (req, res) => {
+    res.status(200).json({ message: 'Logged out successfully.' });
+  };
+  
   
 
 module.exports = {
@@ -446,4 +451,5 @@ module.exports = {
     getUserDetails,
     resetLoginAttempts,
     uploadCV,
+    logout,
 };
