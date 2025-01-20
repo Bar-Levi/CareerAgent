@@ -200,7 +200,7 @@ const filterActiveJobListings = async (req, res) => {
             company,
             location,
             experienceLevel,
-            companySize,
+            companySize, // This comes as a range (e.g., "31-100" or "301+")
             jobType,
             remote,
             skills,
@@ -211,19 +211,37 @@ const filterActiveJobListings = async (req, res) => {
         } = req.query;
 
         // Build the query dynamically
-        const query = {status: 'Active'};
+        const query = { status: 'Active' };
+
         if (jobRole) query.jobRole = { $regex: jobRole, $options: "i" };
         if (company) query.company = { $regex: company, $options: "i" };
         if (location) query.location = { $regex: location, $options: "i" };
         if (experienceLevel) query.experienceLevel = experienceLevel;
-        if (companySize) query.companySize = companySize;
-        if (jobType) query.jobType = { $in: jobType.split(",") };
-        if (remote) query.remote = remote;
+
+        // Handle company size range where `companySize` is stored as a numeric string
+        if (companySize) {
+            if (companySize === "301+") {
+                // Handle the special case for "301+" (no upper limit)
+                query.$expr = { $gte: [{ $toInt: "$companySize" }, 301] };
+            } else {
+                // Handle ranges like "31-100"
+                const [minSize, maxSize] = companySize.split('-').map(Number);
+                query.$expr = {
+                    $and: [
+                        ...(minSize !== undefined ? [{ $gte: [{ $toInt: "$companySize" }, minSize] }] : []),
+                        ...(maxSize !== undefined ? [{ $lte: [{ $toInt: "$companySize" }, maxSize] }] : []),
+                    ],
+                };
+            }
+        }
+
+        if (jobType) query.jobType = { $in: jobType.split(",").map((t) => t.trim()) };
+        if (remote) query.remote = remote === 'true'; // Convert to boolean
         if (skills) query.skills = { $all: skills.split(",").map((s) => s.trim()) };
         if (languages) query.languages = { $all: languages.split(",").map((l) => l.trim()) };
-        if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance) };
+        if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance, 10) };
         if (education) query.education = { $all: education.split(",").map((e) => e.trim()) };
-        if (workExperience) query.workExperience = { $gte: parseInt(workExperience) };
+        if (workExperience) query.workExperience = { $gte: parseInt(workExperience, 10) };
 
         // Fetch filtered results
         const jobListings = await JobListing.find(query);
@@ -241,15 +259,17 @@ const filterActiveJobListings = async (req, res) => {
     }
 };
 
-// Filter job listings
+
+
+// Get Metrics for job listings
 const getMetrics = async (req, res) => {
     try {
-        const recruiterId = req.params;
+        const { recruiterId } = req.params;
 
-        // Fetch filtered results
-        const jobListings = await JobListing.find(recruiterId);
+        // Fetch all job listings for the recruiter
+        const jobListings = await JobListing.find({ recruiterId });
 
-        if (!jobListings || jobListings.length === 0) {
+        if (!jobListings.length) {
             return res.status(200).json({
                 message: "No job listings found.",
                 metrics: {
@@ -260,48 +280,47 @@ const getMetrics = async (req, res) => {
             });
         }
 
-        const activeListingsCount = jobListings.filter((job) => job.status === "Active").length || 0;
-        const totalApplications = jobListings
-            .map((job) => job.applicants.length || 0)
-            .reduce((a, b) => a + b, 0);
+        // Calculate metrics
+        const activeListingsCount = jobListings.filter((job) => job.status === "Active").length;
 
-        const closedJobListings = jobListings.filter((job) => job.closingTime);
+        const totalApplications = jobListings.reduce(
+            (total, job) => total + (job.applicants?.length || 0),
+            0
+        );
 
-        const totalTimeToHire = closedJobListings.map((job) => {
-            const closingTime = new Date(job.closingTime); // Convert to Date object
-            const createdAt = new Date(job.createdAt); // Convert to Date object
+        const closedJobListings = jobListings.filter((job) => job.closingTime && job.createdAt);
 
-            // Calculate the difference in milliseconds
-            const diffInMilliseconds = closingTime - createdAt;
+        const totalTimeToHire = closedJobListings.reduce((total, job) => {
+            const closingTime = new Date(job.closingTime);
+            const createdAt = new Date(job.createdAt);
+            const daysToHire = (closingTime - createdAt) / (1000 * 60 * 60 * 24);
+            return total + Math.round(daysToHire);
+        }, 0);
 
-            // Convert milliseconds to days and round to nearest integer
-            return Math.round(diffInMilliseconds / (1000 * 60 * 60 * 24));
-        });
-
-        const avgTimeToHire =
-            closedJobListings.length > 0
-                ? totalTimeToHire.reduce((a, b) => a + b, 0) / closedJobListings.length
-                : 0;
+        const avgTimeToHire = closedJobListings.length
+            ? totalTimeToHire / closedJobListings.length
+            : 0;
 
         const metrics = {
             activeListings: activeListingsCount,
-            totalApplications: totalApplications,
-            avgTimeToHire: avgTimeToHire,
+            totalApplications,
+            avgTimeToHire,
         };
 
         console.log("Metrics: ", metrics);
         res.status(200).json({
-            message: "Job listings fetched successfully.",
+            message: "Metrics calculated successfully.",
             metrics,
         });
     } catch (error) {
-        console.error("Error filtering job listings:", error.message);
+        console.error("Error calculating metrics:", error.message);
         res.status(500).json({
             message: "Internal Server Error",
             error: error.message,
         });
     }
 };
+
 
 
 // Get specific recruiter job listings.

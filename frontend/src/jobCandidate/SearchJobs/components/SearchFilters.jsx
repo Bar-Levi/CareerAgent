@@ -1,9 +1,69 @@
-import React from "react";
+import React, { useState } from "react";
 
 const SearchFilters = ({ filters, setFilters, clearFilters }) => {
+  const [filteredRoles, setFilteredRoles] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // List of job roles
+  const jobRoles = [
+    "Student",
+    "Full Stack Developer",
+    "Backend Developer",
+    "Frontend Developer",
+    "Software Engineer",
+    "Automation Developer",
+    "Automation Engineer",
+    "DevOps Engineer",
+    "Data Scientist",
+    "Machine Learning Engineer",
+    "Cybersecurity Specialist",
+    "Web Developer",
+    "Mobile Developer",
+    "Game Developer",
+    "Product Manager",
+    "UX Designer",
+    "Blockchain Developer",
+    "AI Engineer",
+    "Cloud Engineer",
+    "Embedded Software Engineer",
+    "Technical Lead",
+    "Software Architect",
+    "Release Manager",
+    "Site Reliability Engineer",
+    "UI Developer",
+    "QA Engineer",
+    "Security Engineer",
+    "Network Engineer",
+    "Data Analyst",
+    "Big Data Specialist",
+    "ETL Developer",
+    // Add other roles as needed
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFilters(name, value); // Update specific filter key
+    setFilters({ ...filters, [name]: value }); // Update specific filter key
+
+    if (name === "jobRole") {
+      // Autocomplete for jobRole
+      if (value.trim() === "") {
+        setFilteredRoles([]);
+        setShowDropdown(false);
+      } else {
+        const matches = jobRoles.filter((role) =>
+          role.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredRoles(matches);
+        setShowDropdown(matches.length > 0);
+      }
+    }
+  };
+
+  const handleDropdownClick = (role) => {
+    // Update the text field and filters state
+    setFilters({ ...filters, jobRole: role });
+    setFilteredRoles([]); // Clear the dropdown options
+    setShowDropdown(false); // Hide the dropdown
   };
 
   return (
@@ -11,7 +71,6 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
       <div className="flex sticky top-0">
         <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
           <span>Filters</span>
-          {/* Clear Filters Button */}
           <button
             onClick={clearFilters}
             className="py-1 px-2 bg-red-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
@@ -19,19 +78,35 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
             Clear Filters
           </button>
         </div>
-
       </div>
-       
-        <div className="space-y-4 overflow-y-auto p-4">
+
+      <div className="space-y-4 overflow-y-auto p-4">
         {/* Job Role */}
-        <input
-          type="text"
-          name="jobRole"
-          placeholder="Job Role"
-          value={filters.jobRole || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            name="jobRole"
+            placeholder="Job Role"
+            value={filters.jobRole || ""}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded"
+          />
+
+          {/* Dropdown for Auto-Completion */}
+          {showDropdown && (
+            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+              {filteredRoles.map((role) => (
+                <li
+                  key={role}
+                  onClick={() => handleDropdownClick(role)} // Set jobRole on selection
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                >
+                  {role}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {/* Company */}
         <input
@@ -68,14 +143,20 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
         </select>
 
         {/* Company Size */}
-        <input
-          type="text"
+        <select
           name="companySize"
-          placeholder="Company Size"
           value={filters.companySize || ""}
           onChange={handleChange}
           className="w-full px-3 py-2 border rounded"
-        />
+        >
+          <option value="" disabled>
+            Select Company Size
+          </option>
+          <option value="0-30">0-30</option>
+          <option value="31-100">31-100</option>
+          <option value="101-300">101-300</option>
+          <option value="301+">301+</option>
+        </select>
 
         {/* Job Type */}
         <select
@@ -89,69 +170,6 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
           <option value="Part Time">Part Time</option>
           <option value="Contract">Contract</option>
         </select>
-
-        {/* Remote */}
-        <select
-          name="remote"
-          value={filters.remote || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Remote</option>
-          <option value="Remote">Remote</option>
-          <option value="Hybrid">Hybrid</option>
-          <option value="On-Site">On-Site</option>
-        </select>
-
-        {/* Skills */}
-        <input
-          type="text"
-          name="skills"
-          placeholder="Skills (comma-separated)"
-          value={filters.skills || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Languages */}
-        <input
-          type="text"
-          name="languages"
-          placeholder="Languages (comma-separated)"
-          value={filters.languages || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Security Clearance */}
-        <input
-          type="number"
-          name="securityClearance"
-          placeholder="Security Clearance"
-          value={filters.securityClearance || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Education */}
-        <input
-          type="text"
-          name="education"
-          placeholder="Education (comma-separated)"
-          value={filters.education || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Work Experience */}
-        <input
-          type="number"
-          name="workExperience"
-          placeholder="Work Experience (years)"
-          value={filters.workExperience || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
       </div>
     </div>
   );
