@@ -2,11 +2,14 @@
 
 import React, { useState } from "react";
 
-const SearchFilters = ({ filters, setFilters, clearFilters }) => {
+const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptions }) => {
   const [filteredRoles, setFilteredRoles] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [filteredSkills, setFilteredSkills] = useState([]);
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
+  const [filteredEducation, setFilteredEducation] = useState([]);
+  const [showEducationDropdown, setShowEducationDropdown] = useState(false);
+
 
   const jobRoles = [
     "Student",
@@ -491,6 +494,8 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
     "IoT Development",
     "Blockchain Technology",
   ];
+
+  
   
 
   // Handle input changes for filters
@@ -526,6 +531,22 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
         setShowSkillsDropdown(matches.length > 0);
       }
     }
+
+    if (name === "education") {
+      const enteredEducation = value.split(",").map((edu) => edu.trim());
+      const lastEducation = enteredEducation[enteredEducation.length - 1];
+
+      if (lastEducation.trim() === "") {
+        setFilteredEducation([]);
+        setShowEducationDropdown(false);
+      } else {
+        const matches = educationListedOptions.filter((skill) =>
+          skill.toLowerCase().startsWith(lastEducation.toLowerCase())
+        );
+        setFilteredEducation(matches);
+        setShowEducationDropdown(matches.length > 0);
+      }
+    }
   };
 
   // Handle dropdown item click for jobRole
@@ -546,9 +567,23 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
     setShowSkillsDropdown(false);
   };
 
+  // Handle dropdown item click for education
+  const handleEducationDropdownClick = (education) => {
+    const currentEducation = filters.education
+      ? filters.education.split(",").map((e) => e.trim())
+      : [];
+    currentEducation.pop(); // Remove the last partial education entry
+    currentEducation.push(education); // Add the selected education level
+
+    setFilters("education", currentEducation.join(", "));
+    setFilteredEducation([]); // Clear the filtered list
+    setShowEducationDropdown(false); // Close the dropdown
+  };
+
+
   return (
-    <div className="relative bg-white shadow rounded-lg h-screen">
-      <div className="flex sticky top-0">
+    <div className="relative bg-white shadow rounded-lg max-h-screen">
+      <div className="flex sticky top-0 z-10">
         <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
           <span>Filters</span>
           <button
@@ -697,15 +732,32 @@ const SearchFilters = ({ filters, setFilters, clearFilters }) => {
           className="w-full px-3 py-2 border rounded"
         />
 
+
         {/* Education */}
-        <input
-          type="text"
-          name="education"
-          placeholder="Education (comma-separated)"
-          value={filters.education || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            name="education"
+            placeholder="Education (comma-separated)"
+            value={filters.education || ""}
+            onChange={handleChange} // Update this to handle education input changes
+            className="w-full px-3 py-2 border rounded"
+          />
+          {showEducationDropdown && (
+            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+              {filteredEducation.map((edu) => (
+                <li
+                  key={edu}
+                  onClick={() => handleEducationDropdownClick(edu)}
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                >
+                  {edu}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
 
         {/* Work Experience */}
         <input

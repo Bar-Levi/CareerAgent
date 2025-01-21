@@ -16,6 +16,7 @@ const SearchJobs = () => {
   const navigate = useNavigate();
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
+  const [educationListedOptions, setEducationListedOptions] = useState([]);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -217,6 +218,7 @@ const SearchJobs = () => {
             filters={filters}
             setFilters={handleFilterChange}
             clearFilters={handleClearFilters}
+            educationListedOptions={educationListedOptions}
           />
         </div>
 
@@ -227,7 +229,7 @@ const SearchJobs = () => {
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
               <h1>Search Results</h1>
 
-                <div className="relative group">
+                <div className="relative flex">
                   {/* Sorting Dropdown */}
                   <select
                     value={sortingMethod}
@@ -239,63 +241,65 @@ const SearchJobs = () => {
                     <option value="oldest">Posting Time: Oldest First</option>
                   </select>
 
-                  {/* Custom Tooltip */}
-                  <span
-                    className="cursor-pointer text-white text-lg"
-                  >
-                    <i className="ml-1 fa fa-info-circle" />
-                  </span>
+                  <div className="relative group">
+                    {/* Custom Tooltip */}
+                    <span
+                      className="cursor-pointer text-white text-lg"
+                    >
+                      <i className="ml-1 fa fa-info-circle" />
+                    </span>
 
 
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                  <p className="text-lg font-bold mb-3 border-b pb-2">Analyzed CV Content</p>
-                  <ul className="list-none pl-0 space-y-1">
-                    {/* Job Roles */}
-                    <li>
-                      <strong className="block text-blue-600">Job Roles:</strong>
-                      <span>{user.analyzed_cv_content.job_role.join(", ")}</span>
-                    </li>
+                    <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+                      <p className="text-lg font-bold mb-3 border-b pb-2">Analyzed CV Content</p>
+                      <ul className="list-none pl-0 space-y-1">
+                        {/* Job Roles */}
+                        <li>
+                          <strong className="block text-blue-600">Job Roles:</strong>
+                          <span>{user.analyzed_cv_content.job_role.join(", ")}</span>
+                        </li>
 
-                    {/* Security Clearance */}
-                    <li>
-                      <strong className="block text-blue-600">Security Clearance:</strong>
-                      <span>{user.analyzed_cv_content.security_clearance || "None"}</span>
-                    </li>
+                        {/* Security Clearance */}
+                        <li>
+                          <strong className="block text-blue-600">Security Clearance:</strong>
+                          <span>{user.analyzed_cv_content.security_clearance || "None"}</span>
+                        </li>
 
-                    {/* Education */}
-                    <li>
-                      <strong className="block text-blue-600">Education:</strong>
-                      {user.analyzed_cv_content.education.map((edu, index) => (
-                        <span key={index} className="block">
-                          {edu.degree} from <span className="font-medium">{edu.institution}</span>
-                        </span>
-                      ))}
-                    </li>
+                        {/* Education */}
+                        <li>
+                          <strong className="block text-blue-600">Education:</strong>
+                          {user.analyzed_cv_content.education.map((edu, index) => (
+                            <span key={index} className="block">
+                              {edu.degree} from <span className="font-medium">{edu.institution}</span>
+                            </span>
+                          ))}
+                        </li>
 
-                    {/* Work Experience */}
-                    <li>
-                      <strong className="block text-blue-600">Work Experience:</strong>
-                      {user.analyzed_cv_content.work_experience.map((exp, index) => {
-                        const yearsOfExperience = (exp.end_year || new Date().getFullYear()) - exp.start_year;
-                        return (
-                          <span key={index} className="block">
-                            {exp.job_title} <span className="font-medium">at {exp.company} ({exp.start_year} - {exp.end_year || "Present"}) - {yearsOfExperience} year(s)</span>
-                          </span>
-                        );
-                      })}
-                    </li>
+                        {/* Work Experience */}
+                        <li>
+                          <strong className="block text-blue-600">Work Experience:</strong>
+                          {user.analyzed_cv_content.work_experience.map((exp, index) => {
+                            const yearsOfExperience = (exp.end_year || new Date().getFullYear()) - exp.start_year;
+                            return (
+                              <span key={index} className="block">
+                                {exp.job_title} <span className="font-medium">at {exp.company} ({exp.start_year} - {exp.end_year || "Present"}) - {yearsOfExperience} year(s)</span>
+                              </span>
+                            );
+                          })}
+                        </li>
 
-                    {/* Skills */}
-                    <li>
-                      <strong className="block text-blue-600">Skills:</strong>
-                      <span>{
-                        user.analyzed_cv_content.skills.length > 5
-                          ? user.analyzed_cv_content.skills.slice(0, 5).join(", ") + ", ..."
-                          : user.analyzed_cv_content.skills.join(", ")
-                      }</span>
-                    </li>
-                  </ul>
-                </div>
+                        {/* Skills */}
+                        <li>
+                          <strong className="block text-blue-600">Skills:</strong>
+                          <span>{
+                            user.analyzed_cv_content.skills.length > 5
+                              ? user.analyzed_cv_content.skills.slice(0, 5).join(", ") + ", ..."
+                              : user.analyzed_cv_content.skills.join(", ")
+                          }</span>
+                        </li>
+                      </ul>
+                      </div>
+                  </div>
 
 
 
@@ -320,6 +324,7 @@ const SearchJobs = () => {
             showNotification={showNotification}
             setJobListingsCount={setJobListingsCount}
             sortingMethod={sortingMethod}
+            setEducationListedOptions={setEducationListedOptions}
           />
         </div>
 

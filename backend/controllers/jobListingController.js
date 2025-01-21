@@ -236,10 +236,50 @@ const filterActiveJobListings = async (req, res) => {
 
         if (jobType) query.jobType = { $in: jobType.split(",").map((t) => t.trim()) };
         if (remote) query.remote = remote === 'true'; // Convert to boolean
-        if (skills) query.skills = { $all: skills.split(",").map((s) => s.trim()) };
+        if (skills) {
+            const skillsArray = skills.split(",").map((s) => s.trim()); // Split and trim skills
+            const lastSkill = skillsArray.length > 0 ? skillsArray.pop() : ""; // Get the last skill or empty string
+          
+            // Escape special characters in lastSkill
+            const escapeRegex = (text) => text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+          
+            if (lastSkill.trim()) {
+              // Combine fully typed skills and regex for the last skill
+              query.$and = [
+                ...(skillsArray.length > 0
+                  ? [{ skills: { $all: skillsArray } }] // Exact match for fully typed skills if they exist
+                  : []),
+                { skills: { $regex: `^${escapeRegex(lastSkill)}`, $options: "i" } }, // Partial match for the last skill
+              ];
+            } else if (skillsArray.length > 0) {
+              // Only exact matches if no lastSkill
+              query.skills = { $all: skillsArray };
+            }
+          }
+                  
+          
         if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance, 10) };
-        if (education) query.education = { $all: education.split(",").map((e) => e.trim()) };
-
+        if (education) {
+            const educationArray = education.split(",").map((e) => e.trim()); // Split and trim education values
+            const lastEducation = educationArray.length > 0 ? educationArray.pop() : ""; // Get the last education or empty string
+          
+            // Escape special characters in lastEducation
+            const escapeRegex = (text) => text.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+          
+            if (lastEducation.trim()) {
+              // Combine fully typed education and regex for the last entry
+              query.$and = [
+                ...(educationArray.length > 0
+                  ? [{ education: { $all: educationArray } }] // Exact match for fully typed education if they exist
+                  : []),
+                { education: { $regex: `^${escapeRegex(lastEducation)}`, $options: "i" } }, // Partial match for the last entry
+              ];
+            } else if (educationArray.length > 0) {
+              // Only exact matches if no lastEducation
+              query.education = { $all: educationArray };
+            }
+          }
+          
         // Adjusted workExperience logic to filter jobs requiring at most the provided years of experience
         if (workExperience) {
             const maxExperience = parseInt(workExperience, 10);
