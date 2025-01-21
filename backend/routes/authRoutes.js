@@ -15,7 +15,8 @@ const {
   getUserDetails,
   resetLoginAttempts,
   uploadCV,
-  logout
+  logout,
+  checkBlacklist
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -31,6 +32,7 @@ router.post("/login", strictLimiter, loginUser);
 router.post("/resend", strictLimiter, resendVerificationCode);
 router.post("/reset-login-attempts", strictLimiter, resetLoginAttempts);
 router.post("/logout", protect,strictLimiter, logout);
+router.post('/check-blacklist',strictLimiter, checkBlacklist);
 
 
 // Less critical routes with generalLimiter

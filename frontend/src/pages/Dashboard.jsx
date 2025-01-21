@@ -8,11 +8,37 @@ const Dashboard = () => {
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const {state} = useLocation();
+    const { state } = useLocation();
     console.log("Dashboard state: " + JSON.stringify(state));
     const email = state?.email; // Email from navigation state
     const role = state?.role;
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
+
+    // Check if the token is blacklisted
+    const isTokenBlacklisted = async (token) => {
+        try {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/check-blacklist`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ token }),
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                return result.isBlacklisted; // Return blacklist status
+            }
+        } catch (error) {
+            console.error("Error checking token blacklist:", error);
+        }
+
+        return false;
+    };
 
     // Fetch user verification status
     const isUserVerified = async (email, token) => {
@@ -60,8 +86,8 @@ const Dashboard = () => {
         } catch (error) {
             console.error("Error fetching user details:", error);
         }
-    }; 
-    
+    };
+
     // Verify user and fetch details on mount
     useEffect(() => {
         const handleUserVerification = async () => {
@@ -70,6 +96,15 @@ const Dashboard = () => {
                 navigate("/authentication");
                 return;
             }
+
+            // Check if the token is blacklisted
+            const tokenIsBlacklisted = await isTokenBlacklisted(token);
+            if (tokenIsBlacklisted) {
+                console.log("Token is blacklisted. Navigating to /authentication.");
+                navigate("/authentication");
+                return;
+            }
+
             if (state.isVerified) {
                 const userDetails = await fetchUserDetails(email, token);
                 setUserData(userDetails);
@@ -82,19 +117,19 @@ const Dashboard = () => {
                 state.isVerified = true;
             } else {
                 console.log("Navigate to /verify");
-                navigate('/verify',{
-                    state: {...state,
-                        notificationType: 'error',
-                        notificationMessage: 'Please verify your email before continuing',
-                        notificationSource: 'Login Without Verification',
-                    }
+                navigate("/verify", {
+                    state: {
+                        ...state,
+                        notificationType: "error",
+                        notificationMessage: "Please verify your email before continuing",
+                        notificationSource: "Login Without Verification",
+                    },
                 });
             }
         };
 
         console.log("State: " + JSON.stringify(state));
-        if (!state.isVerified)
-            handleUserVerification();
+        if (!state.isVerified) handleUserVerification();
     }, [email, token, navigate]);
 
     if (error) {
@@ -105,17 +140,13 @@ const Dashboard = () => {
         );
     }
 
-    return (
-        role === "jobseeker" ? (
-            <JobCandidateDashboard />
-        ) : role === "recruiter" ? (
-            <RecruiterDashboard />
-        ) : (
-            <p>Invalid dashboard type</p>
-        )
+    return role === "jobseeker" ? (
+        <JobCandidateDashboard />
+    ) : role === "recruiter" ? (
+        <RecruiterDashboard />
+    ) : (
+        <p>Invalid dashboard type</p>
     );
-    
 };
-
 
 export default Dashboard;

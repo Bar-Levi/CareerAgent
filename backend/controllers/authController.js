@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const BlacklistedToken = require('../models/BlacklistedTokenModel');
 const crypto = require('crypto'); // For generating secure tokens
 const { sendVerificationCode, sendResetPasswordEmail, generateResetToken} = require('../utils/emailService');
 const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
@@ -435,8 +436,52 @@ const uploadCV = async (req, res) => {
   };
 
   const logout = async (req, res) => {
-    res.status(200).json({ message: 'Logged out successfully.' });
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        if (!token) {
+          return res.status(400).json({ error: 'Token not provided' });
+        }
+    
+        // Decode the token to extract its expiration time
+        const decoded = jwt.decode(token);
+        if (!decoded || !decoded.exp) {
+          return res.status(400).json({ error: 'Invalid token' });
+        }
+    
+        // Add the token to the blacklist with its expiration time
+        const expiresAt = new Date(decoded.exp * 1000); // Convert `exp` (in seconds) to Date
+        await BlacklistedToken.create({ token, expiresAt });
+    
+        res.status(200).json({ message: 'Logged out successfully. Token blacklisted.' });
+      } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ error: 'An error occurred during logout.' });
+      }
   };
+
+  const checkBlacklist = async (req, res) => {
+    try {
+      const { token } = req.body; // Get token from request body
+  
+      if (!token) {
+        return res.status(400).json({ error: 'Token not provided' });
+      }
+  
+      // Check if the token exists in the blacklist
+      const blacklistedToken = await BlacklistedToken.findOne({ token });
+      if (blacklistedToken) {
+        return res.status(200).json({ isBlacklisted: true });
+      }
+  
+      res.status(200).json({ isBlacklisted: false });
+    } catch (error) {
+      console.error('Error checking token blacklist:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+  
+  module.exports = { checkBlacklist };
+  
   
   
 
@@ -452,4 +497,5 @@ module.exports = {
     resetLoginAttempts,
     uploadCV,
     logout,
+    checkBlacklist
 };
