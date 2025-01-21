@@ -9,6 +9,7 @@ const aiRoutes = require('./routes/aiRoutes');
 const conversationRoutes = require("./routes/conversationRoutes");
 const jobListingRoutes = require("./routes/jobListingRoutes");
 const applicantsRoutes = require('./routes/applicantRoutes');
+require('./tasks/cleanupTokens');
 
 dotenv.config();
 connectDB();
