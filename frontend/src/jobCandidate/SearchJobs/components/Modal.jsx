@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { FaSpinner } from "react-icons/fa";
 
 const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmText = "Confirm" }) => {
   const [isVisible, setIsVisible] = useState(false); // For scale-in animation
   const [isClosing, setIsClosing] = useState(false); // For scale-out animation
   const [file, setFile] = useState(null); // State to store the selected file
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Trigger the animation by setting visibility to true after mounting
@@ -19,11 +21,14 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
   };
 
   const handleConfirm = () => {
+    setLoading(true); // Show loading spinner while uploading the file
+
     if (!file) {
       showNotification("error", "Please select a file before uploading.");
       return;
     }
     onConfirm(file); // Pass the selected file to the parent component
+    setLoading(false);
     setIsClosing(true);
     setTimeout(() => {
       onClose(); // Close the modal after confirmation
@@ -45,33 +50,44 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
           isVisible && !isClosing ? "scale-100" : "scale-75"
         }`}
       >
-        <h2 className="text-xl font-bold mb-4">{title}</h2>
-        <p className="text-gray-700 mb-6">{message}</p>
-        <div className="mb-4">
-          <input
-            type="file"
-            accept=".pdf,.doc,.docx"
-            onChange={handleFileChange}
-            className="w-full px-3 py-2 border rounded"
-          />
-        </div>
-        <div className="flex justify-end space-x-4">
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            {confirmText}
-          </button>
-        </div>
+        {loading ? (
+          <div className="z-10 flex flex-col items-center justify-center h-full text-center">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Analyzing Your CV...</h2>
+            <p className="text-gray-600 mb-6">This may take a few seconds. Please wait.</p>
+            <FaSpinner className="animate-spin text-5xl text-blue-500" aria-label="Loading spinner" />
+          </div>
+        ) : (
+          <>
+            <div className="mb-4">
+            <h2 className="text-xl font-bold mb-4">{title}</h2>
+            <p className="text-gray-700 mb-6">{message}</p>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={handleFileChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                {confirmText}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
+  
 };
 
 export default Modal;

@@ -38,7 +38,7 @@ const SearchJobs = () => {
     workExperience: "",
   });
 
-  const [sortingMethod, setSortingMethod] = useState("relevance");
+  const [sortingMethod, setSortingMethod] = useState("newest");
   const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -236,7 +236,7 @@ const SearchJobs = () => {
                     onChange={handleSortChange}
                     className="text-sm px-2 py-1 w-fit border rounded text-gray-700 bg-white shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="relevance">Relevance: Relevant First</option>
+                    <option disabled={!user.analyzed_cv_content} value="relevance">Relevance: Relevant First</option>
                     <option value="newest">Posting Time: Newest First</option>
                     <option value="oldest">Posting Time: Oldest First</option>
                   </select>
@@ -249,7 +249,7 @@ const SearchJobs = () => {
                       <i className="ml-1 fa fa-info-circle" />
                     </span>
 
-
+                    { user.analyzed_cv_content ?
                     <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
                       <p className="text-lg font-bold mb-3 border-b pb-2">Analyzed CV Content</p>
                       <ul className="list-none pl-0 space-y-1">
@@ -298,7 +298,12 @@ const SearchJobs = () => {
                           }</span>
                         </li>
                       </ul>
-                      </div>
+                    </div>
+                    :
+                    <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+                      <p className="text-sm text-gray-500">No analyzed CV content found.</p>
+                    </div>
+                    }
                   </div>
 
 
