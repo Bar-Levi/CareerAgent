@@ -1,8 +1,11 @@
 const cron = require('node-cron');
 const BlacklistedToken = require('../models/BlacklistedTokenModel');
 
-// Schedule cleanup task to run every hour
-cron.schedule('0 * * * *', async () => {
+// Declare the task variable
+let cleanupTask = null;
+
+// Schedule the cleanup task
+cleanupTask = cron.schedule('0 * * * *', async () => {
   try {
     console.log('Starting token cleanup...');
     const result = await BlacklistedToken.deleteMany({ expiresAt: { $lt: new Date() } });
@@ -11,3 +14,6 @@ cron.schedule('0 * * * *', async () => {
     console.error('Error during token cleanup:', error);
   }
 });
+
+// Export the task to allow stopping it in tests
+module.exports = { cleanupTask };
