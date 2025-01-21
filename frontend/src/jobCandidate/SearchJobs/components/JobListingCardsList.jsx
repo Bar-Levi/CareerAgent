@@ -11,74 +11,88 @@ const JobListingCardsList = ({
   setShowModal,
   showNotification,
   setJobListingsCount,
-  sortingMethod
+  sortingMethod,
+  setEducationListedOptions
 }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchJobListings = async () => {
+    const fetchAndSortJobListings = async () => {
       try {
+        // Fetch job listings
         const query = new URLSearchParams(filters).toString();
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/filteredJobListings?${query}`,
           {
-              method: "GET",
-              headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
           }
-      );      
+        );
+  
         if (!response.ok) {
           throw new Error("Failed to fetch job listings.");
         }
+  
         const data = await response.json();
-        setJobListings(data.jobListings);
-        setJobListingsCount(data.jobListings.length);
+  
+        // Sort job listings
+        let sortedListings = data.jobListings;
+  
+        if (sortingMethod === "newest") {
+          sortedListings = [...sortedListings].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          );
+        } else if (sortingMethod === "oldest") {
+          sortedListings = [...sortedListings].sort(
+            (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+          );
+        } else if (sortingMethod === "relevance") {
+          const relevanceList = sortedListings.map((jobListing) => ({
+            jobListing,
+            relevanceScore: calculateRelevanceScore(jobListing, user), // Calculate relevance score
+          }));
+  
+          sortedListings = relevanceList
+            .sort((a, b) => b.relevanceScore - a.relevanceScore) // Descending order
+            .map((item) => item.jobListing); // Extract sorted job listings
+        }
+
+        setJobListings(sortedListings);
+        setJobListingsCount(sortedListings.length);
         setLoading(false);
       } catch (err) {
         setError("Failed to load job listings.");
         setLoading(false);
       }
     };
-    fetchJobListings();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+  
+    fetchAndSortJobListings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sortingMethod, user]);
+  
+useEffect(() => {
+  try {
+  if (jobListings) {
+    const listedOptions = Array.from(
+      new Set(
+        jobListings
+          .map((jobListing) => jobListing.education) // Extract 'education' arrays
+          .flat() // Flatten the nested arrays into a single array
+      )
+    );
+    console.log("Education options:", listedOptions);
+    setEducationListedOptions(listedOptions);
+  }
+} catch (err) {
+  console.error("Error fetching education options:", err);
+}
+}, [jobListings])
 
-  // Sorting by time (newest and oldest)
-  useEffect(() => {
-    const sortJobListings = () => {
-      if (sortingMethod === "newest") {
-        setJobListings((prevListings) =>
-          [...prevListings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        );
-      } else if (sortingMethod === "oldest") {
-        setJobListings((prevListings) =>
-          [...prevListings].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-        );
-      } else if (sortingMethod === "relevance") {
-        console.log(jobListings);
-
-        const relevanceList = jobListings.map((jobListing) => ({
-          jobListing, // Include the job listing object
-          relevanceScore: calculateRelevanceScore(jobListing, user), // Calculate relevance score
-        }));
-        
-        // Sort by relevanceScore in descending order
-        const sortedJobListings = relevanceList
-          .sort((a, b) => b.relevanceScore - a.relevanceScore) // Descending order
-          .map((item) => item.jobListing); // Extract the sorted job listings
-        
-        console.log(sortedJobListings);
-        setJobListings(sortedJobListings);
-        
-      }
-    };
-
-    sortJobListings();
-  }, [sortingMethod, user]);
 
   if (loading) {
     return (
