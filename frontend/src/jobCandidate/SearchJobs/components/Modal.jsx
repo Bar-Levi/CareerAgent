@@ -5,7 +5,7 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
   const [isVisible, setIsVisible] = useState(false); // For scale-in animation
   const [isClosing, setIsClosing] = useState(false); // For scale-out animation
   const [file, setFile] = useState(null); // State to store the selected file
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Trigger the animation by setting visibility to true after mounting
@@ -20,20 +20,28 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
     }, 300); // Match the closing animation duration
   };
 
-  const handleConfirm = () => {
-    setLoading(true); // Show loading spinner while uploading the file
+  const handleConfirm = async () => {
+  if (!file) {
+    showNotification("error", "Please select a file before uploading.");
+    return;
+  }
 
-    if (!file) {
-      showNotification("error", "Please select a file before uploading.");
-      return;
-    }
-    onConfirm(file); // Pass the selected file to the parent component
-    setLoading(false);
-    setIsClosing(true);
+  setLoading(true); // Show the loading spinner
+
+  try {
+    await onConfirm(file); // Pass the selected file to the parent component
+    showNotification("success", "File uploaded successfully!"); // Optional success notification
+    setLoading(false); // Hide the loading spinner
+    setIsClosing(true); // Trigger modal closing animation
     setTimeout(() => {
-      onClose(); // Close the modal after confirmation
-    }, 300);
-  };
+      onClose(); // Close the modal after the animation ends
+    }, 300); // Match the closing animation duration
+  } catch (error) {
+    setLoading(false); // Hide the loading spinner
+    showNotification("error", "Something went wrong during confirmation.");
+  }
+};
+
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]); // Set the selected file
