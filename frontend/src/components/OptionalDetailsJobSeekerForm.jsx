@@ -21,8 +21,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
     useEffect(() => {
         cvFile = formData.cv || null;
         profilePicFile = formData.profilePic || null;
-        console.log("cVFile: " + cvFile);
-        console.log("profilePicFile: " + profilePicFile);
+        
     }, [formData]);
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -51,7 +50,6 @@ const OptionalDetailsForm = ({ onSubmit }) => {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
                 method: 'POST',
                 body: JSON.stringify({
-                    sessionId: 1,
                     prompt: cvContent,
                 }),
                 headers: {

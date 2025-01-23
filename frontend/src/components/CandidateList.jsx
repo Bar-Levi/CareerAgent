@@ -132,8 +132,6 @@ const CandidateCard = ({ candidate, index }) => {
 };
 
 const CandidateList = ({ candidates }) => {
-    console.log("Candidates", candidates);
-
     if (!candidates || candidates.length === 0) {
         return (
             <div className="text-gray-500 text-center">

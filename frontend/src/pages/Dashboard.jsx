@@ -1,15 +1,44 @@
+import JobCandidateDashboard from "../jobCandidate/Dashboard/pages/JobCandidateDashboard";
+import RecruiterDashboard from "../recruiterDashboard/pages/RecruiterDashboard";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import NavigationBar from "../components/NavigationBar";
-import Chatbot from "../botpress/ChatBot";
 
 const Dashboard = () => {
+    console.log("Dashboard");
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const {state} = useLocation();
+    const { state } = useLocation();
+    console.log("Dashboard state: " + JSON.stringify(state));
     const email = state?.email; // Email from navigation state
+    const role = state?.role;
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
+
+    // Check if the token is blacklisted
+    const isTokenBlacklisted = async (token) => {
+        try {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/api/auth/check-blacklist`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ token }),
+                }
+            );
+
+            if (response.ok) {
+                const result = await response.json();
+                return result.isBlacklisted; // Return blacklist status
+            }
+        } catch (error) {
+            console.error("Error checking token blacklist:", error);
+        }
+
+        return false;
+    };
 
     // Fetch user verification status
     const isUserVerified = async (email, token) => {
@@ -25,8 +54,8 @@ const Dashboard = () => {
             );
 
             if (response.ok) {
-                const data = await response.json();
-                return data.isVerified; // Return the verification status
+                const user = await response.json();
+                return user.isVerified; // Return the verification status
             } else if (response.status === 401) {
                 navigate("/authentication"); // Redirect if unauthorized
             }
@@ -57,15 +86,25 @@ const Dashboard = () => {
         } catch (error) {
             console.error("Error fetching user details:", error);
         }
-    }; 
-    
+    };
+
     // Verify user and fetch details on mount
     useEffect(() => {
         const handleUserVerification = async () => {
+            console.log("Handling user verification");
             if (!email) {
                 navigate("/authentication");
                 return;
             }
+
+            // Check if the token is blacklisted
+            const tokenIsBlacklisted = await isTokenBlacklisted(token);
+            if (tokenIsBlacklisted) {
+                console.log("Token is blacklisted. Navigating to /authentication.");
+                navigate("/authentication");
+                return;
+            }
+
             if (state.isVerified) {
                 const userDetails = await fetchUserDetails(email, token);
                 setUserData(userDetails);
@@ -78,19 +117,19 @@ const Dashboard = () => {
                 state.isVerified = true;
             } else {
                 console.log("Navigate to /verify");
-                navigate('/verify',{
-                    state: {...state,
-                        notificationType: 'error',
-                        notificationMessage: 'Please verify your email before continuing',
-                        notificationSource: 'Login Without Verification',
-                    }
+                navigate("/verify", {
+                    state: {
+                        ...state,
+                        notificationType: "error",
+                        notificationMessage: "Please verify your email before continuing",
+                        notificationSource: "Login Without Verification",
+                    },
                 });
             }
         };
 
         console.log("State: " + JSON.stringify(state));
-        if (!state.isVerified)
-            handleUserVerification();
+        if (!state.isVerified) handleUserVerification();
     }, [email, token, navigate]);
 
     if (error) {
@@ -101,21 +140,13 @@ const Dashboard = () => {
         );
     }
 
-    return (
-        <div className="h-screen flex flex-col bg-gray-100">
-        
-            <Chatbot />
-          {/* Navigation Bar */}
-          <NavigationBar />
-    
-          {/* Dashboard Content */}
-          <div className="flex justify-center items-center flex-1">
-            <h1 className="text-gray-800 text-2xl font-bold">
-              Dashboard
-            </h1>
-          </div>
-        </div>
-      );
+    return role === "jobseeker" ? (
+        <JobCandidateDashboard />
+    ) : role === "recruiter" ? (
+        <RecruiterDashboard />
+    ) : (
+        <p>Invalid dashboard type</p>
+    );
 };
 
 export default Dashboard;

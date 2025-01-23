@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const BlacklistedToken = require('../models/BlacklistedTokenModel');
 const crypto = require('crypto'); // For generating secure tokens
 const { sendVerificationCode, sendResetPasswordEmail, generateResetToken} = require('../utils/emailService');
 const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
@@ -60,7 +61,7 @@ const registerJobSeeker = async (req, res) => {
         const hashedPin = await bcrypt.hash(pin.toString(), 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
-        const user = await JobSeeker.create({
+        const userData = {
             fullName,
             email,
             password: hashedPassword,
@@ -71,12 +72,21 @@ const registerJobSeeker = async (req, res) => {
             phone,
             githubUrl,
             linkedinUrl,
-            cv,
-            profilePic,
             dateOfBirth,
             pin: hashedPin,
-            analyzed_cv_content
-        });
+        };
+        
+        // Conditionally add `cv` if it's not null
+        if (cv) {
+            userData.cv = cv;
+            userData.analyzed_cv_content = analyzed_cv_content;
+        }
+
+        if (profilePic)
+            userData.profilePic = profilePic;
+        
+        const user = await JobSeeker.create(userData);
+        
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
@@ -200,7 +210,7 @@ const loginUser = async (req, res) => {
         // Check account verification
         if (!user.isVerified) {
             const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
-            return res.status(403).json({ message: 'Please verify your email before logging in.', token });
+            return res.status(403).json({ message: 'Please verify your email before logging in.', token, user});
         }
 
         // Reset login attempts after successful login
@@ -210,7 +220,7 @@ const loginUser = async (req, res) => {
 
         // Generate JWT token for successful login
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
-        res.status(200).json({ message: 'Login successful.', token });
+        res.status(200).json({ message: 'Login successful.', token, user});
     } catch (error) {
         console.error(`[Login] Error occurred: ${error.message}`);
         res.status(500).json({ message: 'Login failed. Please try again later.' });
@@ -220,7 +230,6 @@ const loginUser = async (req, res) => {
 // Reset Login Attempts
 const resetLoginAttempts = async (req, res) => {
     const { email, pin } = req.body; // Extract email and PIN from the request body
-    console.log("email: " + email, "pin: " + pin);
     try {
         // Find the user (either job seeker or recruiter) based on email
         const jobSeeker = await JobSeeker.findOne({ email });
@@ -402,7 +411,79 @@ const getUserDetails = async (req, res) => {
 };
 
 
+const uploadCV = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const cvPath = req.body.cv; // Path to the uploaded file
+      const analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
+  
+      console.log("analyzed_cv_content: " + analyzed_cv_content);
+      console.dir(analyzed_cv_content, {depth: null})
+      const user = await JobSeeker.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      user.cv = cvPath; // Update CV path in the database
+      user.analyzed_cv_content = analyzed_cv_content; // Update analyzed CV content in the database
+      await user.save();
+  
+      res.status(200).json({ message: "CV uploaded successfully.", cv: cvPath, analyzed_cv_content });
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      res.status(500).json({ message: "Failed to upload CV." });
+    }
+  };
 
+  const logout = async (req, res) => {
+    try {
+        const token = req.header('Authorization')?.replace('Bearer ', '');
+        if (!token) {
+          return res.status(400).json({ error: 'Token not provided' });
+        }
+    
+        // Decode the token to extract its expiration time
+        const decoded = jwt.decode(token);
+        if (!decoded || !decoded.exp) {
+          return res.status(400).json({ error: 'Invalid token' });
+        }
+    
+        // Add the token to the blacklist with its expiration time
+        const expiresAt = new Date(decoded.exp * 1000); // Convert `exp` (in seconds) to Date
+        await BlacklistedToken.create({ token, expiresAt });
+    
+        res.status(200).json({ message: 'Logged out successfully. Token blacklisted.' });
+      } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ error: 'An error occurred during logout.' });
+      }
+  };
+
+  const checkBlacklist = async (req, res) => {
+    try {
+      const { token } = req.body; // Get token from request body
+  
+      if (!token) {
+        return res.status(400).json({ error: 'Token not provided' });
+      }
+  
+      // Check if the token exists in the blacklist
+      const blacklistedToken = await BlacklistedToken.findOne({ token });
+      if (blacklistedToken) {
+        return res.status(200).json({ isBlacklisted: true });
+      }
+  
+      res.status(200).json({ isBlacklisted: false });
+    } catch (error) {
+      console.error('Error checking token blacklist:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+  
+  module.exports = { checkBlacklist };
+  
+  
+  
 
 module.exports = {
     registerRecruiter,
@@ -414,4 +495,7 @@ module.exports = {
     resetPassword,
     getUserDetails,
     resetLoginAttempts,
+    uploadCV,
+    logout,
+    checkBlacklist
 };

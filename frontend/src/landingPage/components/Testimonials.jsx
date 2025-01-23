@@ -34,7 +34,13 @@ const Testimonials = () => {
             <p className="text-xl font-light mb-4 text-gray-200">
               "The career bots provided advice that was spot-on!"
             </p>
-            <h4 className="text-lg font-bold text-gray-100">Rony Bubnovsky, Junior Backend Developer</h4>
+            <h4 className="text-lg font-bold text-gray-100">Rony Bubnovsky, Mid-Senior Backend Developer</h4>
+          </div>
+          <div className="p-6">
+            <p className="text-xl font-light mb-4 text-gray-200">
+              "Goo-Goo-Gaa-Gaaaa!"
+            </p>
+            <h4 className="text-lg font-bold text-gray-100">Agam Levi, New-Born Software Developer</h4>
           </div>
         </Slider>
       </div>

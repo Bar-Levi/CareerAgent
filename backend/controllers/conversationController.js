@@ -26,14 +26,12 @@ const getConversations = async (req, res) => {
 
 // Get conversations for a user
 const getMessagesByConvId = async (req, res) => {
-  console.log("\n\n-req.query: ", req.query);
   const conversationId = req.query.convId;
-  console.log("ConversationId: " + conversationId);
 
 
   try {
     const conversation = await Conversation.find({ conversationId });
-    console.log("Conversation: " + JSON.stringify(conversation));
+
     res.status(200).json(conversation[0].messages);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -43,7 +41,6 @@ const getMessagesByConvId = async (req, res) => {
 // Create a new conversation
 const createNewConversation = async (req, res) => {
   const { email, type } = req.body;
-  console.log("BACKEND - Creating a new conversation for type: " + type +" and email: " + email );
   try {
     // Generate a conversationId based on type and current time
     const conversationId = `${type}-${Date.now()}`;
@@ -95,7 +92,6 @@ const removeConversation = async (req, res) => {
 const updateConversationTitle = async (req, res) => {
   const { id } = req.params;
   const { conversationTitle } = req.body; // New title
-  console.log("Updating id and title: " + id + '\n' + conversationTitle);
   try {
     const updatedConversation = await Conversation.findByIdAndUpdate(
       id,
@@ -117,7 +113,6 @@ const saveMessageToConversation = async (req, res) => {
   const MAX_MESSAGE_COUNT = 100;
   const { id } = req.params; // Conversation ID
   const { message } = req.body; // New message object
-
   try {
     const conversation = await Conversation.findById(id);
 
@@ -145,6 +140,32 @@ const saveMessageToConversation = async (req, res) => {
   }
 };
 
+// Toggle isProfileSynced
+const toggleProfileSynced = async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    // Find the conversation by ID
+    const conversation = await Conversation.findById(id);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // Reverse the isProfileSynced value
+    const updatedConversation = await Conversation.findByIdAndUpdate(
+      id,
+      { isProfileSynced: !conversation.isProfileSynced },
+      { new: true } // Return the updated document
+    );
+
+    res.status(200).json(updatedConversation);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 module.exports = {
   saveConversation,
@@ -153,5 +174,6 @@ module.exports = {
   removeConversation,
   updateConversationTitle,
   saveMessageToConversation,
-  getMessagesByConvId
+  getMessagesByConvId,
+  toggleProfileSynced
 };

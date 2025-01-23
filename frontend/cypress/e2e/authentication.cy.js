@@ -50,7 +50,7 @@ describe('Registration and Authentication Flow Tests', () => {
             cy.visit('/authentication'); // Open the LoginForm directly
         });
 
-        it('should successfully log in with valid credentials', function () {
+        it('should unsuccessfully log in with valid credentials for unverified user', function () {
 
             // Save credentials as aliases for reuse in other tests
             cy.wrap(testUserEmail).as('testUserEmail');
@@ -64,8 +64,8 @@ describe('Registration and Authentication Flow Tests', () => {
 
             cy.get('[data-cy="login-submit"]', { force: true }).click({ force: true });
 
-            // Validate that the user is redirected to the dashboard
-            cy.url().should('include', '/dashboard');
+            // Validate that the user is NOT redirected to the dashboard
+            cy.url().should('not.include', '/dashboard');
         });
 
         it('should display an error message for invalid credentials', () => {

@@ -1,0 +1,64 @@
+const mongoose = require('mongoose');
+
+const applicantSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+    },
+    phone: {
+        type: String,
+    },
+    linkedinUrl: {
+        type: String,
+    },
+    githubUrl: {
+        type: String,
+    },
+    cv: {
+        type: String,
+        required: true,
+    },
+    profilePic: {
+        type: String,
+        required: true,
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
+    },
+    applicationDate: {
+        type: Date,
+        default: Date.now,
+    },
+    status: {
+        type: String,
+        enum: ['Applied', 'In review', 'Rejected', 'Accepted'],
+        default: 'Applied',
+    },
+    notes: {
+        type: String,
+    },
+    jobId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'JobListing',
+        required: true,
+    },
+    recruiterId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Recruiter',
+        required: true,
+    },
+    jobSeekerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'JobSeeker',
+        required: true,
+    },
+    jobTitle: {
+        type: String,
+    },
+});
+
+const Applicant = mongoose.model('Applicant', applicantSchema);
+
+module.exports = Applicant;

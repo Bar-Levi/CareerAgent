@@ -1,4 +1,5 @@
 import React from 'react';
+import Botpress from '../botpress/Botpress';
 
 const TermsAndConditions = () => {
     const handleClose = () => {
@@ -7,6 +8,7 @@ const TermsAndConditions = () => {
 
     return (
         <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gray-50 p-6">
+            <Botpress />
             <div className="max-w-4xl bg-white rounded-lg shadow-lg p-8 space-y-6">
                 <h1 className="text-4xl font-bold text-gray-800 text-center">Terms and Conditions</h1>
                 <p className="text-gray-600 text-sm leading-relaxed">

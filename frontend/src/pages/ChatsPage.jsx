@@ -3,6 +3,7 @@ import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Notification from "../components/Notification";
+import Botpress from "../botpress/Botpress";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -182,6 +183,9 @@ const ChatsPage = () => {
     };
       
   const saveEditedTitle = async (chatId, type) => {
+    if (editingTitle === "") {
+      showNotification("error", "Title cannot be empty");
+    } else {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
@@ -227,6 +231,7 @@ const ChatsPage = () => {
     } catch (error) {
       console.error("Error updating conversation title:", error);
     }
+  }
   };
 
   // Fetch chat histories when component mounts
@@ -243,9 +248,10 @@ const ChatsPage = () => {
                     onClose={() => setNotification(null)}
                 />
       )}
+      <Botpress />
       {/* Navigation Bar */}
       <div>
-        <NavigationBar />
+      <NavigationBar userType={state.user.role}/>
       </div>
   
       {/* Main Content */}
@@ -306,7 +312,7 @@ const ChatsPage = () => {
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
-                    x
+                    ✕
                   </button>
                 </div>
               ))}
@@ -383,6 +389,7 @@ const ChatsPage = () => {
               chatId={selectedChat._id}
               conversationId={selectedChat.conversationId}
               conversationTitle={selectedChat.conversationTitle}
+              isProfileSynced={selectedChat.isProfileSynced}
               type={chatType}
               initialMessages={selectedChat.messages} // Pass messages to ChatBot
               prettyDate={prettyDate} // Pass prettyDate to format message timestamps
