@@ -71,7 +71,7 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
             <p className="text-gray-700 mb-6">{message}</p>
               <input
                 type="file"
-                accept=".pdf,.doc,.docx"
+                accept=".pdf"
                 onChange={handleFileChange}
                 className="w-full px-3 py-2 border rounded"
               />

@@ -198,6 +198,14 @@ e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience 
             {isPosting ? "Posting..." : "POST"}
         </button>
     </div>
+    
+    <div className="flex items-center justify-center bg-white p-3">
+    <span className="text-xs text-center text-gray-500">
+        Your job listing is being analyzed to improve your experience.<br />
+        Our bot may occasionally make mistakes, please review and confirm all key details.
+    </span>
+    </div>
+
 
     <JobListingModal
         isOpen={isModalOpen}
@@ -206,7 +214,7 @@ e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience 
         onSubmit={handleModalSubmit}
         onClose={handleModalClose}
     />
-</div>
+    </div>
 
     );
 };

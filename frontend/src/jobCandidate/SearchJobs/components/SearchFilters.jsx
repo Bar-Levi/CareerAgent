@@ -18,8 +18,6 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
     "Frontend Developer",
     "Software Engineer",
     "Software Developer",
-    "Junior Software Developer",
-    "Senior Software Developer",
     "Lead Software Engineer",
     "Principal Software Engineer",
     "Software Consultant",
