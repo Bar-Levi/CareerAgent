@@ -6,7 +6,7 @@ import mockInterviewImage from "../assets/mock-interview.png";
 import cvScanningImage from "../assets/cv-scanning.png";
 import recruiterCandidateImage from "../assets/recruiter-candidate.png";
 
-const Approach = () => {
+const Features = () => {
   return (
     <section className="w-full py-20 bg-black">
       <motion.h2
@@ -26,6 +26,7 @@ const Approach = () => {
           icon={<AceternityIcon order="Customized Chatbots" />}
           description="Experience two powerful AI-driven tools: an Interviewer chatbot to simulate real-world interview scenarios and a Career Advisor chatbot to guide your career journey."
           image={mockInterviewImage} // Pass the image as a prop
+          index={3}
         >
           <CanvasRevealEffect
             animationSpeed={2}
@@ -45,6 +46,7 @@ const Approach = () => {
           icon={<AceternityIcon order="CV Scanning" />}
           description="Effortlessly extract key details from your CV with AI-powered scanning. Say goodbye to manual data entry and streamline your workflow in seconds."
           image={cvScanningImage}
+          index={2}
         >
           <CanvasRevealEffect
             animationSpeed={2}
@@ -63,6 +65,7 @@ const Approach = () => {
           icon={<AceternityIcon order="Recruiter-Candidate Chat" />}
           description="Enable direct communication between recruiters and candidates for specific job positions, making the hiring process faster and more personalized."
           image={recruiterCandidateImage}
+          index={1}
         >
           <CanvasRevealEffect
             animationSpeed={2}
@@ -76,26 +79,36 @@ const Approach = () => {
   );
 };
 
-const Card = ({ title, icon, children, description, image }) => {
+const Card = ({ title, icon, children, description, image, index = 1 }) => {
   const [hovered, setHovered] = React.useState(false);
+
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-sm w-full mx-auto p-4 relative lg:h-[35rem] rounded-3xl overflow-hidden transition-transform duration-500 hover:scale-105"
-    >
+    <motion.div
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+  initial={{ opacity: 0, x: -1000 }} // Start off-screen (left)
+  animate={{ opacity: 1, x: 0 }} // End at its normal position
+  transition={{
+    duration: 0.8, // Animation duration
+    delay: index * 0.2, // Staggered delay for multiple cards
+    ease: "easeInOut", // Smooth easing function
+  }}
+  className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-sm w-full mx-auto p-4 relative lg:h-[35rem] rounded-3xl overflow-hidden transition-transform ease-in-out duration-500 hover:scale-105"
+>
       {/* Corner Plus Signs */}
       <span className="absolute h-6 w-6 -top-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-down" />
       <span className="absolute h-6 w-6 -bottom-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-up" />
       <span className="absolute h-6 w-6 -top-3 -right-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-down-fast" />
       <span className="absolute h-6 w-6 -bottom-3 -right-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-up-fast" />
 
+      {/* Hover Content */}
       <AnimatePresence>
         {hovered && (
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
             className="h-full w-full absolute inset-0 flex items-center justify-center"
           >
             {children}
@@ -103,40 +116,43 @@ const Card = ({ title, icon, children, description, image }) => {
         )}
       </AnimatePresence>
 
+      {/* Static Content */}
       <div className="relative z-20">
         <div className="text-center group-hover/canvas-card:-translate-y-4 absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] group-hover/canvas-card:opacity-0 transition duration-200 w-full mx-auto flex items-center justify-center animate-slide-up">
           {icon}
         </div>
-        <motion.h2 
-        className="dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center text-3xl animate-slide-in"
-        style={{ 
-          textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
-        }}
+        <motion.h2
+          className="dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center text-3xl animate-slide-in"
+          style={{
+            textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
+          }}
         >
           {title}
         </motion.h2>
         <h2
           className="text-sm dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-down"
-          style={{ 
+          style={{
             textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
           }}
         >
           {description}
         </h2>
         {image && (
-              <img
-                src={image}
-                alt={`${title} illustration`}
-                className="rounded-xl text-sm dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-up-fast"
-                style={{
-                  bottom: "5%",
-                }}
-              />
-            )}
+          <img
+            src={image}
+            alt={`${title} illustration`}
+            className="rounded-xl text-sm dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-up-fast"
+            style={{
+              bottom: "5%",
+            }}
+          />
+        )}
       </div>
-    </div>
+    </motion.div>
   );
 };
+
+
 
 
 const AceternityIcon = ({ order }) => {
@@ -166,4 +182,4 @@ export const Icon = ({ className, ...rest }) => {
   );
 };
 
-export default Approach;
+export default Features;
