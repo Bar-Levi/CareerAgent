@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CanvasRevealEffect } from "./CanvasRevealEffect";
 import mockInterviewImage from "../assets/mock-interview.png";
@@ -81,20 +81,27 @@ const Features = () => {
 
 const Card = ({ title, icon, children, description, image, index = 1 }) => {
   const [hovered, setHovered] = React.useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
   return (
     <motion.div
-  onMouseEnter={() => setHovered(true)}
-  onMouseLeave={() => setHovered(false)}
-  initial={{ opacity: 0, x: -1000 }} // Start off-screen (left)
-  animate={{ opacity: 1, x: 0 }} // End at its normal position
-  transition={{
-    duration: 0.8, // Animation duration
-    delay: index * 0.2, // Staggered delay for multiple cards
-    ease: "easeInOut", // Smooth easing function
-  }}
-  className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-sm w-full mx-auto p-4 relative lg:h-[35rem] rounded-3xl overflow-hidden transition-transform ease-in-out duration-500 hover:scale-105"
->
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      initial={{ opacity: 0, scale: 0.1 }} // Start off-screen (left)
+      onViewportEnter={() => {
+        if (!hasAnimated) {
+          setHasAnimated(true); // Mark as animated when in view
+        }
+      }}
+      animate={hasAnimated ? { opacity: 1, scale: 1 } : {}} // Animate only once
+      transition={{
+        duration: 0.1, // Animation duration
+        delay: index * 0.2, // Staggered delay for multiple cards
+        ease: "easeInOut", // Smooth easing function
+
+      }}
+      className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-sm w-full mx-auto p-4 relative lg:h-[35rem] rounded-3xl overflow-hidden transition-transform ease-in-out duration-500 hover:scale-105"
+    >
       {/* Corner Plus Signs */}
       <span className="absolute h-6 w-6 -top-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-down" />
       <span className="absolute h-6 w-6 -bottom-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-up" />
