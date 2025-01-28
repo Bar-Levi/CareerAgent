@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Notification from "../components/Notification";
 import Botpress from "../botpress/Botpress";
+import { FiEdit } from "react-icons/fi";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -285,7 +286,7 @@ const ChatsPage = () => {
                       type="text"
                       className="w-full border px-2 py-1 rounded"
                       value={editingTitle}
-                      onChange={(e) => handleTitleChange(e, chat._id, 'carerrAdvisor')}
+                      onChange={(e) => handleTitleChange(e, chat._id, 'careerAdvisor')}
                       onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
                       onKeyDown={(e) =>
                         e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
@@ -298,15 +299,17 @@ const ChatsPage = () => {
                       >
                       <p
                         className="font-medium cursor-pointer"
-                        onDoubleClick={() =>
-                          startEditingTitle(chat._id, chat.conversationTitle)
-                        }
                       >
                         {chat.conversationTitle}
                       </p>
                       <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
                     </div>
                   )}
+                  <FiEdit
+                    onClick={() =>
+                    startEditingTitle(chat._id, chat.conversationTitle)
+                  }
+                  />
                   <button
                     onClick={() => removeConversation(chat._id, "careerAdvisor")}
                     className="text-red-500 hover:text-red-700 ml-2"
@@ -359,15 +362,17 @@ const ChatsPage = () => {
                     >
                       <p
                         className="font-medium cursor-pointer"
-                        onDoubleClick={() =>
-                          startEditingTitle(chat._id, chat.conversationTitle)
-                        }
                       >
                         {chat.conversationTitle}
                       </p>
                       <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
                     </div>
                   )}
+                  <FiEdit
+                    onClick={() =>
+                      startEditingTitle(chat._id, chat.conversationTitle)
+                  }
+                  />
                   <button
                     onClick={() => removeConversation(chat._id, "interviewer")}
                     className="text-red-500 hover:text-red-700 ml-2"
