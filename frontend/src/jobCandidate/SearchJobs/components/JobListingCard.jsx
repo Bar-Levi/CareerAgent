@@ -24,6 +24,31 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
 
+  const handleChatButtonClick = async () => {
+    try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ participants: [recruiterId, user._id] }), // Include both user IDs
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json(); // Try to get error details from the server
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
+        }
+
+        const newConversation = await response.json();
+
+        console.log("newConversation: " + JSON.stringify(newConversation));
+
+    } catch (error) {
+        console.error('Error creating conversation:', error);
+        // Handle error (e.g., display an error message to the user)
+        alert("Failed to create chat. Please try again later.") // Example alert
+    }
+};
   const handleApplyNow = async () => {
     if (!user.cv || user.cv === "") {
       setShowModal(true); // Show modal if CV is missing
@@ -146,7 +171,8 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
 
         {/* Chat Button */}
         <div>
-          <button className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300">
+          <button className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300"
+            onClick={handleChatButtonClick}>
             Chat with Recruiter
           </button>
         </div>

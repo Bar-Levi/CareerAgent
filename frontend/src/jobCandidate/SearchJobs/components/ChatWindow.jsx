@@ -19,7 +19,9 @@ const ChatWindow = ({ jobId, userId, job }) => {
       text: "Great! Let's discuss your qualifications.",
       timestamp: new Date().toISOString(),
     },
-  ]);  const chatEndRef = useRef(null);
+  ]);  
+  
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -51,7 +53,7 @@ const ChatWindow = ({ jobId, userId, job }) => {
     setMessages([...messages, newMessage]);
 
     try {
-      const response = await fetch(`/api/conversations/${jobId}`, {
+      const response = await fetch(`/api/bot-conversations/${jobId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json", // Important for sending JSON data

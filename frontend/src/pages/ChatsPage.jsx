@@ -39,7 +39,7 @@ const ChatsPage = () => {
   const fetchHistoryChats = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/?email=${encodeURIComponent(email)}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/?email=${encodeURIComponent(email)}`,
         {
           method: "GET",
           headers: {
@@ -72,7 +72,7 @@ const ChatsPage = () => {
   const createNewConversation = async (type) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/new`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/new`,
         {
           method: "POST",
           headers: { 
@@ -117,7 +117,7 @@ const ChatsPage = () => {
   const removeConversation = async (chatId, type) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
         { method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -189,7 +189,7 @@ const ChatsPage = () => {
     } else {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
         {
           method: "PUT",
           headers: { 

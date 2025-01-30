@@ -1,48 +1,73 @@
 const mongoose = require("mongoose");
 
+const messageSchema = new mongoose.Schema(
+  {
+    sender: {
+      type: mongoose.Schema.Types.ObjectId, // Store the user's ObjectId
+      ref: "User", // Reference the User model
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now,
+    },
+    // Add other message-related fields as needed (attachments, reactions, etc.)
+    attachments: [{
+      url: String,
+      type: String, // MIME type
+      name: String
+    }],
+    reactions: [{
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      reactionType: String // e.g., "like", "heart"
+    }],
+    edited: {
+      type: Boolean,
+      default: false
+    },
+    deleted: {
+      type: Boolean,
+      default: false
+    },
+    // ... other message fields
+  },
+  { timestamps: true } // Add timestamps to messages
+);
+
 const conversationSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      enum: ["careerAdvisor", "interviewer"], // Restrict allowed types
-      required: true,
-    },
-    conversationId: {
-      type: String,
-      required: true,
-    },
-    conversationTitle: {
-      type: String,
-      required: true,
-      default: "Untitled Conversation",
-    },
-    isProfileSynced: {
-      type: Boolean,
-      default: false,
-      required: true,
-    },
-    messages: [
+    participants: [
       {
-        sender: {
-          type: String,
-          required: true,
-        },
-        text: {
-          type: String,
-          required: true,
-        },
-        timestamp: {
-          type: Date,
-          default: Date.now,
-        },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "JobSeeker", // Reference the User model
+        required: true,
+      },
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Recruiter", // Reference the User model
+        required: true,
       },
     ],
+    messages: [messageSchema], // Use the messageSchema as a subdocument array
+    isGroupChat: {
+      type: Boolean,
+      default: false,
+    },
+    groupChatName: {
+      type: String,
+      required: function() { return this.isGroupChat; } // Only required if it's a group chat
+    },
+    // Add other conversation fields as needed (e.g., last message, etc.)
+    lastMessage: {
+      type: messageSchema,
+      required: false
+    }
   },
-  { timestamps: true }
+  { timestamps: true } // Add timestamps to the conversation
 );
 
 module.exports = mongoose.model("Conversation", conversationSchema);

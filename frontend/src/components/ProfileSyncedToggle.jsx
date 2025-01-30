@@ -134,7 +134,7 @@ const ProfileSyncedToggle = ({ isProfileSynced, chatId, token, email }) => {
       };
 
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}/messages`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}/messages`,
         {
           method: "POST",
           headers: {
@@ -159,7 +159,7 @@ const ProfileSyncedToggle = ({ isProfileSynced, chatId, token, email }) => {
     // Update the conversation's isProfileSynced to true
     try {
       await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}/toggleProfileSynced`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}/toggleProfileSynced`,
         {
           method: "PUT",
           headers: {

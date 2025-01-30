@@ -1,40 +1,26 @@
 const express = require("express");
+const router = express.Router();
 const {
-  saveConversation,
-  getConversations,
-  createNewConversation,
-  removeConversation,
-  updateConversationTitle,
-  saveMessageToConversation,
-  getMessagesByConvId,
-  toggleProfileSynced
+    getAllConversations,
+    getConversationById,
+    createConversation,
+    updateConversation,
+    deleteConversation,
+    addMessageToConversation,
+    updateMessageInConversation,
+    deleteMessageFromConversation,
 } = require("../controllers/conversationController");
 
-const {
-  protect
-} = require("../middleware/authMiddleware");
+// Routes for conversations
+router.get("/", getAllConversations);
+router.get("/:id", getConversationById);
+router.post("/", createConversation);
+router.put("/:id", updateConversation);
+router.delete("/:id", deleteConversation);
 
-const router = express.Router();
-
-// Save a conversation
-router.post("/save", protect, saveConversation);
-
-// Get all conversations for a user
-router.get("/", protect, getConversations);
-
-router.get("/getMessagesByConvId", protect, getMessagesByConvId);
-
-// Create a new conversation
-router.post("/new", protect, createNewConversation);
-
-// Remove a conversation
-router.delete("/:id", protect, removeConversation); // Pass conversation ID in the route
-
-// Update conversation title
-router.put("/:id", protect, updateConversationTitle); // Pass conversation ID in the route
-
-router.put("/:id/toggleProfileSynced", protect, toggleProfileSynced); // Pass conversation
-
-router.post("/:id/messages", protect, saveMessageToConversation); // Add a message to a conversation
+// Routes for messages within a conversation
+router.post("/:id/messages", addMessageToConversation); // POST to add a new message
+router.put("/:id/messages/:messageId", updateMessageInConversation); // PUT to update a message
+router.delete("/:id/messages/:messageId", deleteMessageFromConversation); // DELETE to remove a message
 
 module.exports = router;
