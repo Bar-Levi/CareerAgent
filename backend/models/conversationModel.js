@@ -33,7 +33,6 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false
     },
-    // ... other message fields
   },
   { timestamps: true } // Add timestamps to messages
 );
@@ -52,6 +51,11 @@ const conversationSchema = new mongoose.Schema(
         required: true,
       },
     ],
+    jobListingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "JobListing",
+      required: true,
+    },
     messages: [messageSchema], // Use the messageSchema as a subdocument array
     isGroupChat: {
       type: Boolean,

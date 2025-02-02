@@ -31,7 +31,10 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ participants: [recruiterId, user._id] }), // Include both user IDs
+            body: JSON.stringify({ 
+              participants: [recruiterId, user._id],
+              jobListingId: jobId,
+            }), // Include both user IDs
         });
 
         if (!response.ok) {
