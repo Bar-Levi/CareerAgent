@@ -3,8 +3,12 @@ const mongoose = require("mongoose");
 const messageSchema = new mongoose.Schema(
   {
     senderId: {
-      type: mongoose.Schema.Types.ObjectId, // Store the user's ObjectId
-      ref: "User", // Reference the User model
+      type: mongoose.Schema.Types.ObjectId, 
+      required: true,
+    },
+    senderType: {
+      type: String,
+      enum: ["JobSeeker", "Recruiter"], // Explicitly track sender type
       required: true,
     },
     senderProfilePic: {
@@ -13,7 +17,7 @@ const messageSchema = new mongoose.Schema(
     },
     senderName: {
       type: String,
-      required: true
+      required: true,
     },
     text: {
       type: String,
@@ -23,27 +27,32 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    // Add other message-related fields as needed (attachments, reactions, etc.)
-    attachments: [{
-      url: String,
-      type: String, // MIME type
-      name: String
-    }],
-    reactions: [{
-      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-      reactionType: String // e.g., "like", "heart"
-    }],
+    attachments: [
+      {
+        url: String,
+        type: String, // MIME type
+        name: String,
+      },
+    ],
+    reactions: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId },
+        userType: { type: String, enum: ["JobSeeker", "Recruiter"] }, // Track user type for reactions
+        reactionType: String, // e.g., "like", "heart"
+      },
+    ],
     edited: {
       type: Boolean,
-      default: false
+      default: false,
     },
     deleted: {
       type: Boolean,
-      default: false
+      default: false,
     },
   },
-  { timestamps: true } // Add timestamps to messages
+  { timestamps: true }
 );
+
 
 const conversationSchema = new mongoose.Schema(
   {

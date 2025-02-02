@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
-const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification,     setCurrentOpenConversationId
+const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification, setCurrentOpenConversationId
 }) => {
   const {
     jobRole,

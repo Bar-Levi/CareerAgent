@@ -13,7 +13,7 @@ const {
 
 // Routes for conversations
 router.get("/", getAllConversations);
-router.get("/:id", getConversationById);
+router.get("/:conversationId", getConversationById);
 router.post("/", createConversation);
 router.put("/:id", updateConversation);
 router.delete("/:id", deleteConversation);

@@ -3,42 +3,30 @@ import MessageBubble from "./MessageBubble";
 import InputBox from "./InputBox";
 
 const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
-  const [messages, setMessages] = useState([
-    {
-      user: { name: "Recruiter", profilePic: "https://via.placeholder.com/40" },
-      text: "Hello! How can I help you today?",
-      timestamp: new Date().toISOString(),
-    },
-    {
-      user: { name: "You", profilePic: "https://via.placeholder.com/40" },
-      text: "Hi! I'm interested in the Software Engineer position.",
-      timestamp: new Date().toISOString(),
-    },
-    {
-      user: { name: "Recruiter", profilePic: "https://via.placeholder.com/40" },
-      text: "Great! Let's discuss your qualifications.",
-      timestamp: new Date().toISOString(),
-    },
-  ]);  
+  const [messages, setMessages] = useState([]);  
   
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${jobId}`);
+        if (!currentOpenConversationId) {
+          return;
+        }
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
-        setMessages(data.messages);
+        const conversation = await response.json();
+        console.log("Fetched conversation:", conversation);
+        setMessages(conversation.messages);
       } catch (error) {
         console.error("Error fetching chat messages", error);
       }
     };
 
     fetchMessages();
-  }, [jobId]);
+  }, [jobId, currentOpenConversationId]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

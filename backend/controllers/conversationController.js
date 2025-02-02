@@ -1,11 +1,14 @@
+const mongoose = require("mongoose");
 const Conversation = require("../models/conversationModel");
+const JobSeeker = require("../models/jobSeekerModel");
+const Recruiter = require("../models/recruiterModel");
 
 // Controller functions for conversations
 const getAllConversations = async (req, res) => {
   try {
     const conversations = await Conversation.find()
       .populate("participants")
-      .populate("jobListingId"); // Ensure job listing details are included
+      .populate("jobListingId");
     res.json(conversations);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -14,22 +17,33 @@ const getAllConversations = async (req, res) => {
 
 const getConversationById = async (req, res) => {
   try {
-    const conversation = await Conversation.findById(req.params.id)
+    console.log("Fetching conversation with ID:", req.params.conversationId);
+
+    const conversation = await Conversation.findById(req.params.conversationId)
       .populate("participants")
-      .populate("jobListingId") // Populate job listing
-      .populate({
-        path: "messages",
-        populate: {
-          path: "sender",
-          model: "User",
-        },
-      });
+      .populate("jobListingId")
+      .populate("messages"); // No direct ref, fetching manually later
+
     if (!conversation) {
+      console.log("Conversation not found for ID:", req.params.conversationId);
       return res.status(404).json({ message: "Conversation not found" });
     }
+
+    // Fetch sender details dynamically (JobSeeker or Recruiter)
+    for (let message of conversation.messages) {
+      if (mongoose.Types.ObjectId.isValid(message.senderId)) {
+        if (message.senderType === "JobSeeker") {
+          message.senderDetails = await JobSeeker.findById(message.senderId).select("name profilePic");
+        } else if (message.senderType === "Recruiter") {
+          message.senderDetails = await Recruiter.findById(message.senderId).select("name profilePic");
+        }
+      }
+    }
+
     res.json(conversation);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error fetching conversation:", err);
+    res.status(500).json({ message: "Server error while fetching conversation" });
   }
 };
 
@@ -43,12 +57,12 @@ const createConversation = async (req, res) => {
   try {
     // Check if a conversation with the same participants and jobListingId already exists
     const existingConversation = await Conversation.findOne({
-      participants: { $all: participants, $size: participants.length }, // Ensure exact same participants
+      participants: { $all: participants, $size: participants.length },
       jobListingId,
     });
 
     if (existingConversation) {
-      return res.status(200).json(existingConversation); // Return the existing conversation
+      return res.status(200).json(existingConversation);
     }
 
     // If no existing conversation is found, create a new one
@@ -59,7 +73,6 @@ const createConversation = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
-
 
 const updateConversation = async (req, res) => {
   try {
@@ -79,7 +92,7 @@ const updateConversation = async (req, res) => {
       updateData,
       { new: true }
     ).populate("participants").populate("jobListingId");
-    
+
     res.json(updatedConversation);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -101,28 +114,22 @@ const deleteConversation = async (req, res) => {
 // Controller functions for messages within a conversation
 const addMessageToConversation = async (req, res) => {
   try {
+    const { senderId, senderType, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    if (!senderId || !senderProfilePic || !senderName || !text || !senderType) {
+      return res.status(400).json({ message: "Missing required message fields" });
+    }
+
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const newMessage = req.body; // Assuming req.body contains the message data
+    const newMessage = { senderId, senderType, senderProfilePic, senderName, text, attachments, reactions };
     conversation.messages.push(newMessage);
-    conversation.lastMessage = newMessage; // Update last message
+    conversation.lastMessage = newMessage;
     await conversation.save();
 
-    const updatedConversation = await Conversation.findById(req.params.id)
-      .populate("participants")
-      .populate("jobListingId") // Populate job listing
-      .populate({
-        path: "messages",
-        populate: {
-          path: "sender",
-          model: "User",
-        },
-      });
-
-    res.status(201).json(updatedConversation);
+    res.status(201).json(conversation);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -152,18 +159,7 @@ const updateMessageInConversation = async (req, res) => {
     };
     await conversation.save();
 
-    const updatedConversation = await Conversation.findById(req.params.id)
-      .populate("participants")
-      .populate("jobListingId")
-      .populate({
-        path: "messages",
-        populate: {
-          path: "sender",
-          model: "User",
-        },
-      });
-
-    res.json(updatedConversation);
+    res.json(conversation);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -182,18 +178,7 @@ const deleteMessageFromConversation = async (req, res) => {
     );
     await conversation.save();
 
-    const updatedConversation = await Conversation.findById(req.params.id)
-      .populate("participants")
-      .populate("jobListingId")
-      .populate({
-        path: "messages",
-        populate: {
-          path: "sender",
-          model: "User",
-        },
-      });
-
-    res.status(204).json(updatedConversation);
+    res.status(204).json(conversation);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
