@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 import InputBox from "./InputBox";
 
-const ChatWindow = ({ jobId, userId, job }) => {
+const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const [messages, setMessages] = useState([
     {
       user: { name: "Recruiter", profilePic: "https://via.placeholder.com/40" },
@@ -26,7 +26,7 @@ const ChatWindow = ({ jobId, userId, job }) => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`/api/conversations/${jobId}`);
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${jobId}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -46,19 +46,21 @@ const ChatWindow = ({ jobId, userId, job }) => {
 
   const sendMessage = async (text) => {
     const newMessage = {
-      user: { name: "You", profilePic: "https://via.placeholder.com/40" },
-      text,
+      senderId: user._id,
+      senderProfilePic: user.profilePic,
+      senderName: user.fullName,
+      text: text.text,
       timestamp: new Date().toISOString(),
     };
     setMessages([...messages, newMessage]);
 
     try {
-      const response = await fetch(`/api/bot-conversations/${jobId}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json", // Important for sending JSON data
         },
-        body: JSON.stringify({ userId, message: text }), // Convert data to JSON string
+        body: JSON.stringify(newMessage), // Convert data to JSON string
       });
 
       if (!response.ok) {
@@ -83,7 +85,7 @@ const ChatWindow = ({ jobId, userId, job }) => {
       </div>    
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((msg, index) => (
-          <MessageBubble key={index} message={msg} />
+          <MessageBubble key={index} message={msg} currentUser={user}/>
         ))}
         <div ref={chatEndRef} />
       </div>

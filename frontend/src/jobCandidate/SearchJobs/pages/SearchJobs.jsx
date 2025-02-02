@@ -18,6 +18,7 @@ const SearchJobs = () => {
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
+  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -331,6 +332,7 @@ const SearchJobs = () => {
             setJobListingsCount={setJobListingsCount}
             sortingMethod={sortingMethod}
             setEducationListedOptions={setEducationListedOptions}
+            setCurrentOpenConversationId={setCurrentOpenConversationId}
           />
         </div>
 
@@ -338,7 +340,7 @@ const SearchJobs = () => {
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (
             <>
-              <ChatWindow jobId={selectedJob._id} userId={user._id} job={selectedJob} />
+              <ChatWindow jobId={selectedJob._id} user={user} job={selectedJob} currentOpenConversationId={currentOpenConversationId}/>
               {/* <h2 className="text-xl font-bold mb-2">{selectedJob.jobRole}</h2>
               <p className="text-sm text-gray-600">
                 {selectedJob.company} - {selectedJob.location}

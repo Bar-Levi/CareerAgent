@@ -41,6 +41,17 @@ const createConversation = async (req, res) => {
   }
 
   try {
+    // Check if a conversation with the same participants and jobListingId already exists
+    const existingConversation = await Conversation.findOne({
+      participants: { $all: participants, $size: participants.length }, // Ensure exact same participants
+      jobListingId,
+    });
+
+    if (existingConversation) {
+      return res.status(200).json(existingConversation); // Return the existing conversation
+    }
+
+    // If no existing conversation is found, create a new one
     const conversation = new Conversation(req.body);
     const newConversation = await conversation.save();
     res.status(201).json(newConversation);
@@ -48,6 +59,7 @@ const createConversation = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 const updateConversation = async (req, res) => {
   try {

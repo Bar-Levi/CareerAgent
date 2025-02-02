@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 
-const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification }) => {
+const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification,     setCurrentOpenConversationId
+}) => {
   const {
     jobRole,
     company,
@@ -34,7 +35,7 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
             body: JSON.stringify({ 
               participants: [recruiterId, user._id],
               jobListingId: jobId,
-            }), // Include both user IDs
+            }),
         });
 
         if (!response.ok) {
@@ -43,7 +44,9 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
         }
 
         const newConversation = await response.json();
-
+        console.log("New conversation created:", newConversation);
+        setCurrentOpenConversationId(newConversation._id);
+      
         console.log("newConversation: " + JSON.stringify(newConversation));
 
     } catch (error) {
