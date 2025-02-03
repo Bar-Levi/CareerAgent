@@ -1,5 +1,5 @@
 import JobCandidateDashboard from "../jobCandidate/Dashboard/pages/JobCandidateDashboard";
-import RecruiterDashboard from "../recruiterDashboard/pages/RecruiterDashboard";
+import RecruiterDashboard from "../recruiter/pages/RecruiterDashboard";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 

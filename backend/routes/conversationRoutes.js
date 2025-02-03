@@ -9,6 +9,7 @@ const {
     addMessageToConversation,
     updateMessageInConversation,
     deleteMessageFromConversation,
+    getJobListingConversations
 } = require("../controllers/conversationController");
 
 // Routes for conversations
@@ -17,6 +18,9 @@ router.get("/:conversationId", getConversationById);
 router.post("/", createConversation);
 router.put("/:id", updateConversation);
 router.delete("/:id", deleteConversation);
+
+// Get conversations of a specific jobListing
+router.get("/jobListing/:jobListingId", getJobListingConversations);
 
 // Routes for messages within a conversation
 router.post("/:id/messages", addMessageToConversation); // POST to add a new message

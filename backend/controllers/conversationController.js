@@ -1,7 +1,4 @@
-const mongoose = require("mongoose");
 const Conversation = require("../models/conversationModel");
-const JobSeeker = require("../models/jobSeekerModel");
-const Recruiter = require("../models/recruiterModel");
 
 // Controller functions for conversations
 const getAllConversations = async (req, res) => {
@@ -175,6 +172,17 @@ const deleteMessageFromConversation = async (req, res) => {
   }
 };
 
+const getJobListingConversations = async (req, res) => {
+  try {
+    const jobListingId = req.params.jobListingId;
+    const conversations = await Conversation.find({ jobListingId });
+
+    res.status(200).json({jobListingConversations: conversations});
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   getAllConversations,
   getConversationById,
@@ -184,4 +192,5 @@ module.exports = {
   addMessageToConversation,
   updateMessageInConversation,
   deleteMessageFromConversation,
+  getJobListingConversations
 };
