@@ -2,28 +2,56 @@ import React, { useState, useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 import InputBox from "./InputBox";
 
+const MessageSkeleton = ({ isSender }) => {
+  return (
+    <div className={`flex text-sm items-start space-x-3 mb-4 opacity-50 ${isSender ? "justify-end" : ""}`}>
+      {/* Skeleton Profile Picture */}
+      {!isSender && <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full"></div>}
+
+      <div className="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg shadow-md max-w-xs">
+        {/* Skeleton Sender Name */}
+        <div className="h-4 bg-gray-400 dark:bg-gray-500 rounded w-24 mb-2"></div>
+        
+        {/* Skeleton Text */}
+        <div className="space-y-2">
+          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-32"></div>
+          <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+        </div>
+        
+        {/* Skeleton Timestamp */}
+        <div className="h-2 bg-gray-400 dark:bg-gray-500 rounded w-16 mt-2"></div>
+      </div>
+    </div>
+  );
+};
+
 const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const [messages, setMessages] = useState([]);  
-  
+  const [loading, setLoading] = useState(true);
+    
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        if (!currentOpenConversationId) {
-          return;
-        }
+        if (!currentOpenConversationId) return;
+        
+        setLoading(true); // Start loading
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
         const conversation = await response.json();
         console.log("Fetched conversation:", conversation);
+        
         setMessages(conversation.messages);
       } catch (error) {
         console.error("Error fetching chat messages", error);
+      } finally {
+        setLoading(false); // Stop loading after fetching
       }
-    };
+    };    
 
     fetchMessages();
   }, [jobId, currentOpenConversationId]);
@@ -72,9 +100,10 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         </span>
       </div>    
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg, index) => (
-          <MessageBubble key={index} message={msg} currentUser={user}/>
-        ))}
+        {loading
+          ? [...Array(5)].map((_, index) => <MessageSkeleton key={index} isSender={index % 2 === 0} />)
+          : messages.map((msg, index) => <MessageBubble key={index} message={msg} currentUser={user} />)
+        }
         <div ref={chatEndRef} />
       </div>
       <InputBox onSend={sendMessage} />

@@ -29,17 +29,6 @@ const getConversationById = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // Fetch sender details dynamically (JobSeeker or Recruiter)
-    for (let message of conversation.messages) {
-      if (mongoose.Types.ObjectId.isValid(message.senderId)) {
-        if (message.senderType === "JobSeeker") {
-          message.senderDetails = await JobSeeker.findById(message.senderId).select("name profilePic");
-        } else if (message.senderType === "Recruiter") {
-          message.senderDetails = await Recruiter.findById(message.senderId).select("name profilePic");
-        }
-      }
-    }
-
     res.json(conversation);
   } catch (err) {
     console.error("Error fetching conversation:", err);
@@ -114,8 +103,10 @@ const deleteConversation = async (req, res) => {
 // Controller functions for messages within a conversation
 const addMessageToConversation = async (req, res) => {
   try {
-    const { senderId, senderType, senderProfilePic, senderName, text, attachments, reactions } = req.body;
-    if (!senderId || !senderProfilePic || !senderName || !text || !senderType) {
+    console.log("Add message to conversation:", req.params.id);
+    console.log("Req.body:", req.body);
+    const { senderId, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    if (!senderId || !senderProfilePic || !senderName || !text) {
       return res.status(400).json({ message: "Missing required message fields" });
     }
 
@@ -124,7 +115,7 @@ const addMessageToConversation = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const newMessage = { senderId, senderType, senderProfilePic, senderName, text, attachments, reactions };
+    const newMessage = { senderId, senderProfilePic, senderName, text, attachments, reactions };
     conversation.messages.push(newMessage);
     conversation.lastMessage = newMessage;
     await conversation.save();

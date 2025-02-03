@@ -6,11 +6,6 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId, 
       required: true,
     },
-    senderType: {
-      type: String,
-      enum: ["JobSeeker", "Recruiter"], // Explicitly track sender type
-      required: true,
-    },
     senderProfilePic: {
       type: String,
       required: true,
