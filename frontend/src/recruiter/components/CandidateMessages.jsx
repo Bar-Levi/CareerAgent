@@ -87,14 +87,15 @@ const CandidateMessages = ({ user, recruiterId, jobListing, showNotification }) 
       ) : (
         <>
           {/* Top Section: Job Title */}
-          <div className="bg-gray-200 z-10 flex justify-between items-center shadow-xl p-3">
-            <h3 className="text-xl font-bold text-gray-800">{jobListing.jobRole}</h3>
+          <div className="bg-gray-200 z-10 flex justify-center items-center shadow-xl p-3">
+            <h3 className="text-xl font-bold text-gray-800 text-center">{jobListing.jobRole}</h3>
           </div>
+
           {/* Main Section: Split into Candidate List and Chat Window */}
           <div className="flex flex-1 overflow-hidden">
             {/* Left Pane: Candidate List (30% width) */}
             <div className="w-1/3 border-r border-gray-300 p-4 overflow-y-auto">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4">Candidates</h4>
+              <h4 className="text-lg font-semibold text-gray-800 mb-4 text-center">Candidates</h4>
               {conversations.length === 0 ? (
                 <p className="text-gray-500">No messages for this job listing.</p>
               ) : (
@@ -127,9 +128,11 @@ const CandidateMessages = ({ user, recruiterId, jobListing, showNotification }) 
               )}
             </div>
             {/* Right Pane: Chat Window (70% width) */}
-            <div className="w-2/3 p-4 overflow-y-auto">
+            <div 
+              className="w-2/3 p-4 overflow-y-auto">
               {selectedConversationId ? (
                 <ChatWindow
+                  key={jobListing}
                   jobId={jobListing._id}
                   user={user} // Passing recruiter info
                   // Pass candidate name as the job.recruiterName for display in ChatWindow's title

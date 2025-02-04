@@ -115,6 +115,11 @@ const RecruiterDashboard = () => {
 
   const handlePostSuccess = () => {
     showNotification("success", "Job listing posted successfully!");
+    // Update metrics locally and increment metric.activeListings by 1
+    setMetrics((prevMetrics) => ({
+      ...prevMetrics,
+      activeListings: prevMetrics.activeListings + 1,
+    }));
     fetchJobListings();
   };
 
@@ -140,8 +145,8 @@ const RecruiterDashboard = () => {
       <div className="flex flex-col md:flex-row flex-1 p-6 space-y-8 md:space-y-0 md:space-x-4">
         {/* Left Pane: My Job Listings (40% width, scrollable) */}
         <div
-          className="md:w-2/5 w-full bg-white shadow rounded-lg overflow-y-auto"
-          style={{ maxHeight: "calc(65vh)" }}
+          className="md:w-2/5 w-full bg-gray-50 shadow rounded-lg overflow-y-auto border-gray-200 border-2 border-t-0"
+          style={{ height: "calc(65vh)" }}
         >
           <MyJobListings
             showNotification={showNotification}
@@ -150,17 +155,21 @@ const RecruiterDashboard = () => {
             // Pass the selected job listing object and the setter
             selectedJobListing={selectedJobListing}
             setSelectedJobListing={setSelectedJobListing}
+            setMetrics={setMetrics}
           />
         </div>
         {/* Right Pane: Candidate Messages & Chat (55% width) */}
         <div
-          className="md:w-3/5 w-full bg-white shadow rounded-lg overflow-y-auto"
-          style={{ maxHeight: "calc(65vh)" }}
+          className="md:w-3/5 w-full bg-white shadow rounded-lg overflow-y-auto border-gray-200 border-2 border-t-0"
+          style={{ 
+            height: "calc(65vh)",
+
+           }}
         >
           <CandidateMessages
+            key={selectedJobListing ? selectedJobListing._id : "none"}
             user={user}
             recruiterId={user._id}
-            // Pass the selected job listing object instead of only its id
             jobListing={selectedJobListing}
             showNotification={showNotification}
           />

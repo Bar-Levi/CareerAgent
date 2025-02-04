@@ -86,9 +86,9 @@ const MyJobListings = ({
   jobListings,
   setJobListings,
   showNotification,
-  // Receive the selected job listing object and its setter
   selectedJobListing,
   setSelectedJobListing,
+  setMetrics,
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
@@ -155,11 +155,13 @@ const MyJobListings = ({
 
   const onStatusChange = async (id, newStatus) => {
     try {
+      // Optimistically update the local state
       setJobListings((prevListings) =>
         prevListings.map((listing) =>
           listing._id === id ? { ...listing, status: newStatus } : listing
         )
       );
+  
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/${id}`, {
         method: "PUT",
         headers: {
@@ -168,9 +170,18 @@ const MyJobListings = ({
         },
         body: JSON.stringify({ status: newStatus }),
       });
+  
       if (!response.ok) {
         throw new Error(`Failed to update status for job listing with ID ${id}.`);
       }
+  
+      // Extract the JSON from the response
+      const data = await response.json();
+      // The controller returns the updated metrics under the "metrics" property
+      const updatedMetrics = data.metrics;
+      console.log("Updated metrics:", updatedMetrics);
+      setMetrics(updatedMetrics);
+  
       showNotification("success", `Status updated to ${newStatus}`);
     } catch (error) {
       console.error("Error updating job listing status:", error.message);
@@ -179,6 +190,7 @@ const MyJobListings = ({
       setMenuOpen(null);
     }
   };
+  
 
   return (
     <div className="relative w-full">

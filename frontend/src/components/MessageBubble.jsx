@@ -1,5 +1,4 @@
 import React from "react";
-import ReactionBar from "./ReactionBar";
 
 const MessageBubble = ({ message, currentUser }) => {
   return (
@@ -9,7 +8,6 @@ const MessageBubble = ({ message, currentUser }) => {
         <div className="text-sm font-semibold text-gray-900 dark:text-gray-200">{message.senderName}</div>
         <p className="text-gray-700 dark:text-gray-300">{message.text}</p>
         <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(message.timestamp).toLocaleTimeString()}</span>
-        <ReactionBar />
       </div>
     </div>
   );
