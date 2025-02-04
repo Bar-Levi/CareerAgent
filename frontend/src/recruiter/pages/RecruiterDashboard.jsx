@@ -8,7 +8,7 @@ import MetricsOverview from "../components/MetricsOverview";
 import MyJobListings from "../components/MyJobListings";
 import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
-import CandidateMessages from "../components/CandidateMessages"; // NEW component for candidate messages & chat
+import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
 
 const RecruiterDashboard = () => {
   const navigate = useNavigate();
@@ -19,14 +19,15 @@ const RecruiterDashboard = () => {
   const [recentApplications, setRecentApplications] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
-  const [selectedJobListingId, setSelectedJobListingId] = useState(null); // Selected job listing for which to show messages
+  // Store the entire job listing object that was selected
+  const [selectedJobListing, setSelectedJobListing] = useState(null);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
   };
 
-  // Fetch functions (same as before)
+  // Fetch functions
   const fetchJobListings = async () => {
     try {
       const response = await fetch(
@@ -139,25 +140,28 @@ const RecruiterDashboard = () => {
       <div className="flex flex-col md:flex-row flex-1 p-6 space-y-8 md:space-y-0 md:space-x-4">
         {/* Left Pane: My Job Listings (40% width, scrollable) */}
         <div
-          className="md:w-2/5 w-full bg-white shadow rounded-lg p-4 overflow-y-auto"
-          style={{ maxHeight: "calc(100vh - 150px)" }}
+          className="md:w-2/5 w-full bg-white shadow rounded-lg overflow-y-auto"
+          style={{ maxHeight: "calc(65vh)" }}
         >
           <MyJobListings
             showNotification={showNotification}
             jobListings={jobListings}
             setJobListings={setJobListings}
-            setSelectedJobListingId={setSelectedJobListingId} // Pass callback to update selected job listing
+            // Pass the selected job listing object and the setter
+            selectedJobListing={selectedJobListing}
+            setSelectedJobListing={setSelectedJobListing}
           />
         </div>
         {/* Right Pane: Candidate Messages & Chat (55% width) */}
         <div
-          className="md:w-3/5 w-full bg-white shadow rounded-lg p-4 overflow-y-auto"
-          style={{ maxHeight: "calc(100vh - 150px)" }}
+          className="md:w-3/5 w-full bg-white shadow rounded-lg overflow-y-auto"
+          style={{ maxHeight: "calc(65vh)" }}
         >
           <CandidateMessages
             user={user}
             recruiterId={user._id}
-            jobListingId={selectedJobListingId}
+            // Pass the selected job listing object instead of only its id
+            jobListing={selectedJobListing}
             showNotification={showNotification}
           />
         </div>

@@ -56,9 +56,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     fetchMessages();
   }, [jobId, currentOpenConversationId]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  
 
   const sendMessage = async (text) => {
     const newMessage = {

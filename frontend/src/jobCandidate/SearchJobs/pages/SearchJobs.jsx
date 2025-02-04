@@ -7,7 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from '../../../utils/pdfUtils';
-import ChatWindow from "../components/ChatWindow";
+import ChatWindow from "../../../components/ChatWindow";
 
 
 

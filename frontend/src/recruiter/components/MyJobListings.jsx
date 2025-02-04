@@ -86,7 +86,9 @@ const MyJobListings = ({
   jobListings,
   setJobListings,
   showNotification,
-  setSelectedJobListingId, // Callback from dashboard to set the selected job listing ID
+  // Receive the selected job listing object and its setter
+  selectedJobListing,
+  setSelectedJobListing,
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
@@ -121,6 +123,10 @@ const MyJobListings = ({
         throw new Error(`Failed to remove job listing with ID ${id}.`);
       }
       showNotification("success", "Job listing removed successfully.");
+      // If the removed listing is the selected one, clear the selection.
+      if (selectedJobListing && selectedJobListing._id === id) {
+        setSelectedJobListing(null);
+      }
     } catch (error) {
       console.error("Error removing job listing:", error.message);
       showNotification("error", "Failed to remove job listing. Restoring it...");
@@ -175,8 +181,8 @@ const MyJobListings = ({
   };
 
   return (
-    <div className="w-full">
-      <div className="flex justify-between items-center mb-4">
+    <div className="relative w-full">
+      <div className="sticky top-0 bg-gray-200 z-10 flex justify-between items-center shadow-xl p-2">
         <h2 className="text-xl font-bold text-gray-800">My Job Listings</h2>
         {jobListings.length > 0 && (
           <button
@@ -191,15 +197,31 @@ const MyJobListings = ({
         {jobListings.length === 0 ? (
           <p className="text-gray-500">No active job listings.</p>
         ) : (
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-gray-300">
             {jobListings.map((listing) => (
-              <li key={listing._id} className="py-4 flex justify-between items-center relative">
+              <li
+                key={listing._id}
+                className={`p-4 flex justify-between items-center relative ${
+                  selectedJobListing && selectedJobListing._id === listing._id
+                    ? "bg-gray-200"
+                    : ""
+                }`}
+              >
                 <div>
                   <h3 className="text-lg font-semibold text-gray-800">{listing.jobRole}</h3>
                   <p className="text-sm text-gray-500">{listing.location}</p>
                   <p className="text-sm text-gray-500">Status: {listing.status}</p>
                 </div>
                 <div className="flex items-center space-x-4 relative">
+                  {/* "View Messages" button */}
+                  <button
+                    onClick={() => {
+                      setSelectedJobListing(listing);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700"
+                  >
+                    View Messages
+                  </button>
                   <button
                     onClick={() => handleStatusMenuToggle(listing._id)}
                     className={`px-3 py-1 text-sm rounded-full ${
@@ -232,15 +254,6 @@ const MyJobListings = ({
                       loading={individualLoading[listing._id] || false}
                     />
                   )}
-                  {/* NEW: "View Messages" button to select this job listing */}
-                  <button
-                    onClick={() => {
-                        setSelectedJobListingId(listing._id);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700"
-                  >
-                    View Messages
-                  </button>
                 </div>
               </li>
             ))}

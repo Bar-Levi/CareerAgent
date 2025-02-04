@@ -1,22 +1,22 @@
 // /components/CandidateMessages.jsx
 import React, { useState, useEffect } from "react";
-import ChatWindow from "../../jobCandidate/SearchJobs/components/ChatWindow"; // Adjust path if needed
+import ChatWindow from "../../components/ChatWindow"; // Adjust path if needed
 import { FaSpinner } from "react-icons/fa";
 
-const CandidateMessages = ({ user, recruiterId, jobListingId, showNotification }) => {
+const CandidateMessages = ({ user, recruiterId, jobListing, showNotification }) => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [candidate, setCandidate] = useState(null);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   // Fetch candidate conversations for the given job listing
   useEffect(() => {
     const fetchConversations = async () => {
-      if (!jobListingId) return;
+      if (!jobListing) return;
       setLoading(true);
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/jobListing/${jobListingId}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/jobListing/${jobListing._id}`,
           {
             method: "GET",
             headers: {
@@ -30,7 +30,7 @@ const CandidateMessages = ({ user, recruiterId, jobListingId, showNotification }
         }
         const data = await response.json();
         const jobListingConversations = data.jobListingConversations;
-        // Filter conversations to keep those that have at least one message from a candidate
+        // Filter conversations that have at least one message from a candidate
         const candidateConversations = jobListingConversations.filter((convo) => {
           return convo.messages && convo.messages.some(
             (msg) => msg.senderId.toString() !== recruiterId
@@ -47,7 +47,7 @@ const CandidateMessages = ({ user, recruiterId, jobListingId, showNotification }
     };
 
     fetchConversations();
-  }, [jobListingId, recruiterId, showNotification]);
+  }, [jobListing, recruiterId, showNotification]);
 
   // Helper: Get candidate info from a conversation by scanning its messages
   const getCandidateInfo = (conversation) => {
@@ -66,16 +66,17 @@ const CandidateMessages = ({ user, recruiterId, jobListingId, showNotification }
     return null;
   };
 
-  // When a candidate is selected, update both selected conversation and candidate state
+  // When a candidate is selected, update both the conversation and candidate state
   const handleCandidateSelect = (conversation) => {
     setSelectedConversationId(conversation._id);
     const candidateInfo = getCandidateInfo(conversation);
-    setCandidate(candidateInfo);
+    setSelectedCandidate(candidateInfo);
   };
 
   return (
     <div className="w-full h-full flex flex-col">
-      {!jobListingId ? (
+      {/* Check if a job listing is selected */}
+      {!jobListing ? (
         <div className="text-center text-gray-500">
           Please select a job listing to view candidate messages.
         </div>
@@ -84,55 +85,65 @@ const CandidateMessages = ({ user, recruiterId, jobListingId, showNotification }
           <FaSpinner className="animate-spin text-2xl text-gray-700" />
         </div>
       ) : (
-        <div className="flex flex-col h-full">
-          {/* Candidate List */}
-          <div className="border-b border-gray-300 p-4">
-            <h3 className="text-lg font-semibold text-gray-800">Candidate Messages</h3>
-            {conversations.length === 0 ? (
-              <p className="text-gray-500 mt-2">No messages for this job listing.</p>
-            ) : (
-              <ul className="mt-2">
-                {conversations.map((conversation) => {
-                  const candidateInfo = getCandidateInfo(conversation);
-                  return (
-                    <li
-                      key={conversation._id}
-                      className="py-2 cursor-pointer hover:bg-gray-100 px-2 rounded"
-                      onClick={() => handleCandidateSelect(conversation)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <img
-                          src={candidateInfo?.profilePic || "https://via.placeholder.com/40"}
-                          alt={candidateInfo?.name || "Candidate"}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <span className="text-gray-800 font-semibold">
-                          {candidateInfo?.name || "Candidate"}
-                        </span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+        <>
+          {/* Top Section: Job Title */}
+          <div className="bg-gray-200 z-10 flex justify-between items-center shadow-xl p-3">
+            <h3 className="text-xl font-bold text-gray-800">{jobListing.jobRole}</h3>
           </div>
-          {/* Chat Window */}
-          <div className="flex-1">
-            {selectedConversationId ? (
-              <ChatWindow
-                jobId={jobListingId}
-                user={user} // Passing recruiter info
-                // Using candidate.name as recruiterName parameter for chat title
-                job={{ recruiterName: candidate ? candidate.name : "Candidate Chat" }}
-                currentOpenConversationId={selectedConversationId}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                Select a candidate to view chat.
-              </div>
-            )}
+          {/* Main Section: Split into Candidate List and Chat Window */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Left Pane: Candidate List (30% width) */}
+            <div className="w-1/3 border-r border-gray-300 p-4 overflow-y-auto">
+              <h4 className="text-lg font-semibold text-gray-800 mb-4">Candidates</h4>
+              {conversations.length === 0 ? (
+                <p className="text-gray-500">No messages for this job listing.</p>
+              ) : (
+                <ul>
+                  {conversations.map((conversation) => {
+                    const candidateInfo = getCandidateInfo(conversation);
+                    const isSelected = conversation._id === selectedConversationId;
+                    return (
+                      <li
+                        key={conversation._id}
+                        onClick={() => handleCandidateSelect(conversation)}
+                        className={`py-2 px-2 cursor-pointer rounded mb-2 ${
+                          isSelected ? "bg-gray-200" : "hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <img
+                            src={candidateInfo?.profilePic || "https://via.placeholder.com/40"}
+                            alt={candidateInfo?.name || "Candidate"}
+                            className="w-10 h-10 rounded-full"
+                          />
+                          <span className="text-gray-800 font-semibold">
+                            {candidateInfo?.name || "Candidate"}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            {/* Right Pane: Chat Window (70% width) */}
+            <div className="w-2/3 p-4 overflow-y-auto">
+              {selectedConversationId ? (
+                <ChatWindow
+                  jobId={jobListing._id}
+                  user={user} // Passing recruiter info
+                  // Pass candidate name as the job.recruiterName for display in ChatWindow's title
+                  job={{ recruiterName: selectedCandidate ? selectedCandidate.name : "Candidate Chat" }}
+                  currentOpenConversationId={selectedConversationId}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Select a candidate to view chat.
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
