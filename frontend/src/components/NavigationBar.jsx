@@ -12,12 +12,46 @@ import {
 import logo from "../assets/logo.png"; // Import the logo
 import NotificationPanel from './NotificationPanel';
 
-const NavigationBar = ({ userType, notifications, handleNotificationClick }) => {
+
+const NavigationBar = ({ userType, handleNotificationClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const user = location.state?.user;
+  const [notifications, setNotifications] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+
+  const fetchNotifications = async () => {
+    try {
+      console.log("Fetching notifications...");
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        const errorMessage = `Error ${response.status}: ${response.statusText}`;
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      console.log("Notifications: ", data.notifications);
+      setNotifications(data.notifications);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error.message);
+    }
+  };
+    
+  useEffect(() => {;
+    fetchNotifications();
+  }, []);
 
   // Function to determine active styling
   const isActive = (path) =>
