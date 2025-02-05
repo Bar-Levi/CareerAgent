@@ -17,7 +17,6 @@ const getAllConversations = async (req, res) => {
 
 const getConversationById = async (req, res) => {
   try {
-    console.log("Fetching conversation with ID:", req.params.conversationId);
 
     const conversation = await Conversation.findById(req.params.conversationId)
       .populate("participants")
@@ -104,7 +103,6 @@ const deleteConversation = async (req, res) => {
 const addMessageToConversation = async (req, res) => {
   try {
     console.log("Add message to conversation:", req.params.id);
-    console.log("Req.body:", req.body);
     const { senderId, senderRole, senderProfilePic, senderName, text, attachments, reactions } = req.body;
     
     if (!senderId || !senderProfilePic || !senderName || !text) {
@@ -159,6 +157,12 @@ const addMessageToConversation = async (req, res) => {
     }
     reciever.notifications.push(newNotification);
     await reciever.save();
+
+    // Retrieve the Socket.IO instance from the app and emit the notification event.
+    const io = req.app.get("io");
+    // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
+    io.to(reciever.email).emit("newNotification", newNotification);
+    console.log("Emitting notification to: " + reciever.email);
 
     res.status(201).json(conversation);
   } catch (err) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AuthenticationPage from './pages/AuthenticationPage';
@@ -14,7 +14,6 @@ import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 
 function App() {
     return (

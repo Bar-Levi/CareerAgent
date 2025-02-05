@@ -35,7 +35,6 @@ const CandidateMessages = ({ user, recruiterId, jobListing, showNotification, se
             (msg) => msg.senderId.toString() !== recruiterId
           );
         });
-        console.log("Candidate conversations:", candidateConversations);
         setConversations(candidateConversations);
       } catch (error) {
         console.error("Error fetching candidate conversations:", error);

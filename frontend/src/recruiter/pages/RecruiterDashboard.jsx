@@ -113,7 +113,6 @@ const RecruiterDashboard = () => {
       }
       const data = await response.json();
       const dashboardMetrics = data.metrics;
-      console.log("dashboardMetrics:", dashboardMetrics);
       setMetrics(dashboardMetrics);
     } catch (error) {
       console.error("Failed to fetch metrics:", error.message);

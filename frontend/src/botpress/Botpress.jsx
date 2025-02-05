@@ -82,14 +82,12 @@ const Botpress = () => {
       BotpressWebchatLoader.async = true;
 
       BotpressWebchatLoader.onload = () => {
-        console.log('Botpress Webchat script loaded successfully.');
 
         const CustomBotScript = document.createElement('script');
         CustomBotScript.src = process.env.REACT_APP_CUSTOM_BOT_SCRIPT_URL;
         CustomBotScript.async = true;
 
         CustomBotScript.onload = () => {
-          console.log('Custom Bot script loaded successfully.');
           setIsBotAvailable(true); // Bot is successfully loaded
         };
 

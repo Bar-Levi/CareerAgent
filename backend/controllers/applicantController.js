@@ -56,7 +56,6 @@ const getRecruiterApplicants = async (req, res) => {
         // Find applicants where the recruiterId matches
         const applicants = await Applicant.find({ recruiterId: recruiterId })
             .populate('recruiterId');
-        console.log("Recruiter Applicants: ", applicants);
 
         if (!applicants || applicants.length === 0) {
             return res.status(404).json({ message: 'No applicants found for this recruiter' });

@@ -373,12 +373,10 @@ const getUserDetails = async (req, res) => {
         if (!email) {
             return res.status(400).json({ message: 'Email is required.' });
         }
-        console.log("Email: " + email);
         let user = await JobSeeker.findOne({ email });
         if (!user) {
             user = await Recruiter.findOne({ email });
         }
-        console.log("User: " + user);
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }

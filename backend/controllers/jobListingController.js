@@ -4,7 +4,6 @@ const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
-    console.log("Req.BODY: " + req.body);
     try {
         // Extract job listing data from the request body
         const {
@@ -111,8 +110,6 @@ const getJobListingsByRecruiterId = async (req, res) => {
             return res.status(400).json({ message: "Recruiter ID is required." });
         }
 
-        console.log(`[INFO] Fetching job listings for recruiter ID: ${recruiterId}`);
-
         // Fetch job listings from the database
         const jobListings = await JobListing.find({ recruiterId });
 
@@ -120,8 +117,6 @@ const getJobListingsByRecruiterId = async (req, res) => {
             console.warn(`[WARN] No job listings found for recruiter ID: ${recruiterId}`);
             return res.status(404).json({ message: "No job listings found for this recruiter." });
         }
-
-        console.log(`[INFO] ${jobListings.length} job listing(s) found for recruiter ID: ${recruiterId}`);
 
         // Return the job listings with success response
         return res.status(200).json({

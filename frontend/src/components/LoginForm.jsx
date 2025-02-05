@@ -24,7 +24,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
     const handleForgotPasswordInputChange = (e) => {
         const { name, value } = e.target;
         setForgotPasswordFormData({ ...forgotPasswordFormData, [name]: value });
-        console.log(forgotPasswordFormData[name]);
     };
 
     const handleSubmit = async (e) => {
@@ -45,7 +44,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 const errorData = await response.json();
 
                 if (response.status === 403) {
-                    console.log("STATUS: 403");
                     localStorage.setItem('token', errorData.token);
                     navigate('/dashboard', {
                         state: {
@@ -79,8 +77,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         },
                     });
                 
-                    console.log("Here!");
-
                     if (pin) {
                         // Send the secret PIN to reset login attempts
                         const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {

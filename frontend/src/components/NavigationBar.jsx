@@ -25,7 +25,6 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
 
   const fetchNotifications = async () => {
     try {
-      console.log("Fetching notifications...");
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
         {
@@ -42,7 +41,6 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
         throw new Error(errorMessage);
       }
       const data = await response.json();
-      console.log("Notifications: ", data.notifications);
       setNotifications(data.notifications);
     } catch (error) {
       console.error("Failed to fetch notifications:", error.message);

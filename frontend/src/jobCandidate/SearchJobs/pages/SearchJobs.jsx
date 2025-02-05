@@ -68,7 +68,6 @@ const SearchJobs = () => {
   };
 
   const handleClearFilters = () => {
-    console.log("Clear filters");
     setFilters({
       jobRole: "",
       company: "",

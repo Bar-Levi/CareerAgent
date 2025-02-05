@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const NotificationPanel = ({ notifications, onClose, handleNotificationClick }) => {
     const navigate = useNavigate();
     const { state } = useLocation();
-    console.log("Notification Panel State: ", state);
     return (
         <div className="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50">
         <div className="p-4 border-b flex justify-between items-center">
@@ -18,7 +17,6 @@ const NotificationPanel = ({ notifications, onClose, handleNotificationClick }) 
                 if (notification.type === "chat") {
                     // Redirect to chat
                     const newState = { ...state, ...notification.extraData.stateAddition };
-                    console.log("newState: ", newState);
                     navigate(notification.extraData.goToRoute, {
                         state: { ...state, ...notification.extraData.stateAddition }
                       });

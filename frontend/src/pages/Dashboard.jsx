@@ -2,14 +2,17 @@ import JobCandidateDashboard from "../jobCandidate/Dashboard/pages/JobCandidateD
 import RecruiterDashboard from "../recruiter/pages/RecruiterDashboard";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import socket from "../socket"; // Adjust the path as needed
 
 const Dashboard = () => {
-    console.log("Dashboard");
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { state } = useLocation();
-    console.log("Dashboard state: " + JSON.stringify(state));
+    console.log("State: ", state);
+    const user = state?.user; // User from navigation state
     const email = state?.email; // Email from navigation state
     const role = state?.role;
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
@@ -88,10 +91,46 @@ const Dashboard = () => {
         }
     };
 
+    // Assume you have the logged-in user available (e.g., via context or state)
+
+    useEffect(() => {
+        // Connect the socket
+        socket.connect();
+    
+        // Join the room using the user's ID (as a string)
+        if (user && user._id) {
+        socket.emit("join", user.email.toString());
+        console.log("Socket joined room:", user.email);
+        }
+    
+        // Log when connected
+        socket.on("connect", () => {
+        console.log("Socket connected with ID:", socket.id);
+        });
+    
+        // Listen for new notifications
+        socket.on("newNotification", (notificationData) => {
+        console.log("Received new notification:", notificationData);
+        toast.info(notificationData.message, {
+            onClick: () => {
+            // For example, navigate or update state here if needed
+            console.log("Notification clicked");
+            },
+            autoClose: 5000,
+            pauseOnHover: true,
+        });
+        });
+    
+        // Clean up on component unmount
+        return () => {
+        socket.off("newNotification");
+        socket.disconnect();
+        };
+    }, [user]);
+    
     // Verify user and fetch details on mount
     useEffect(() => {
         const handleUserVerification = async () => {
-            console.log("Handling user verification");
             if (!email) {
                 navigate("/authentication");
                 return;
@@ -116,7 +155,6 @@ const Dashboard = () => {
                 setUserData(userDetails);
                 state.isVerified = true;
             } else {
-                console.log("Navigate to /verify");
                 navigate("/verify", {
                     state: {
                         ...state,
@@ -128,7 +166,6 @@ const Dashboard = () => {
             }
         };
 
-        console.log("State: " + JSON.stringify(state));
         if (!state.isVerified) handleUserVerification();
     }, [email, token, navigate]);
 

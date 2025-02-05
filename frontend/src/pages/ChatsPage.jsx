@@ -180,7 +180,6 @@ const ChatsPage = () => {
   const handleChatSelection = (chat, type) => {
     setSelectedChat(chat);
     setChatType(type);
-    console.log("Selected chat");
     };
       
   const saveEditedTitle = async (chatId, type) => {

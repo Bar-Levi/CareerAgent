@@ -32,6 +32,7 @@
     "react-toastify": "^11.0.3",
     "react-tsparticles": "^2.12.2",
     "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.15.3",
     "three": "^0.172.0",
     "tsparticles": "^3.7.1",

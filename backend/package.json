@@ -27,6 +27,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.16",
     "pdf-parse": "^1.1.1",
+    "socket.io": "^4.8.1",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {
