@@ -9,6 +9,8 @@ import MyJobListings from "../components/MyJobListings";
 import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
+import convertMongoObject from "../../utils/convertMongoObject";
+
 
 const RecruiterDashboard = () => {
   const navigate = useNavigate();
@@ -20,7 +22,9 @@ const RecruiterDashboard = () => {
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
   // Store the entire job listing object that was selected
-  const [selectedJobListing, setSelectedJobListing] = useState(null);
+
+  const initializedJobListing = convertMongoObject(state?.jobListing) || null;
+  const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(initializedJobListing));
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
