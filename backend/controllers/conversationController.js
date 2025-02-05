@@ -1,5 +1,6 @@
 const Conversation = require("../models/conversationModel");
 const Recruiter = require("../models/recruiterModel");
+const JobSeeker = require("../models/jobSeekerModel");
 const JobListing = require("../models/jobListingModel");
 
 // Controller functions for conversations
@@ -121,15 +122,17 @@ const addMessageToConversation = async (req, res) => {
 
     await conversation.save();
 
-    // Assuming the recruiter is at index 0 in the participants array
+    // Assuming the recruiter is at index 0 in the participants array and job seeker at index 1.
     const recruiterParticipantId = conversation.participants[0];
     const jobSeekerParticipantId = conversation.participants[1];
 
+    // Determine the receiver based on the sender's role
     const recieverId = senderRole === "recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
 
+    console.log("Reciever ID:", recieverId);
     const reciever = senderRole === "recruiter" ?
-      await Recruiter.findById(recieverId) :
-      await JobSeeker.findById(recieverId);
+      await JobSeeker.findById(recieverId) :
+      await Recruiter.findById(recieverId);
 
     if (!reciever) {
       return res.status(404).json({ message: "Reciever not found" });
@@ -137,20 +140,22 @@ const addMessageToConversation = async (req, res) => {
 
     const jobListing = await JobListing.findById(conversation.jobListingId);
     
-    // Send notification to reciever
+    console.log("JobListing:", jobListing)
+    // Create and push a new notification to the receiver
     const newNotification = {
       type: "chat",
       message: `New message from ${senderName}`,
       extraData: {
         state: {
-        goToRoute : senderRole === "recruiter" ? '/dashboard' : '/searchjobs',
-        conversationId: conversation._id,
-        jobListing
-        }
-      }
+          goToRoute: senderRole === "recruiter" ? '/dashboard' : '/searchjobs',
+          conversationId: conversation._id,
+          jobListing,
+        },
+      },
     };
-
-    // Push notification and save reciever document
+    if (!reciever.notifications) {
+      reciever.notifications = [];
+    }
     reciever.notifications.push(newNotification);
     await reciever.save();
 

@@ -18,7 +18,10 @@ const notificationSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    extraData: {}
+    extraData: {
+        type: {},
+        required: false
+    }
 });
 
 const recruiterSchema = new mongoose.Schema({
