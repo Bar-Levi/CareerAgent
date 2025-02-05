@@ -8,6 +8,7 @@ import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from '../../../utils/pdfUtils';
 import ChatWindow from "../../../components/ChatWindow";
+import convertMongoObject from "../../../utils/convertMongoObject";
 
 
 
@@ -21,7 +22,14 @@ const SearchJobs = () => {
 
   // Initialize conversation and job listing states (if comes from a notification)
   const [currentOpenConversationId, setCurrentOpenConversationId] = useState(state?.conversationId || null);
-  const [selectedJob, setSelectedJob] = useState(state?.jobListing || null);
+  const initializedJobListing = convertMongoObject(state?.jobListing) || null;
+  const [selectedJob, setSelectedJob] = useState(convertMongoObject(initializedJobListing));
+
+  const handleNotificationClick = (notificationData) => {
+    // Update the state for conversation and job listing
+    setCurrentOpenConversationId(notificationData.conversationId);
+    setSelectedJob(convertMongoObject(notificationData.jobListing));
+  };
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -205,7 +213,7 @@ const SearchJobs = () => {
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">
-      <NavigationBar userType={state?.user?.role} notifications={state?.user?.notifications || []} />
+      <NavigationBar userType={state?.user?.role} handleNotificationClick={handleNotificationClick}/>
       <Botpress />
       {notification && (
         <Notification
