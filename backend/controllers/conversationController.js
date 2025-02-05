@@ -1,179 +1,196 @@
 const Conversation = require("../models/conversationModel");
 
-// Save a conversation
-const saveConversation = async (req, res) => {
-  const { email, conversationId, messages } = req.body;
-
+// Controller functions for conversations
+const getAllConversations = async (req, res) => {
   try {
-    const newConversation = await Conversation.create({ email, conversationId, messages });
-    res.status(201).json(newConversation);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const conversations = await Conversation.find()
+      .populate("participants")
+      .populate("jobListingId");
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
-// Get conversations for a user
-const getConversations = async (req, res) => {
-  const email = req.query.email;
-
+const getConversationById = async (req, res) => {
   try {
-    const conversations = await Conversation.find({ email });
-    res.status(200).json(conversations);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log("Fetching conversation with ID:", req.params.conversationId);
+
+    const conversation = await Conversation.findById(req.params.conversationId)
+      .populate("participants")
+      .populate("jobListingId")
+      .populate("messages"); // No direct ref, fetching manually later
+
+    if (!conversation) {
+      console.log("Conversation not found for ID:", req.params.conversationId);
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    res.json(conversation);
+  } catch (err) {
+    console.error("Error fetching conversation:", err);
+    res.status(500).json({ message: "Server error while fetching conversation" });
   }
 };
 
-// Get conversations for a user
-const getMessagesByConvId = async (req, res) => {
-  const conversationId = req.query.convId;
+const createConversation = async (req, res) => {
+  const { participants, jobListingId, isGroupChat, groupChatName } = req.body;
 
-
-  try {
-    const conversation = await Conversation.find({ conversationId });
-
-    res.status(200).json(conversation[0].messages);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  if (!jobListingId) {
+    return res.status(400).json({ message: "jobListingId is required" });
   }
-};
 
-// Create a new conversation
-const createNewConversation = async (req, res) => {
-  const { email, type } = req.body;
   try {
-    // Generate a conversationId based on type and current time
-    const conversationId = `${type}-${Date.now()}`;
-
-    const conversations = await Conversation.find({ email, type });
-
-    if (conversations.length < 10) {
-    // Initialize an empty messages array
-    const newConversation = await Conversation.create({
-      email,
-      type,
-      conversationId,
-      messages: [],
-      startDate: new Date(),
+    // Check if a conversation with the same participants and jobListingId already exists
+    const existingConversation = await Conversation.findOne({
+      participants: { $all: participants, $size: participants.length },
+      jobListingId,
     });
 
-    newConversation.save();
+    if (existingConversation) {
+      return res.status(200).json(existingConversation);
+    }
 
+    // If no existing conversation is found, create a new one
+    const conversation = new Conversation(req.body);
+    const newConversation = await conversation.save();
     res.status(201).json(newConversation);
-
-  }
-  else {
-    const name = type === 'interviewer' ? type : 'career advisor';
-    return res.status(400).json({ message: `You have reached the maximum number of ${name} conversations. Remove some and try again.` });
-  } 
-} catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Remove a conversation
-const removeConversation = async (req, res) => {
-  const { id } = req.params;
-
+const updateConversation = async (req, res) => {
   try {
-    const deletedConversation = await Conversation.findByIdAndDelete(id);
+    const { jobListingId, ...updateData } = req.body;
 
+    // Prevent updating jobListingId after creation
+    const existingConversation = await Conversation.findById(req.params.id);
+    if (!existingConversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    if (jobListingId && jobListingId !== existingConversation.jobListingId.toString()) {
+      return res.status(400).json({ message: "jobListingId cannot be changed" });
+    }
+
+    const updatedConversation = await Conversation.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    ).populate("participants").populate("jobListingId");
+
+    res.json(updatedConversation);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+const deleteConversation = async (req, res) => {
+  try {
+    const deletedConversation = await Conversation.findByIdAndDelete(req.params.id);
     if (!deletedConversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
-
-    res.status(200).json({ message: "Conversation deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(204).end(); // 204 No Content
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
-// Update conversation title
-const updateConversationTitle = async (req, res) => {
-  const { id } = req.params;
-  const { conversationTitle } = req.body; // New title
+// Controller functions for messages within a conversation
+const addMessageToConversation = async (req, res) => {
   try {
-    const updatedConversation = await Conversation.findByIdAndUpdate(
-      id,
-      { conversationTitle },
-      { new: true } // Return the updated document
-    );
+    console.log("Add message to conversation:", req.params.id);
+    console.log("Req.body:", req.body);
+    const { senderId, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    if (!senderId || !senderProfilePic || !senderName || !text) {
+      return res.status(400).json({ message: "Missing required message fields" });
+    }
 
-    if (!updatedConversation) {
+    const conversation = await Conversation.findById(req.params.id);
+    if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    res.status(200).json(updatedConversation);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const saveMessageToConversation = async (req, res) => {
-  const MAX_MESSAGE_COUNT = 100;
-  const { id } = req.params; // Conversation ID
-  const { message } = req.body; // New message object
-  try {
-    const conversation = await Conversation.findById(id);
-
-    if (!conversation) {
-      return res.status(404).json({ error: "Conversation not found" });
-    }
-
-    // Check if the conversation already has 4 messages
-    if (conversation.messages.length >= MAX_MESSAGE_COUNT) {
-      return res.status(400).json({
-        error: `This conversation already has ${MAX_MESSAGE_COUNT} messages. Please start a new conversation.`,
-      });
-    }
-
-    // Add the new message to the messages array
-    conversation.messages.push(message);
-
-    // Save the updated conversation
+    const newMessage = { senderId, senderProfilePic, senderName, text, attachments, reactions };
+    conversation.messages.push(newMessage);
+    conversation.lastMessage = newMessage;
     await conversation.save();
 
-    res.status(200).json({ message: "Message saved successfully" });
-  } catch (error) {
-    console.error("Error saving message:", error.message);
-    res.status(500).json({ error: error.message });
+    res.status(201).json(conversation);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Toggle isProfileSynced
-const toggleProfileSynced = async (req, res) => {
-  const { id } = req.params;
-  
+const updateMessageInConversation = async (req, res) => {
   try {
-    // Find the conversation by ID
-    const conversation = await Conversation.findById(id);
-
+    const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    // Reverse the isProfileSynced value
-    const updatedConversation = await Conversation.findByIdAndUpdate(
-      id,
-      { isProfileSynced: !conversation.isProfileSynced },
-      { new: true } // Return the updated document
+    const messageId = req.params.messageId;
+    const updatedMessage = req.body;
+
+    const messageIndex = conversation.messages.findIndex(
+      (message) => message._id.toString() === messageId
     );
 
-    res.status(200).json(updatedConversation);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (messageIndex === -1) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    conversation.messages[messageIndex] = {
+      ...conversation.messages[messageIndex],
+      ...updatedMessage,
+    };
+    await conversation.save();
+
+    res.json(conversation);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
+const deleteMessageFromConversation = async (req, res) => {
+  try {
+    const conversation = await Conversation.findById(req.params.id);
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
 
+    const messageId = req.params.messageId;
+    conversation.messages = conversation.messages.filter(
+      (message) => message._id.toString() !== messageId
+    );
+    await conversation.save();
+
+    res.status(204).json(conversation);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const getJobListingConversations = async (req, res) => {
+  try {
+    const jobListingId = req.params.jobListingId;
+    const conversations = await Conversation.find({ jobListingId });
+
+    res.status(200).json({jobListingConversations: conversations});
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 module.exports = {
-  saveConversation,
-  getConversations,
-  createNewConversation,
-  removeConversation,
-  updateConversationTitle,
-  saveMessageToConversation,
-  getMessagesByConvId,
-  toggleProfileSynced
+  getAllConversations,
+  getConversationById,
+  createConversation,
+  updateConversation,
+  deleteConversation,
+  addMessageToConversation,
+  updateMessageInConversation,
+  deleteMessageFromConversation,
+  getJobListingConversations
 };

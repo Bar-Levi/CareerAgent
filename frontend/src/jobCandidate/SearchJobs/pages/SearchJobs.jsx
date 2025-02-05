@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from '../../../utils/pdfUtils';
+import ChatWindow from "../../../components/ChatWindow";
 
 
 
@@ -17,6 +18,7 @@ const SearchJobs = () => {
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
+  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -330,14 +332,16 @@ const SearchJobs = () => {
             setJobListingsCount={setJobListingsCount}
             sortingMethod={sortingMethod}
             setEducationListedOptions={setEducationListedOptions}
+            setCurrentOpenConversationId={setCurrentOpenConversationId}
           />
         </div>
 
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (
-            <div>
-              <h2 className="text-xl font-bold mb-2">{selectedJob.jobRole}</h2>
+            <>
+              <ChatWindow jobId={selectedJob._id} user={user} job={selectedJob} currentOpenConversationId={currentOpenConversationId}/>
+              {/* <h2 className="text-xl font-bold mb-2">{selectedJob.jobRole}</h2>
               <p className="text-sm text-gray-600">
                 {selectedJob.company} - {selectedJob.location}
               </p>
@@ -347,8 +351,8 @@ const SearchJobs = () => {
               <p className="text-sm text-gray-500">
                 Type: {selectedJob.jobType.join(", ")}
               </p>
-              <p className="mt-4">{selectedJob.description}</p>
-            </div>
+              <p className="mt-4">{selectedJob.description}</p> */}
+            </>
           ) : (
             <p className="text-gray-500">Select a job to view details.</p>
           )}

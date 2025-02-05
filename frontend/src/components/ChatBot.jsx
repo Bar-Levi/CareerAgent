@@ -94,7 +94,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, isProf
 
     try {
       // Save the message in the backend
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}/messages`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}/messages`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -122,7 +122,7 @@ const ChatBot = ({ chatId, prettyDate, conversationId, conversationTitle, isProf
       };
 
       // Save the bot's reply to the backend
-      const botResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}/messages`, {
+      const botResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}/messages`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

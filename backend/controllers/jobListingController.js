@@ -1,4 +1,6 @@
 const JobListing = require("../models/jobListingModel");
+const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
+
 
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
@@ -160,16 +162,21 @@ const updateJobListing = async (req, res) => {
             return res.status(404).json({ message: "Job listing not found." });
         }
 
+        const recruiterId = updatedJobListing.recruiterId;
+
+        const metrics = await getMetricsByRecruiterId(recruiterId);
+
+
         res.status(200).json({
             message: "Job listing updated successfully.",
             jobListing: updatedJobListing,
+            metrics
         });
     } catch (error) {
         console.error("Error updating job listing:", error.message);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
-
 
 // Delete a job listing by ID
 const deleteJobListing = async (req, res) => {
@@ -302,67 +309,22 @@ const filterActiveJobListings = async (req, res) => {
     }
 };
 
-
-
-
 // Get Metrics for job listings
 const getMetrics = async (req, res) => {
-    try {
-        const { recruiterId } = req.params;
-
-        // Fetch all job listings for the recruiter
-        const jobListings = await JobListing.find({ recruiterId });
-
-        if (!jobListings.length) {
-            return res.status(200).json({
-                message: "No job listings found.",
-                metrics: {
-                    activeListings: 0,
-                    totalApplications: 0,
-                    avgTimeToHire: 0,
-                },
-            });
-        }
-
-        // Calculate metrics
-        const activeListingsCount = jobListings.filter((job) => job.status === "Active").length;
-
-        const totalApplications = jobListings.reduce(
-            (total, job) => total + (job.applicants?.length || 0),
-            0
-        );
-
-        const closedJobListings = jobListings.filter((job) => job.closingTime && job.createdAt);
-
-        const totalTimeToHire = closedJobListings.reduce((total, job) => {
-            const closingTime = new Date(job.closingTime);
-            const createdAt = new Date(job.createdAt);
-            const daysToHire = (closingTime - createdAt) / (1000 * 60 * 60 * 24);
-            return total + Math.round(daysToHire);
-        }, 0);
-
-        const avgTimeToHire = closedJobListings.length
-            ? totalTimeToHire / closedJobListings.length
-            : 0;
-
-        const metrics = {
-            activeListings: activeListingsCount,
-            totalApplications,
-            avgTimeToHire,
-        };
-
-        console.log("Metrics: ", metrics);
-        res.status(200).json({
-            message: "Metrics calculated successfully.",
-            metrics,
-        });
-    } catch (error) {
-        console.error("Error calculating metrics:", error.message);
-        res.status(500).json({
-            message: "Internal Server Error",
-            error: error.message,
-        });
-    }
+  try {
+    const { recruiterId } = req.params;
+    const metrics = await getMetricsByRecruiterId(recruiterId);
+    res.status(200).json({
+      message: "Metrics calculated successfully.",
+      metrics,
+    });
+  } catch (error) {
+    console.error("Error calculating metrics:", error.message);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
 };
 
 

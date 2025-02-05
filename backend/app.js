@@ -6,9 +6,10 @@ const authRoutes = require('./routes/authRoutes');
 const cloudinaryRoutes = require('./routes/cloudinaryRoutes');
 const bodyParser = require("body-parser");
 const aiRoutes = require('./routes/aiRoutes');
-const conversationRoutes = require("./routes/conversationRoutes");
+const botConversationRoutes = require("./routes/botConversationRoutes");
 const jobListingRoutes = require("./routes/jobListingRoutes");
 const applicantsRoutes = require('./routes/applicantRoutes');
+const conversationRoutes = require("./routes/conversationRoutes");
 require('./tasks/cleanupTokens');
 
 dotenv.config();
@@ -22,8 +23,10 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/ai', aiRoutes);
-app.use("/api/conversations", conversationRoutes);
+app.use("/api/bot-conversations", botConversationRoutes);
 app.use("/api/joblistings", jobListingRoutes);
 app.use("/api/applicants", applicantsRoutes);
+app.use("/api/conversations", conversationRoutes);
+
 
 module.exports = app;
