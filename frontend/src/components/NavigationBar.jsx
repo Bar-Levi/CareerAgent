@@ -11,6 +11,9 @@ import {
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
 import NotificationPanel from './NotificationPanel';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import socket from "../socket"; // Adjust the path as needed
 
 
 const NavigationBar = ({ userType, handleNotificationClick }) => {
@@ -22,6 +25,44 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  useEffect(() => {
+          // Connect the socket
+          socket.connect();
+      
+          // Join the room using the user's ID (as a string)
+          if (user && user._id) {
+          socket.emit("join", user.email);
+          console.log("Socket joined room:", user.email);
+          }
+      
+          // Log when connected
+          socket.on("connect", () => {
+          console.log("Socket connected with ID:", socket.id);
+          });
+      
+          // Listen for new notifications
+          socket.on("newNotification", (notificationData) => {
+          console.log("Received new notification:", notificationData);
+          toast.info(notificationData.message, {
+            onClick: () => {
+              handleNotificationClick(notificationData.extraData.stateAddition);
+            },
+            autoClose: 5000,
+            pauseOnHover: true,
+            draggable: true,
+            closeOnClick: true,
+            pauseOnFocusLoss: true,
+            toastClassName: "cursor-pointer",
+          });
+          
+          fetchNotifications();
+          });
+          // Clean up on component unmount
+          return () => {
+          socket.off("newNotification");
+          socket.disconnect();
+          };
+      }, [user]);
 
   const fetchNotifications = async () => {
     try {
