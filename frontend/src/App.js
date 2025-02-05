@@ -12,9 +12,14 @@ import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 function App() {
     return (
+        <>
+        <ToastContainer position="top-right" autoClose={5000} />
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
@@ -45,6 +50,7 @@ function App() {
 
             </Routes>
         </Router>
+        </>
     );
 }
 

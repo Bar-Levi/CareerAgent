@@ -141,13 +141,14 @@ const addMessageToConversation = async (req, res) => {
     const jobListing = await JobListing.findById(conversation.jobListingId);
     
     console.log("JobListing:", jobListing)
+    console.log("senderRole:", senderRole);
     // Create and push a new notification to the receiver
     const newNotification = {
       type: "chat",
       message: `New message from ${senderName}`,
       extraData: {
-        state: {
-          goToRoute: senderRole === "recruiter" ? '/dashboard' : '/searchjobs',
+        goToRoute: senderRole === "recruiter" ? '/searchjobs' : '/dashboard',
+        stateAddition: {
           conversationId: conversation._id,
           jobListing,
         },

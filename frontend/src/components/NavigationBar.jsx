@@ -10,10 +10,12 @@ import {
   FaQuestionCircle,
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
+import NotificationPanel from './NotificationPanel';
 
-const NavigationBar = ({ userType }) => {
+const NavigationBar = ({ userType, notifications, handleNotificationClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -77,14 +79,27 @@ const NavigationBar = ({ userType }) => {
           </button>
         )}
 
-        <button
-          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-            "/notifications"
-          )}`}
-          onClick={() => navigate("/notifications", { state: location.state })}
-        >
-          <FaBell className="mr-2" /> Notifications
-        </button>
+        
+        <div className="relative">
+          <button 
+          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 text-brand-secondary`}
+          onClick={() => setPanelOpen(!panelOpen)}>
+            <FaBell className="text-xl" />
+            {notifications.length > 0 && (
+              <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                {notifications.length}
+              </span>
+            )}
+          </button>
+          {panelOpen && (
+            <NotificationPanel 
+              notifications={notifications}
+              onClose={() => setPanelOpen(false)}
+              handleNotificationClick={handleNotificationClick}
+            />
+          )}
+        </div>
+
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
             "/messages"

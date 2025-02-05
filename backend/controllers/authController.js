@@ -373,37 +373,17 @@ const getUserDetails = async (req, res) => {
         if (!email) {
             return res.status(400).json({ message: 'Email is required.' });
         }
-
+        console.log("Email: " + email);
         let user = await JobSeeker.findOne({ email });
         if (!user) {
             user = await Recruiter.findOne({ email });
         }
-
+        console.log("User: " + user);
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        res.status(200).json({
-            _id: user._id || null,
-            fullName: user.fullName || null,
-            email: user.email || null,
-            password: user.password || null,
-            role: user.role || null,
-            phone: user.phone || null,
-            cv: user.cv || null,
-            profilePic: user.profilePic || null,
-            githubUrl: user.githubUrl || null,
-            linkedinUrl: user.linkedinUrl || null,
-            isVerified: user.isVerified || null,
-            verificationCode: user.verificationCode || null,
-            verificationCodeSentAt: user.verificationCodeSentAt || null,
-            dateOfBirth: user.dateOfBirth || null,
-            companyName: user.companyName || null,
-            companySize: user.companySize|| null,
-            companyWebsite: user.companyWebsite|| null,
-            loginAttemptsLeft: user.loginAttemptsLeft || null,
-            analyzed_cv_content: user.analyzed_cv_content || null,
-        });
+        res.status(200).json(user);
     } catch (error) {
         console.error('Error fetching user details:', error);
         res.status(500).json({ message: 'Failed to fetch user details.' });

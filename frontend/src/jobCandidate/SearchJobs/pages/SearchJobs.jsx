@@ -205,7 +205,7 @@ const SearchJobs = () => {
 
   return (
     <div className="bg-gray-100 h-screen flex flex-col">
-      <NavigationBar userType={state.user.role} />
+      <NavigationBar userType={state?.user?.role} notifications={state?.user?.notifications || []} />
       <Botpress />
       {notification && (
         <Notification
