@@ -8,6 +8,7 @@ import {
   FaCogs,
   FaRobot,
   FaQuestionCircle,
+  FaComments
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
 import NotificationPanel from './NotificationPanel';
@@ -43,17 +44,30 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
           // Listen for new notifications
           socket.on("newNotification", (notificationData) => {
           console.log("Received new notification:", notificationData);
-          toast.info(notificationData.message, {
-            onClick: () => {
-              handleNotificationClick(notificationData.extraData.stateAddition);
-            },
-            autoClose: 5000,
-            pauseOnHover: true,
-            draggable: true,
-            closeOnClick: true,
-            pauseOnFocusLoss: true,
-            toastClassName: "cursor-pointer",
-          });
+          toast.info(
+            <div className="flex items-center space-x-2">
+              <FaComments className="w-5 h-5 text-blue-500" />
+              <span>
+                {notificationData.message.length > 30
+                  ? notificationData.message.slice(0, 30) + "..."
+                  : notificationData.message}
+              </span>
+              </div>,
+            {
+              onClick: () => {
+                handleNotificationClick(notificationData.extraData.stateAddition);
+              },
+              autoClose: 5000,
+              pauseOnHover: true,
+              draggable: true,
+              closeButton: false,
+              closeOnClick: true,
+              pauseOnFocusLoss: true,
+              icon: false,
+              toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+            }
+          );
+          
           
           fetchNotifications();
           });

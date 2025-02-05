@@ -143,7 +143,7 @@ const addMessageToConversation = async (req, res) => {
     // Create and push a new notification to the receiver
     const newNotification = {
       type: "chat",
-      message: `New message from ${senderName}`,
+      message: `${senderName}: ${text}`,
       extraData: {
         goToRoute: senderRole === "recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
