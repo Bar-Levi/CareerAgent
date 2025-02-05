@@ -18,7 +18,10 @@ const SearchJobs = () => {
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
-  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
+
+  // Initialize conversation and job listing states (if comes from a notification)
+  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(state?.conversationId || null);
+  const [selectedJob, setSelectedJob] = useState(state?.jobListing || null);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -41,7 +44,6 @@ const SearchJobs = () => {
   });
 
   const [sortingMethod, setSortingMethod] = useState("newest");
-  const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {

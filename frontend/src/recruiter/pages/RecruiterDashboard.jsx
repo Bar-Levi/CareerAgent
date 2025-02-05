@@ -23,6 +23,8 @@ const RecruiterDashboard = () => {
   const [notification, setNotification] = useState(null);
   // Store the entire job listing object that was selected
 
+  // Initialize conversation and job listing states (if comes from a notification)
+  const [selectedConversationId, setSelectedConversationId] = useState(state?.conversationId || null);
   const initializedJobListing = convertMongoObject(state?.jobListing) || null;
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(initializedJobListing));
 
@@ -176,6 +178,8 @@ const RecruiterDashboard = () => {
             recruiterId={user._id}
             jobListing={selectedJobListing}
             showNotification={showNotification}
+            selectedConversationId={selectedConversationId}
+            setSelectedConversationId={setSelectedConversationId}
           />
         </div>
       </div>

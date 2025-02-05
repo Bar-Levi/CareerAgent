@@ -3,9 +3,8 @@ import React, { useState, useEffect } from "react";
 import ChatWindow from "../../components/ChatWindow"; // Adjust path if needed
 import { FaSpinner } from "react-icons/fa";
 
-const CandidateMessages = ({ user, recruiterId, jobListing, showNotification }) => {
+const CandidateMessages = ({ user, recruiterId, jobListing, showNotification, selectedConversationId, setSelectedConversationId}) => {
   const [conversations, setConversations] = useState([]);
-  const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 

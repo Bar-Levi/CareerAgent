@@ -1,4 +1,6 @@
 const Conversation = require("../models/conversationModel");
+const Recruiter = require("../models/recruiterModel");
+const JobListing = require("../models/jobListingModel");
 
 // Controller functions for conversations
 const getAllConversations = async (req, res) => {
@@ -102,7 +104,8 @@ const addMessageToConversation = async (req, res) => {
   try {
     console.log("Add message to conversation:", req.params.id);
     console.log("Req.body:", req.body);
-    const { senderId, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    const { senderId, senderRole, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    
     if (!senderId || !senderProfilePic || !senderName || !text) {
       return res.status(400).json({ message: "Missing required message fields" });
     }
@@ -115,13 +118,48 @@ const addMessageToConversation = async (req, res) => {
     const newMessage = { senderId, senderProfilePic, senderName, text, attachments, reactions };
     conversation.messages.push(newMessage);
     conversation.lastMessage = newMessage;
+
     await conversation.save();
+
+    // Assuming the recruiter is at index 0 in the participants array
+    const recruiterParticipantId = conversation.participants[0];
+    const jobSeekerParticipantId = conversation.participants[1];
+
+    const recieverId = senderRole === "recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
+
+    const reciever = senderRole === "recruiter" ?
+      await Recruiter.findById(recieverId) :
+      await JobSeeker.findById(recieverId);
+
+    if (!reciever) {
+      return res.status(404).json({ message: "Reciever not found" });
+    }
+
+    const jobListing = await JobListing.findById(conversation.jobListingId);
+    
+    // Send notification to reciever
+    const newNotification = {
+      type: "chat",
+      message: `New message from ${senderName}`,
+      extraData: {
+        state: {
+        goToRoute : senderRole === "recruiter" ? '/dashboard' : '/searchjobs',
+        conversationId: conversation._id,
+        jobListing
+        }
+      }
+    };
+
+    // Push notification and save reciever document
+    reciever.notifications.push(newNotification);
+    await reciever.save();
 
     res.status(201).json(conversation);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 const updateMessageInConversation = async (req, res) => {
   try {
