@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaComments } from 'react-icons/fa';
+import { FaComments, FaUser } from 'react-icons/fa';
 
 const NotificationPanel = ({ notifications, setNotifications, onClose, handleNotificationClick }) => {
   const navigate = useNavigate();
@@ -77,25 +77,18 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
               onClose();
               handleNotificationClick(notification);
             }}
-
-
-
-
-
-
-
-
-
-
-
-            
           >
             {/* Left Pane: Chat Icon with 10% width */}
-            {notification.type === "chat" && (
+            {notification.type === "chat" ? (
               <div className="p-4 w-[10%] flex justify-center">
                 <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
               </div>
-            )}
+            ) : notification.type === "apply" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+              </div>
+            ) : null}
+
             {/* Message Text: 80% width */}
             <div className="p-4 w-[80%] flex flex-col justify-center break-words">
               <p className="text-sm">

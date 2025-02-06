@@ -8,7 +8,8 @@ import {
   FaCogs,
   FaRobot,
   FaQuestionCircle,
-  FaComments
+  FaComments,
+  FaUser
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
 import NotificationPanel from './NotificationPanel';
@@ -56,7 +57,15 @@ const NavigationBar = ({ userType }) => {
           console.log("Received new notification:", notificationData);
           toast.info(
             <div className="flex items-center space-x-2">
-              <FaComments className="w-5 h-5 text-blue-500" />
+{notificationData.type === "chat" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+              </div>
+            ) : notificationData.type === "apply" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+              </div>
+            ) : null}
               <span>
                 {notificationData.message.length > 30
                   ? notificationData.message.slice(0, 30) + "..."
