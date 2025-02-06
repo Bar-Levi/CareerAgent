@@ -107,8 +107,8 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
                   e.stopPropagation(); // Prevent triggering li onClick
                   handleDeleteNotification(notification._id);
                 }}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-              >
+                className="p-1 text-red-500 hover:bg-red-100 focus:outline-none rounded-full"
+                >
                 X
               </button>
             </div>

@@ -66,8 +66,11 @@ io.on("connection", (socket) => {
 
 // Define the port and start listening
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`\n- Server running on http://localhost:${PORT}\n`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`\n- Server running on http://localhost:${PORT}\n`);
+  });
+}
+
 
 module.exports = app;
