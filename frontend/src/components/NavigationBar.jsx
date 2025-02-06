@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaTachometerAlt,
@@ -23,6 +23,8 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
   const user = location.state?.user;
   const [notifications, setNotifications] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const panelRef = useRef(null);
+
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -102,6 +104,25 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
     }
   };
     
+  // Close the panel if a click occurs outside of it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        setPanelOpen(false);
+      }
+    };
+
+    if (panelOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [panelOpen]);
+
   useEffect(() => {;
     fetchNotifications();
   }, []);
@@ -167,26 +188,29 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
         )}
 
         
-        <div className="relative">
-          <button 
-          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 text-brand-secondary`}
-          onClick={() => setPanelOpen(!panelOpen)}>
-            <FaBell className="text-xl" />
-            {notifications.length > 0 && (
-              <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                {notifications.length}
-              </span>
-            )}
-          </button>
-          {panelOpen && (
-            <NotificationPanel 
-              notifications={notifications}
-              setNotifications={setNotifications}
-              onClose={() => setPanelOpen(false)}
-              handleNotificationClick={handleNotificationClick}
-            />
-          )}
+<div className="relative">
+      <button 
+        className="flex items-center px-4 py-2 rounded font-medium transition duration-300 text-brand-secondary"
+        onClick={() => setPanelOpen(!panelOpen)}
+      >
+        <FaBell className="text-xl" />
+        {notifications.length > 0 && (
+          <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+            {notifications.length}
+          </span>
+        )}
+      </button>
+      {panelOpen && (
+        <div ref={panelRef}>
+          <NotificationPanel 
+            notifications={notifications}
+            setNotifications={setNotifications}
+            onClose={() => setPanelOpen(false)}
+            handleNotificationClick={handleNotificationClick}
+          />
         </div>
+      )}
+    </div>
 
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(

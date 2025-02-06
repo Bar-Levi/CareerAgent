@@ -66,9 +66,6 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
           >
             Delete All
           </button>
-          <button onClick={onClose} className="text-gray-600 focus:outline-none">
-            X
-          </button>
         </div>
       </div>
       <ul className="max-h-80 overflow-y-auto">
