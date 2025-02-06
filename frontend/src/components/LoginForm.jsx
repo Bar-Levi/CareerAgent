@@ -50,7 +50,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                             email: formData.email,
                             role: formData.role,
                             token: errorData.token,
-                            user: errorData.user
+                            user: errorData.user,
+                            refreshToken: 0,
                         },
                     });
                 } else if (response.status === 405) {
@@ -128,6 +129,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     role: formData.role,
                     token,
                     user,
+                    refreshToken: 0
                 },
             });
         } catch (error) {

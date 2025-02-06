@@ -21,15 +21,27 @@ const SearchJobs = () => {
   const [educationListedOptions, setEducationListedOptions] = useState([]);
 
   // Initialize conversation and job listing states (if comes from a notification)
-  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(state?.conversationId || null);
-  const initializedJobListing = convertMongoObject(state?.jobListing) || null;
-  const [selectedJob, setSelectedJob] = useState(convertMongoObject(initializedJobListing));
+  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+  useEffect(() => {
+    const stateAddition = localStorage.getItem("stateAddition");
+    if (stateAddition) {
+      try {
+        const parsedAddition = JSON.parse(stateAddition);
+        setCurrentOpenConversationId(parsedAddition.conversationId);
+        setSelectedJob(convertMongoObject(parsedAddition.jobListing));
+        // Only remove after you are sure the state is updated (or use a flag)
+      } catch (error) {
+        console.error("Error parsing stateAddition:", error);
+      } finally {
+        localStorage.removeItem("stateAddition");
 
-  const handleNotificationClick = (notificationData) => {
-    // Update the state for conversation and job listing
-    setCurrentOpenConversationId(notificationData.conversationId);
-    setSelectedJob(convertMongoObject(notificationData.jobListing));
-  };
+      }
+    } else {
+      console.log("No state addition found.");
+    }
+  }, [state.refreshToken]); // Run once on mount
+  
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -211,8 +223,8 @@ const SearchJobs = () => {
   };
 
   return (
-    <div className="bg-gray-100 h-screen flex flex-col">
-      <NavigationBar userType={state?.user?.role} handleNotificationClick={handleNotificationClick}/>
+    <div key={state.refreshToken} className="bg-gray-100 h-screen flex flex-col">
+      <NavigationBar userType={state?.user?.role}/>
       <Botpress />
       {notification && (
         <Notification

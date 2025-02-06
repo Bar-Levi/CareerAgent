@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import socket from "../socket"; // Adjust the path as needed
 
 
-const NavigationBar = ({ userType, handleNotificationClick }) => {
+const NavigationBar = ({ userType }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = location.state?.user;
@@ -27,6 +27,14 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
 
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleNotificationClick = (notificationData) => {
+    // Save notification extraData on localStorage.
+    localStorage.setItem('stateAddition', JSON.stringify(notificationData.extraData.stateAddition));
+    const updatedState = { ...location.state, refreshToken: location.state.refreshToken + 1 };
+    console.log("Updated state:", updatedState);
+    navigate(notificationData.extraData.goToRoute, {state: updatedState});
+  };
 
   useEffect(() => {
           // Connect the socket

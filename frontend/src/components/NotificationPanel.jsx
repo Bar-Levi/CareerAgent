@@ -74,14 +74,21 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
             key={notification._id}
             className="flex items-center p-4 border-b hover:bg-gray-100 cursor-pointer"
             onClick={() => {
-              if (notification.type === "chat") {
-                navigate(notification.extraData.goToRoute, {
-                  state: { ...state, ...notification.extraData.stateAddition },
-                });
-              }
               onClose();
               handleNotificationClick(notification);
             }}
+
+
+
+
+
+
+
+
+
+
+
+            
           >
             {/* Left Pane: Chat Icon with 10% width */}
             {notification.type === "chat" && (

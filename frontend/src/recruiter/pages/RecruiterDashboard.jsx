@@ -23,22 +23,29 @@ const RecruiterDashboard = () => {
   // Store the entire job listing object that was selected
 
   // Initialize conversation and job listing states (if comes from a notification)
-  const [selectedConversationId, setSelectedConversationId] = useState(state?.conversationId || null);
-  const initializedJobListing = convertMongoObject(state?.jobListing) || null;
-  const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(initializedJobListing));
+  const [selectedConversationId, setSelectedConversationId] = useState(null);
+  const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
 
   // This function is called when a notification is clicked.
+  useEffect(() => {
+    const stateAddition = localStorage.getItem("stateAddition");
+    if (stateAddition) {
+      try {
+        const parsedAddition = JSON.parse(stateAddition);
+        setSelectedConversationId(parsedAddition.conversationId);
+        setSelectedJobListing(convertMongoObject(parsedAddition.jobListing));
+        // Only remove after you are sure the state is updated (or use a flag)
+      } catch (error) {
+        console.error("Error parsing stateAddition:", error);
+      } finally {
+        localStorage.removeItem("stateAddition");
 
-
-  const handleNotificationClick = (notificationData) => {
-    console.log("Notificaiton data: ", notificationData);
-    if (notificationData.type === "chat") {
-      // Update the state for conversation and job listing
-      setSelectedConversationId(notificationData.extraData.stateAddition.conversationId);
-      setSelectedJobListing(convertMongoObject(notificationData.extraData.stateAddition.jobListing));
+      }
+    } else {
+      console.log("No state addition found.");
     }
-  };
-  
+  }, [state.refreshToken]); // Run once on mount
+
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
@@ -142,9 +149,9 @@ const RecruiterDashboard = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 animate-fade-in">
+    <div key={state.refreshToken} className="h-screen flex flex-col bg-gray-100 animate-fade-in">
       <Botpress />
-      <NavigationBar userType={state?.user?.role || state?.role} handleNotificationClick={handleNotificationClick}/>
+      <NavigationBar userType={state?.user?.role || state?.role}/>
 
       {notification && (
         <Notification
