@@ -31,9 +31,12 @@ const RecruiterDashboard = () => {
 
 
   const handleNotificationClick = (notificationData) => {
-    // Update the state for conversation and job listing
-    setSelectedConversationId(notificationData.conversationId);
-    setSelectedJobListing(convertMongoObject(notificationData.jobListing));
+    console.log("Notificaiton data: ", notificationData);
+    if (notificationData.type === "chat") {
+      // Update the state for conversation and job listing
+      setSelectedConversationId(notificationData.extraData.stateAddition.conversationId);
+      setSelectedJobListing(convertMongoObject(notificationData.extraData.stateAddition.jobListing));
+    }
   };
   
   const showNotification = (type, message) => {

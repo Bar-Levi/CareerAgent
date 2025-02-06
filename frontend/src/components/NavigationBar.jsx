@@ -55,7 +55,7 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
               </div>,
             {
               onClick: () => {
-                handleNotificationClick(notificationData.extraData.stateAddition);
+                handleNotificationClick(notificationData);
               },
               autoClose: 5000,
               pauseOnHover: true,

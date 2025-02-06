@@ -24,7 +24,7 @@ const NotificationPanel = ({ notifications, onClose, handleNotificationClick }) 
                 });
               }
               onClose();
-              handleNotificationClick(notification.extraData.stateAddition);
+              handleNotificationClick(notification);
             }}
           >
             {notification.type === "chat" && (

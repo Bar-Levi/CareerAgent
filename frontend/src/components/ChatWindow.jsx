@@ -43,6 +43,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         }
         
         const conversation = await response.json();
+        console.log("Fetched conversation:", conversation);
         
         setMessages(conversation.messages);
       } catch (error) {
