@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import ChatWindow from "../../components/ChatWindow"; // Adjust path if needed
 import { FaSpinner } from "react-icons/fa";
 
-const CandidateMessages = ({ user, recruiterId, jobListing, showNotification, selectedConversationId, setSelectedConversationId}) => {
+const CandidateMessages = ({ user, recruiterId, jobListing, showNotification, selectedConversationId, setSelectedConversationId, onlineUsers}) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -98,16 +98,20 @@ const CandidateMessages = ({ user, recruiterId, jobListing, showNotification, se
                 <p className="text-gray-500">No messages for this job listing.</p>
               ) : (
                 <ul>
-                  {conversations.map((conversation) => {
+                    {conversations.map((conversation) => {
                     const candidateInfo = getCandidateInfo(conversation);
                     const isSelected = conversation._id === selectedConversationId;
+                    // Check if candidateInfo.email exists and is in the onlineUsers array
+                    const isOnline = candidateInfo?.senderId && onlineUsers.includes(candidateInfo.senderId);
+                    console.log("candidateInfo:", candidateInfo);
+                    
                     return (
                       <li
                         key={conversation._id}
                         onClick={() => handleCandidateSelect(conversation)}
                         className={`py-2 px-2 cursor-pointer rounded mb-2 ${
                           isSelected ? "bg-gray-200" : "hover:bg-gray-100"
-                        }`}
+                        } ${isOnline ? "border bg-green-500" : ""}`}
                       >
                         <div className="flex items-center space-x-3">
                           <img
@@ -123,6 +127,7 @@ const CandidateMessages = ({ user, recruiterId, jobListing, showNotification, se
                     );
                   })}
                 </ul>
+
               )}
             </div>
             {/* Right Pane: Chat Window (70% width) */}

@@ -25,6 +25,8 @@ const NavigationBar = ({ userType }) => {
   const [notifications, setNotifications] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef(null);
+  const [onlineUsers, setOnlineUsers] = useState(new Map()); // You can use a Map or an object/array as needed
+
 
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -37,19 +39,39 @@ const NavigationBar = ({ userType }) => {
     navigate(notificationData.extraData.goToRoute, {state: updatedState});
   };
 
+  
   useEffect(() => {
           // Connect the socket
           socket.connect();
       
           // Join the room using the user's ID (as a string)
-          if (user && user._id) {
+          if (user && user.email) {
           socket.emit("join", user.email);
           console.log("Socket joined room:", user.email);
           }
-      
+        
+          // Listen for the updateOnlineUsers event
+          socket.on("updateOnlineUsers", (onlineUserIds) => {
+            console.log("Updated online users:", onlineUserIds);
+            // Here, you can update your state.
+            // For simplicity, we store the array of online user IDs.
+            setOnlineUsers(new Map(onlineUserIds.map(id => [id, true])));
+            // Alternatively, store as an array: setOnlineUsers(onlineUserIds);
+          });
+
+          // Optionally, listen for the "user-online" event to see when other users come online.
+          socket.on("user-online", (data) => {
+            console.log("User online:", data);
+          });
+
+          // Optionally, listen for the "user-online" event to see when other users come online.
+          socket.on("user-offline", (data) => {
+            console.log("User offline:", data);
+          });
+
           // Log when connected
           socket.on("connect", () => {
-          console.log("Socket connected with ID:", socket.id);
+            console.log("Socket connected with ID:", socket.id);
           });
       
           // Listen for new notifications
@@ -57,7 +79,7 @@ const NavigationBar = ({ userType }) => {
           console.log("Received new notification:", notificationData);
           toast.info(
             <div className="flex items-center space-x-2">
-{notificationData.type === "chat" ? (
+            {notificationData.type === "chat" ? (
               <div className="p-4 w-[10%] flex justify-center">
                 <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
               </div>
@@ -92,6 +114,7 @@ const NavigationBar = ({ userType }) => {
           });
           // Clean up on component unmount
           return () => {
+          socket.off("updateOnlineUsers");
           socket.off("newNotification");
           socket.disconnect();
           };

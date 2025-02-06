@@ -10,6 +10,7 @@ import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
 import convertMongoObject from "../../utils/convertMongoObject";
+import socket from "../../socket";
 
 const RecruiterDashboard = () => {
   const location = useLocation();
@@ -20,7 +21,39 @@ const RecruiterDashboard = () => {
   const [recentApplications, setRecentApplications] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
-  // Store the entire job listing object that was selected
+
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
+  useEffect(() => {
+      console.log("Online users:", onlineUsers);
+    }, [onlineUsers]);
+
+  useEffect(() => {
+    // If the socket isn't already connected, connect it.
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Join the room for the current user (if not already joined)
+    if (user && user.email) {
+      socket.emit("join", user.email);
+      console.log("Socket joined room:", user.email);
+      }
+
+    // Listen for updates on online users
+    socket.on("updateOnlineUsers", (onlineUserIds) => {
+      console.log("Updated online users:", onlineUserIds);
+      // Update state as needed (here we assume onlineUserIds is an array of user IDs)
+      setOnlineUsers(onlineUserIds);
+    });
+
+    // Clean up on component unmount
+    return () => {
+      socket.off("updateOnlineUsers");
+      // Note: Do not disconnect here if other components rely on the socket.
+      // socket.disconnect(); // Only disconnect if you’re sure no component needs it
+    };
+  }, [user]);
 
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);
@@ -197,6 +230,7 @@ const RecruiterDashboard = () => {
             showNotification={showNotification}
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
+            onlineUsers={onlineUsers}
           />
         </div>
       </div>
