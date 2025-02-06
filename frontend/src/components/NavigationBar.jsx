@@ -181,6 +181,7 @@ const NavigationBar = ({ userType, handleNotificationClick }) => {
           {panelOpen && (
             <NotificationPanel 
               notifications={notifications}
+              setNotifications={setNotifications}
               onClose={() => setPanelOpen(false)}
               handleNotificationClick={handleNotificationClick}
             />
