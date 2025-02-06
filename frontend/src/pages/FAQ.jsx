@@ -103,7 +103,7 @@ const [filteredFaqs, setFilteredFaqs] = useState(faqs);
   return (
     <div className="min-h-screen bg-brand-primary text-brand-accent font-sans">
       <Botpress />
-      <NavigationBar userType={state.user.role}/>
+      <NavigationBar userType={state?.user?.role} notifications={state?.user?.notifications || []}/>
       
 
       <div className="my-6 text-center">

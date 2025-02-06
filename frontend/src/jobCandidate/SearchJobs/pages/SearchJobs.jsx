@@ -8,6 +8,7 @@ import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from '../../../utils/pdfUtils';
 import ChatWindow from "../../../components/ChatWindow";
+import convertMongoObject from "../../../utils/convertMongoObject";
 
 
 
@@ -18,7 +19,29 @@ const SearchJobs = () => {
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
+
+  // Initialize conversation and job listing states (if comes from a notification)
   const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+  useEffect(() => {
+    const stateAddition = localStorage.getItem("stateAddition");
+    if (stateAddition) {
+      try {
+        const parsedAddition = JSON.parse(stateAddition);
+        setCurrentOpenConversationId(parsedAddition.conversationId);
+        setSelectedJob(convertMongoObject(parsedAddition.jobListing));
+        // Only remove after you are sure the state is updated (or use a flag)
+      } catch (error) {
+        console.error("Error parsing stateAddition:", error);
+      } finally {
+        localStorage.removeItem("stateAddition");
+
+      }
+    } else {
+      console.log("No state addition found.");
+    }
+  }, [state.refreshToken]); // Run once on mount
+  
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -41,7 +64,6 @@ const SearchJobs = () => {
   });
 
   const [sortingMethod, setSortingMethod] = useState("newest");
-  const [selectedJob, setSelectedJob] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -58,7 +80,6 @@ const SearchJobs = () => {
   };
 
   const handleClearFilters = () => {
-    console.log("Clear filters");
     setFilters({
       jobRole: "",
       company: "",
@@ -202,8 +223,8 @@ const SearchJobs = () => {
   };
 
   return (
-    <div className="bg-gray-100 h-screen flex flex-col">
-      <NavigationBar userType={state.user.role} />
+    <div key={state.refreshToken} className="bg-gray-100 h-screen flex flex-col">
+      <NavigationBar userType={state?.user?.role}/>
       <Botpress />
       {notification && (
         <Notification

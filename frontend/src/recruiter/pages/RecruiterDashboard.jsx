@@ -9,10 +9,11 @@ import MyJobListings from "../components/MyJobListings";
 import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
+import convertMongoObject from "../../utils/convertMongoObject";
 
 const RecruiterDashboard = () => {
-  const navigate = useNavigate();
-  const { state } = useLocation();
+  const location = useLocation();
+  const state = location.state;
   const user = state?.user;
 
   const [jobListings, setJobListings] = useState([]);
@@ -20,7 +21,30 @@ const RecruiterDashboard = () => {
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
   // Store the entire job listing object that was selected
-  const [selectedJobListing, setSelectedJobListing] = useState(null);
+
+  // Initialize conversation and job listing states (if comes from a notification)
+  const [selectedConversationId, setSelectedConversationId] = useState(null);
+  const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
+
+  // This function is called when a notification is clicked.
+  useEffect(() => {
+    const stateAddition = localStorage.getItem("stateAddition");
+    if (stateAddition) {
+      try {
+        const parsedAddition = JSON.parse(stateAddition);
+        setSelectedConversationId(parsedAddition.conversationId);
+        setSelectedJobListing(convertMongoObject(parsedAddition.jobListing));
+        // Only remove after you are sure the state is updated (or use a flag)
+      } catch (error) {
+        console.error("Error parsing stateAddition:", error);
+      } finally {
+        localStorage.removeItem("stateAddition");
+
+      }
+    } else {
+      console.log("No state addition found.");
+    }
+  }, [state.refreshToken]); // Run once on mount
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -99,13 +123,14 @@ const RecruiterDashboard = () => {
       }
       const data = await response.json();
       const dashboardMetrics = data.metrics;
-      console.log("dashboardMetrics:", dashboardMetrics);
       setMetrics(dashboardMetrics);
     } catch (error) {
       console.error("Failed to fetch metrics:", error.message);
       showNotification("error", "Failed to fetch metrics. Please try again later.");
     }
   };
+
+  
 
   useEffect(() => {
     fetchJobListings();
@@ -124,9 +149,9 @@ const RecruiterDashboard = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 animate-fade-in">
+    <div key={state.refreshToken} className="h-screen flex flex-col bg-gray-100 animate-fade-in">
       <Botpress />
-      <NavigationBar userType={state?.user?.role || state?.role} />
+      <NavigationBar userType={state?.user?.role || state?.role}/>
 
       {notification && (
         <Notification
@@ -156,15 +181,13 @@ const RecruiterDashboard = () => {
             selectedJobListing={selectedJobListing}
             setSelectedJobListing={setSelectedJobListing}
             setMetrics={setMetrics}
+            setSelectedConversationId={setSelectedConversationId}
           />
         </div>
         {/* Right Pane: Candidate Messages & Chat (55% width) */}
         <div
           className="md:w-3/5 w-full bg-white shadow rounded-lg overflow-y-auto border-gray-200 border-2 border-t-0"
-          style={{ 
-            height: "calc(65vh)",
-
-           }}
+          style={{ height: "calc(65vh)" }}
         >
           <CandidateMessages
             key={selectedJobListing ? selectedJobListing._id : "none"}
@@ -172,6 +195,8 @@ const RecruiterDashboard = () => {
             recruiterId={user._id}
             jobListing={selectedJobListing}
             showNotification={showNotification}
+            selectedConversationId={selectedConversationId}
+            setSelectedConversationId={setSelectedConversationId}
           />
         </div>
       </div>

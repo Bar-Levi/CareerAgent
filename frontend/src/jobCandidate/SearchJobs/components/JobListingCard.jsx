@@ -47,7 +47,6 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
         console.log("New conversation created:", newConversation);
         setCurrentOpenConversationId(newConversation._id);
       
-        console.log("newConversation: " + JSON.stringify(newConversation));
 
     } catch (error) {
         console.error('Error creating conversation:', error);
@@ -61,18 +60,6 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
       return;
     }
     try {
-
-      console.log(user.fullName,
-        user.email,
-        user.phone,
-        user.linkedinUrl,
-        user.githubUrl,
-        user.cv,
-        user._id,
-        user.profilePic,
-        jobId,
-        recruiterId,
-        jobRole)
       // Create the new applicant
       const applicantResponse = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/applicants`,

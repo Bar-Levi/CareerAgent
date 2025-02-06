@@ -177,7 +177,6 @@ const verifyCode = async (req, res) => {
 };
 
 // Login User
-
 const loginUser = async (req, res) => {
     const { email, password, role } = req.body;
 
@@ -373,37 +372,15 @@ const getUserDetails = async (req, res) => {
         if (!email) {
             return res.status(400).json({ message: 'Email is required.' });
         }
-
         let user = await JobSeeker.findOne({ email });
         if (!user) {
             user = await Recruiter.findOne({ email });
         }
-
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        res.status(200).json({
-            _id: user._id || null,
-            fullName: user.fullName || null,
-            email: user.email || null,
-            password: user.password || null,
-            role: user.role || null,
-            phone: user.phone || null,
-            cv: user.cv || null,
-            profilePic: user.profilePic || null,
-            githubUrl: user.githubUrl || null,
-            linkedinUrl: user.linkedinUrl || null,
-            isVerified: user.isVerified || null,
-            verificationCode: user.verificationCode || null,
-            verificationCodeSentAt: user.verificationCodeSentAt || null,
-            dateOfBirth: user.dateOfBirth || null,
-            companyName: user.companyName || null,
-            companySize: user.companySize|| null,
-            companyWebsite: user.companyWebsite|| null,
-            loginAttemptsLeft: user.loginAttemptsLeft || null,
-            analyzed_cv_content: user.analyzed_cv_content || null,
-        });
+        res.status(200).json(user);
     } catch (error) {
         console.error('Error fetching user details:', error);
         res.status(500).json({ message: 'Failed to fetch user details.' });
@@ -433,9 +410,9 @@ const uploadCV = async (req, res) => {
       console.error("Error uploading CV:", error);
       res.status(500).json({ message: "Failed to upload CV." });
     }
-  };
+};
 
-  const logout = async (req, res) => {
+const logout = async (req, res) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
         if (!token) {
@@ -457,9 +434,9 @@ const uploadCV = async (req, res) => {
         console.error('Logout error:', error);
         res.status(500).json({ error: 'An error occurred during logout.' });
       }
-  };
+};
 
-  const checkBlacklist = async (req, res) => {
+const checkBlacklist = async (req, res) => {
     try {
       const { token } = req.body; // Get token from request body
   
@@ -478,12 +455,80 @@ const uploadCV = async (req, res) => {
       console.error('Error checking token blacklist:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
+};
+
+/**
+ * Delete a notification from a user's notifications array.
+ * Expects userId and notificationId in req.params.
+ */
+const deleteNotification = async (req, res) => {
+    try {
+      const { userId, notificationId } = req.params;
+  
+      // First, try finding the user in JobSeeker collection
+      let user = await JobSeeker.findById(userId);
+      // If not found, try in Recruiter collection
+      if (!user) {
+        user = await Recruiter.findById(userId);
+      }
+  
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      // Filter out the notification with the matching ID
+      user.notifications = user.notifications.filter(
+        (notification) => notification._id.toString() !== notificationId
+      );
+  
+      // Save the updated user document
+      await user.save();
+  
+      res.status(200).json({
+        message: "Notification deleted successfully",
+        notifications: user.notifications,
+      });
+    } catch (error) {
+      console.error("Error deleting notification:", error.message);
+      res.status(500).json({ message: error.message });
+    }
   };
-  
-  module.exports = { checkBlacklist };
-  
-  
-  
+
+/**
+ * Delete all notifications from a user's notifications array.
+ * Expects userId in req.params.
+ */
+const deleteAllNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Try to find the user in the JobSeeker collection
+    let user = await JobSeeker.findById(userId);
+    // If not found, try in the Recruiter collection
+    if (!user) {
+      user = await Recruiter.findById(userId);
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Clear the notifications array
+    user.notifications = [];
+
+    // Save the updated user document
+    await user.save();
+
+    res.status(200).json({
+      message: "All notifications deleted successfully.",
+      notifications: user.notifications,
+    });
+  } catch (error) {
+    console.error("Error deleting all notifications:", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+    
 
 module.exports = {
     registerRecruiter,
@@ -497,5 +542,7 @@ module.exports = {
     resetLoginAttempts,
     uploadCV,
     logout,
-    checkBlacklist
+    checkBlacklist,
+    deleteNotification,
+    deleteAllNotifications
 };

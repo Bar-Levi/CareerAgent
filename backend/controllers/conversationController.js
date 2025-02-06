@@ -1,4 +1,7 @@
 const Conversation = require("../models/conversationModel");
+const Recruiter = require("../models/recruiterModel");
+const JobSeeker = require("../models/jobSeekerModel");
+const JobListing = require("../models/jobListingModel");
 
 // Controller functions for conversations
 const getAllConversations = async (req, res) => {
@@ -14,7 +17,6 @@ const getAllConversations = async (req, res) => {
 
 const getConversationById = async (req, res) => {
   try {
-    console.log("Fetching conversation with ID:", req.params.conversationId);
 
     const conversation = await Conversation.findById(req.params.conversationId)
       .populate("participants")
@@ -101,8 +103,8 @@ const deleteConversation = async (req, res) => {
 const addMessageToConversation = async (req, res) => {
   try {
     console.log("Add message to conversation:", req.params.id);
-    console.log("Req.body:", req.body);
-    const { senderId, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    const { senderId, senderRole, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    
     if (!senderId || !senderProfilePic || !senderName || !text) {
       return res.status(400).json({ message: "Missing required message fields" });
     }
@@ -115,13 +117,59 @@ const addMessageToConversation = async (req, res) => {
     const newMessage = { senderId, senderProfilePic, senderName, text, attachments, reactions };
     conversation.messages.push(newMessage);
     conversation.lastMessage = newMessage;
+
     await conversation.save();
+
+    // Assuming the recruiter is at index 0 in the participants array and job seeker at index 1.
+    const recruiterParticipantId = conversation.participants[0];
+    const jobSeekerParticipantId = conversation.participants[1];
+
+    // Determine the receiver based on the sender's role
+    const recieverId = senderRole === "recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
+
+    console.log("Reciever ID:", recieverId);
+    const reciever = senderRole === "recruiter" ?
+      await JobSeeker.findById(recieverId) :
+      await Recruiter.findById(recieverId);
+
+    if (!reciever) {
+      return res.status(404).json({ message: "Reciever not found" });
+    }
+
+    const jobListing = await JobListing.findById(conversation.jobListingId);
+    
+    console.log("JobListing:", jobListing)
+    console.log("senderRole:", senderRole);
+    // Create and push a new notification to the receiver
+    const newNotification = {
+      type: "chat",
+      message: `${senderName}: ${text}`,
+      extraData: {
+        goToRoute: senderRole === "recruiter" ? '/searchjobs' : '/dashboard',
+        stateAddition: {
+          conversationId: conversation._id,
+          jobListing,
+        },
+      },
+    };
+    if (!reciever.notifications) {
+      reciever.notifications = [];
+    }
+    reciever.notifications.push(newNotification);
+    await reciever.save();
+    console.log("Notification added to reciever:", reciever.email);
+    // Retrieve the Socket.IO instance from the app and emit the notification event.
+    const io = req.app.get("io");
+    // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
+    io.to(reciever.email).emit("newNotification", newNotification);
+    console.log("Emitting notification to: " + reciever.email);
 
     res.status(201).json(conversation);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
+
 
 const updateMessageInConversation = async (req, res) => {
   try {

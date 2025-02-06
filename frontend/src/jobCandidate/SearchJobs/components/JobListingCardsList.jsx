@@ -86,7 +86,6 @@ useEffect(() => {
           .flat() // Flatten the nested arrays into a single array
       )
     );
-    console.log("Education options:", listedOptions);
     setEducationListedOptions(listedOptions);
   }
 } catch (err) {

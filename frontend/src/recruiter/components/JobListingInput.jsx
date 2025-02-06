@@ -46,7 +46,6 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             if (!match) {
                 throw new Error("Invalid JSON format in response.");
             }
-            console.log(JSON.parse(match[1]));
             return JSON.parse(match[1]); // Parse the extracted JSON string
         } catch (error) {
             console.error("Error analyzing free text:", error.message);
@@ -56,9 +55,7 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
 
     const saveJobListing = async (jobListingData) => {
         try {
-            console.log("user_id: "+ user._id);
             const updatedJobListingData = { ...jobListingData, recruiterId: user._id, recruiterName: user.fullName, recruiterProfileImage: user.profilePic};
-            console.log("updatedJobListingData: " + JSON.stringify(updatedJobListingData));
 
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
@@ -74,8 +71,6 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             }
 
             const result = await response.json();
-            console.log("jobListings: ", jobListings);
-            console.log("jobListingData: ", JSON.stringify(updatedJobListingData));
             setJobListings([...jobListings, updatedJobListingData]);
             showNotification("success", "Job listing successfully saved in the database!");
             return result;
@@ -118,7 +113,7 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             if (hasMissingFields) return;
 
             const saveResult = await saveJobListing(analyzedData);
-            console.log("Save result:", saveResult);
+            
             setInput(""); // Clear the input
             if (onPostSuccess) onPostSuccess();
         } catch (error) {
@@ -140,12 +135,10 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             }, "");
 
             const analyzedData = await analyzeFreeText(combinedText);
-            console.log("analyzed data: " + JSON.stringify(analyzedData));
             handleMissingFields(analyzedData);
             if (!analyzedData) return;
 
             const saveResult = await saveJobListing(analyzedData);
-            console.log("Save result:", saveResult);
 
             setJobListing(null); // Clear job listing state
             if (onPostSuccess) onPostSuccess();

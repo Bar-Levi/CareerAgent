@@ -61,6 +61,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const sendMessage = async (text) => {
     const newMessage = {
       senderId: user._id,
+      senderRole: user.role,
       senderProfilePic: user.profilePic,
       senderName: user.fullName,
       text: text.text,

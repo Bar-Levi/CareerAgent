@@ -1,7 +1,7 @@
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 const request = require('supertest');
-const app = require('../../app');
+const app = require('../../server');
 const JobSeeker = require('../../models/jobSeekerModel');
 const bcrypt = require('bcryptjs');
 const { cleanupTask } = require('../../tasks/cleanupTokens'); // Import the cron task

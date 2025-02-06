@@ -1,4 +1,5 @@
 const Applicant = require('../models/applicantModel');
+const Recruiter = require('../models/recruiterModel');
 
 // Create a new applicant
 const createApplicant = async (req, res) => {
@@ -11,6 +12,30 @@ const createApplicant = async (req, res) => {
             message: 'Applicant created successfully',
             applicant: savedApplicant,
         });
+
+    const reciever = await Recruiter.findById(req.body.recruiterId);
+    // Create and push a new notification to the receiver
+    const newNotification = {
+        type: "apply",
+        message: `${req.body.name} has applied for the ${req.body.jobTitle} position.`,
+        extraData: {
+          goToRoute: '/dashboard',
+          stateAddition: {
+          },
+        },
+      };
+      if (!reciever.notifications) {
+        reciever.notifications = [];
+      }
+      reciever.notifications.push(newNotification);
+      await reciever.save();
+      console.log("Notification added to reciever:", reciever.email);
+      // Retrieve the Socket.IO instance from the app and emit the notification event.
+      const io = req.app.get("io");
+      // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
+      io.to(reciever.email).emit("newNotification", newNotification);
+      console.log("Emitting notification to: " + reciever.email);
+  
     } catch (error) {
         console.error('Error creating applicant:', error);
         res.status(500).json({ message: 'Failed to create applicant', error: error.message });
@@ -56,7 +81,6 @@ const getRecruiterApplicants = async (req, res) => {
         // Find applicants where the recruiterId matches
         const applicants = await Applicant.find({ recruiterId: recruiterId })
             .populate('recruiterId');
-        console.log("Recruiter Applicants: ", applicants);
 
         if (!applicants || applicants.length === 0) {
             return res.status(404).json({ message: 'No applicants found for this recruiter' });

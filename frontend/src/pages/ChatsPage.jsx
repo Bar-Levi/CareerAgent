@@ -180,7 +180,6 @@ const ChatsPage = () => {
   const handleChatSelection = (chat, type) => {
     setSelectedChat(chat);
     setChatType(type);
-    console.log("Selected chat");
     };
       
   const saveEditedTitle = async (chatId, type) => {
@@ -252,7 +251,7 @@ const ChatsPage = () => {
       <Botpress />
       {/* Navigation Bar */}
       <div>
-      <NavigationBar userType={state.user.role}/>
+      <NavigationBar userType={state?.user?.role} notifications={state?.user?.notifications || []}/>
       </div>
   
       {/* Main Content */}
