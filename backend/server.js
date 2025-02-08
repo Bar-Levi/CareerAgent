@@ -36,35 +36,81 @@ app.use("/api/conversations", conversationRoutes);
 
 // Create HTTP server and integrate Socket.IO
 const http = require("http");
-const socketIo = require("socket.io");
-
 const server = http.createServer(app);
+const socketIo = require("socket.io");
 const io = socketIo(server, {
   cors: {
-    origin: "*", // Adjust CORS settings as needed
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
 
-// Store the io instance in app locals so that you can access it in your controllers
+
+const onlineUsers = new Map();
+
+// Store the io instance in app locals so controllers can access it if needed
 app.set("io", io);
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
-  // Example: listen for a 'join' event to add socket to a room
-  socket.on("join", (room) => {
-    socket.join(room);
-    console.log(`Socket ${socket.id} joined room ${room}`);
+  // Listen for a 'join' event, expecting a primitive user ID
+  socket.on("join", (userId) => {
+    const key = userId.toString();
+
+    // Save the userId on the socket for later use
+    socket.userId = key;
+    
+    // Have the socket join a room identified by the userId
+    socket.join(key);
+    console.log(`Socket ${socket.id} joined room for user ${key}`);
+
+    // Update the onlineUsers map using the userId as the key
+    if (onlineUsers.has(key)) {
+      // Retrieve the existing object
+      const userData = onlineUsers.get(key);
+      // Only add the socket.id if it's not already present
+      if (!userData.socketIds.includes(socket.id)) {
+        userData.socketIds.push(socket.id);
+      }
+      onlineUsers.set(key, userData);
+    } else {
+      // Create a new object for this user (with userEmail as null, or remove if not needed)
+      onlineUsers.set(key, {
+        userId: key,
+        // userEmail: null,  // You can include email if available
+        socketIds: [socket.id]
+      });
+    }
+
+    // Broadcast the updated online users list to all connected clients
+    io.emit("updateOnlineUsers", Array.from(onlineUsers.values()));
   });
 
   socket.on("disconnect", () => {
+    const key = socket.userId;
+    if (key && onlineUsers.has(key)) {
+      // Retrieve the current object for the user
+      const userData = onlineUsers.get(key);
+      // Remove this socket.id from the array
+      userData.socketIds = userData.socketIds.filter((id) => id !== socket.id);
+      if (userData.socketIds.length === 0) {
+        // Remove the user entirely if no sockets remain
+        onlineUsers.delete(key);
+      } else {
+        onlineUsers.set(key, userData);
+      }
+      // Broadcast the updated online users list
+      io.emit("updateOnlineUsers", Array.from(onlineUsers.values()));
+    }
     console.log("Client disconnected:", socket.id);
   });
 });
 
-// Define the port and start listening
+
+
+// Define the port and start listening only if run directly
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
   server.listen(PORT, () => {
@@ -72,5 +118,4 @@ if (require.main === module) {
   });
 }
 
-
-module.exports = app;
+module.exports = { app, server };

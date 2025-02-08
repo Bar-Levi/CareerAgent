@@ -1,6 +1,6 @@
 // /pages/RecruiterDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import NavigationBar from "../../components/NavigationBar";
 import Botpress from "../../botpress/Botpress";
 import Notification from "../../components/Notification";
@@ -10,6 +10,7 @@ import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
 import convertMongoObject from "../../utils/convertMongoObject";
+import socket from "../../socket";
 
 const RecruiterDashboard = () => {
   const location = useLocation();
@@ -20,11 +21,41 @@ const RecruiterDashboard = () => {
   const [recentApplications, setRecentApplications] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
-  // Store the entire job listing object that was selected
+
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
+  useEffect(() => {
+      // console.log("Online users:", onlineUsers);
+    }, [onlineUsers]);
+
+ 
+  useEffect(() => {
+    // If the socket isn't already connected, connect it.
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    // Listen for updates on online users
+    socket.on("updateOnlineUsers", (onlineUserIds) => {
+      console.log("Updated online users:", onlineUserIds);
+      // Update state as needed (here we assume onlineUserIds is an array of user IDs)
+      setOnlineUsers(onlineUserIds);
+    });
+
+    // Clean up on component unmount
+    return () => {
+      socket.off("updateOnlineUsers");
+    };
+  }, [user]);
 
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
+
+  useEffect(() => {
+    console.log("selectedJobListing", selectedJobListing);
+    console.log("selectedJobListing._id", selectedJobListing?._id);
+  }, [selectedJobListing]);
 
   // This function is called when a notification is clicked.
   useEffect(() => {
@@ -194,9 +225,9 @@ const RecruiterDashboard = () => {
             user={user}
             recruiterId={user._id}
             jobListing={selectedJobListing}
-            showNotification={showNotification}
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
+            onlineUsers={onlineUsers}
           />
         </div>
       </div>

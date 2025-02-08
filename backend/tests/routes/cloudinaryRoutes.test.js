@@ -1,6 +1,6 @@
 const path = require('path');
 const request = require('supertest');
-const app = require('../../server'); // Your app's entry point
+const { app } = require('../../server'); // Your app's entry point
 const mongoose = require('mongoose');
 const { cleanupTask } = require('../../tasks/cleanupTokens'); // Import the cleanup task
 
