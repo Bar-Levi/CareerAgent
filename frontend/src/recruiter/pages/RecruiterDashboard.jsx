@@ -44,8 +44,6 @@ const RecruiterDashboard = () => {
     // Clean up on component unmount
     return () => {
       socket.off("updateOnlineUsers");
-      // Note: Do not disconnect here if other components rely on the socket.
-      // socket.disconnect(); // Only disconnect if you’re sure no component needs it
     };
   }, [user]);
 

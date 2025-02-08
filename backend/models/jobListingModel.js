@@ -20,12 +20,6 @@ const jobListingSchema = new mongoose.Schema({
     },
     companyWebsite: {
         type: String,
-        validate: {
-            validator: function (v) {
-                return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/.test(v);
-            },
-            message: 'Invalid URL format.'
-        },
         default: null
     },
     experienceLevel: {

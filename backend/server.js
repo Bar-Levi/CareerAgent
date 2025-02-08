@@ -40,13 +40,12 @@ const server = http.createServer(app);
 const socketIo = require("socket.io");
 const io = socketIo(server, {
   cors: {
-    origin: "*", // Adjust CORS settings as needed
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
 
-// In-memory Map to store online users
-// Key: user ID, Value: array of socket IDs (to support multiple connections per user)
+
 const onlineUsers = new Map();
 
 // Store the io instance in app locals so controllers can access it if needed
@@ -58,12 +57,10 @@ io.on("connection", (socket) => {
 
   // Listen for a 'join' event, expecting a primitive user ID
   socket.on("join", (userId) => {
-    // Convert the userId to a string (if it isn’t already)
     const key = userId.toString();
 
     // Save the userId on the socket for later use
     socket.userId = key;
-    // (If you need userEmail, you'll have to supply it or query for it here)
     
     // Have the socket join a room identified by the userId
     socket.join(key);
@@ -77,7 +74,6 @@ io.on("connection", (socket) => {
       if (!userData.socketIds.includes(socket.id)) {
         userData.socketIds.push(socket.id);
       }
-      // (Objects are mutable, but we update the map anyway)
       onlineUsers.set(key, userData);
     } else {
       // Create a new object for this user (with userEmail as null, or remove if not needed)

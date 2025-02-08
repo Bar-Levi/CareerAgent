@@ -25,7 +25,7 @@ const NavigationBar = ({ userType }) => {
   const [notifications, setNotifications] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef(null);
-  const [onlineUsers, setOnlineUsers] = useState(new Map()); // You can use a Map or an object/array as needed
+  const [onlineUsers, setOnlineUsers] = useState(new Map());
 
 
 
@@ -43,6 +43,7 @@ const NavigationBar = ({ userType }) => {
   useEffect(() => {
           // Connect the socket
           socket.connect();
+          
           // Join the room using the user's ID (as a string)
           if (user && user._id) {
             socket.emit("join", user._id);
@@ -55,15 +56,12 @@ const NavigationBar = ({ userType }) => {
             // Here, you can update your state.
             // For simplicity, we store the array of online user IDs.
             setOnlineUsers(onlineUsersData);
-            // Alternatively, store as an array: setOnlineUsers(onlineUserIds);
           });
 
-          // Optionally, listen for the "user-online" event to see when other users come online.
           socket.on("user-online", (data) => {
             console.log("User online:", data);
           });
 
-          // Optionally, listen for the "user-online" event to see when other users come online.
           socket.on("user-offline", (data) => {
             console.log("User offline:", data);
           });
@@ -75,7 +73,6 @@ const NavigationBar = ({ userType }) => {
       
           // Listen for new notifications
           socket.on("newNotification", (notificationData) => {
-          console.log("Received new notification:", notificationData);
           toast.info(
             <div className="flex items-center space-x-2">
             {notificationData.type === "chat" ? (
@@ -108,7 +105,7 @@ const NavigationBar = ({ userType }) => {
             }
           );
           
-          
+
           fetchNotifications();
           });
           // Clean up on component unmount
@@ -304,5 +301,4 @@ const NavigationBar = ({ userType }) => {
     </div>
   );
 };
-
 export default NavigationBar;
