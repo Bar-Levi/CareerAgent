@@ -8,7 +8,7 @@ const MessageBubble = ({ message, currentUser }) => {
       {isSender ? (
         // For sender: Message bubble first, then profile picture on the right
         <>
-          <div className="max-w-xs bg-gray-200 dark:bg-gray-700 p-3 rounded-lg shadow-md">
+          <div className="max-w-xs bg-gray-200ec dark:bg-gray-700 p-3 rounded-lg shadow-md">
             <div className="text-sm font-semibold text-gray-900 dark:text-gray-200">
               {message.senderName}
             </div>

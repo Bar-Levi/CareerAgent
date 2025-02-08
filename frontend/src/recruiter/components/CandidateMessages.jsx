@@ -6,7 +6,6 @@ const CandidateMessages = ({
   user,
   recruiterId,
   jobListing,
-  showNotification,
   selectedConversationId,
   setSelectedConversationId,
   onlineUsers, // Assume onlineUsers is an array of objects, each with { userId, ... }
@@ -45,14 +44,18 @@ const CandidateMessages = ({
         setConversations(candidateConversations);
       } catch (error) {
         console.error("Error fetching candidate conversations:", error);
-        showNotification("error", "Failed to fetch candidate conversations.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchConversations();
-  }, [jobListing, recruiterId, showNotification]);
+
+    // Log them separately
+    console.log("jobListing:", jobListing);
+    console.log("recruiterId:", recruiterId);
+    
+  }, [jobListing, recruiterId]);
 
   // Helper: Get candidate info from a conversation by scanning its messages
   const getCandidateInfo = (conversation) => {
@@ -142,6 +145,7 @@ const CandidateMessages = ({
                         className={`py-2 px-2 cursor-pointer rounded mb-2 transition-colors duration-200 ${
                           isSelected ? "bg-gray-200" : "hover:bg-gray-100"
                         } ${isOnline ? "border border-green-500 shadow-lg" : "border border-transparent"}`}
+                        
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">

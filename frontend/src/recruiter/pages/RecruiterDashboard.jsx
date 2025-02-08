@@ -1,6 +1,6 @@
 // /pages/RecruiterDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import NavigationBar from "../../components/NavigationBar";
 import Botpress from "../../botpress/Botpress";
 import Notification from "../../components/Notification";
@@ -25,9 +25,10 @@ const RecruiterDashboard = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
 
   useEffect(() => {
-      console.log("Online users:", onlineUsers);
+      // console.log("Online users:", onlineUsers);
     }, [onlineUsers]);
 
+ 
   useEffect(() => {
     // If the socket isn't already connected, connect it.
     if (!socket.connected) {
@@ -50,6 +51,11 @@ const RecruiterDashboard = () => {
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
+
+  useEffect(() => {
+    console.log("selectedJobListing", selectedJobListing);
+    console.log("selectedJobListing._id", selectedJobListing?._id);
+  }, [selectedJobListing]);
 
   // This function is called when a notification is clicked.
   useEffect(() => {
@@ -219,7 +225,6 @@ const RecruiterDashboard = () => {
             user={user}
             recruiterId={user._id}
             jobListing={selectedJobListing}
-            showNotification={showNotification}
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
             onlineUsers={onlineUsers}
