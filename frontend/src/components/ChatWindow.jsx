@@ -110,4 +110,4 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   );
 };
 
-export default ChatWindow;
+export default React.memo(ChatWindow);

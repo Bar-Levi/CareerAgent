@@ -56,42 +56,63 @@ app.set("io", io);
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
 
-  // Listen for a 'join' event to add the socket to a room and update onlineUsers Map
+  // Listen for a 'join' event, expecting a primitive user ID
   socket.on("join", (userId) => {
-    // Save the user ID on the socket for later use
-    socket.userId = userId;
+    // Convert the userId to a string (if it isn’t already)
+    const key = userId.toString();
 
-    // Update the onlineUsers map
-    if (onlineUsers.has(userId)) {
-      onlineUsers.get(userId).push(socket.id);
+    // Save the userId on the socket for later use
+    socket.userId = key;
+    // (If you need userEmail, you'll have to supply it or query for it here)
+    
+    // Have the socket join a room identified by the userId
+    socket.join(key);
+    console.log(`Socket ${socket.id} joined room for user ${key}`);
+
+    // Update the onlineUsers map using the userId as the key
+    if (onlineUsers.has(key)) {
+      // Retrieve the existing object
+      const userData = onlineUsers.get(key);
+      // Only add the socket.id if it's not already present
+      if (!userData.socketIds.includes(socket.id)) {
+        userData.socketIds.push(socket.id);
+      }
+      // (Objects are mutable, but we update the map anyway)
+      onlineUsers.set(key, userData);
     } else {
-      onlineUsers.set(userId, [socket.id]);
+      // Create a new object for this user (with userEmail as null, or remove if not needed)
+      onlineUsers.set(key, {
+        userId: key,
+        // userEmail: null,  // You can include email if available
+        socketIds: [socket.id]
+      });
     }
 
-    console.log(`Socket ${socket.id} joined room for user ${userId}`);
-
     // Broadcast the updated online users list to all connected clients
-    io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+    io.emit("updateOnlineUsers", Array.from(onlineUsers.values()));
   });
 
-  // On disconnect, remove the socket from the map and broadcast updated list if needed
   socket.on("disconnect", () => {
-    const userId = socket.userId;
-    if (userId) {
-      const sockets = onlineUsers.get(userId) || [];
-      const updatedSockets = sockets.filter(id => id !== socket.id);
-      if (updatedSockets.length > 0) {
-        onlineUsers.set(userId, updatedSockets);
+    const key = socket.userId;
+    if (key && onlineUsers.has(key)) {
+      // Retrieve the current object for the user
+      const userData = onlineUsers.get(key);
+      // Remove this socket.id from the array
+      userData.socketIds = userData.socketIds.filter((id) => id !== socket.id);
+      if (userData.socketIds.length === 0) {
+        // Remove the user entirely if no sockets remain
+        onlineUsers.delete(key);
       } else {
-        onlineUsers.delete(userId);
+        onlineUsers.set(key, userData);
       }
-      console.log(`Socket ${socket.id} for user ${userId} disconnected.`);
-      // Emit updated online users list
-      io.emit("updateOnlineUsers", Array.from(onlineUsers.keys()));
+      // Broadcast the updated online users list
+      io.emit("updateOnlineUsers", Array.from(onlineUsers.values()));
     }
     console.log("Client disconnected:", socket.id);
   });
 });
+
+
 
 // Define the port and start listening only if run directly
 const PORT = process.env.PORT || 5000;

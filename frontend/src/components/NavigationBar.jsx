@@ -43,19 +43,18 @@ const NavigationBar = ({ userType }) => {
   useEffect(() => {
           // Connect the socket
           socket.connect();
-      
           // Join the room using the user's ID (as a string)
-          if (user && user.email) {
-          socket.emit("join", user.email);
-          console.log("Socket joined room:", user.email);
+          if (user && user._id) {
+            socket.emit("join", user._id);
+            console.log("Socket joined room:", user._id);
           }
         
           // Listen for the updateOnlineUsers event
-          socket.on("updateOnlineUsers", (onlineUserIds) => {
-            console.log("Updated online users:", onlineUserIds);
+          socket.on("updateOnlineUsers", (onlineUsersData) => {
+            console.log("Updated online users:", onlineUsersData);
             // Here, you can update your state.
             // For simplicity, we store the array of online user IDs.
-            setOnlineUsers(new Map(onlineUserIds.map(id => [id, true])));
+            setOnlineUsers(onlineUsersData);
             // Alternatively, store as an array: setOnlineUsers(onlineUserIds);
           });
 

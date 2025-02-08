@@ -34,12 +34,6 @@ const RecruiterDashboard = () => {
       socket.connect();
     }
 
-    // Join the room for the current user (if not already joined)
-    if (user && user.email) {
-      socket.emit("join", user.email);
-      console.log("Socket joined room:", user.email);
-      }
-
     // Listen for updates on online users
     socket.on("updateOnlineUsers", (onlineUserIds) => {
       console.log("Updated online users:", onlineUserIds);
