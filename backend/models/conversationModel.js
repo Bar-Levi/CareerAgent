@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+
+const attachmentSchema = new mongoose.Schema({
+  url: String,
+  type: String,
+  name: String,
+});
+
 const messageSchema = new mongoose.Schema(
   {
     senderId: {
@@ -22,20 +29,7 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    attachments: [
-      {
-        url: String,
-        type: String, // MIME type
-        name: String,
-      },
-    ],
-    reactions: [
-      {
-        userId: { type: mongoose.Schema.Types.ObjectId },
-        userType: { type: String, enum: ["JobSeeker", "Recruiter"] }, // Track user type for reactions
-        reactionType: String, // e.g., "like", "heart"
-      },
-    ],
+    attachments: [attachmentSchema],
     edited: {
       type: Boolean,
       default: false,

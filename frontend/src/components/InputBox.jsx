@@ -1,5 +1,6 @@
+// InputBox.jsx
 import React, { useState, useRef } from "react";
-import { FaImage, FaLink, FaSmile } from "react-icons/fa";
+import { FaImage } from "react-icons/fa";
 
 const InputBox = ({ onSend }) => {
   const [text, setText] = useState("");
@@ -21,7 +22,6 @@ const InputBox = ({ onSend }) => {
 
   return (
     <div className="border-t border-gray-300 p-3 bg-white dark:bg-gray-800 flex flex-col">
-      {/* Text Input */}
       <div className="flex items-center space-x-3">
         <textarea
           value={text}
@@ -33,34 +33,26 @@ const InputBox = ({ onSend }) => {
           onClick={handleSend}
           disabled={!text.trim() && !file}
           className={`px-4 py-2 rounded-md font-semibold ${
-            text.trim() || file ? "bg-blue-500 hover:bg-blue-600 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            text.trim() || file
+              ? "bg-blue-500 hover:bg-blue-600 text-white"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           Send
         </button>
       </div>
-
-      {/* Attachments & Actions */}
       <div className="flex items-center justify-between mt-2 text-gray-600 dark:text-gray-400">
         <div className="flex space-x-4">
-          {/* Image Upload */}
           <button onClick={() => fileInputRef.current.click()} className="hover:text-blue-500">
             <FaImage size={18} />
           </button>
-          <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} />
-
-          {/* Link Attachment */}
-          <button className="hover:text-blue-500">
-            <FaLink size={18} />
-          </button>
-
-          {/* Emoji Picker (Placeholder for future emoji integration) */}
-          <button className="hover:text-blue-500">
-            <FaSmile size={18} />
-          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </div>
-
-        {/* File Preview */}
         {file && (
           <div className="flex items-center space-x-2 text-sm text-blue-500">
             <span>{file.name}</span>

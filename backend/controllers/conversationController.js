@@ -103,20 +103,24 @@ const deleteConversation = async (req, res) => {
 const addMessageToConversation = async (req, res) => {
   try {
     console.log("Add message to conversation:", req.params.id);
-    const { senderId, senderRole, senderProfilePic, senderName, text, attachments, reactions } = req.body;
+    const { senderId, senderRole, senderProfilePic, senderName, text, attachments } = req.body;
     
     if (!senderId || !senderProfilePic || !senderName || !text) {
       return res.status(400).json({ message: "Missing required message fields" });
     }
-
+    console.log("Attachments: ", attachments);
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const newMessage = { senderId, senderProfilePic, senderName, text, attachments, reactions };
+    const newMessage = { senderId, senderProfilePic, senderName, text, attachments };
+    console.log("New message:", newMessage);
     conversation.messages.push(newMessage);
-    conversation.lastMessage = newMessage;
+    conversation.lastMessage = conversation.messages[conversation.messages.length - 1];
+
+
+    console.log("Conversation.lastMessage:", conversation.lastMessage);
 
     await conversation.save();
 
