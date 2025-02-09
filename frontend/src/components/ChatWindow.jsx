@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 import InputBox from "./InputBox";
+import socket from "../socket";
 
 const MessageSkeleton = ({ isSender }) => {
   return (
@@ -30,27 +31,43 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const [loading, setLoading] = useState(true);  
   const chatEndRef = useRef(null);
 
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!currentOpenConversationId) return;
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}`
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const conversation = await response.json();
-        console.log("Fetched conversation:", conversation);
-        setMessages(conversation.messages);
-      } catch (error) {
-        console.error("Error fetching chat messages", error);
-      } finally {
-        setLoading(false);
+  const fetchMessages = async () => {
+    if (!currentOpenConversationId) return;
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };    
+      const conversation = await response.json();
+      console.log("Fetched conversation:", conversation);
+      setMessages(conversation.messages);
+    } catch (error) {
+      console.error("Error fetching chat messages", error);
+    } finally {
+      setLoading(false);
+    }
+  };    
 
+  useEffect(() => {
+    // Connect the socket
+    socket.connect();
+          
+    // Join the room using the user's ID (as a string)
+    if (user && user._id) {
+      socket.emit("join", user._id);
+      console.log("Socket joined room:", user._id);
+    }
+    socket.on("newNotification", (notificationData) => {
+      // Fetch messages.
+      fetchMessages();
+    });
+
+  }, []);
+
+  useEffect(() => {
     fetchMessages();
   }, [jobId, currentOpenConversationId]);
 
@@ -86,7 +103,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         };
       } catch (error) {
         console.error("Error uploading file", error);
-        return; // Optionally, show an error to the user here
+        return;
       }
     }
 
