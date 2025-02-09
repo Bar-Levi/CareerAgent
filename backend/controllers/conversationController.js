@@ -242,6 +242,35 @@ const getJobListingConversations = async (req, res) => {
   }
 };
 
+const markMessagesAsRead = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { readerId } = req.body;
+
+    const conversation = await Conversation.findByIdAndUpdate(
+      conversationId,
+      {
+        $set: {
+          "messages.$[elem].read": true,
+        },
+      },
+      {
+        new: true,
+        arrayFilters: [{ "elem.senderId": { $ne: readerId } }],
+      }
+    );
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found." });
+    }
+
+    res.status(200).json({ message: "Messages marked as read", conversation });
+  } catch (error) {
+    console.error("Error marking messages as read:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   getAllConversations,
   getConversationById,
@@ -251,5 +280,6 @@ module.exports = {
   addMessageToConversation,
   updateMessageInConversation,
   deleteMessageFromConversation,
-  getJobListingConversations
+  getJobListingConversations,
+  markMessagesAsRead
 };

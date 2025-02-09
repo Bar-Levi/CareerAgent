@@ -71,7 +71,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     };
 
     socket.on("newNotification", handleNewNotification);
-
     return () => {
       socket.off("newNotification", handleNewNotification);
     };
@@ -83,7 +82,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   }, [jobId, currentOpenConversationId]);
 
   // Function to send a message
-  const sendMessage = async ({ text, file }) => {
+  const sendMessage = async ({ text , file }) => {
     let attachmentData = null;
 
     // If a file is attached, upload it to Cloudinary
@@ -153,10 +152,41 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       console.log("Message sent successfully:", data);
     } catch (error) {
       console.error("Error sending message", error);
-      // Optionally revert the optimistic update here
     }
   };
 
+  useEffect(() => {
+    if (!currentOpenConversationId) return;
+  
+    const markMessagesAsRead = async () => {
+      try {
+        // Call your backend API to mark messages as read
+        await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/markAsRead`, 
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ readerId: user._id })
+          }
+        );
+        
+        // Optionally update local messages state to set read: true for messages not sent by the current user.
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.senderId !== user._id ? { ...msg, read: true } : msg
+          )
+        );
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+  
+    markMessagesAsRead();
+  }, [currentOpenConversationId, user._id]);
+  
   return (
     <div className="w-full h-full max-w-lg md:max-w-xl lg:max-w-2xl border border-gray-300 rounded-lg bg-white shadow-lg dark:bg-gray-800 flex flex-col">
       <div className="m-2 flex justify-center bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t-lg">

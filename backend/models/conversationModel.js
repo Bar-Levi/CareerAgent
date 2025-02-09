@@ -30,6 +30,10 @@ const messageSchema = new mongoose.Schema(
       default: Date.now,
     },
     attachments: [attachmentSchema],
+    read: {
+      type: Boolean,
+      default: false,
+    },
     edited: {
       type: Boolean,
       default: false,
