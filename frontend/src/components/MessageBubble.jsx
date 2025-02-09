@@ -44,7 +44,7 @@ const MessageBubble = ({ message, currentUser }) => {
           </div>
         )}
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {new Date(message.timestamp).toLocaleTimeString()}
+              {new Date(message.timestamp).toLocaleTimeString().slice(0, 5)}
             </span>
           </div>
           <img

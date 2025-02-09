@@ -164,9 +164,15 @@ const addMessageToConversation = async (req, res) => {
     console.log("Notification added to reciever:", reciever.email);
     // Retrieve the Socket.IO instance from the app and emit the notification event.
     const io = req.app.get("io");
-    
+
+    let notificationWithMessageObject = newNotification;
+    notificationWithMessageObject.messageObject = newMessage;
+    // Update 'messageObject.createdAt' to be NOW.
+    notificationWithMessageObject.messageObject.timestamp = new Date().toISOString();
+
+    console.log("notificationWithMessageObject: ", notificationWithMessageObject); console
     // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
-    io.to(reciever._id.toString()).emit("newNotification", newNotification);
+    io.to(reciever._id.toString()).emit("newNotification", notificationWithMessageObject);
     console.log("Emitting notification to: " + reciever._id);
 
     res.status(201).json(conversation);

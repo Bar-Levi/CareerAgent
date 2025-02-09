@@ -27,10 +27,11 @@ const MessageSkeleton = ({ isSender }) => {
 };
 
 const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
-  const [messages, setMessages] = useState([]);  
-  const [loading, setLoading] = useState(true);  
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const chatEndRef = useRef(null);
 
+  // Function to fetch messages
   const fetchMessages = async () => {
     if (!currentOpenConversationId) return;
     try {
@@ -49,28 +50,39 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     } finally {
       setLoading(false);
     }
-  };    
+  };
 
+  // Setup socket connection and listener for new notifications
   useEffect(() => {
-    // Connect the socket
-    socket.connect();
-          
-    // Join the room using the user's ID (as a string)
+    // Ensure socket is connected
+    if (!socket.connected) {
+      socket.connect();
+    }
     if (user && user._id) {
       socket.emit("join", user._id);
       console.log("Socket joined room:", user._id);
     }
-    socket.on("newNotification", (notificationData) => {
-      // Fetch messages.
-      fetchMessages();
-    });
 
-  }, []);
+    const handleNewNotification = (notificationData) => {
+      console.log("New notification received:", notificationData);
+      if (notificationData.type === "chat") {
+        setMessages((prev) => [...prev, notificationData.messageObject]);
+      }
+    };
 
+    socket.on("newNotification", handleNewNotification);
+
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+    };
+  }, [user]);
+
+  // Fetch messages when jobId or conversation ID changes
   useEffect(() => {
     fetchMessages();
   }, [jobId, currentOpenConversationId]);
 
+  // Function to send a message
   const sendMessage = async ({ text, file }) => {
     let attachmentData = null;
 
@@ -79,7 +91,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       try {
         const formData = new FormData();
         formData.append("file", file);
-        // Pass the conversation id as folder so the file is stored there
         formData.append("folder", currentOpenConversationId);
 
         const uploadResponse = await fetch(
@@ -87,7 +98,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           {
             method: "POST",
             body: formData,
-          } 
+          }
         );
 
         if (!uploadResponse.ok) {
@@ -107,7 +118,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       }
     }
 
-    // Create the new message object including attachments if any
+    // Create the new message object
     const newMessage = {
       senderId: user._id,
       senderRole: user.role,
@@ -121,7 +132,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     // Optimistically update the UI
     setMessages((prev) => [...prev, newMessage]);
 
-    // Send the message to your backend
+    // Send the message to the backend
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`,
@@ -142,7 +153,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       console.log("Message sent successfully:", data);
     } catch (error) {
       console.error("Error sending message", error);
-      // Optionally revert the optimistic UI update here
+      // Optionally revert the optimistic update here
     }
   };
 
@@ -152,7 +163,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         <span className="font-semibold text-gray-800 dark:text-gray-300">
           Chat with {job.recruiterName}
         </span>
-      </div>    
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading
           ? [...Array(5)].map((_, index) => (

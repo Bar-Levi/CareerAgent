@@ -41,80 +41,81 @@ const NavigationBar = ({ userType }) => {
 
   
   useEffect(() => {
-          // Connect the socket
-          socket.connect();
-          
-          // Join the room using the user's ID (as a string)
-          if (user && user._id) {
-            socket.emit("join", user._id);
-            console.log("Socket joined room:", user._id);
-          }
+      // If the socket isn't already connected, connect it.
+      if (!socket.connected) {
+        socket.connect();
+      }
         
-          // Listen for the updateOnlineUsers event
-          socket.on("updateOnlineUsers", (onlineUsersData) => {
-            console.log("Updated online users:", onlineUsersData);
-            // Here, you can update your state.
-            // For simplicity, we store the array of online user IDs.
-            setOnlineUsers(onlineUsersData);
-          });
+      // Join the room using the user's ID (as a string)
+      if (user && user._id) {
+        socket.emit("join", user._id);
+        console.log("Socket joined room:", user._id);
+      }
+    
+      // Listen for the updateOnlineUsers event
+      socket.on("updateOnlineUsers", (onlineUsersData) => {
+        console.log("Updated online users:", onlineUsersData);
+        // Here, you can update your state.
+        // For simplicity, we store the array of online user IDs.
+        setOnlineUsers(onlineUsersData);
+      });
 
-          socket.on("user-online", (data) => {
-            console.log("User online:", data);
-          });
+      socket.on("user-online", (data) => {
+        console.log("User online:", data);
+      });
 
-          socket.on("user-offline", (data) => {
-            console.log("User offline:", data);
-          });
+      socket.on("user-offline", (data) => {
+        console.log("User offline:", data);
+      });
 
-          // Log when connected
-          socket.on("connect", () => {
-            console.log("Socket connected with ID:", socket.id);
-          });
-      
-          // Listen for new notifications
-          socket.on("newNotification", (notificationData) => {
-          toast.info(
-            <div className="flex items-center space-x-2">
-            {notificationData.type === "chat" ? (
-              <div className="p-4 w-[10%] flex justify-center">
-                <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
-              </div>
-            ) : notificationData.type === "apply" ? (
-              <div className="p-4 w-[10%] flex justify-center">
-                <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
-              </div>
-            ) : null}
-              <span>
-                {notificationData.message.length > 30
-                  ? notificationData.message.slice(0, 30) + "..."
-                  : notificationData.message}
-              </span>
-              </div>,
-            {
-              onClick: () => {
-                handleNotificationClick(notificationData);
-              },
-              autoClose: 5000,
-              pauseOnHover: true,
-              draggable: true,
-              closeButton: false,
-              closeOnClick: true,
-              pauseOnFocusLoss: true,
-              icon: false,
-              toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
-            }
-          );
-          
+      // Log when connected
+      socket.on("connect", () => {
+        console.log("Socket connected with ID:", socket.id);
+      });
+  
+      // Listen for new notifications
+      socket.on("newNotification", (notificationData) => {
+        toast.info(
+        <div className="flex items-center space-x-2">
+        {notificationData.type === "chat" ? (
+          <div className="p-4 w-[10%] flex justify-center">
+            <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+          </div>
+        ) : notificationData.type === "apply" ? (
+          <div className="p-4 w-[10%] flex justify-center">
+            <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+          </div>
+        ) : null}
+          <span>
+            {notificationData.message.length > 30
+              ? notificationData.message.slice(0, 30) + "..."
+              : notificationData.message}
+          </span>
+          </div>,
+        {
+          onClick: () => {
+            handleNotificationClick(notificationData);
+          },
+          autoClose: 5000,
+          pauseOnHover: true,
+          draggable: true,
+          closeButton: false,
+          closeOnClick: true,
+          pauseOnFocusLoss: true,
+          icon: false,
+          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+        }
+      );
 
-          fetchNotifications();
-          });
-          // Clean up on component unmount
-          return () => {
-          socket.off("updateOnlineUsers");
-          socket.off("newNotification");
-          socket.disconnect();
-          };
-      }, [user]);
+      fetchNotifications();
+      });
+      // Clean up on component unmount
+      return () => {
+      socket.off("updateOnlineUsers");
+      socket.off("newNotification");
+      socket.disconnect();
+      };
+  }, [user]);
 
   const fetchNotifications = async () => {
     try {
