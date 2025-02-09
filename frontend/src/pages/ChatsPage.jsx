@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar";
 import Notification from "../components/Notification";
 import Botpress from "../botpress/Botpress";
+import { FiEdit } from "react-icons/fi";
 
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
@@ -38,7 +39,7 @@ const ChatsPage = () => {
   const fetchHistoryChats = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/?email=${encodeURIComponent(email)}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/?email=${encodeURIComponent(email)}`,
         {
           method: "GET",
           headers: {
@@ -71,7 +72,7 @@ const ChatsPage = () => {
   const createNewConversation = async (type) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/new`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/new`,
         {
           method: "POST",
           headers: { 
@@ -116,7 +117,7 @@ const ChatsPage = () => {
   const removeConversation = async (chatId, type) => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
         { method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -179,7 +180,6 @@ const ChatsPage = () => {
   const handleChatSelection = (chat, type) => {
     setSelectedChat(chat);
     setChatType(type);
-    console.log("Selected chat");
     };
       
   const saveEditedTitle = async (chatId, type) => {
@@ -188,7 +188,7 @@ const ChatsPage = () => {
     } else {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${chatId}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
         {
           method: "PUT",
           headers: { 
@@ -251,7 +251,7 @@ const ChatsPage = () => {
       <Botpress />
       {/* Navigation Bar */}
       <div>
-      <NavigationBar userType={state.user.role}/>
+      <NavigationBar userType={state?.user?.role} notifications={state?.user?.notifications || []}/>
       </div>
   
       {/* Main Content */}
@@ -285,7 +285,7 @@ const ChatsPage = () => {
                       type="text"
                       className="w-full border px-2 py-1 rounded"
                       value={editingTitle}
-                      onChange={(e) => handleTitleChange(e, chat._id, 'carerrAdvisor')}
+                      onChange={(e) => handleTitleChange(e, chat._id, 'careerAdvisor')}
                       onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
                       onKeyDown={(e) =>
                         e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
@@ -298,15 +298,17 @@ const ChatsPage = () => {
                       >
                       <p
                         className="font-medium cursor-pointer"
-                        onDoubleClick={() =>
-                          startEditingTitle(chat._id, chat.conversationTitle)
-                        }
                       >
                         {chat.conversationTitle}
                       </p>
                       <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
                     </div>
                   )}
+                  <FiEdit
+                    onClick={() =>
+                    startEditingTitle(chat._id, chat.conversationTitle)
+                  }
+                  />
                   <button
                     onClick={() => removeConversation(chat._id, "careerAdvisor")}
                     className="text-red-500 hover:text-red-700 ml-2"
@@ -359,15 +361,17 @@ const ChatsPage = () => {
                     >
                       <p
                         className="font-medium cursor-pointer"
-                        onDoubleClick={() =>
-                          startEditingTitle(chat._id, chat.conversationTitle)
-                        }
                       >
                         {chat.conversationTitle}
                       </p>
                       <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
                     </div>
                   )}
+                  <FiEdit
+                    onClick={() =>
+                      startEditingTitle(chat._id, chat.conversationTitle)
+                  }
+                  />
                   <button
                     onClick={() => removeConversation(chat._id, "interviewer")}
                     className="text-red-500 hover:text-red-700 ml-2"

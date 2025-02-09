@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaTachometerAlt,
@@ -8,14 +8,160 @@ import {
   FaCogs,
   FaRobot,
   FaQuestionCircle,
+  FaComments,
+  FaUser
 } from "react-icons/fa";
 import logo from "../assets/logo.png"; // Import the logo
+import NotificationPanel from './NotificationPanel';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import socket from "../socket"; // Adjust the path as needed
+
 
 const NavigationBar = ({ userType }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const user = location.state?.user;
+  const [notifications, setNotifications] = useState([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const panelRef = useRef(null);
+  const [onlineUsers, setOnlineUsers] = useState(new Map());
+
+
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleNotificationClick = (notificationData) => {
+    // Save notification extraData on localStorage.
+    localStorage.setItem('stateAddition', JSON.stringify(notificationData.extraData.stateAddition));
+    const updatedState = { ...location.state, refreshToken: location.state.refreshToken + 1 };
+    console.log("Updated state:", updatedState);
+    navigate(notificationData.extraData.goToRoute, {state: updatedState});
+  };
+
+  
+  useEffect(() => {
+          // Connect the socket
+          socket.connect();
+          
+          // Join the room using the user's ID (as a string)
+          if (user && user._id) {
+            socket.emit("join", user._id);
+            console.log("Socket joined room:", user._id);
+          }
+        
+          // Listen for the updateOnlineUsers event
+          socket.on("updateOnlineUsers", (onlineUsersData) => {
+            console.log("Updated online users:", onlineUsersData);
+            // Here, you can update your state.
+            // For simplicity, we store the array of online user IDs.
+            setOnlineUsers(onlineUsersData);
+          });
+
+          socket.on("user-online", (data) => {
+            console.log("User online:", data);
+          });
+
+          socket.on("user-offline", (data) => {
+            console.log("User offline:", data);
+          });
+
+          // Log when connected
+          socket.on("connect", () => {
+            console.log("Socket connected with ID:", socket.id);
+          });
+      
+          // Listen for new notifications
+          socket.on("newNotification", (notificationData) => {
+          toast.info(
+            <div className="flex items-center space-x-2">
+            {notificationData.type === "chat" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+              </div>
+            ) : notificationData.type === "apply" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+              </div>
+            ) : null}
+              <span>
+                {notificationData.message.length > 30
+                  ? notificationData.message.slice(0, 30) + "..."
+                  : notificationData.message}
+              </span>
+              </div>,
+            {
+              onClick: () => {
+                handleNotificationClick(notificationData);
+              },
+              autoClose: 5000,
+              pauseOnHover: true,
+              draggable: true,
+              closeButton: false,
+              closeOnClick: true,
+              pauseOnFocusLoss: true,
+              icon: false,
+              toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+            }
+          );
+          
+
+          fetchNotifications();
+          });
+          // Clean up on component unmount
+          return () => {
+          socket.off("updateOnlineUsers");
+          socket.off("newNotification");
+          socket.disconnect();
+          };
+      }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        const errorMessage = `Error ${response.status}: ${response.statusText}`;
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      setNotifications(data.notifications);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error.message);
+    }
+  };
+    
+  // Close the panel if a click occurs outside of it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        setPanelOpen(false);
+      }
+    };
+
+    if (panelOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [panelOpen]);
+
+  useEffect(() => {;
+    fetchNotifications();
+  }, []);
 
   // Function to determine active styling
   const isActive = (path) =>
@@ -77,14 +223,31 @@ const NavigationBar = ({ userType }) => {
           </button>
         )}
 
-        <button
-          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-            "/notifications"
-          )}`}
-          onClick={() => navigate("/notifications", { state: location.state })}
-        >
-          <FaBell className="mr-2" /> Notifications
-        </button>
+        
+<div className="relative">
+      <button 
+        className="flex items-center px-4 py-2 rounded font-medium transition duration-300 text-brand-secondary"
+        onClick={() => setPanelOpen(!panelOpen)}
+      >
+        <FaBell className="text-xl" />
+        {notifications.length > 0 && (
+          <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+            {notifications.length}
+          </span>
+        )}
+      </button>
+      {panelOpen && (
+        <div ref={panelRef}>
+          <NotificationPanel 
+            notifications={notifications}
+            setNotifications={setNotifications}
+            onClose={() => setPanelOpen(false)}
+            handleNotificationClick={handleNotificationClick}
+          />
+        </div>
+      )}
+    </div>
+
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
             "/messages"
@@ -138,5 +301,4 @@ const NavigationBar = ({ userType }) => {
     </div>
   );
 };
-
 export default NavigationBar;

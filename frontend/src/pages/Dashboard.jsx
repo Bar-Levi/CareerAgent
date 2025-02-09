@@ -1,15 +1,14 @@
 import JobCandidateDashboard from "../jobCandidate/Dashboard/pages/JobCandidateDashboard";
-import RecruiterDashboard from "../recruiterDashboard/pages/RecruiterDashboard";
+import RecruiterDashboard from "../recruiter/pages/RecruiterDashboard";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Dashboard = () => {
-    console.log("Dashboard");
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { state } = useLocation();
-    console.log("Dashboard state: " + JSON.stringify(state));
+    console.log("State: ", state);
     const email = state?.email; // Email from navigation state
     const role = state?.role;
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
@@ -88,10 +87,11 @@ const Dashboard = () => {
         }
     };
 
+    
+    
     // Verify user and fetch details on mount
     useEffect(() => {
         const handleUserVerification = async () => {
-            console.log("Handling user verification");
             if (!email) {
                 navigate("/authentication");
                 return;
@@ -116,7 +116,6 @@ const Dashboard = () => {
                 setUserData(userDetails);
                 state.isVerified = true;
             } else {
-                console.log("Navigate to /verify");
                 navigate("/verify", {
                     state: {
                         ...state,
@@ -128,7 +127,6 @@ const Dashboard = () => {
             }
         };
 
-        console.log("State: " + JSON.stringify(state));
         if (!state.isVerified) handleUserVerification();
     }, [email, token, navigate]);
 

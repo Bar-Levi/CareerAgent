@@ -16,7 +16,9 @@ const {
   resetLoginAttempts,
   uploadCV,
   logout,
-  checkBlacklist
+  checkBlacklist,
+  deleteNotification,
+  deleteAllNotifications
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -44,5 +46,9 @@ router.get("/user-details", protect, generalLimiter, getUserDetails);
 
 // Route for CV upload
 router.patch("/upload-cv/:id", protect, upload.single("cv"), uploadCV);
+
+// Route for notification delete
+router.delete("/delete-notification/:userId/:notificationId", protect, generalLimiter, deleteNotification);
+router.delete("/delete-all-notifications/:userId", protect, generalLimiter, deleteAllNotifications);
 
 module.exports = router;

@@ -15,9 +15,7 @@ function calculateJobMatch(userData, jobListing) {
   userData.work_experience.forEach((experience) => {
     // Normalize the job titles
     const normalizedUserJobTitle = normalizeText(experience.job_title);
-    console.log('Normailzed :', normalizedUserJobTitle)
     const normalizedJobListingRole = normalizeText(jobListing.jobRole);
-    console.log('Normailzed :', normalizedJobListingRole)
 
 
     // Tokenize and match based on subset of tokens

@@ -1,9 +1,35 @@
 const mongoose = require('mongoose');
 
+// Create a new schema for notifications
+const notificationSchema = new mongoose.Schema({
+    type: {
+        type: String,
+        required: true,
+    },
+    message: {
+        type: String,
+        required: true,
+    },
+    read: {
+        type: Boolean,
+        default: false,
+    },
+    date: {
+        type: Date,
+        default: Date.now,
+    },
+    extraData: {
+        type: {},
+        required: false
+    }
+});
+
+
 const jobSeekerSchema = new mongoose.Schema({
     fullName: {
         type: String,
         trim: true,
+        required: [true, 'Full name is required'],
     },
     email: {
         type: String,
@@ -16,7 +42,7 @@ const jobSeekerSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        minlength: [6, 'Password must be at least 6 characters long'],
+        minlength: [8, 'Password must be at least 8 characters long'],
     },
     role: {
         type: String,
@@ -84,7 +110,8 @@ const jobSeekerSchema = new mongoose.Schema({
     analyzed_cv_content: {
         type: {},
         required: false,
-    }
+    },
+    notifications: [notificationSchema],
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes

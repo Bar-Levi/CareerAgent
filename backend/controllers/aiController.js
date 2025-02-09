@@ -23,7 +23,7 @@ async function loadSessionHistory(convId, token) {
     }
     try {
         // Call the API endpoint exposed by getMessagesByConvId
-        const response = await fetch(`${process.env.BACKEND_URL}/api/conversations/getMessagesByConvId?convId=${convId}`,
+        const response = await fetch(`${process.env.BACKEND_URL}/api/bot-conversations/getMessagesByConvId?convId=${convId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

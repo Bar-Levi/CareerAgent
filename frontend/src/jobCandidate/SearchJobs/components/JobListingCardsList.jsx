@@ -12,7 +12,8 @@ const JobListingCardsList = ({
   showNotification,
   setJobListingsCount,
   sortingMethod,
-  setEducationListedOptions
+  setEducationListedOptions,
+  setCurrentOpenConversationId
 }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -85,7 +86,6 @@ useEffect(() => {
           .flat() // Flatten the nested arrays into a single array
       )
     );
-    console.log("Education options:", listedOptions);
     setEducationListedOptions(listedOptions);
   }
 } catch (err) {
@@ -189,6 +189,7 @@ useEffect(() => {
             setUser={setUser}
             setShowModal={setShowModal}
             showNotification={showNotification}
+            setCurrentOpenConversationId={setCurrentOpenConversationId}
           />
         </div>
       ))}

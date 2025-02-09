@@ -88,21 +88,59 @@ const Hero = () => {
 
         {/* Down Arrow */}
         <motion.div
+          onClick={() => {
+            document.getElementById("features-section")?.scrollIntoView({
+              behavior: "smooth",
+            });
+          }}
           animate={{ y: [0, 10, 0] }}
           transition={{
             duration: 1.5,
             repeat: Infinity,
             repeatType: "loop",
           }}
-          className="flex justify-center mt-8"
+          className="relative flex flex-col items-center mt-8 cursor-pointer"
         >
+          {/* First arrow */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="white"
-            className="w-16 h-16"
+            className="w-8 h-8 absolute top-0"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 12.75L12 20.25L4.5 12.75"
+            />
+          </svg>
+
+          {/* Second arrow */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="white"
+            className="w-12 h-12 absolute top-1"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 12.75L12 20.25L4.5 12.75"
+            />
+          </svg>
+
+          {/* Third arrow */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="white"
+            className="w-16 h-16 absolute top-2"
           >
             <path
               strokeLinecap="round"
@@ -111,6 +149,7 @@ const Hero = () => {
             />
           </svg>
         </motion.div>
+
       </div>
     </section>
   );
