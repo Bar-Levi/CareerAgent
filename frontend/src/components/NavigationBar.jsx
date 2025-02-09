@@ -49,14 +49,12 @@ const NavigationBar = ({ userType }) => {
       // Join the room using the user's ID (as a string)
       if (user && user._id) {
         socket.emit("join", user._id);
+        console.log("Joined with ID ", user._id);
         console.log("Socket joined room:", user._id);
       }
     
       // Listen for the updateOnlineUsers event
       socket.on("updateOnlineUsers", (onlineUsersData) => {
-        console.log("Updated online users:", onlineUsersData);
-        // Here, you can update your state.
-        // For simplicity, we store the array of online user IDs.
         setOnlineUsers(onlineUsersData);
       });
 

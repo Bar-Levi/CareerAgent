@@ -52,7 +52,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     }
   };
 
-  // Setup socket connection and listener for new notifications
   useEffect(() => {
     // Ensure socket is connected
     if (!socket.connected) {
@@ -62,19 +61,40 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       socket.emit("join", user._id);
       console.log("Socket joined room:", user._id);
     }
-
+  
     const handleNewNotification = (notificationData) => {
       console.log("New notification received:", notificationData);
       if (notificationData.type === "chat") {
         setMessages((prev) => [...prev, notificationData.messageObject]);
       }
     };
-
+  
+    const handleUpdateReadMessages = (readConversationId) => {
+      console.log("Received updateReadMessages event:", readConversationId);
+      console.log("currentOpenConversationId:", currentOpenConversationId);
+    
+      if (currentOpenConversationId === readConversationId) {
+        setMessages((prevMessages) => {
+          const updatedMessages = prevMessages.map((msg) =>
+           (msg.senderId === user._id ? { ...msg, read: true } : msg)
+          );
+          console.log("Updated messages:", updatedMessages);
+          return updatedMessages;
+        });
+      }
+    };
+    
+    
+  
     socket.on("newNotification", handleNewNotification);
+    socket.on("updateReadMessages", handleUpdateReadMessages);
+    
     return () => {
       socket.off("newNotification", handleNewNotification);
+      socket.off("updateReadMessages", handleUpdateReadMessages);
     };
-  }, [user]);
+  }, [user?._id, currentOpenConversationId]);
+  
 
   // Fetch messages when jobId or conversation ID changes
   useEffect(() => {
@@ -131,7 +151,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     // Optimistically update the UI
     setMessages((prev) => [...prev, newMessage]);
 
-    // Send the message to the backend
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`,
@@ -173,7 +192,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           }
         );
         
-        // Optionally update local messages state to set read: true for messages not sent by the current user.
         setMessages(prevMessages =>
           prevMessages.map(msg =>
             msg.senderId !== user._id ? { ...msg, read: true } : msg

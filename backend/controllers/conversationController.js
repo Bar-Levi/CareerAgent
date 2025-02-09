@@ -246,7 +246,7 @@ const markMessagesAsRead = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const { readerId } = req.body;
-
+    console.log("ReaderId: ", readerId);
     const conversation = await Conversation.findByIdAndUpdate(
       conversationId,
       {
@@ -263,6 +263,17 @@ const markMessagesAsRead = async (req, res) => {
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found." });
     }
+
+    const recruiterParticipantId = conversation.participants[0].toString();
+    const jobSeekerParticipantId = conversation.participants[1].toString();
+    const participantToUpdateId = readerId === recruiterParticipantId ? jobSeekerParticipantId : recruiterParticipantId;
+    console.log("ReaderId: ", readerId);
+    console.log("recruiterParticipantId: ", recruiterParticipantId);
+    console.log("jobSeekerParticipantId: ", jobSeekerParticipantId);
+    console.log("participantToUpdateId: ", participantToUpdateId);
+    const io = req.app.get("io");
+    console.log("Emitting to ", participantToUpdateId.toString());
+    io.to(participantToUpdateId.toString()).emit("updateReadMessages", conversationId);
 
     res.status(200).json({ message: "Messages marked as read", conversation });
   } catch (error) {
