@@ -37,21 +37,18 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const [dummySpacerHeight, setDummySpacerHeight] = useState(0);
 
   // Refs for scrolling.
-  const chatEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   // Ref to auto-scroll on initial load.
   const initialLoadRef = useRef(true);
 
-  // Scroll to the bottom of the chat.
+  // Scroll to the bottom of the chat container only.
   const scrollToBottom = () => {
-    // if (chatEndRef.current) {
-    //   chatEndRef.current.scrollIntoView({ behavior: "smooth" });
-    // }
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   // Load the initial (latest) messages.
-  // Assumes the API returns messages in descending order (newest first),
-  // so we reverse them for chronological display.
   const loadInitialMessages = async () => {
     if (!currentOpenConversationId) return;
     try {
@@ -64,8 +61,9 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       }
       const conversation = await response.json();
       const initialMessages = conversation.messages;
+      // Reverse the messages so that the oldest is first and the newest is last.
       setMessages(initialMessages.reverse());
-      // If we got fewer than the batch size, assume no more older messages.
+      // If we received fewer than the batch size, assume no more older messages.
       setHasMore(initialMessages.length >= MESSAGE_BATCH_SIZE);
     } catch (error) {
       console.error("Error fetching chat messages", error);
@@ -175,7 +173,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       const container = messagesContainerRef.current;
       const visibleHeight = container.clientHeight;
       const contentHeight = container.scrollHeight;
-      // If content doesn't exceed container height, add a fixed 50px spacer.
+      // If the content doesn't exceed the container height, add a fixed 50px spacer.
       if (contentHeight <= visibleHeight) {
         setDummySpacerHeight(50);
       } else {
@@ -227,6 +225,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       timestamp: new Date().toISOString(),
       attachments: attachmentData ? [attachmentData] : [],
     };
+    // Optimistically update the UI.
     setMessages((prev) => [...prev, newMessage]);
     scrollToBottom();
     try {
@@ -270,7 +269,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           : messages.map((msg, index) => (
               <MessageBubble key={index} message={msg} currentUser={user} />
             ))}
-        <div ref={chatEndRef} />
       </div>
       <InputBox onSend={sendMessage} />
     </div>
