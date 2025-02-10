@@ -66,8 +66,16 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       console.log("New notification received:", notificationData);
       if (notificationData.type === "chat") {
         setMessages((prev) => [...prev, notificationData.messageObject]);
+        if (notificationData.conversationId === currentOpenConversationId) {
+          console.log("\nEmitting messagesRead")
+          socket.emit("messagesRead", {
+            conversationId: currentOpenConversationId,
+            readerId: user._id,
+          });
+        }
       }
     };
+
   
     const handleUpdateReadMessages = (readConversationId) => {
       console.log("Received updateReadMessages event:", readConversationId);

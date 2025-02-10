@@ -38,6 +38,7 @@ app.use("/api/conversations", conversationRoutes);
 const http = require("http");
 const server = http.createServer(app);
 const socketIo = require("socket.io");
+const { markMessagesAsReadInternal } = require('./controllers/conversationController');
 const io = socketIo(server, {
   cors: {
     origin: "*",
@@ -86,6 +87,19 @@ io.on("connection", (socket) => {
 
     // Broadcast the updated online users list to all connected clients
     io.emit("updateOnlineUsers", Array.from(onlineUsers.values()));
+  });
+
+  // Listen for "messagesRead" events from the client.
+  socket.on("messagesRead", async ({ conversationId, readerId }) => {
+    console.log(`\nReceived messagesRead for conversation ${conversationId} from reader ${readerId}`);
+    try {
+      const { participantToUpdateId } = await markMessagesAsReadInternal(conversationId, readerId);
+      // Notify the other participant that messages have been read.
+      io.to(participantToUpdateId.toString()).emit("updateReadMessages", conversationId);
+      console.log(`Emitted updateReadMessages to room ${participantToUpdateId}`);
+    } catch (error) {
+      console.error("Error handling messagesRead event:", error);
+    }
   });
 
   socket.on("disconnect", () => {
