@@ -41,10 +41,11 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   // Ref to auto-scroll on initial load.
   const initialLoadRef = useRef(true);
 
-  // Scroll to the bottom of the chat container only.
+  // Scroll to the bottom of the chat container.
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
     }
   };
 
@@ -149,8 +150,10 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     };
   }, [user]);
 
-  // Load the initial batch when the chat opens or conversation changes.
+  // When the conversation changes, reset the initialLoadRef so the chat always scrolls to the bottom,
+  // then load the initial batch of messages.
   useEffect(() => {
+    initialLoadRef.current = true;
     loadInitialMessages();
   }, [jobId, currentOpenConversationId]);
 
@@ -262,6 +265,31 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       >
         {/* Dummy spacer to force scrollability */}
         {dummySpacerHeight > 0 && <div style={{ height: dummySpacerHeight }} />}
+        {/* Loading spinner when fetching older messages */}
+        {isLoadingMore && (
+          <div className="flex justify-center items-center mb-4">
+            <svg
+              className="animate-spin h-5 w-5 text-gray-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              ></path>
+            </svg>
+          </div>
+        )}
         {loading
           ? [...Array(5)].map((_, index) => (
               <MessageSkeleton key={index} isSender={index % 2 === 0} />
