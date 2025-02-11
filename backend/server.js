@@ -1,10 +1,10 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const cloudinaryRoutes = require('./routes/cloudinaryRoutes');
+const personalDetailsRoutes = require('./routes/personalDetailsRoutes'); // Added personal details routes
 const bodyParser = require("body-parser");
 const aiRoutes = require('./routes/aiRoutes');
 const botConversationRoutes = require("./routes/botConversationRoutes");
@@ -28,6 +28,7 @@ app.use(bodyParser.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
+app.use('/api/personal', personalDetailsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use("/api/bot-conversations", botConversationRoutes);
 app.use("/api/joblistings", jobListingRoutes);
@@ -44,7 +45,6 @@ const io = socketIo(server, {
     methods: ["GET", "POST"]
   }
 });
-
 
 const onlineUsers = new Map();
 
@@ -107,8 +107,6 @@ io.on("connection", (socket) => {
     console.log("Client disconnected:", socket.id);
   });
 });
-
-
 
 // Define the port and start listening only if run directly
 const PORT = process.env.PORT || 5000;
