@@ -28,7 +28,6 @@ const NavigationBar = ({ userType }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Map());
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Handle notification click event
   const handleNotificationClick = (notificationData) => {
     localStorage.setItem(
       "stateAddition",
@@ -42,78 +41,81 @@ const NavigationBar = ({ userType }) => {
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
 
-  // Socket connection and event listeners
   useEffect(() => {
     // If the socket isn't already connected, connect it.
     if (!socket.connected) {
       socket.connect();
     }
-
-    // Join room with user ID if available
+      
+    // Join the room using the user's ID (as a string)
     if (user && user._id) {
       socket.emit("join", user._id);
       console.log("Joined with ID ", user._id);
+      console.log("Socket joined room:", user._id);
     }
-
-    // Listen for online users update and other events
+  
+    // Listen for the updateOnlineUsers event
     socket.on("updateOnlineUsers", (onlineUsersData) => {
       setOnlineUsers(onlineUsersData);
     });
+
     socket.on("user-online", (data) => {
       console.log("User online:", data);
     });
+
     socket.on("user-offline", (data) => {
       console.log("User offline:", data);
     });
+
+    // Log when connected
     socket.on("connect", () => {
       console.log("Socket connected with ID:", socket.id);
     });
 
-    // Listen for new notifications and display them with react-toastify
+    // Listen for new notifications
     socket.on("newNotification", (notificationData) => {
       toast.info(
-        <div className="flex items-center space-x-2">
-          {notificationData.type === "chat" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
-            </div>
-          ) : notificationData.type === "apply" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
-            </div>
-          ) : null}
-          <span>
-            {notificationData.message.length > 30
-              ? notificationData.message.slice(0, 30) + "..."
-              : notificationData.message}
-          </span>
+      <div className="flex items-center space-x-2">
+      {notificationData.type === "chat" ? (
+        <div className="p-4 w-[10%] flex justify-center">
+          <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+        </div>
+      ) : notificationData.type === "apply" ? (
+        <div className="p-4 w-[10%] flex justify-center">
+          <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+        </div>
+      ) : null}
+        <span>
+          {notificationData.message.length > 30
+            ? notificationData.message.slice(0, 30) + "..."
+            : notificationData.message}
+        </span>
         </div>,
-        {
-          onClick: () => {
-            handleNotificationClick(notificationData);
-          },
-          autoClose: 5000,
-          pauseOnHover: true,
-          draggable: true,
-          closeButton: false,
-          closeOnClick: true,
-          pauseOnFocusLoss: true,
-          icon: false,
-          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
-        }
-      );
-      fetchNotifications();
+      {
+        onClick: () => {
+          handleNotificationClick(notificationData);
+        },
+        autoClose: 5000,
+        pauseOnHover: true,
+        draggable: true,
+        closeButton: false,
+        closeOnClick: true,
+        pauseOnFocusLoss: true,
+        icon: false,
+        toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+      }
+    );
+
+    fetchNotifications();
     });
-
-    // Clean up socket listeners on component unmount
+    // Clean up on component unmount
     return () => {
-      socket.off("updateOnlineUsers");
-      socket.off("newNotification");
-      socket.disconnect();
+    socket.off("updateOnlineUsers");
+    socket.off("newNotification");
+    socket.disconnect();
     };
-  }, [user]);
+}, [user]);
 
-  // Fetch notifications from the backend
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
@@ -140,7 +142,6 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // Close notification panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
@@ -163,13 +164,11 @@ const NavigationBar = ({ userType }) => {
     fetchNotifications();
   }, []);
 
-  // Determine active button styling based on current location
   const isActive = (path) =>
     location.pathname === path
       ? "bg-brand-primary text-brand-secondary"
       : "bg-brand-secondary text-brand-primary hover:text-brand-secondary hover:bg-brand-primary";
 
-  // Close dropdown if clicking outside of it
   useEffect(() => {
     const closeDropdown = (e) => {
       if (!e.target.closest(".dropdown")) setDropdownOpen(false);
@@ -178,7 +177,6 @@ const NavigationBar = ({ userType }) => {
     return () => document.removeEventListener("click", closeDropdown);
   }, []);
 
-  // Logout function
   const handleLogout = async () => {
     try {
       await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`, {
@@ -187,6 +185,7 @@ const NavigationBar = ({ userType }) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
+
       localStorage.clear();
       navigate("/authentication", { replace: true });
     } catch (error) {
@@ -195,12 +194,14 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // Handle Change Password - now without the old password field
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
-      // Only two fields: New Password and Confirm New Password
       html: `
+        <div style="position: relative;">
+          <i id="toggle-old-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="old-password" class="swal2-input" placeholder="Old Password" style="padding-left: 2.5rem;">
+        </div>
         <div style="position: relative;">
           <i id="toggle-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
           <input type="password" id="new-password" class="swal2-input" placeholder="New Password" style="padding-left: 2.5rem;">
@@ -214,11 +215,15 @@ const NavigationBar = ({ userType }) => {
       focusConfirm: false,
       showCancelButton: true,
       preConfirm: () => {
-        // Get new password fields
+        const oldPassword = document.getElementById("old-password").value;
         const newPassword = document.getElementById("new-password").value;
         const confirmNewPassword = document.getElementById("confirm-new-password").value;
-        if (!newPassword || !confirmNewPassword) {
-          Swal.showValidationMessage("Please enter new password and confirm new password");
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
+          Swal.showValidationMessage("Please enter old password, new password, and confirm new password");
+          return;
+        }
+        if (oldPassword === newPassword) {
+          Swal.showValidationMessage("New password cannot be the same as the old password");
           return;
         }
         if (newPassword !== confirmNewPassword) {
@@ -233,15 +238,16 @@ const NavigationBar = ({ userType }) => {
           return;
         }
         Swal.resetValidationMessage();
-        return { newPassword };
+        return { oldPassword, newPassword };
       },
       didOpen: () => {
-        // Get the input elements and strength div
+        const oldPasswordInput = document.getElementById("old-password");
         const newPasswordInput = document.getElementById("new-password");
         const confirmNewPasswordInput = document.getElementById("confirm-new-password");
         const strengthDiv = document.getElementById("password-strength");
 
-        // Add eye toggle functionality for each field, now positioned on the left
+        // Add eye toggle functionality for each field (icon positioned on the left)
+        const toggleOld = document.getElementById("toggle-old-password");
         const toggleNew = document.getElementById("toggle-new-password");
         const toggleConfirm = document.getElementById("toggle-confirm-new-password");
 
@@ -259,10 +265,23 @@ const NavigationBar = ({ userType }) => {
           });
         };
 
+        addToggleListener(toggleOld, oldPasswordInput);
         addToggleListener(toggleNew, newPasswordInput);
         addToggleListener(toggleConfirm, confirmNewPasswordInput);
 
-        // Create fixed-width indicator elements for new and confirm fields
+        // Create fixed-width indicator elements for each field so that all fields align
+        let oldIndicator = document.getElementById("old-password-indicator");
+        if (!oldIndicator) {
+          oldIndicator = document.createElement("span");
+          oldIndicator.id = "old-password-indicator";
+          oldIndicator.style.marginLeft = "8px";
+          oldIndicator.style.display = "inline-block";
+          oldIndicator.style.width = "20px";
+          oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
+        }
+        // Reserve space for the old password field by always inserting a non-breaking space.
+        oldIndicator.innerHTML = "&nbsp;";
+
         let newIndicator = document.getElementById("new-password-indicator");
         if (!newIndicator) {
           newIndicator = document.createElement("span");
@@ -364,7 +383,6 @@ const NavigationBar = ({ userType }) => {
           }
         };
 
-        // Add event listeners for input in new and confirm fields
         newPasswordInput.addEventListener("input", () => {
           Swal.resetValidationMessage();
           updateStrengthMeter();
@@ -374,8 +392,12 @@ const NavigationBar = ({ userType }) => {
           Swal.resetValidationMessage();
           updateNewAndConfirmIndicators();
         });
+        oldPasswordInput.addEventListener("input", () => {
+          Swal.resetValidationMessage();
+          updateNewAndConfirmIndicators();
+        });
 
-        // Initialize strength meter and indicators on modal open
+        // Initialize indicators on modal open
         updateStrengthMeter();
         updateNewAndConfirmIndicators();
       },
