@@ -27,10 +27,11 @@ const MessageSkeleton = ({ isSender }) => {
 };
 
 const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
-  const [messages, setMessages] = useState([]);  
-  const [loading, setLoading] = useState(true);  
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const chatEndRef = useRef(null);
 
+  // Function to fetch messages
   const fetchMessages = async () => {
     if (!currentOpenConversationId) return;
     try {
@@ -49,29 +50,67 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     } finally {
       setLoading(false);
     }
-  };    
+  };
 
   useEffect(() => {
-    // Connect the socket
-    socket.connect();
-          
-    // Join the room using the user's ID (as a string)
+    // Ensure socket is connected
+    if (!socket.connected) {
+      socket.connect();
+    }
     if (user && user._id) {
       socket.emit("join", user._id);
       console.log("Socket joined room:", user._id);
     }
-    socket.on("newNotification", (notificationData) => {
-      // Fetch messages.
-      fetchMessages();
-    });
+  
+    const handleNewNotification = (notificationData) => {
+      console.log("New notification received:", notificationData);
+      if (notificationData.type === "chat") {
+        setMessages((prev) => [...prev, notificationData.messageObject]);
+        if (notificationData.conversationId === currentOpenConversationId) {
+          console.log("\nEmitting messagesRead")
+          socket.emit("messagesRead", {
+            conversationId: currentOpenConversationId,
+            readerId: user._id,
+          });
+        }
+      }
+    };
 
-  }, []);
+  
+    const handleUpdateReadMessages = (readConversationId) => {
+      console.log("Received updateReadMessages event:", readConversationId);
+      console.log("currentOpenConversationId:", currentOpenConversationId);
+    
+      if (currentOpenConversationId === readConversationId) {
+        setMessages((prevMessages) => {
+          const updatedMessages = prevMessages.map((msg) =>
+           (msg.senderId === user._id ? { ...msg, read: true } : msg)
+          );
+          console.log("Updated messages:", updatedMessages);
+          return updatedMessages;
+        });
+      }
+    };
+    
+    
+  
+    socket.on("newNotification", handleNewNotification);
+    socket.on("updateReadMessages", handleUpdateReadMessages);
+    
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+      socket.off("updateReadMessages", handleUpdateReadMessages);
+    };
+  }, [user?._id, currentOpenConversationId]);
+  
 
+  // Fetch messages when jobId or conversation ID changes
   useEffect(() => {
     fetchMessages();
   }, [jobId, currentOpenConversationId]);
 
-  const sendMessage = async ({ text, file }) => {
+  // Function to send a message
+  const sendMessage = async ({ text , file }) => {
     let attachmentData = null;
 
     // If a file is attached, upload it to Cloudinary
@@ -79,7 +118,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       try {
         const formData = new FormData();
         formData.append("file", file);
-        // Pass the conversation id as folder so the file is stored there
         formData.append("folder", currentOpenConversationId);
 
         const uploadResponse = await fetch(
@@ -87,7 +125,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           {
             method: "POST",
             body: formData,
-          } 
+          }
         );
 
         if (!uploadResponse.ok) {
@@ -107,7 +145,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       }
     }
 
-    // Create the new message object including attachments if any
+    // Create the new message object
     const newMessage = {
       senderId: user._id,
       senderRole: user.role,
@@ -121,7 +159,6 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     // Optimistically update the UI
     setMessages((prev) => [...prev, newMessage]);
 
-    // Send the message to your backend
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`,
@@ -142,17 +179,47 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       console.log("Message sent successfully:", data);
     } catch (error) {
       console.error("Error sending message", error);
-      // Optionally revert the optimistic UI update here
     }
   };
 
+  useEffect(() => {
+    if (!currentOpenConversationId) return;
+  
+    const markMessagesAsRead = async () => {
+      try {
+        // Call your backend API to mark messages as read
+        await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/markAsRead`, 
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ readerId: user._id })
+          }
+        );
+        
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.senderId !== user._id ? { ...msg, read: true } : msg
+          )
+        );
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+  
+    markMessagesAsRead();
+  }, [currentOpenConversationId, user._id]);
+  
   return (
     <div className="w-full h-full max-w-lg md:max-w-xl lg:max-w-2xl border border-gray-300 rounded-lg bg-white shadow-lg dark:bg-gray-800 flex flex-col">
       <div className="m-2 flex justify-center bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
         <span className="font-semibold text-gray-800 dark:text-gray-300">
           Chat with {job.recruiterName}
         </span>
-      </div>    
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {loading
           ? [...Array(5)].map((_, index) => (
