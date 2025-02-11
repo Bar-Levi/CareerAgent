@@ -32,6 +32,7 @@ const createApplicant = async (req, res) => {
       console.log("Notification added to reciever:", reciever.email);
       // Retrieve the Socket.IO instance from the app and emit the notification event.
       const io = req.app.get("io");
+
       // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
       io.to(reciever._id.toString()).emit("newNotification", newNotification);
       console.log("Emitting notification to: " + reciever._id);
