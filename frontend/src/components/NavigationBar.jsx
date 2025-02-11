@@ -33,7 +33,10 @@ const NavigationBar = ({ userType }) => {
       "stateAddition",
       JSON.stringify(notificationData.extraData.stateAddition)
     );
-    const updatedState = { ...location.state, refreshToken: location.state.refreshToken + 1 };
+    const updatedState = {
+      ...location.state,
+      refreshToken: location.state.refreshToken + 1,
+    };
     console.log("Updated state:", updatedState);
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
@@ -188,9 +191,18 @@ const NavigationBar = ({ userType }) => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
       html: `
-        <input type="password" id="old-password" class="swal2-input" placeholder="Old Password">
-        <input type="password" id="new-password" class="swal2-input" placeholder="New Password">
-        <input type="password" id="confirm-new-password" class="swal2-input" placeholder="Confirm New Password">
+        <div style="position: relative;">
+          <i id="toggle-old-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="old-password" class="swal2-input" placeholder="Old Password" style="padding-left: 2.5rem;">
+        </div>
+        <div style="position: relative;">
+          <i id="toggle-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="new-password" class="swal2-input" placeholder="New Password" style="padding-left: 2.5rem;">
+        </div>
+        <div style="position: relative;">
+          <i id="toggle-confirm-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="confirm-new-password" class="swal2-input" placeholder="Confirm New Password" style="padding-left: 2.5rem;">
+        </div>
         <div id="password-strength" style="margin-top:10px; text-align:left; font-size:0.9rem;"></div>
       `,
       focusConfirm: false,
@@ -227,7 +239,30 @@ const NavigationBar = ({ userType }) => {
         const confirmNewPasswordInput = document.getElementById("confirm-new-password");
         const strengthDiv = document.getElementById("password-strength");
 
-        // Create fixed-width indicator elements for old, new, and confirm fields
+        // Add eye toggle functionality for each field (icon positioned on the left)
+        const toggleOld = document.getElementById("toggle-old-password");
+        const toggleNew = document.getElementById("toggle-new-password");
+        const toggleConfirm = document.getElementById("toggle-confirm-new-password");
+
+        const addToggleListener = (toggleElem, inputElem) => {
+          toggleElem.addEventListener("click", () => {
+            if (inputElem.type === "password") {
+              inputElem.type = "text";
+              toggleElem.classList.remove("fa-eye-slash");
+              toggleElem.classList.add("fa-eye");
+            } else {
+              inputElem.type = "password";
+              toggleElem.classList.remove("fa-eye");
+              toggleElem.classList.add("fa-eye-slash");
+            }
+          });
+        };
+
+        addToggleListener(toggleOld, oldPasswordInput);
+        addToggleListener(toggleNew, newPasswordInput);
+        addToggleListener(toggleConfirm, confirmNewPasswordInput);
+
+        // Create fixed-width indicator elements for each field so that all fields align
         let oldIndicator = document.getElementById("old-password-indicator");
         if (!oldIndicator) {
           oldIndicator = document.createElement("span");
@@ -237,8 +272,8 @@ const NavigationBar = ({ userType }) => {
           oldIndicator.style.width = "20px";
           oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
         }
-        // Even though we do not want any icon for the old password field, we set it empty to reserve space.
-        oldIndicator.innerHTML = "";
+        // Reserve space for the old password field by always inserting a non-breaking space.
+        oldIndicator.innerHTML = "&nbsp;";
 
         let newIndicator = document.getElementById("new-password-indicator");
         if (!newIndicator) {
@@ -323,7 +358,7 @@ const NavigationBar = ({ userType }) => {
           `;
         };
 
-        // Update the new and confirm password indicators together.
+        // Update new and confirm password indicators together:
         const updateNewAndConfirmIndicators = () => {
           const newPwd = newPasswordInput.value;
           const confirmPwd = confirmNewPasswordInput.value;
@@ -341,7 +376,6 @@ const NavigationBar = ({ userType }) => {
           }
         };
 
-        // Add event listeners for input in new and confirm fields to update indicators and reset validation messages
         newPasswordInput.addEventListener("input", () => {
           Swal.resetValidationMessage();
           updateStrengthMeter();
@@ -351,16 +385,12 @@ const NavigationBar = ({ userType }) => {
           Swal.resetValidationMessage();
           updateNewAndConfirmIndicators();
         });
-
-        // No indicator is needed for old password, but we maintain its fixed-width element.
         oldPasswordInput.addEventListener("input", () => {
           Swal.resetValidationMessage();
-          // Always clear the old password indicator.
-          oldIndicator.innerHTML = "";
           updateNewAndConfirmIndicators();
         });
 
-        // Initialize all indicators when the modal opens
+        // Initialize indicators on modal open
         updateStrengthMeter();
         updateNewAndConfirmIndicators();
       },
