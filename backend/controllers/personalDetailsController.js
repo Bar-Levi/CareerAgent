@@ -6,7 +6,6 @@ const recruiterModel = require('../models/recruiterModel');
 /**
  * Controller to change a user's password.
  * Expects the following in the request body:
- * - oldPassword: the user's current password.
  * - newPassword: the new password the user wants to set.
  *
  * Assumes the user is authenticated via the protect middleware,
@@ -14,16 +13,15 @@ const recruiterModel = require('../models/recruiterModel');
  */
 const changePassword = async (req, res) => {
   try {
-    console.log("here");
     // Extract user info from req.user
     const { id } = req.user;
     
-    // Extract passwords from request body
-    const { oldPassword, newPassword } = req.body;
+    // Extract the new password from the request body
+    const { newPassword } = req.body;
     
-    // Validate required fields
-    if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: "Old password and new password are required." });
+    // Validate required field
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required." });
     }
     
     // Retrieve the user from one of the two models
@@ -36,14 +34,10 @@ const changePassword = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
     
-    // Verify the old password matches the stored hashed password
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Old password is incorrect." });
-    }
-
-    // Check that the new password is not equal to the old password
-    if (oldPassword === newPassword) {
+    // Check that the new password is not equal to the user's current password.
+    // This is done by comparing the new password with the stored hashed password.
+    const isMatch = await bcrypt.compare(newPassword, user.password);
+    if (isMatch) {
       return res.status(400).json({ message: "New password cannot equal the old password." });
     }
     
