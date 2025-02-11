@@ -51,7 +51,6 @@ const MessageBubble = ({ message, currentUser }) => {
     );
   };
 
-  
   return (
     <div
       className={`flex items-start mb-4 ${isSender ? "justify-end" : "justify-start"}`}
