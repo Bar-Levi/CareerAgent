@@ -90,8 +90,7 @@ const NavigationBar = ({ userType }) => {
           closeOnClick: true,
           pauseOnFocusLoss: true,
           icon: false,
-          toastClassName:
-            "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
         }
       );
       fetchNotifications();
@@ -103,13 +102,11 @@ const NavigationBar = ({ userType }) => {
     };
   }, [user]);
 
-  // Fetch notifications from the backend
+  // Fetch notifications from backend
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
-          user.email
-        )}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
         {
           method: "GET",
           headers: {
@@ -182,7 +179,7 @@ const NavigationBar = ({ userType }) => {
 
   // ---------- Profile Picture Functions ----------
 
-  // Helper: Fetch current profile picture URL from backend
+  // Helper: Fetch current profile picture URL from backend (with Bearer token)
   const getCurrentProfilePic = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -204,10 +201,10 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // Function to open a modern modal for changing profile picture with white background preview
+  // Function to open a modern modal for changing profile picture with white background
   const handleChangeProfilePic = async () => {
     const currentPic = await getCurrentProfilePic();
-    const { value: action } = await Swal.fire({
+    const { value: result } = await Swal.fire({
       title: "Change Profile Picture",
       html: `
         <div class="flex flex-col items-center bg-white p-4 rounded-lg">
@@ -225,18 +222,41 @@ const NavigationBar = ({ userType }) => {
       showCancelButton: true,
       confirmButtonText: "OK",
       preConfirm: async () => {
-        Swal.showLoading(); // Display a loading indicator during processing
+        Swal.showLoading(); // Force a loading indicator until the request completes
+        const token = localStorage.getItem("token");
         const changeClicked = document.getElementById("change-btn").dataset.action === "change";
         const deleteClicked = document.getElementById("delete-btn").dataset.action === "delete";
+
         if (deleteClicked) {
-          return { action: "delete" };
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Failed to delete profile picture");
+          return { action: "delete", message: data.message };
         }
         if (changeClicked) {
           const fileInput = document.getElementById("profile-input");
           if (fileInput.files.length === 0) {
             Swal.showValidationMessage("Please select a file.");
           } else {
-            return { action: "change", file: fileInput.files[0] };
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            const response = await fetch(
+              `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-profile-pic`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+              }
+            );
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Failed to update profile picture");
+            return { action: "change", message: data.message };
           }
         }
         return null;
@@ -247,7 +267,7 @@ const NavigationBar = ({ userType }) => {
         const fileInput = document.getElementById("profile-input");
         const previewImg = document.getElementById("profile-preview");
 
-        // Initialize data-action attributes for buttons
+        // Initialize data-action attributes
         changeBtn.dataset.action = "";
         deleteBtn.dataset.action = "";
 
@@ -276,9 +296,8 @@ const NavigationBar = ({ userType }) => {
           previewImg.src = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
         });
 
-        // When clicking the preview image, open a fullscreen overlay preview without closing the modal
+        // When clicking the preview image, open a full-screen overlay preview (without closing the modal)
         previewImg.addEventListener("click", () => {
-          // Create a full-screen overlay
           const overlay = document.createElement("div");
           overlay.style.position = "fixed";
           overlay.style.top = "0";
@@ -291,14 +310,12 @@ const NavigationBar = ({ userType }) => {
           overlay.style.justifyContent = "center";
           overlay.style.zIndex = "9999";
 
-          // Create an image element for fullscreen preview
           const fullImg = document.createElement("img");
           fullImg.src = previewImg.src;
           fullImg.style.maxWidth = "90%";
           fullImg.style.maxHeight = "90%";
           fullImg.style.borderRadius = "10px";
 
-          // Create a close button for the overlay
           const closeBtn = document.createElement("button");
           closeBtn.textContent = "Close Preview";
           closeBtn.style.position = "absolute";
@@ -321,49 +338,16 @@ const NavigationBar = ({ userType }) => {
       }
     });
 
-    if (action) {
-      if (action.action === "delete") {
-        try {
-          const token = localStorage.getItem("token");
-          const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
-            {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          const data = await response.json();
-          if (!response.ok)
-            throw new Error(data.message || "Failed to delete profile picture");
-          Swal.fire("Deleted!", data.message, "success");
-        } catch (error) {
-          Swal.fire("Error", error.message, "error");
-        }
-      } else if (action.action === "change") {
-        try {
-          const token = localStorage.getItem("token");
-          const formData = new FormData();
-          formData.append("file", action.file);
-          const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-profile-pic`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
-              body: formData,
-            }
-          );
-          const data = await response.json();
-          if (!response.ok)
-            throw new Error(data.message || "Failed to update profile picture");
-          Swal.fire("Updated!", data.message, "success");
-        } catch (error) {
-          Swal.fire("Error", error.message, "error");
-        }
+    if (result) {
+      if (result.action === "delete") {
+        Swal.fire("Deleted!", result.message, "success");
+      } else if (result.action === "change") {
+        Swal.fire("Updated!", result.message, "success");
       }
     }
   };
 
-  // ---------- Change Password Functionality (Existing) ----------
+  // ---------- Change Password Functionality ----------
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
@@ -481,7 +465,7 @@ const NavigationBar = ({ userType }) => {
         const getStrengthText = (strength) => {
           switch (strength) {
             case 0:
-              return "Enter a password";
+              return "Enter a new password";
             case 1:
               return "Very Weak";
             case 2:
