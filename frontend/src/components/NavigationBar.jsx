@@ -41,7 +41,7 @@ const NavigationBar = ({ userType }) => {
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
 
-  // Setup socket connection and notifications
+  // Socket connection and event listeners
   useEffect(() => {
     if (!socket.connected) {
       socket.connect();
@@ -103,7 +103,7 @@ const NavigationBar = ({ userType }) => {
     };
   }, [user]);
 
-  // Fetch notifications from backend
+  // Fetch notifications from the backend
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
@@ -129,7 +129,7 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // Close notification panel if clicking outside
+  // Close notification panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
@@ -150,7 +150,7 @@ const NavigationBar = ({ userType }) => {
     fetchNotifications();
   }, []);
 
-  // Active navigation button styling
+  // Determine active navigation styling
   const isActive = (path) =>
     location.pathname === path
       ? "bg-brand-primary text-brand-secondary"
@@ -180,9 +180,9 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ---------- Change Profile Picture Functionality ----------
+  // ---------- Profile Picture Functions ----------
 
-  // Fetch the current profile picture URL from the backend
+  // Helper: Fetch current profile picture URL from backend
   const getCurrentProfilePic = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -195,37 +195,37 @@ const NavigationBar = ({ userType }) => {
           },
         }
       );
-      if (!response.ok)
-        throw new Error("Failed to fetch current profile picture");
+      if (!response.ok) throw new Error("Failed to fetch current profile picture");
       const data = await response.json();
       return data.profilePic;
     } catch (error) {
       console.error("Error fetching current profile picture:", error);
-      // Return default if there's an error
       return "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
     }
   };
 
-  // Open a modal for changing profile picture
+  // Function to open a modern modal for changing profile picture with white background preview
   const handleChangeProfilePic = async () => {
-    // Fetch current profile picture so that modal always shows the latest version
     const currentPic = await getCurrentProfilePic();
     const { value: action } = await Swal.fire({
       title: "Change Profile Picture",
       html: `
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <img id="profile-preview" src="${currentPic}" alt="Profile Picture" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;">
-          <input type="file" id="profile-input" accept="image/*" style="display: none;">
-          <div>
-            <button id="change-btn" class="swal2-styled" style="margin-right: 10px;">Change Picture</button>
-            <button id="delete-btn" class="swal2-styled">Delete Picture</button>
+        <div class="flex flex-col items-center bg-white p-4 rounded-lg">
+          <!-- Circular preview container with white background -->
+          <div class="w-36 h-36 rounded-full overflow-hidden mb-4">
+            <img id="profile-preview" src="${currentPic}" alt="Profile Picture" class="object-cover w-full h-full" style="cursor: pointer;">
+          </div>
+          <input type="file" id="profile-input" accept="image/*" class="hidden">
+          <div class="flex space-x-4">
+            <button id="change-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none">Change Picture</button>
+            <button id="delete-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none">Delete Picture</button>
           </div>
         </div>
       `,
       showCancelButton: true,
       confirmButtonText: "OK",
       preConfirm: async () => {
-        // Check which button was pressed based on custom data attributes.
+        Swal.showLoading(); // Display a loading indicator during processing
         const changeClicked = document.getElementById("change-btn").dataset.action === "change";
         const deleteClicked = document.getElementById("delete-btn").dataset.action === "delete";
         if (deleteClicked) {
@@ -269,11 +269,54 @@ const NavigationBar = ({ userType }) => {
           }
         });
 
-        // When "Delete Picture" is clicked, mark delete action and update preview to default
+        // When "Delete Picture" is clicked, mark delete action and update preview to default image
         deleteBtn.addEventListener("click", () => {
           deleteBtn.dataset.action = "delete";
           changeBtn.dataset.action = "";
           previewImg.src = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+        });
+
+        // When clicking the preview image, open a fullscreen overlay preview without closing the modal
+        previewImg.addEventListener("click", () => {
+          // Create a full-screen overlay
+          const overlay = document.createElement("div");
+          overlay.style.position = "fixed";
+          overlay.style.top = "0";
+          overlay.style.left = "0";
+          overlay.style.width = "100%";
+          overlay.style.height = "100%";
+          overlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
+          overlay.style.display = "flex";
+          overlay.style.alignItems = "center";
+          overlay.style.justifyContent = "center";
+          overlay.style.zIndex = "9999";
+
+          // Create an image element for fullscreen preview
+          const fullImg = document.createElement("img");
+          fullImg.src = previewImg.src;
+          fullImg.style.maxWidth = "90%";
+          fullImg.style.maxHeight = "90%";
+          fullImg.style.borderRadius = "10px";
+
+          // Create a close button for the overlay
+          const closeBtn = document.createElement("button");
+          closeBtn.textContent = "Close Preview";
+          closeBtn.style.position = "absolute";
+          closeBtn.style.top = "20px";
+          closeBtn.style.right = "20px";
+          closeBtn.style.padding = "10px 20px";
+          closeBtn.style.backgroundColor = "#fff";
+          closeBtn.style.border = "none";
+          closeBtn.style.borderRadius = "5px";
+          closeBtn.style.cursor = "pointer";
+
+          closeBtn.addEventListener("click", () => {
+            document.body.removeChild(overlay);
+          });
+
+          overlay.appendChild(fullImg);
+          overlay.appendChild(closeBtn);
+          document.body.appendChild(overlay);
         });
       }
     });
@@ -320,7 +363,7 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ---------- Change Password Functionality ----------
+  // ---------- Change Password Functionality (Existing) ----------
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
@@ -395,7 +438,6 @@ const NavigationBar = ({ userType }) => {
         addToggleListener(toggleNew, newPasswordInput);
         addToggleListener(toggleConfirm, confirmNewPasswordInput);
 
-        // Create fixed-width indicator elements for each field
         let oldIndicator = document.getElementById("old-password-indicator");
         if (!oldIndicator) {
           oldIndicator = document.createElement("span");
@@ -405,7 +447,6 @@ const NavigationBar = ({ userType }) => {
           oldIndicator.style.width = "20px";
           oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
         }
-        // Reserve space for old password with a non-breaking space.
         oldIndicator.innerHTML = "&nbsp;";
 
         let newIndicator = document.getElementById("new-password-indicator");
@@ -427,7 +468,6 @@ const NavigationBar = ({ userType }) => {
           confirmNewPasswordInput.parentNode.insertBefore(confirmIndicator, confirmNewPasswordInput.nextSibling);
         }
 
-        // Strength meter (same design as before)
         const calculateStrength = (pwd) => {
           let strength = 0;
           if (pwd.length >= 8) strength++;
@@ -491,7 +531,6 @@ const NavigationBar = ({ userType }) => {
           `;
         };
 
-        // Update new and confirm indicators together
         const updateNewAndConfirmIndicators = () => {
           const newPwd = newPasswordInput.value;
           const confirmPwd = confirmNewPasswordInput.value;
@@ -569,18 +608,14 @@ const NavigationBar = ({ userType }) => {
         <div className="flex items-center">
           <nav className="flex space-x-4">
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/dashboard"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/dashboard")}`}
               onClick={() => navigate("/dashboard", { state: location.state })}
             >
               <FaTachometerAlt className="mr-2" /> Dashboard
             </button>
             {userType === "jobseeker" && (
               <button
-                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                  "/searchjobs"
-                )}`}
+                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/searchjobs")}`}
                 onClick={() => navigate("/searchjobs", { state: location.state })}
               >
                 <FaBriefcase className="mr-2" /> Search Jobs
@@ -610,34 +645,26 @@ const NavigationBar = ({ userType }) => {
               )}
             </div>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/messages"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/messages")}`}
               onClick={() => navigate("/messages", { state: location.state })}
             >
               <FaEnvelope className="mr-2" /> Messages
             </button>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/chats"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/chats")}`}
               onClick={() => navigate("/chats", { state: location.state })}
             >
               <FaRobot className="mr-2" /> Chatbots
             </button>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/faq"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/faq")}`}
               onClick={() => navigate("/faq", { state: location.state })}
             >
               <FaQuestionCircle className="mr-2" /> FAQ
             </button>
             <div className="relative dropdown">
               <button
-                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                  "/settings"
-                )}`}
+                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/settings")}`}
                 onClick={() => setDropdownOpen((prev) => !prev)}
               >
                 <FaCogs className="mr-2" /> Settings
