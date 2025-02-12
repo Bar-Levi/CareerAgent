@@ -28,6 +28,7 @@ const NavigationBar = ({ userType }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Map());
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Handle notification click event
   const handleNotificationClick = (notificationData) => {
     localStorage.setItem(
       "stateAddition",
@@ -37,85 +38,72 @@ const NavigationBar = ({ userType }) => {
       ...location.state,
       refreshToken: location.state.refreshToken + 1,
     };
-    console.log("Updated state:", updatedState);
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
 
+  // Setup socket connection and notifications
   useEffect(() => {
-    // If the socket isn't already connected, connect it.
     if (!socket.connected) {
       socket.connect();
     }
-      
-    // Join the room using the user's ID (as a string)
     if (user && user._id) {
       socket.emit("join", user._id);
-      console.log("Joined with ID ", user._id);
-      console.log("Socket joined room:", user._id);
     }
-  
-    // Listen for the updateOnlineUsers event
     socket.on("updateOnlineUsers", (onlineUsersData) => {
       setOnlineUsers(onlineUsersData);
     });
-
     socket.on("user-online", (data) => {
       console.log("User online:", data);
     });
-
     socket.on("user-offline", (data) => {
       console.log("User offline:", data);
     });
-
-    // Log when connected
     socket.on("connect", () => {
       console.log("Socket connected with ID:", socket.id);
     });
-
-    // Listen for new notifications
     socket.on("newNotification", (notificationData) => {
       toast.info(
-      <div className="flex items-center space-x-2">
-      {notificationData.type === "chat" ? (
-        <div className="p-4 w-[10%] flex justify-center">
-          <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
-        </div>
-      ) : notificationData.type === "apply" ? (
-        <div className="p-4 w-[10%] flex justify-center">
-          <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
-        </div>
-      ) : null}
-        <span>
-          {notificationData.message.length > 30
-            ? notificationData.message.slice(0, 30) + "..."
-            : notificationData.message}
-        </span>
+        <div className="flex items-center space-x-2">
+          {notificationData.type === "chat" ? (
+            <div className="p-4 w-[10%] flex justify-center">
+              <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+            </div>
+          ) : notificationData.type === "apply" ? (
+            <div className="p-4 w-[10%] flex justify-center">
+              <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+            </div>
+          ) : null}
+          <span>
+            {notificationData.message.length > 30
+              ? notificationData.message.slice(0, 30) + "..."
+              : notificationData.message}
+          </span>
         </div>,
-      {
-        onClick: () => {
-          handleNotificationClick(notificationData);
-        },
-        autoClose: 5000,
-        pauseOnHover: true,
-        draggable: true,
-        closeButton: false,
-        closeOnClick: true,
-        pauseOnFocusLoss: true,
-        icon: false,
-        toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
-      }
-    );
-
-    fetchNotifications();
+        {
+          onClick: () => {
+            handleNotificationClick(notificationData);
+          },
+          autoClose: 5000,
+          pauseOnHover: true,
+          draggable: true,
+          closeButton: false,
+          closeOnClick: true,
+          pauseOnFocusLoss: true,
+          icon: false,
+          toastClassName:
+            "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+        }
+      );
+      fetchNotifications();
     });
-    // Clean up on component unmount
     return () => {
-    socket.off("updateOnlineUsers");
-    socket.off("newNotification");
-    socket.disconnect();
+      socket.off("updateOnlineUsers");
+      socket.off("newNotification");
+      socket.disconnect();
     };
-}, [user]);
+  }, [user]);
 
+  // Fetch notifications from backend
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
@@ -132,7 +120,6 @@ const NavigationBar = ({ userType }) => {
       );
       if (!response.ok) {
         const errorMessage = `Error ${response.status}: ${response.statusText}`;
-        console.error(errorMessage);
         throw new Error(errorMessage);
       }
       const data = await response.json();
@@ -142,19 +129,18 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
+  // Close notification panel if clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
         setPanelOpen(false);
       }
     };
-
     if (panelOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -164,6 +150,7 @@ const NavigationBar = ({ userType }) => {
     fetchNotifications();
   }, []);
 
+  // Active navigation button styling
   const isActive = (path) =>
     location.pathname === path
       ? "bg-brand-primary text-brand-secondary"
@@ -185,7 +172,6 @@ const NavigationBar = ({ userType }) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-
       localStorage.clear();
       navigate("/authentication", { replace: true });
     } catch (error) {
@@ -194,6 +180,147 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
+  // ---------- Change Profile Picture Functionality ----------
+
+  // Fetch the current profile picture URL from the backend
+  const getCurrentProfilePic = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok)
+        throw new Error("Failed to fetch current profile picture");
+      const data = await response.json();
+      return data.profilePic;
+    } catch (error) {
+      console.error("Error fetching current profile picture:", error);
+      // Return default if there's an error
+      return "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+    }
+  };
+
+  // Open a modal for changing profile picture
+  const handleChangeProfilePic = async () => {
+    // Fetch current profile picture so that modal always shows the latest version
+    const currentPic = await getCurrentProfilePic();
+    const { value: action } = await Swal.fire({
+      title: "Change Profile Picture",
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center;">
+          <img id="profile-preview" src="${currentPic}" alt="Profile Picture" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;">
+          <input type="file" id="profile-input" accept="image/*" style="display: none;">
+          <div>
+            <button id="change-btn" class="swal2-styled" style="margin-right: 10px;">Change Picture</button>
+            <button id="delete-btn" class="swal2-styled">Delete Picture</button>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "OK",
+      preConfirm: async () => {
+        // Check which button was pressed based on custom data attributes.
+        const changeClicked = document.getElementById("change-btn").dataset.action === "change";
+        const deleteClicked = document.getElementById("delete-btn").dataset.action === "delete";
+        if (deleteClicked) {
+          return { action: "delete" };
+        }
+        if (changeClicked) {
+          const fileInput = document.getElementById("profile-input");
+          if (fileInput.files.length === 0) {
+            Swal.showValidationMessage("Please select a file.");
+          } else {
+            return { action: "change", file: fileInput.files[0] };
+          }
+        }
+        return null;
+      },
+      didOpen: () => {
+        const changeBtn = document.getElementById("change-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+        const fileInput = document.getElementById("profile-input");
+        const previewImg = document.getElementById("profile-preview");
+
+        // Initialize data-action attributes for buttons
+        changeBtn.dataset.action = "";
+        deleteBtn.dataset.action = "";
+
+        // When "Change Picture" is clicked, trigger the file input
+        changeBtn.addEventListener("click", () => {
+          fileInput.click();
+        });
+
+        // When a file is selected, update the preview image and mark change action
+        fileInput.addEventListener("change", () => {
+          if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              previewImg.src = e.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+            changeBtn.dataset.action = "change";
+            deleteBtn.dataset.action = "";
+          }
+        });
+
+        // When "Delete Picture" is clicked, mark delete action and update preview to default
+        deleteBtn.addEventListener("click", () => {
+          deleteBtn.dataset.action = "delete";
+          changeBtn.dataset.action = "";
+          previewImg.src = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+        });
+      }
+    });
+
+    if (action) {
+      if (action.action === "delete") {
+        try {
+          const token = localStorage.getItem("token");
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const data = await response.json();
+          if (!response.ok)
+            throw new Error(data.message || "Failed to delete profile picture");
+          Swal.fire("Deleted!", data.message, "success");
+        } catch (error) {
+          Swal.fire("Error", error.message, "error");
+        }
+      } else if (action.action === "change") {
+        try {
+          const token = localStorage.getItem("token");
+          const formData = new FormData();
+          formData.append("file", action.file);
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-profile-pic`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}` },
+              body: formData,
+            }
+          );
+          const data = await response.json();
+          if (!response.ok)
+            throw new Error(data.message || "Failed to update profile picture");
+          Swal.fire("Updated!", data.message, "success");
+        } catch (error) {
+          Swal.fire("Error", error.message, "error");
+        }
+      }
+    }
+  };
+
+  // ---------- Change Password Functionality ----------
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
@@ -246,7 +373,6 @@ const NavigationBar = ({ userType }) => {
         const confirmNewPasswordInput = document.getElementById("confirm-new-password");
         const strengthDiv = document.getElementById("password-strength");
 
-        // Add eye toggle functionality for each field (icon positioned on the left)
         const toggleOld = document.getElementById("toggle-old-password");
         const toggleNew = document.getElementById("toggle-new-password");
         const toggleConfirm = document.getElementById("toggle-confirm-new-password");
@@ -269,7 +395,7 @@ const NavigationBar = ({ userType }) => {
         addToggleListener(toggleNew, newPasswordInput);
         addToggleListener(toggleConfirm, confirmNewPasswordInput);
 
-        // Create fixed-width indicator elements for each field so that all fields align
+        // Create fixed-width indicator elements for each field
         let oldIndicator = document.getElementById("old-password-indicator");
         if (!oldIndicator) {
           oldIndicator = document.createElement("span");
@@ -279,7 +405,7 @@ const NavigationBar = ({ userType }) => {
           oldIndicator.style.width = "20px";
           oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
         }
-        // Reserve space for the old password field by always inserting a non-breaking space.
+        // Reserve space for old password with a non-breaking space.
         oldIndicator.innerHTML = "&nbsp;";
 
         let newIndicator = document.getElementById("new-password-indicator");
@@ -301,7 +427,7 @@ const NavigationBar = ({ userType }) => {
           confirmNewPasswordInput.parentNode.insertBefore(confirmIndicator, confirmNewPasswordInput.nextSibling);
         }
 
-        // Strength meter for new password (same design as ResetPassword)
+        // Strength meter (same design as before)
         const calculateStrength = (pwd) => {
           let strength = 0;
           if (pwd.length >= 8) strength++;
@@ -365,7 +491,7 @@ const NavigationBar = ({ userType }) => {
           `;
         };
 
-        // Update new and confirm password indicators together:
+        // Update new and confirm indicators together
         const updateNewAndConfirmIndicators = () => {
           const newPwd = newPasswordInput.value;
           const confirmPwd = confirmNewPasswordInput.value;
@@ -397,12 +523,10 @@ const NavigationBar = ({ userType }) => {
           updateNewAndConfirmIndicators();
         });
 
-        // Initialize indicators on modal open
         updateStrengthMeter();
         updateNewAndConfirmIndicators();
       },
     });
-
     if (formValues) {
       try {
         const token = localStorage.getItem("token");
@@ -528,6 +652,15 @@ const NavigationBar = ({ userType }) => {
                     }}
                   >
                     Change Password
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      handleChangeProfilePic();
+                    }}
+                  >
+                    Change Profile Picture
                   </button>
                   <button
                     className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
