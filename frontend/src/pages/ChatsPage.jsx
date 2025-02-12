@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ChatBot from "../components/ChatBot";
 import { useLocation } from "react-router-dom";
-import NavigationBar from "../components/NavigationBar";
+import NavigationBar from "../components/NavigationBar/NavigationBar";
 import Notification from "../components/Notification";
 import Botpress from "../botpress/Botpress";
 import { FiEdit } from "react-icons/fi";
