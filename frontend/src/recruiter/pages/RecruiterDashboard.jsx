@@ -1,7 +1,7 @@
 // /pages/RecruiterDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import NavigationBar from "../../components/NavigationBar";
+import NavigationBar from "../../components/NavigationBar/NavigationBar";
 import Botpress from "../../botpress/Botpress";
 import Notification from "../../components/Notification";
 import MetricsOverview from "../components/MetricsOverview";

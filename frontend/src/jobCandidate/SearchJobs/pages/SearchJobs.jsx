@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import JobListingCardsList from "../components/JobListingCardsList";
 import SearchFilters from "../components/SearchFilters";
-import NavigationBar from "../../../components/NavigationBar";
+import NavigationBar from "../../../components/NavigationBar/NavigationBar";
 import Modal from "../components/Modal";
 import { useLocation, useNavigate } from "react-router-dom";
 import Notification from "../../../components/Notification";
