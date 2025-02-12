@@ -28,6 +28,7 @@ const NavigationBar = ({ userType }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Map());
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Handle notification click event
   const handleNotificationClick = (notificationData) => {
     localStorage.setItem(
       "stateAddition",
@@ -37,91 +38,75 @@ const NavigationBar = ({ userType }) => {
       ...location.state,
       refreshToken: location.state.refreshToken + 1,
     };
-    console.log("Updated state:", updatedState);
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
 
+  // Socket connection and event listeners
   useEffect(() => {
-    // If the socket isn't already connected, connect it.
     if (!socket.connected) {
       socket.connect();
     }
-      
-    // Join the room using the user's ID (as a string)
     if (user && user._id) {
       socket.emit("join", user._id);
-      console.log("Joined with ID ", user._id);
-      console.log("Socket joined room:", user._id);
     }
-  
-    // Listen for the updateOnlineUsers event
     socket.on("updateOnlineUsers", (onlineUsersData) => {
       setOnlineUsers(onlineUsersData);
     });
-
     socket.on("user-online", (data) => {
       console.log("User online:", data);
     });
-
     socket.on("user-offline", (data) => {
       console.log("User offline:", data);
     });
-
-    // Log when connected
     socket.on("connect", () => {
       console.log("Socket connected with ID:", socket.id);
     });
-
-    // Listen for new notifications
     socket.on("newNotification", (notificationData) => {
       toast.info(
-      <div className="flex items-center space-x-2">
-      {notificationData.type === "chat" ? (
-        <div className="p-4 w-[10%] flex justify-center">
-          <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
-        </div>
-      ) : notificationData.type === "apply" ? (
-        <div className="p-4 w-[10%] flex justify-center">
-          <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
-        </div>
-      ) : null}
-        <span>
-          {notificationData.message.length > 30
-            ? notificationData.message.slice(0, 30) + "..."
-            : notificationData.message}
-        </span>
+        <div className="flex items-center space-x-2">
+          {notificationData.type === "chat" ? (
+            <div className="p-4 w-[10%] flex justify-center">
+              <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+            </div>
+          ) : notificationData.type === "apply" ? (
+            <div className="p-4 w-[10%] flex justify-center">
+              <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+            </div>
+          ) : null}
+          <span>
+            {notificationData.message.length > 30
+              ? notificationData.message.slice(0, 30) + "..."
+              : notificationData.message}
+          </span>
         </div>,
-      {
-        onClick: () => {
-          handleNotificationClick(notificationData);
-        },
-        autoClose: 5000,
-        pauseOnHover: true,
-        draggable: true,
-        closeButton: false,
-        closeOnClick: true,
-        pauseOnFocusLoss: true,
-        icon: false,
-        toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
-      }
-    );
-
-    fetchNotifications();
+        {
+          onClick: () => {
+            handleNotificationClick(notificationData);
+          },
+          autoClose: 5000,
+          pauseOnHover: true,
+          draggable: true,
+          closeButton: false,
+          closeOnClick: true,
+          pauseOnFocusLoss: true,
+          icon: false,
+          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+        }
+      );
+      fetchNotifications();
     });
-    // Clean up on component unmount
     return () => {
-    socket.off("updateOnlineUsers");
-    socket.off("newNotification");
-    socket.disconnect();
+      socket.off("updateOnlineUsers");
+      socket.off("newNotification");
+      socket.disconnect();
     };
-}, [user]);
+  }, [user]);
 
+  // Fetch notifications from backend
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
-          user.email
-        )}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
         {
           method: "GET",
           headers: {
@@ -132,7 +117,6 @@ const NavigationBar = ({ userType }) => {
       );
       if (!response.ok) {
         const errorMessage = `Error ${response.status}: ${response.statusText}`;
-        console.error(errorMessage);
         throw new Error(errorMessage);
       }
       const data = await response.json();
@@ -142,19 +126,18 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
+  // Close notification panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
         setPanelOpen(false);
       }
     };
-
     if (panelOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -164,6 +147,7 @@ const NavigationBar = ({ userType }) => {
     fetchNotifications();
   }, []);
 
+  // Determine active navigation styling
   const isActive = (path) =>
     location.pathname === path
       ? "bg-brand-primary text-brand-secondary"
@@ -185,7 +169,6 @@ const NavigationBar = ({ userType }) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-
       localStorage.clear();
       navigate("/authentication", { replace: true });
     } catch (error) {
@@ -194,6 +177,177 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
+  // ---------- Profile Picture Functions ----------
+
+  // Helper: Fetch current profile picture URL from backend (with Bearer token)
+  const getCurrentProfilePic = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch current profile picture");
+      const data = await response.json();
+      return data.profilePic;
+    } catch (error) {
+      console.error("Error fetching current profile picture:", error);
+      return "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+    }
+  };
+
+  // Function to open a modern modal for changing profile picture with white background
+  const handleChangeProfilePic = async () => {
+    const currentPic = await getCurrentProfilePic();
+    const { value: result } = await Swal.fire({
+      title: "Change Profile Picture",
+      html: `
+        <div class="flex flex-col items-center bg-white p-4 rounded-lg">
+          <!-- Circular preview container with white background -->
+          <div class="w-36 h-36 rounded-full overflow-hidden mb-4">
+            <img id="profile-preview" src="${currentPic}" alt="Profile Picture" class="object-cover w-full h-full" style="cursor: pointer;">
+          </div>
+          <input type="file" id="profile-input" accept="image/*" class="hidden">
+          <div class="flex space-x-4">
+            <button id="change-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none">Change Picture</button>
+            <button id="delete-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none">Delete Picture</button>
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "OK",
+      preConfirm: async () => {
+        Swal.showLoading(); // Force a loading indicator until the request completes
+        const token = localStorage.getItem("token");
+        const changeClicked = document.getElementById("change-btn").dataset.action === "change";
+        const deleteClicked = document.getElementById("delete-btn").dataset.action === "delete";
+
+        if (deleteClicked) {
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Failed to delete profile picture");
+          return { action: "delete", message: data.message };
+        }
+        if (changeClicked) {
+          const fileInput = document.getElementById("profile-input");
+          if (fileInput.files.length === 0) {
+            Swal.showValidationMessage("Please select a file.");
+          } else {
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+            const response = await fetch(
+              `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-profile-pic`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+              }
+            );
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Failed to update profile picture");
+            return { action: "change", message: data.message };
+          }
+        }
+        return null;
+      },
+      didOpen: () => {
+        const changeBtn = document.getElementById("change-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+        const fileInput = document.getElementById("profile-input");
+        const previewImg = document.getElementById("profile-preview");
+
+        // Initialize data-action attributes
+        changeBtn.dataset.action = "";
+        deleteBtn.dataset.action = "";
+
+        // When "Change Picture" is clicked, trigger the file input
+        changeBtn.addEventListener("click", () => {
+          fileInput.click();
+        });
+
+        // When a file is selected, update the preview image and mark change action
+        fileInput.addEventListener("change", () => {
+          if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              previewImg.src = e.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+            changeBtn.dataset.action = "change";
+            deleteBtn.dataset.action = "";
+          }
+        });
+
+        // When "Delete Picture" is clicked, mark delete action and update preview to default image
+        deleteBtn.addEventListener("click", () => {
+          deleteBtn.dataset.action = "delete";
+          changeBtn.dataset.action = "";
+          previewImg.src = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+        });
+
+        // When clicking the preview image, open a full-screen overlay preview (without closing the modal)
+        previewImg.addEventListener("click", () => {
+          const overlay = document.createElement("div");
+          overlay.style.position = "fixed";
+          overlay.style.top = "0";
+          overlay.style.left = "0";
+          overlay.style.width = "100%";
+          overlay.style.height = "100%";
+          overlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
+          overlay.style.display = "flex";
+          overlay.style.alignItems = "center";
+          overlay.style.justifyContent = "center";
+          overlay.style.zIndex = "9999";
+
+          const fullImg = document.createElement("img");
+          fullImg.src = previewImg.src;
+          fullImg.style.maxWidth = "90%";
+          fullImg.style.maxHeight = "90%";
+          fullImg.style.borderRadius = "10px";
+
+          const closeBtn = document.createElement("button");
+          closeBtn.textContent = "Close Preview";
+          closeBtn.style.position = "absolute";
+          closeBtn.style.top = "20px";
+          closeBtn.style.right = "20px";
+          closeBtn.style.padding = "10px 20px";
+          closeBtn.style.backgroundColor = "#fff";
+          closeBtn.style.border = "none";
+          closeBtn.style.borderRadius = "5px";
+          closeBtn.style.cursor = "pointer";
+
+          closeBtn.addEventListener("click", () => {
+            document.body.removeChild(overlay);
+          });
+
+          overlay.appendChild(fullImg);
+          overlay.appendChild(closeBtn);
+          document.body.appendChild(overlay);
+        });
+      }
+    });
+
+    if (result) {
+      if (result.action === "delete") {
+        Swal.fire("Deleted!", result.message, "success");
+      } else if (result.action === "change") {
+        Swal.fire("Updated!", result.message, "success");
+      }
+    }
+  };
+
+  // ---------- Change Password Functionality ----------
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
@@ -246,7 +400,6 @@ const NavigationBar = ({ userType }) => {
         const confirmNewPasswordInput = document.getElementById("confirm-new-password");
         const strengthDiv = document.getElementById("password-strength");
 
-        // Add eye toggle functionality for each field (icon positioned on the left)
         const toggleOld = document.getElementById("toggle-old-password");
         const toggleNew = document.getElementById("toggle-new-password");
         const toggleConfirm = document.getElementById("toggle-confirm-new-password");
@@ -269,7 +422,6 @@ const NavigationBar = ({ userType }) => {
         addToggleListener(toggleNew, newPasswordInput);
         addToggleListener(toggleConfirm, confirmNewPasswordInput);
 
-        // Create fixed-width indicator elements for each field so that all fields align
         let oldIndicator = document.getElementById("old-password-indicator");
         if (!oldIndicator) {
           oldIndicator = document.createElement("span");
@@ -279,7 +431,6 @@ const NavigationBar = ({ userType }) => {
           oldIndicator.style.width = "20px";
           oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
         }
-        // Reserve space for the old password field by always inserting a non-breaking space.
         oldIndicator.innerHTML = "&nbsp;";
 
         let newIndicator = document.getElementById("new-password-indicator");
@@ -301,7 +452,6 @@ const NavigationBar = ({ userType }) => {
           confirmNewPasswordInput.parentNode.insertBefore(confirmIndicator, confirmNewPasswordInput.nextSibling);
         }
 
-        // Strength meter for new password (same design as ResetPassword)
         const calculateStrength = (pwd) => {
           let strength = 0;
           if (pwd.length >= 8) strength++;
@@ -315,7 +465,7 @@ const NavigationBar = ({ userType }) => {
         const getStrengthText = (strength) => {
           switch (strength) {
             case 0:
-              return "Enter a password";
+              return "Enter a new password";
             case 1:
               return "Very Weak";
             case 2:
@@ -365,7 +515,6 @@ const NavigationBar = ({ userType }) => {
           `;
         };
 
-        // Update new and confirm password indicators together:
         const updateNewAndConfirmIndicators = () => {
           const newPwd = newPasswordInput.value;
           const confirmPwd = confirmNewPasswordInput.value;
@@ -397,12 +546,10 @@ const NavigationBar = ({ userType }) => {
           updateNewAndConfirmIndicators();
         });
 
-        // Initialize indicators on modal open
         updateStrengthMeter();
         updateNewAndConfirmIndicators();
       },
     });
-
     if (formValues) {
       try {
         const token = localStorage.getItem("token");
@@ -445,18 +592,14 @@ const NavigationBar = ({ userType }) => {
         <div className="flex items-center">
           <nav className="flex space-x-4">
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/dashboard"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/dashboard")}`}
               onClick={() => navigate("/dashboard", { state: location.state })}
             >
               <FaTachometerAlt className="mr-2" /> Dashboard
             </button>
             {userType === "jobseeker" && (
               <button
-                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                  "/searchjobs"
-                )}`}
+                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/searchjobs")}`}
                 onClick={() => navigate("/searchjobs", { state: location.state })}
               >
                 <FaBriefcase className="mr-2" /> Search Jobs
@@ -486,34 +629,26 @@ const NavigationBar = ({ userType }) => {
               )}
             </div>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/messages"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/messages")}`}
               onClick={() => navigate("/messages", { state: location.state })}
             >
               <FaEnvelope className="mr-2" /> Messages
             </button>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/chats"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/chats")}`}
               onClick={() => navigate("/chats", { state: location.state })}
             >
               <FaRobot className="mr-2" /> Chatbots
             </button>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                "/faq"
-              )}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/faq")}`}
               onClick={() => navigate("/faq", { state: location.state })}
             >
               <FaQuestionCircle className="mr-2" /> FAQ
             </button>
             <div className="relative dropdown">
               <button
-                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-                  "/settings"
-                )}`}
+                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/settings")}`}
                 onClick={() => setDropdownOpen((prev) => !prev)}
               >
                 <FaCogs className="mr-2" /> Settings
@@ -528,6 +663,15 @@ const NavigationBar = ({ userType }) => {
                     }}
                   >
                     Change Password
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      handleChangeProfilePic();
+                    }}
+                  >
+                    Change Profile Picture
                   </button>
                   <button
                     className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
