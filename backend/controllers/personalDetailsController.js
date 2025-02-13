@@ -8,6 +8,42 @@ const jobListingModel = require('../models/jobListingModel'); // Import JobListi
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
 /**
+ * Helper function to extract Cloudinary public_id from the secure_url.
+ * Assumes the URL is in the standard format. 
+ * Returns: "profile_pictures/filename"
+ */
+const extractPublicId = (url) => {
+  const cloudName = cloudinary.config().cloud_name;
+  const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload/`;
+  if (!url.startsWith(baseUrl)) return null;
+  let publicIdWithExt = url.substring(baseUrl.length); // e.g. "v1735084555/profile_pictures/filename.png"
+  // Remove version if present (starts with v followed by digits)
+  const parts = publicIdWithExt.split('/');
+  if (parts[0].startsWith('v')) {
+    parts.shift();
+  }
+  const publicIdWithExtNoQuery = parts.join('/');
+  const dotIndex = publicIdWithExtNoQuery.lastIndexOf('.');
+  const publicId = dotIndex !== -1 ? publicIdWithExtNoQuery.substring(0, dotIndex) : publicIdWithExtNoQuery;
+  return publicId;
+};
+
+/**
+ * Wrap Cloudinary's destroy method in a Promise.
+ */
+const deleteFromCloudinary = (publicId) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        console.error("Cloudinary destroy error:", error);
+        return reject(error);
+      }
+      return resolve(result);
+    });
+  });
+};
+
+/**
  * Controller to change a user's password.
  * Expects:
  * - email: the user's unique email.
@@ -77,6 +113,19 @@ const changeProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+    // Delete current profile picture from Cloudinary if not default
+    if (user.profilePic && user.profilePic !== defaultProfilePic) {
+      const publicId = extractPublicId(user.profilePic);
+      if (publicId) {
+        try {
+          await deleteFromCloudinary(publicId);
+        } catch (error) {
+          console.error("Failed to delete old image from Cloudinary:", error);
+          // Proceed even if deletion fails
+        }
+      }
+    }
+    // Upload new file via Cloudinary
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder: "profile_pictures" },
       async (error, result) => {
@@ -86,7 +135,7 @@ const changeProfilePic = async (req, res) => {
         }
         user.profilePic = result.secure_url;
         await user.save();
-        // If the user is a recruiter, update all job listings for that recruiter
+        // If the user is a recruiter, update all job listings with the new recruiterProfileImage
         if (user.role === "recruiter") {
           await jobListingModel.updateMany(
             { recruiterId: user._id },
@@ -124,9 +173,21 @@ const deleteProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+    // Delete current profile picture from Cloudinary if not default
+    if (user.profilePic && user.profilePic !== defaultProfilePic) {
+      const publicId = extractPublicId(user.profilePic);
+      if (publicId) {
+        try {
+          await deleteFromCloudinary(publicId);
+        } catch (error) {
+          console.error("Failed to delete old image from Cloudinary:", error);
+          // Proceed even if deletion fails
+        }
+      }
+    }
     user.profilePic = defaultProfilePic;
     await user.save();
-    // If the user is a recruiter, update all job listings for that recruiter
+    // If the user is a recruiter, update job listings with the default profile pic
     if (user.role === "recruiter") {
       await jobListingModel.updateMany(
         { recruiterId: user._id },
@@ -166,7 +227,6 @@ const getProfilePic = async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 };
-
 
 module.exports = {
   changePassword,
