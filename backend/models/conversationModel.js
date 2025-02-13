@@ -13,10 +13,6 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId, 
       required: true,
     },
-    senderProfilePic: {
-      type: String,
-      required: true,
-    },
     senderName: {
       type: String,
       required: true,
