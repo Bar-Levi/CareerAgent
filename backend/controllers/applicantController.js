@@ -88,18 +88,7 @@ const getRecruiterApplicants = async (req, res) => {
         }
 
         const applications = applicants.map((applicant, index) => {
-            return {
-                id: applicant._id, // Use index for sequential IDs
-                candidate: applicant.name, // Map 'name' to 'candidate'
-                position: applicant.jobTitle || "Unknown Position", // Default value for position
-                date: applicant.applicationDate.toISOString().split("T")[0] || "Unknown Date", // Default to today's date if not present
-                status: applicant.status || "Pending", // Default status if not provided
-                cv: applicant.cv,
-                linkedinUrl: applicant.linkedinUrl,
-                githubUrl: applicant.githubUrl,
-                profilePic: applicant.profilePic,
-                applicationDate: applicant.applicationDate.toISOString().split("T")[0] || "Unknown Date",
-            };
+            return applicant;
         });
         
         res.status(200).json({

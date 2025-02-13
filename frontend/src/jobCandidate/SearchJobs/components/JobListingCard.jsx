@@ -80,7 +80,6 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
             recruiterId: recruiterId,
             jobSeekerId: user._id,
             jobTitle: jobRole,
-            profilePic: user.profilePic,
           }),
         }
       );
