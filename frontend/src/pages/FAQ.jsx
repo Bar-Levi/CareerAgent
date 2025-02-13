@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import NavigationBar from "../components/NavigationBar/NavigationBar";
+import NavigationBar from "../components/NavigationBar";
 import Botpress from "../botpress/Botpress";
 import { useLocation } from "react-router-dom";
 
