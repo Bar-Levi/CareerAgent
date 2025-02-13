@@ -184,7 +184,7 @@ const NavigationBar = ({ userType }) => {
     const token = localStorage.getItem("token");
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(user.email)}`,
         {
           method: "GET",
           headers: {
@@ -229,7 +229,7 @@ const NavigationBar = ({ userType }) => {
 
         if (deleteClicked) {
           const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(user.email)}`,
             {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
@@ -246,6 +246,7 @@ const NavigationBar = ({ userType }) => {
           } else {
             const formData = new FormData();
             formData.append("file", fileInput.files[0]);
+            formData.append("email", user.email);
             const response = await fetch(
               `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-profile-pic`,
               {
