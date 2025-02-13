@@ -3,27 +3,28 @@ const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const jobSeekerModel = require('../models/jobSeekerModel');
 const recruiterModel = require('../models/recruiterModel');
+const jobListingModel = require('../models/jobListingModel'); // Import JobListing model
 
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
 /**
  * Controller to change a user's password.
  * Expects:
+ * - email: the user's unique email.
  * - oldPassword: the user's current password.
  * - newPassword: the new password the user wants to set.
  * 
- * Assumes req.user contains the user's id.
+ * Searches the user by its email.
  */
 const changePassword = async (req, res) => {
   try {
-    const { id } = req.user;
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: "Old password and new password are required." });
+    const { email, oldPassword, newPassword } = req.body;
+    if (!email || !oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Email, old password and new password are required." });
     }
-    let user = await jobSeekerModel.findById(id);
+    let user = await jobSeekerModel.findOne({ email });
     if (!user) {
-      user = await recruiterModel.findById(id);
+      user = await recruiterModel.findOne({ email });
     }
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -54,18 +55,24 @@ const changePassword = async (req, res) => {
 
 /**
  * Controller to change a user's profile picture.
- * Expects a file uploaded via multer (available in req.file).
- * Assumes req.user contains the user's id.
+ * Expects:
+ * - email: the user's unique email.
+ * - A file uploaded via multer (available in req.file).
+ * 
+ * Searches the user by its email.
  */
 const changeProfilePic = async (req, res) => {
   try {
-    const { id } = req.user;
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded." });
     }
-    let user = await jobSeekerModel.findById(id);
+    let user = await jobSeekerModel.findOne({ email });
     if (!user) {
-      user = await recruiterModel.findById(id);
+      user = await recruiterModel.findOne({ email });
     }
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -79,6 +86,13 @@ const changeProfilePic = async (req, res) => {
         }
         user.profilePic = result.secure_url;
         await user.save();
+        // If the user is a recruiter, update all job listings for that recruiter
+        if (user.role === "recruiter") {
+          await jobListingModel.updateMany(
+            { recruiterId: user._id },
+            { recruiterProfileImage: result.secure_url }
+          );
+        }
         return res.status(200).json({ message: "Profile picture updated successfully.", profilePic: result.secure_url });
       }
     );
@@ -91,21 +105,34 @@ const changeProfilePic = async (req, res) => {
 
 /**
  * Controller to delete a user's profile picture.
+ * Expects:
+ * - email: the user's unique email.
+ * 
  * Resets the profilePic field to the default URL.
- * Assumes req.user contains the user's id.
+ * Searches the user by its email.
  */
 const deleteProfilePic = async (req, res) => {
   try {
-    const { id } = req.user;
-    let user = await jobSeekerModel.findById(id);
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+    let user = await jobSeekerModel.findOne({ email });
     if (!user) {
-      user = await recruiterModel.findById(id);
+      user = await recruiterModel.findOne({ email });
     }
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
     user.profilePic = defaultProfilePic;
     await user.save();
+    // If the user is a recruiter, update all job listings for that recruiter
+    if (user.role === "recruiter") {
+      await jobListingModel.updateMany(
+        { recruiterId: user._id },
+        { recruiterProfileImage: defaultProfilePic }
+      );
+    }
     return res.status(200).json({ message: "Profile picture deleted successfully.", profilePic: defaultProfilePic });
   } catch (error) {
     console.error("Error deleting profile picture:", error);
@@ -114,15 +141,21 @@ const deleteProfilePic = async (req, res) => {
 };
 
 /**
- * Controller to get the current profile picture URL for the logged in user.
- * Assumes req.user contains the user's id.
+ * Controller to get the current profile picture URL for the user.
+ * Expects:
+ * - email: the user's unique email.
+ * 
+ * Searches the user by its email.
  */
 const getProfilePic = async (req, res) => {
   try {
-    const { id } = req.user;
-    let user = await jobSeekerModel.findById(id);
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+    let user = await jobSeekerModel.findOne({ email });
     if (!user) {
-      user = await recruiterModel.findById(id);
+      user = await recruiterModel.findOne({ email });
     }
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -133,6 +166,7 @@ const getProfilePic = async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 };
+
 
 module.exports = {
   changePassword,

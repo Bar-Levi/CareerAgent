@@ -21,7 +21,10 @@ import { showChangePasswordModal } from "./modals/ChangePasswordModal";
 const NavigationBar = ({ userType }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = location.state?.user;
+  // Try to read the user object from localStorage
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  // Fallback to location state (if needed)
+  const user = storedUser || location.state?.user;
   const [notifications, setNotifications] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef(null);
@@ -35,7 +38,7 @@ const NavigationBar = ({ userType }) => {
     );
     const updatedState = {
       ...location.state,
-      refreshToken: location.state.refreshToken + 1,
+      refreshToken: (location.state?.refreshToken || 0) + 1,
     };
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
@@ -89,9 +92,10 @@ const NavigationBar = ({ userType }) => {
 
   const fetchNotifications = async () => {
     try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
-          user.email
+          storedUser.email
         )}`,
         {
           method: "GET",
@@ -155,12 +159,13 @@ const NavigationBar = ({ userType }) => {
   };
 
   // ---------- Modal Handlers ----------
-  // Helper: Fetch current profile picture URL (with Bearer token)
+  // Helper: Fetch current profile picture URL (using email from localStorage)
   const getCurrentProfilePic = async () => {
     const token = localStorage.getItem("token");
     try {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(storedUser.email)}`,
         {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
@@ -180,8 +185,7 @@ const NavigationBar = ({ userType }) => {
     const result = await showChangeProfilePicModal(currentPic);
     if (result) {
       const token = localStorage.getItem("token");
-
-      // Open a loading modal that remains visible until the upload fetch completes
+      // Open a loading modal that remains visible until the fetch completes
       Swal.fire({
         title: "Uploading...",
         allowOutsideClick: false,
@@ -190,11 +194,10 @@ const NavigationBar = ({ userType }) => {
           Swal.showLoading();
         },
       });
-
       if (result.action === "delete") {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(JSON.parse(localStorage.getItem("user")).email)}`,
             {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
@@ -210,6 +213,8 @@ const NavigationBar = ({ userType }) => {
         try {
           const formData = new FormData();
           formData.append("file", result.file);
+          // Append email so backend can use it
+          formData.append("email", JSON.parse(localStorage.getItem("user")).email);
           const response = await fetch(
             `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-profile-pic`,
             {
@@ -232,7 +237,6 @@ const NavigationBar = ({ userType }) => {
     const result = await showChangePasswordModal();
     if (result) {
       const token = localStorage.getItem("token");
-      // Open a loading modal until the password change fetch completes
       Swal.fire({
         title: "Processing...",
         allowOutsideClick: false,
@@ -242,6 +246,7 @@ const NavigationBar = ({ userType }) => {
         },
       });
       try {
+        const storedUser = JSON.parse(localStorage.getItem("user"));
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-password`,
           {
@@ -250,7 +255,7 @@ const NavigationBar = ({ userType }) => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify(result),
+            body: JSON.stringify({ ...result, email: storedUser.email }),
           }
         );
         const data = await response.json();
