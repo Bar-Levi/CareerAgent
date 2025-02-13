@@ -1,10 +1,15 @@
 import React from "react";
 import { FaCheckDouble, FaEye } from "react-icons/fa";
 
-const MessageBubble = ({ message, currentUser }) => {
+const MessageBubble = ({ message, currentUser, profilePics }) => {
   const isSender = message.senderId === currentUser._id;
 
-  // Format the timestamp (customize as needed)
+  // Look up the profile picture for this message sender from the profilePics array.
+  const profilePic =
+    profilePics?.find((item) => item.id === message.senderId)?.profilePic ||
+    "https://via.placeholder.com/40";
+
+  // Format the timestamp
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -21,7 +26,6 @@ const MessageBubble = ({ message, currentUser }) => {
       <div className="mt-2 space-y-2">
         {message.attachments.map((attachment, idx) => (
           <div key={idx} className="flex flex-col space-y-1">
-            {/* If the attachment is an image, display it; otherwise, use an embed */}
             {attachment.type.startsWith("image/") ? (
               <img
                 src={attachment.url}
@@ -35,7 +39,6 @@ const MessageBubble = ({ message, currentUser }) => {
                 className="w-full h-64"
               />
             )}
-            {/* Quick View Button */}
             <div className="flex space-x-2">
               <button
                 onClick={() => handleQuickView(attachment.url)}
@@ -53,7 +56,9 @@ const MessageBubble = ({ message, currentUser }) => {
 
   return (
     <div
-      className={`flex items-start mb-4 ${isSender ? "justify-end" : "justify-start"}`}
+      className={`flex items-start mb-4 ${
+        isSender ? "justify-end" : "justify-start"
+      }`}
     >
       {isSender ? (
         // Sender's message: bubble first, then profile picture on the right
@@ -64,7 +69,6 @@ const MessageBubble = ({ message, currentUser }) => {
             </div>
             <p className="text-gray-700 dark:text-gray-300">{message.text}</p>
             {renderAttachments()}
-            {/* Timestamp with double tick icon */}
             <div className="flex items-center space-x-1 mt-1">
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {formattedTime}
@@ -76,7 +80,7 @@ const MessageBubble = ({ message, currentUser }) => {
             </div>
           </div>
           <img
-            src={message.senderProfilePic}
+            src={profilePic}
             alt="User"
             className="w-10 h-10 rounded-full ml-2"
           />
@@ -85,7 +89,7 @@ const MessageBubble = ({ message, currentUser }) => {
         // Receiver's message: profile picture first, then bubble on the right
         <>
           <img
-            src={message.senderProfilePic}
+            src={profilePic}
             alt="User"
             className="w-10 h-10 rounded-full mr-2"
           />

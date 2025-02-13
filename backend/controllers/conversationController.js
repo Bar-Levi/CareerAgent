@@ -103,9 +103,9 @@ const deleteConversation = async (req, res) => {
 const addMessageToConversation = async (req, res) => {
   try {
     
-    const { senderId, senderRole, senderProfilePic, senderName, text, attachments } = req.body;
+    const { senderId, senderRole, senderName, text, attachments } = req.body;
     
-    if (!senderId || !senderProfilePic || !senderName || !text) {
+    if (!senderId || !senderName || !text) {
       return res.status(400).json({ message: "Missing required message fields" });
     }
     
@@ -114,7 +114,7 @@ const addMessageToConversation = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const newMessage = { senderId, senderProfilePic, senderName, text, attachments };
+    const newMessage = { senderId, senderName, text, attachments };
     
     conversation.messages.push(newMessage);
     conversation.lastMessage = conversation.messages[conversation.messages.length - 1];

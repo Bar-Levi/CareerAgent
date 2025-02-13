@@ -26,7 +26,7 @@ const MessageSkeleton = ({ isSender }) => {
   );
 };
 
-const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
+const ChatWindow = ({ jobId, user, job, currentOpenConversationId, profilePics}) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const chatEndRef = useRef(null);
@@ -225,8 +225,8 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           ? [...Array(5)].map((_, index) => (
               <MessageSkeleton key={index} isSender={index % 2 === 0} />
             ))
-          : messages.map((msg, index) => (
-              <MessageBubble key={index} message={msg} currentUser={user} />
+          : messages.length > 0 && messages.map((msg, index) => (
+              <MessageBubble key={index} message={msg} currentUser={user} profilePics={profilePics} />
             ))}
         <div ref={chatEndRef} />
       </div>

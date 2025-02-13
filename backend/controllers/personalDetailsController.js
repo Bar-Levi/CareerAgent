@@ -210,23 +210,39 @@ const deleteProfilePic = async (req, res) => {
  */
 const getProfilePic = async (req, res) => {
   try {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
+    // Destructure email and id from the query parameters.
+    const { email, id } = req.query;
+    let user = null;
+
+    // If email is provided, search by email.
+    if (email) {
+      user =
+        (await jobSeekerModel.findOne({ email })) ||
+        (await recruiterModel.findOne({ email }));
     }
-    let user = await jobSeekerModel.findOne({ email });
-    if (!user) {
-      user = await recruiterModel.findOne({ email });
+    // If email is not provided but id is provided, search by id.
+    else if (id) {
+      user =
+        (await jobSeekerModel.findOne({ _id: id })) ||
+        (await recruiterModel.findOne({ _id: id }));
+    } else {
+      // Neither email nor id provided.
+      return res
+        .status(400)
+        .json({ message: "Email or ID is required to fetch profile picture." });
     }
+
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
+
     return res.status(200).json({ profilePic: user.profilePic });
   } catch (error) {
     console.error("Error fetching profile picture:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
+
 
 module.exports = {
   changePassword,
