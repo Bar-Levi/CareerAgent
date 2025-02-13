@@ -6,7 +6,7 @@ import PerformanceInsights from "../components/PerformanceInsights";
 import Gamification from "../components/Gamification";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
-import NavigationBar from "../../../components/NavigationBar/NavigationBar";
+import NavigationBar from "../../../components/NavigationBar";
 import { useLocation } from "react-router-dom";
 
 const JobCandidateDashboard = () => {
