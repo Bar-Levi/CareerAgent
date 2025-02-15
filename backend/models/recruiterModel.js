@@ -86,6 +86,10 @@ const recruiterSchema = new mongoose.Schema({
     resetPasswordToken: {
         type: String,
     },
+    dateOfBirth: {
+        type: Date,
+        required: false,
+    },
     resetPasswordExpires: {
         type: Date,
     },
