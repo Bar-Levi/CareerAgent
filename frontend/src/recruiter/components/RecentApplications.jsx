@@ -91,7 +91,7 @@ const RecentApplications = ({ applications = [] }) => {
                         {app.candidate}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Applied for: {app.position}
+                        Applied for: {app.jobTitle}
                       </p>
                       <p className="text-sm text-gray-400">
                         Date:{" "}

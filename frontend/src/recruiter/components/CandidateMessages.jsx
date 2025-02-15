@@ -188,6 +188,7 @@ const CandidateMessages = ({
                   {conversations.map((conversation) => {
                     // Use prefetched candidate info from our map
                     const candidateInfo = candidateInfoMap[conversation._id];
+                    console.log("candidate info: ", candidateInfo)
                     const isSelected = conversation._id === selectedConversationId;
                     // Check if candidate is online based on senderId
                     const isOnline =

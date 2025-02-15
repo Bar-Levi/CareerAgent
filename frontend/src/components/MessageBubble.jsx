@@ -4,6 +4,7 @@ import { FaCheckDouble, FaEye } from "react-icons/fa";
 const MessageBubble = ({ message, currentUser, profilePics }) => {
   const isSender = message.senderId === currentUser._id;
 
+  console.log("ProfilePics:" ,  profilePics);
   // Look up the profile picture for this message sender from the profilePics array.
   const profilePic =
     profilePics?.find((item) => item.id === message.senderId)?.profilePic ||

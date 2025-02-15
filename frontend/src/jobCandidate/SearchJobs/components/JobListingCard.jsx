@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 
-const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification, setCurrentOpenConversationId
+const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrentOpenConversationId
 }) => {
   const {
     jobRole,
@@ -21,6 +22,10 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
     recruiterId,
     createdAt,
   } = jobListing;
+
+  const { state } = useLocation();
+  const user = state?.user;
+  console.log("state: ", state)
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);

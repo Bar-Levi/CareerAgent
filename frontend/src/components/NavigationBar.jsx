@@ -641,7 +641,11 @@ const NavigationBar = ({ userType }) => {
       if (!response.ok) {
         throw new Error(data.message || `Failed to reset ${label}`);
       }
+
+      location.state.user = data.updatedUser;
+      navigate(location.pathname, { state: location.state })
       Swal.fire("Reset!", data.message, "success");
+
     } catch (error) {
       Swal.fire("Error", error.message, "error");
     }
@@ -720,6 +724,11 @@ const NavigationBar = ({ userType }) => {
         if (!updateResponse.ok) {
           throw new Error(updateData.message || "Failed to update detail");
         }
+
+        location.state.user = updateData.updatedUser;
+        navigate(location.pathname, { state: location.state })
+
+
         Swal.fire("Updated!", `Your ${label} has been updated.`, "success");
       } else if (isDenied) {
         await handleResetPersonalDetail(type, label);

@@ -366,7 +366,7 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
     }
 
     await user.save();
-    return res.status(200).json({ message: "Personal detail updated successfully." });
+    return res.status(200).json({ message: "Personal detail updated successfully." , updatedUser: user});
   } catch (error) {
     console.error("Error updating personal details:", error);
     return res.status(500).json({ message: "Server error." });
@@ -387,7 +387,7 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
     if (!email || !type) {
       return res.status(400).json({ message: "Email and type are required." });
     }
-    // Find the jobseeker by email.
+    // Find the jobseeker by email
     const user = await jobSeekerModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Jobseeker not found." });
@@ -420,7 +420,7 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
       dob: "Date of Birth",
     };
 
-    return res.status(200).json({ message: `${detailNames[type.toLowerCase()]} reset successfully.` });
+    return res.status(200).json({ message: `${detailNames[type.toLowerCase()]} reset successfully.` , updatedUser: user});
   } catch (error) {
     console.error("Error resetting personal details:", error);
     return res.status(500).json({ message: "Server error." });

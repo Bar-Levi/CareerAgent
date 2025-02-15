@@ -23,6 +23,8 @@ const SearchJobs = () => {
   // Initialize conversation and job listing states (if comes from a notification)
   const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
+
+
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
     if (stateAddition) {
@@ -328,9 +330,6 @@ const SearchJobs = () => {
                     </div>
                     }
                   </div>
-
-
-
                 </div>
 
               <span
@@ -362,17 +361,6 @@ const SearchJobs = () => {
           {selectedJob ? (
             <>
               <ChatWindow jobId={selectedJob._id} user={user} job={selectedJob} currentOpenConversationId={currentOpenConversationId}/>
-              {/* <h2 className="text-xl font-bold mb-2">{selectedJob.jobRole}</h2>
-              <p className="text-sm text-gray-600">
-                {selectedJob.company} - {selectedJob.location}
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Experience: {selectedJob.experienceLevel}
-              </p>
-              <p className="text-sm text-gray-500">
-                Type: {selectedJob.jobType.join(", ")}
-              </p>
-              <p className="mt-4">{selectedJob.description}</p> */}
             </>
           ) : (
             <p className="text-gray-500">Select a job to view details.</p>

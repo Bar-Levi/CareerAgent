@@ -26,10 +26,11 @@ const MessageSkeleton = ({ isSender }) => {
   );
 };
 
-const ChatWindow = ({ jobId, user, job, currentOpenConversationId, profilePics}) => {
+const ChatWindow = ({ jobId, user, job, currentOpenConversationId}) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const chatEndRef = useRef(null);
+  const [profilePics, setProfilePics] = useState(null);
 
   // Function to fetch messages
   const fetchMessages = async () => {
@@ -42,7 +43,8 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId, profilePics})
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const conversation = await response.json();
+      const { conversation, pics } = await response.json();
+      setProfilePics(pics);
       console.log("Fetched conversation:", conversation);
       setMessages(conversation.messages);
     } catch (error) {

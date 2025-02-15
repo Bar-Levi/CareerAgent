@@ -19,7 +19,6 @@ const getConversationById = async (req, res) => {
   try {
 
     const conversation = await Conversation.findById(req.params.conversationId)
-      .populate("participants")
       .populate("jobListingId")
       .populate("messages"); // No direct ref, fetching manually later
 
@@ -27,8 +26,30 @@ const getConversationById = async (req, res) => {
       
       return res.status(404).json({ message: "Conversation not found" });
     }
+    console.log("Conversation.participants: ", conversation._id);
+    const recruiterId = conversation.participants[0];
+    console.log("RecruiterID: ", recruiterId);
+    const recruiter = await Recruiter.findById(recruiterId);
+    console.log("Recruiter: ", recruiter);
+    const jobSeekerId = conversation.participants[1];
+    console.log("Job SeekerID: ", jobSeekerId);
+    const jobSeeker = await JobSeeker.findById(jobSeekerId);
+    console.log("Job Seeker: ", jobSeeker);
 
-    res.json(conversation);
+    const profilePics = [
+      {
+        role: "Recruiter",
+        id: recruiterId,
+        profilePic: recruiter.profilePic
+      },
+      {
+        role: "JobSeeker",
+        id: jobSeekerId,
+        profilePic: jobSeeker.profilePic
+      }
+    ] || [];
+
+    res.json({ conversation, pics: profilePics });
   } catch (err) {
     console.error("Error fetching conversation:", err);
     res.status(500).json({ message: "Server error while fetching conversation" });

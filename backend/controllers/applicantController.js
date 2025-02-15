@@ -12,7 +12,6 @@ const createApplicant = async (req, res) => {
             message: 'Applicant created successfully',
             applicant: savedApplicant,
         });
-
     const reciever = await Recruiter.findById(req.body.recruiterId);
     // Create and push a new notification to the receiver
     const newNotification = {
