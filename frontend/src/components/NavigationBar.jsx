@@ -179,8 +179,8 @@ const NavigationBar = ({ userType }) => {
     return () => document.removeEventListener("click", closeDropdown);
   }, []);
 
-  // -------------------- Logout --------------------
-  const handleLogout = async () => {
+   // -------------------- Logout --------------------
+   const handleLogout = async () => {
     try {
       await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`, {
         method: "POST",
@@ -751,10 +751,9 @@ const NavigationBar = ({ userType }) => {
       const getData = await getResponse.json();
       let currentValue;
       if (type.toLowerCase() === "dob") {
+        currentValue = getData.dob || "Not set";
         if (currentValue !== "Not set") {
-          currentValue = getData.dob;
-          console.log(currentValue);
-          // Use "en-GB" locale for dd/mm/yyyy format
+          // Use en-GB locale for dd/mm/yyyy format
           currentValue = new Date(currentValue).toLocaleDateString("en-GB", {
             day: "2-digit",
             month: "2-digit",
@@ -814,10 +813,10 @@ const NavigationBar = ({ userType }) => {
         }
         Swal.fire("Updated!", `Your ${label} has been updated.`, "success");
       } else if (isDenied) {
-        // Reset: POST update with an empty string.
+        // Reset using the dedicated reset endpoint for recruiters
         const token = localStorage.getItem("token");
         const resetResponse = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/recruiter-personal`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/recruiter-personal/reset-recruiter-details`,
           {
             method: "POST",
             headers: {
@@ -827,7 +826,6 @@ const NavigationBar = ({ userType }) => {
             body: JSON.stringify({
               email: user.email,
               type,
-              value: "",
             }),
           }
         );
