@@ -10,6 +10,10 @@ import {
   FaQuestionCircle,
   FaComments,
   FaUser,
+  FaBirthdayCake,
+  FaPhone,
+  FaGithub,
+  FaLinkedin,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import NotificationPanel from "./NotificationPanel";
@@ -90,7 +94,8 @@ const NavigationBar = ({ userType }) => {
           closeOnClick: true,
           pauseOnFocusLoss: true,
           icon: false,
-          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+          toastClassName:
+            "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
         }
       );
       fetchNotifications();
@@ -106,7 +111,9 @@ const NavigationBar = ({ userType }) => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
+          user.email
+        )}`,
         {
           method: "GET",
           headers: {
@@ -178,13 +185,13 @@ const NavigationBar = ({ userType }) => {
   };
 
   // ---------- Profile Picture Functions ----------
-
-  // Helper: Fetch current profile picture URL from backend (with Bearer token)
   const getCurrentProfilePic = async () => {
     const token = localStorage.getItem("token");
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(user.email)}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(
+          user.email
+        )}`,
         {
           method: "GET",
           headers: {
@@ -192,7 +199,8 @@ const NavigationBar = ({ userType }) => {
           },
         }
       );
-      if (!response.ok) throw new Error("Failed to fetch current profile picture");
+      if (!response.ok)
+        throw new Error("Failed to fetch current profile picture");
       const data = await response.json();
       return data.profilePic;
     } catch (error) {
@@ -201,42 +209,61 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // Function to open a modern modal for changing profile picture with white background
   const handleChangeProfilePic = async () => {
     const currentPic = await getCurrentProfilePic();
     const { value: result } = await Swal.fire({
       title: "Change Profile Picture",
-      html: `
-        <div class="flex flex-col items-center bg-white p-4 rounded-lg">
-          <!-- Circular preview container with white background -->
-          <div class="w-36 h-36 rounded-full overflow-hidden mb-4">
-            <img id="profile-preview" src="${currentPic}" alt="Profile Picture" class="object-cover w-full h-full" style="cursor: pointer;">
+      html: (
+        <div className="flex flex-col items-center bg-white p-4 rounded-lg">
+          <div className="w-36 h-36 rounded-full overflow-hidden mb-4">
+            <img
+              id="profile-preview"
+              src={currentPic}
+              alt="Profile Picture"
+              className="object-cover w-full h-full"
+              style={{ cursor: "pointer" }}
+            />
           </div>
-          <input type="file" id="profile-input" accept="image/*" class="hidden">
-          <div class="flex space-x-4">
-            <button id="change-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none">Change Picture</button>
-            <button id="delete-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none">Delete Picture</button>
+          <input type="file" id="profile-input" accept="image/*" className="hidden" />
+          <div className="flex space-x-4">
+            <button
+              id="change-btn"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none"
+            >
+              Change Picture
+            </button>
+            <button
+              id="delete-btn"
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none"
+            >
+              Delete Picture
+            </button>
           </div>
         </div>
-      `,
+      ),
       showCancelButton: true,
       confirmButtonText: "OK",
       preConfirm: async () => {
-        Swal.showLoading(); // Force a loading indicator until the request completes
+        Swal.showLoading();
         const token = localStorage.getItem("token");
-        const changeClicked = document.getElementById("change-btn").dataset.action === "change";
-        const deleteClicked = document.getElementById("delete-btn").dataset.action === "delete";
+        const changeClicked =
+          document.getElementById("change-btn").dataset.action === "change";
+        const deleteClicked =
+          document.getElementById("delete-btn").dataset.action === "delete";
 
         if (deleteClicked) {
           const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(user.email)}`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(
+              user.email
+            )}`,
             {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
             }
           );
           const data = await response.json();
-          if (!response.ok) throw new Error(data.message || "Failed to delete profile picture");
+          if (!response.ok)
+            throw new Error(data.message || "Failed to delete profile picture");
           return { action: "delete", message: data.message };
         }
         if (changeClicked) {
@@ -256,7 +283,10 @@ const NavigationBar = ({ userType }) => {
               }
             );
             const data = await response.json();
-            if (!response.ok) throw new Error(data.message || "Failed to update profile picture");
+            if (!response.ok)
+              throw new Error(
+                data.message || "Failed to update profile picture"
+              );
             return { action: "change", message: data.message };
           }
         }
@@ -268,16 +298,13 @@ const NavigationBar = ({ userType }) => {
         const fileInput = document.getElementById("profile-input");
         const previewImg = document.getElementById("profile-preview");
 
-        // Initialize data-action attributes
         changeBtn.dataset.action = "";
         deleteBtn.dataset.action = "";
 
-        // When "Change Picture" is clicked, trigger the file input
         changeBtn.addEventListener("click", () => {
           fileInput.click();
         });
 
-        // When a file is selected, update the preview image and mark change action
         fileInput.addEventListener("change", () => {
           if (fileInput.files && fileInput.files[0]) {
             const reader = new FileReader();
@@ -290,14 +317,13 @@ const NavigationBar = ({ userType }) => {
           }
         });
 
-        // When "Delete Picture" is clicked, mark delete action and update preview to default image
         deleteBtn.addEventListener("click", () => {
           deleteBtn.dataset.action = "delete";
           changeBtn.dataset.action = "";
-          previewImg.src = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+          previewImg.src =
+            "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
         });
 
-        // When clicking the preview image, open a full-screen overlay preview (without closing the modal)
         previewImg.addEventListener("click", () => {
           const overlay = document.createElement("div");
           overlay.style.position = "fixed";
@@ -336,7 +362,7 @@ const NavigationBar = ({ userType }) => {
           overlay.appendChild(closeBtn);
           document.body.appendChild(overlay);
         });
-      }
+      },
     });
 
     if (result) {
@@ -352,37 +378,97 @@ const NavigationBar = ({ userType }) => {
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
-      html: `
-        <div style="position: relative;">
-          <i id="toggle-old-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
-          <input type="password" id="old-password" class="swal2-input" placeholder="Old Password" style="padding-left: 2.5rem;">
-        </div>
-        <div style="position: relative;">
-          <i id="toggle-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
-          <input type="password" id="new-password" class="swal2-input" placeholder="New Password" style="padding-left: 2.5rem;">
-        </div>
-        <div style="position: relative;">
-          <i id="toggle-confirm-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
-          <input type="password" id="confirm-new-password" class="swal2-input" placeholder="Confirm New Password" style="padding-left: 2.5rem;">
-        </div>
-        <div id="password-strength" style="margin-top:10px; text-align:left; font-size:0.9rem;"></div>
-      `,
+      html: (
+        <>
+          <div style={{ position: "relative" }}>
+            <i
+              id="toggle-old-password"
+              className="fa fa-eye-slash"
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            ></i>
+            <input
+              type="password"
+              id="old-password"
+              className="swal2-input"
+              placeholder="Old Password"
+              style={{ paddingLeft: "2.5rem" }}
+            />
+          </div>
+          <div style={{ position: "relative" }}>
+            <i
+              id="toggle-new-password"
+              className="fa fa-eye-slash"
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            ></i>
+            <input
+              type="password"
+              id="new-password"
+              className="swal2-input"
+              placeholder="New Password"
+              style={{ paddingLeft: "2.5rem" }}
+            />
+          </div>
+          <div style={{ position: "relative" }}>
+            <i
+              id="toggle-confirm-new-password"
+              className="fa fa-eye-slash"
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+              }}
+            ></i>
+            <input
+              type="password"
+              id="confirm-new-password"
+              className="swal2-input"
+              placeholder="Confirm New Password"
+              style={{ paddingLeft: "2.5rem" }}
+            />
+          </div>
+          <div
+            id="password-strength"
+            style={{ marginTop: "10px", textAlign: "left", fontSize: "0.9rem" }}
+          ></div>
+        </>
+      ),
       focusConfirm: false,
       showCancelButton: true,
       preConfirm: () => {
         const oldPassword = document.getElementById("old-password").value;
         const newPassword = document.getElementById("new-password").value;
-        const confirmNewPassword = document.getElementById("confirm-new-password").value;
+        const confirmNewPassword = document.getElementById("confirm-new-password")
+          .value;
         if (!oldPassword || !newPassword || !confirmNewPassword) {
-          Swal.showValidationMessage("Please enter old password, new password, and confirm new password");
+          Swal.showValidationMessage(
+            "Please enter old password, new password, and confirm new password"
+          );
           return;
         }
         if (oldPassword === newPassword) {
-          Swal.showValidationMessage("New password cannot be the same as the old password");
+          Swal.showValidationMessage(
+            "New password cannot be the same as the old password"
+          );
           return;
         }
         if (newPassword !== confirmNewPassword) {
-          Swal.showValidationMessage("New password and confirm new password do not match");
+          Swal.showValidationMessage(
+            "New password and confirm new password do not match"
+          );
           return;
         }
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -430,7 +516,10 @@ const NavigationBar = ({ userType }) => {
           oldIndicator.style.marginLeft = "8px";
           oldIndicator.style.display = "inline-block";
           oldIndicator.style.width = "20px";
-          oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
+          oldPasswordInput.parentNode.insertBefore(
+            oldIndicator,
+            oldPasswordInput.nextSibling
+          );
         }
         oldIndicator.innerHTML = "&nbsp;";
 
@@ -441,16 +530,24 @@ const NavigationBar = ({ userType }) => {
           newIndicator.style.marginLeft = "8px";
           newIndicator.style.display = "inline-block";
           newIndicator.style.width = "20px";
-          newPasswordInput.parentNode.insertBefore(newIndicator, newPasswordInput.nextSibling);
+          newPasswordInput.parentNode.insertBefore(
+            newIndicator,
+            newPasswordInput.nextSibling
+          );
         }
-        let confirmIndicator = document.getElementById("confirm-new-password-indicator");
+        let confirmIndicator = document.getElementById(
+          "confirm-new-password-indicator"
+        );
         if (!confirmIndicator) {
           confirmIndicator = document.createElement("span");
           confirmIndicator.id = "confirm-new-password-indicator";
           confirmIndicator.style.marginLeft = "8px";
           confirmIndicator.style.display = "inline-block";
           confirmIndicator.style.width = "20px";
-          confirmNewPasswordInput.parentNode.insertBefore(confirmIndicator, confirmNewPasswordInput.nextSibling);
+          confirmNewPasswordInput.parentNode.insertBefore(
+            confirmIndicator,
+            confirmNewPasswordInput.nextSibling
+          );
         }
 
         const calculateStrength = (pwd) => {
@@ -511,7 +608,7 @@ const NavigationBar = ({ userType }) => {
               <span class="text-sm font-medium text-gray-700">${strengthText}</span>
             </div>
             <div class="w-full h-2 bg-gray-200 rounded">
-              <div class="h-2 rounded transition-all duration-300 ${strengthColor}" style="width: ${(strength/5)*100}%"></div>
+              <div class="h-2 rounded transition-all duration-300 ${strengthColor}" style="width: ${(strength / 5) * 100}%"></div>
             </div>
           `;
         };
@@ -554,7 +651,6 @@ const NavigationBar = ({ userType }) => {
     if (formValues) {
       try {
         const token = localStorage.getItem("token");
-        // append to formValues user.email
         formValues.email = user.email;
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-password`,
@@ -586,6 +682,161 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
+  // ---------- Change Personal Details (Jobseeker Only) ----------
+  // Helper function to fetch the current detail, allow editing, and update via POST request.
+  const handleEditPersonalDetail = async (type, label) => {
+    try {
+      // Fetch current detail from backend
+      const getResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/job-seeker-details?email=${encodeURIComponent(
+          user.email
+        )}&type=${type}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!getResponse.ok) {
+        throw new Error("Failed to fetch current detail");
+      }
+      const getData = await getResponse.json();
+      // Format current value for dob to MM/DD/YYYY if applicable
+      let currentValue = getData[type] || "Not set";
+      if (type === "dob" && currentValue !== "Not set") {
+        currentValue = new Date(currentValue).toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric",
+        });
+      }
+      // For date of birth, use a date picker input; otherwise, use a text input.
+      const inputField =
+        type === "dob"
+          ? `<input type="date" id="swal-input-new" class="swal2-input" />`
+          : `<input id="swal-input-new" class="swal2-input" placeholder="Enter new ${label}" />`;
+
+      // Prompt user for a new value
+      const { value: newValue } = await Swal.fire({
+        title: `Change ${label}`,
+        html: `
+          <div>
+            <p>Current ${label}: ${currentValue}</p>
+            ${inputField}
+          </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        preConfirm: () => {
+          const inputValue = document.getElementById("swal-input-new").value;
+          if (!inputValue) {
+            Swal.showValidationMessage(`Please enter a new ${label}`);
+          }
+          return inputValue;
+        },
+      });
+      if (newValue) {
+        // Make POST request to update the detail
+        const token = localStorage.getItem("token");
+        const updateResponse = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/personal/update-job-seeker-details`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              email: user.email,
+              type,
+              value: newValue,
+            }),
+          }
+        );
+        const updateData = await updateResponse.json();
+        if (!updateResponse.ok) {
+          throw new Error(updateData.message || "Failed to update detail");
+        }
+        Swal.fire("Updated!", `Your ${label} has been updated.`, "success");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", error.message, "error");
+    }
+  };
+
+  const handleChangePersonalDetails = async () => {
+    await Swal.fire({
+      title: "Change Personal Details",
+      html: `
+        <div class="flex flex-col space-y-4">
+          <button
+            id="change-dob"
+            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
+          >
+            <i class="fas fa-birthday-cake" style="margin-right: 8px;"></i>
+            Change Date of Birth
+          </button>
+          <button
+            id="change-phone"
+            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
+          >
+            <i class="fas fa-phone" style="margin-right: 8px;"></i>
+            Change Phone Number
+          </button>
+          <button
+            id="change-github"
+            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
+          >
+            <i class="fab fa-github" style="margin-right: 8px;"></i>
+            Change Github Link
+          </button>
+          <button
+            id="change-linkedin"
+            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
+          >
+            <i class="fab fa-linkedin" style="margin-right: 8px;"></i>
+            Change LinkedIn URL
+          </button>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Close",
+      focusConfirm: false,
+      didOpen: () => {
+        // Use a short timeout to ensure the modal's HTML is rendered
+        setTimeout(() => {
+          const changeDob = document.getElementById("change-dob");
+          if (changeDob) {
+            changeDob.addEventListener("click", () => {
+              handleEditPersonalDetail("dob", "Date of Birth");
+            });
+          }
+          const changePhone = document.getElementById("change-phone");
+          if (changePhone) {
+            changePhone.addEventListener("click", () => {
+              handleEditPersonalDetail("phone", "Phone Number");
+            });
+          }
+          const changeGithub = document.getElementById("change-github");
+          if (changeGithub) {
+            changeGithub.addEventListener("click", () => {
+              handleEditPersonalDetail("github", "Github URL");
+            });
+          }
+          const changeLinkedin = document.getElementById("change-linkedin");
+          if (changeLinkedin) {
+            changeLinkedin.addEventListener("click", () => {
+              handleEditPersonalDetail("linkedin", "LinkedIn URL");
+            });
+          }
+        }, 100);
+      },
+    });
+  };
+
   return (
     <div className="w-full bg-brand-primary text-brand-primary px-6 py-4">
       <div className="flex items-center justify-between">
@@ -595,15 +846,21 @@ const NavigationBar = ({ userType }) => {
         <div className="flex items-center">
           <nav className="flex space-x-4">
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/dashboard")}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+                "/dashboard"
+              )}`}
               onClick={() => navigate("/dashboard", { state: location.state })}
             >
               <FaTachometerAlt className="mr-2" /> Dashboard
             </button>
             {userType === "jobseeker" && (
               <button
-                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/searchjobs")}`}
-                onClick={() => navigate("/searchjobs", { state: location.state })}
+                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+                  "/searchjobs"
+                )}`}
+                onClick={() =>
+                  navigate("/searchjobs", { state: location.state })
+                }
               >
                 <FaBriefcase className="mr-2" /> Search Jobs
               </button>
@@ -632,26 +889,34 @@ const NavigationBar = ({ userType }) => {
               )}
             </div>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/messages")}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+                "/messages"
+              )}`}
               onClick={() => navigate("/messages", { state: location.state })}
             >
               <FaEnvelope className="mr-2" /> Messages
             </button>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/chats")}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+                "/chats"
+              )}`}
               onClick={() => navigate("/chats", { state: location.state })}
             >
               <FaRobot className="mr-2" /> Chatbots
             </button>
             <button
-              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/faq")}`}
+              className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+                "/faq"
+              )}`}
               onClick={() => navigate("/faq", { state: location.state })}
             >
               <FaQuestionCircle className="mr-2" /> FAQ
             </button>
             <div className="relative dropdown">
               <button
-                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive("/settings")}`}
+                className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+                  "/settings"
+                )}`}
                 onClick={() => setDropdownOpen((prev) => !prev)}
               >
                 <FaCogs className="mr-2" /> Settings
@@ -676,6 +941,17 @@ const NavigationBar = ({ userType }) => {
                   >
                     Change Profile Picture
                   </button>
+                  {userType === "jobseeker" && (
+                    <button
+                      className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        handleChangePersonalDetails();
+                      }}
+                    >
+                      Change Personal Details
+                    </button>
+                  )}
                   <button
                     className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
                     onClick={() => {

@@ -243,10 +243,140 @@ const getProfilePic = async (req, res) => {
   }
 };
 
+/**
+ * Controller to get personal details for a jobseeker.
+ * Expects:
+ * - email: the user's unique email (via query).
+ * - type: (optional) the specific detail to retrieve ("github", "linkedin", "phone", or "dob").
+ * 
+ * If type is provided, returns the corresponding detail.
+ * If not, returns all available personal details.
+ */
+const getJobSeekerPersonalDetails = async (req, res) => {
+  try {
+    const { email, type } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+    // Find the user in the jobSeeker collection only.
+    const user = await jobSeekerModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Jobseeker not found." });
+    }
+    // Decide what to return based on the type parameter.
+    if (type) {
+      let detail;
+      switch (type.toLowerCase()) {
+        case "github":
+          detail = user.githubUrl;
+          break;
+        case "linkedin":
+          detail = user.linkedinUrl;
+          break;
+        case "phone":
+          detail = user.phone;
+          break;
+        case "dob":
+          detail = user.dateOfBirth;
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid detail type. Valid types: github, linkedin, phone, dob." });
+      }
+      return res.status(200).json({ [type]: detail });
+    } else {
+      // If no type is provided, return all details.
+      return res.status(200).json({
+        github: user.githubUrl,
+        linkedin: user.linkedinUrl,
+        phone: user.phone,
+        dob: user.dateOfBirth
+      });
+    }
+  } catch (error) {
+    console.error("Error fetching personal details:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
+
+/**
+ * Controller to update a jobseeker's personal detail.
+ * Expects:
+ * - email: the user's unique email (in req.body).
+ * - type: the detail type to update ("github", "linkedin", "phone", or "dob").
+ * - value: the new value to set.
+ * 
+ * Validates the new value and updates the corresponding field.
+ */
+const updateJobSeekerPersonalDetails = async (req, res) => {
+  try {
+    const { email, type, value } = req.body;
+    if (!email || !type || value === undefined) {
+      return res.status(400).json({ message: "Email, type, and value are required." });
+    }
+    // Find the jobseeker by email.
+    const user = await jobSeekerModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Jobseeker not found." });
+    }
+
+    // Validate and update based on the type.
+    switch (type.toLowerCase()) {
+      case "github":
+        // Validate GitHub URL (must start with https://github.com/)
+        if (!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+$/.test(value.trim())) {
+          return res.status(400).json({ message: "Invalid GitHub URL." });
+        }
+        user.githubUrl = value.trim();
+        break;
+      case "linkedin":
+        // Validate LinkedIn URL (must start with https://www.linkedin.com/in/)
+        if (!/^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/.test(value.trim())) {
+          return res.status(400).json({ message: "Invalid LinkedIn URL." });
+        }
+        user.linkedinUrl = value.trim();
+        break;
+      case "phone":
+        // Validate phone number (allow optional + and 7-15 digits)
+        if (!/^\+?[0-9]{7,15}$/.test(value.trim())) {
+          return res.status(400).json({ message: "Invalid phone number." });
+        }
+        user.phone = value.trim();
+        break;
+      case "dob":
+        // Validate date of birth: check if it's a valid date and not in the future.
+        const parsedDate = Date.parse(value);
+        if (isNaN(parsedDate)) {
+          return res.status(400).json({ message: "Invalid date of birth." });
+        }
+        const dobDate = new Date(parsedDate);
+        if (dobDate > new Date()) {
+          return res.status(400).json({ message: "Date of birth cannot be in the future." });
+        }
+        // Format the date as a nice string, e.g. "January 1, 2020"
+        const formattedDate = dobDate.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        user.dateOfBirth = formattedDate;
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid detail type. Valid types: github, linkedin, phone, dob." });
+    }
+
+    await user.save();
+    return res.status(200).json({ message: "Personal detail updated successfully." });
+  } catch (error) {
+    console.error("Error updating personal details:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
 
 module.exports = {
   changePassword,
   changeProfilePic,
   deleteProfilePic,
   getProfilePic,
+  getJobSeekerPersonalDetails,
+  updateJobSeekerPersonalDetails,
 };
