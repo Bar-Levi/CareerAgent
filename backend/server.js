@@ -4,7 +4,8 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const cloudinaryRoutes = require('./routes/cloudinaryRoutes');
-const personalDetailsRoutes = require('./routes/personalDetailsRoutes'); // Added personal details routes
+const personalDetailsRoutes = require('./routes/jobSeekerPersonalDetailsRoutes');
+const recruiterPersonalDetailsRoutes = require('./routes/recruiterPersonalDetailsRoutes');
 const bodyParser = require("body-parser");
 const aiRoutes = require('./routes/aiRoutes');
 const botConversationRoutes = require("./routes/botConversationRoutes");
@@ -29,6 +30,7 @@ app.use(bodyParser.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/personal', personalDetailsRoutes);
+app.use('/api/recruiter-personal', recruiterPersonalDetailsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use("/api/bot-conversations", botConversationRoutes);
 app.use("/api/joblistings", jobListingRoutes);

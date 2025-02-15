@@ -32,7 +32,7 @@ const NavigationBar = ({ userType }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Map());
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Handle notification click event
+  // -------------------- Notification Handler --------------------
   const handleNotificationClick = (notificationData) => {
     localStorage.setItem(
       "stateAddition",
@@ -45,7 +45,33 @@ const NavigationBar = ({ userType }) => {
     navigate(notificationData.extraData.goToRoute, { state: updatedState });
   };
 
-  // Socket connection and event listeners
+  // -------------------- Fetch Notifications --------------------
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
+          user.email
+        )}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        const errorMessage = `Error ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      setNotifications(data.notifications);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error.message);
+    }
+  };
+
+  // -------------------- Socket Setup --------------------
   useEffect(() => {
     if (!socket.connected) {
       socket.connect();
@@ -66,37 +92,24 @@ const NavigationBar = ({ userType }) => {
       console.log("Socket connected with ID:", socket.id);
     });
     socket.on("newNotification", (notificationData) => {
-      toast.info(
-        <div className="flex items-center space-x-2">
-          {notificationData.type === "chat" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
-            </div>
-          ) : notificationData.type === "apply" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
-            </div>
-          ) : null}
-          <span>
-            {notificationData.message.length > 30
-              ? notificationData.message.slice(0, 30) + "..."
-              : notificationData.message}
-          </span>
-        </div>,
-        {
-          onClick: () => {
-            handleNotificationClick(notificationData);
-          },
-          autoClose: 5000,
-          pauseOnHover: true,
-          draggable: true,
-          closeButton: false,
-          closeOnClick: true,
-          pauseOnFocusLoss: true,
-          icon: false,
-          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
-        }
-      );
+      // Display just the message string (truncated if needed)
+      const messageStr =
+        notificationData.message.length > 30
+          ? notificationData.message.slice(0, 30) + "..."
+          : notificationData.message;
+      toast.info(messageStr, {
+        onClick: () => {
+          handleNotificationClick(notificationData);
+        },
+        autoClose: 5000,
+        pauseOnHover: true,
+        draggable: true,
+        closeButton: false,
+        closeOnClick: true,
+        pauseOnFocusLoss: true,
+        icon: false,
+        toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+      });
       fetchNotifications();
     });
     return () => {
@@ -106,31 +119,7 @@ const NavigationBar = ({ userType }) => {
     };
   }, [user]);
 
-  // Fetch notifications from backend
-  const fetchNotifications = async () => {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      if (!response.ok) {
-        const errorMessage = `Error ${response.status}: ${response.statusText}`;
-        throw new Error(errorMessage);
-      }
-      const data = await response.json();
-      setNotifications(data.notifications);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error.message);
-    }
-  };
-
-  // Close notification panel when clicking outside
+  // -------------------- Close Panel on Outside Click --------------------
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
@@ -151,7 +140,7 @@ const NavigationBar = ({ userType }) => {
     fetchNotifications();
   }, []);
 
-  // Determine active navigation styling
+  // -------------------- Active Navigation Styling --------------------
   const isActive = (path) =>
     location.pathname === path
       ? "bg-brand-primary text-brand-secondary"
@@ -165,6 +154,7 @@ const NavigationBar = ({ userType }) => {
     return () => document.removeEventListener("click", closeDropdown);
   }, []);
 
+  // -------------------- Logout --------------------
   const handleLogout = async () => {
     try {
       await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`, {
@@ -181,8 +171,7 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ---------- Profile Picture Functions ----------
-
+  // -------------------- Profile Picture Functions --------------------
   const getCurrentProfilePic = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -362,8 +351,7 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ------------------ Change Password Functionality ------------------
-
+  // -------------------- Change Password --------------------
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
@@ -571,7 +559,7 @@ const NavigationBar = ({ userType }) => {
         }
         updateStrengthMeter();
         updateNewAndConfirmIndicators();
-      },
+      }
     });
     if (formValues) {
       try {
@@ -607,9 +595,9 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ------------------ Personal Details Functions ------------------
+  // -------------------- Personal Details Functions --------------------
 
-  // Reset a personal detail via POST.
+  // For jobseeker: Reset a personal detail via POST.
   const handleResetPersonalDetail = async (type, label) => {
     try {
       const token = localStorage.getItem("token");
@@ -634,7 +622,7 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // Edit a personal detail with integrated Reset option.
+  // For jobseeker: Edit a personal detail with integrated Reset option.
   const handleEditPersonalDetail = async (type, label) => {
     try {
       const getResponse = await fetch(
@@ -717,7 +705,121 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  const handleChangePersonalDetails = async () => {
+  // For recruiter: Edit a personal detail via backend.
+  const handleEditRecruiterPersonalDetail = async (type, label) => {
+    try {
+      const getResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/recruiter-personal/recruiter-details?email=${encodeURIComponent(
+          user.email
+        )}&type=${type}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (!getResponse.ok) {
+        throw new Error("Failed to fetch current detail");
+      }
+      const getData = await getResponse.json();
+      let currentValue;
+      if (type.toLowerCase() === "dob") {
+        if (currentValue !== "Not set") {
+          currentValue = getData.dob;
+          console.log(currentValue);
+          // Use "en-GB" locale for dd/mm/yyyy format
+          currentValue = new Date(currentValue).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          });
+        }
+      } else if (type.toLowerCase() === "companywebsite") {
+        currentValue = getData.companyWebsite || "Not set";
+      } else {
+        currentValue = "Not set";
+      }
+      const inputField =
+        type.toLowerCase() === "dob"
+          ? `<input type="date" id="swal-input-new" class="swal2-input" />`
+          : `<input id="swal-input-new" class="swal2-input" placeholder="Enter new ${label}" />`;
+      const { isConfirmed, isDenied, value: newValue } = await Swal.fire({
+        title: `Change ${label}`,
+        html: `
+          <div>
+            <p>Current ${label}: ${currentValue}</p>
+            ${inputField}
+          </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Update",
+        denyButtonText: "Reset",
+        preConfirm: () => {
+          const inputValue = document.getElementById("swal-input-new")?.value;
+          if (!inputValue) {
+            Swal.showValidationMessage(`Please enter a new ${label}`);
+          }
+          return inputValue;
+        },
+      });
+      if (isConfirmed) {
+        const token = localStorage.getItem("token");
+        const updateResponse = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/recruiter-personal/update-recruiter-details`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              email: user.email,
+              type,
+              value: newValue,
+            }),
+          }
+        );
+        const updateData = await updateResponse.json();
+        if (!updateResponse.ok) {
+          throw new Error(updateData.message || "Failed to update detail");
+        }
+        Swal.fire("Updated!", `Your ${label} has been updated.`, "success");
+      } else if (isDenied) {
+        // Reset: POST update with an empty string.
+        const token = localStorage.getItem("token");
+        const resetResponse = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/recruiter-personal`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              email: user.email,
+              type,
+              value: "",
+            }),
+          }
+        );
+        const resetData = await resetResponse.json();
+        if (!resetResponse.ok) {
+          throw new Error(resetData.message || `Failed to reset ${label}`);
+        }
+        Swal.fire("Reset!", resetData.message, "success");
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire("Error", error.message, "error");
+    }
+  };
+
+  // For jobseeker: Show modal to change personal details.
+  const handleChangeJobSeekerPersonalDetails = async () => {
     await Swal.fire({
       title: "Change Personal Details",
       html: `
@@ -770,6 +872,43 @@ const NavigationBar = ({ userType }) => {
     });
   };
 
+  // For recruiter: Show modal to change personal details.
+  const handleChangeRecruiterPersonalDetails = async () => {
+    await Swal.fire({
+      title: "Change Personal Details",
+      html: `
+        <div class="flex flex-col space-y-4">
+          <button id="recruiter-change-dob" class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100">
+            <i class="fas fa-birthday-cake" style="margin-right: 8px;"></i>Change Date of Birth
+          </button>
+          <button id="recruiter-change-company" class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100">
+            <i class="fas fa-globe" style="margin-right: 8px;"></i>Change Company Website
+          </button>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Close",
+      focusConfirm: false,
+      didOpen: () => {
+        setTimeout(() => {
+          const changeDob = document.getElementById("recruiter-change-dob");
+          if (changeDob) {
+            changeDob.addEventListener("click", () => {
+              handleEditRecruiterPersonalDetail("dob", "Date of Birth");
+            });
+          }
+          const changeCompany = document.getElementById("recruiter-change-company");
+          if (changeCompany) {
+            changeCompany.addEventListener("click", () => {
+              handleEditRecruiterPersonalDetail("companywebsite", "Company Website");
+            });
+          }
+        }, 100);
+      },
+    });
+  };
+
+  // -------------------- Render --------------------
   return (
     <div className="w-full bg-brand-primary text-brand-primary px-6 py-4">
       <div className="flex items-center justify-between">
@@ -879,7 +1018,18 @@ const NavigationBar = ({ userType }) => {
                       className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100"
                       onClick={() => {
                         setDropdownOpen(false);
-                        handleChangePersonalDetails();
+                        handleChangeJobSeekerPersonalDetails();
+                      }}
+                    >
+                      Change Personal Details
+                    </button>
+                  )}
+                  {userType === "recruiter" && (
+                    <button
+                      className="block w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        handleChangeRecruiterPersonalDetails();
                       }}
                     >
                       Change Personal Details
