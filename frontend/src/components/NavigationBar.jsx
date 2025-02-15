@@ -94,8 +94,7 @@ const NavigationBar = ({ userType }) => {
           closeOnClick: true,
           pauseOnFocusLoss: true,
           icon: false,
-          toastClassName:
-            "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+          toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
         }
       );
       fetchNotifications();
@@ -111,9 +110,7 @@ const NavigationBar = ({ userType }) => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
-          user.email
-        )}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
         {
           method: "GET",
           headers: {
@@ -185,6 +182,7 @@ const NavigationBar = ({ userType }) => {
   };
 
   // ---------- Profile Picture Functions ----------
+
   const getCurrentProfilePic = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -213,43 +211,31 @@ const NavigationBar = ({ userType }) => {
     const currentPic = await getCurrentProfilePic();
     const { value: result } = await Swal.fire({
       title: "Change Profile Picture",
-      html: (
-        <div className="flex flex-col items-center bg-white p-4 rounded-lg">
-          <div className="w-36 h-36 rounded-full overflow-hidden mb-4">
-            <img
-              id="profile-preview"
-              src={currentPic}
-              alt="Profile Picture"
-              className="object-cover w-full h-full"
-              style={{ cursor: "pointer" }}
-            />
+      html: `
+        <div class="flex flex-col items-center bg-white p-4 rounded-lg">
+          <div class="w-36 h-36 rounded-full overflow-hidden mb-4">
+            <img id="profile-preview" src="${currentPic}" alt="Profile Picture" class="object-cover w-full h-full" style="cursor: pointer;">
           </div>
-          <input type="file" id="profile-input" accept="image/*" className="hidden" />
-          <div className="flex space-x-4">
-            <button
-              id="change-btn"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none"
-            >
-              Change Picture
-            </button>
-            <button
-              id="delete-btn"
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none"
-            >
-              Delete Picture
-            </button>
+          <input type="file" id="profile-input" accept="image/*" class="hidden">
+          <div class="flex space-x-4">
+            <button id="change-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none">Change Picture</button>
+            <button id="delete-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none">Delete Picture</button>
           </div>
         </div>
-      ),
+      `,
       showCancelButton: true,
       confirmButtonText: "OK",
       preConfirm: async () => {
         Swal.showLoading();
         const token = localStorage.getItem("token");
+        const changeBtn = document.getElementById("change-btn");
+        const deleteBtn = document.getElementById("delete-btn");
+        const fileInput = document.getElementById("profile-input");
+
         const changeClicked =
-          document.getElementById("change-btn").dataset.action === "change";
+          changeBtn && changeBtn.dataset.action === "change";
         const deleteClicked =
-          document.getElementById("delete-btn").dataset.action === "delete";
+          deleteBtn && deleteBtn.dataset.action === "delete";
 
         if (deleteClicked) {
           const response = await fetch(
@@ -267,8 +253,7 @@ const NavigationBar = ({ userType }) => {
           return { action: "delete", message: data.message };
         }
         if (changeClicked) {
-          const fileInput = document.getElementById("profile-input");
-          if (fileInput.files.length === 0) {
+          if (!fileInput || fileInput.files.length === 0) {
             Swal.showValidationMessage("Please select a file.");
           } else {
             const formData = new FormData();
@@ -284,9 +269,7 @@ const NavigationBar = ({ userType }) => {
             );
             const data = await response.json();
             if (!response.ok)
-              throw new Error(
-                data.message || "Failed to update profile picture"
-              );
+              throw new Error(data.message || "Failed to update profile picture");
             return { action: "change", message: data.message };
           }
         }
@@ -298,70 +281,75 @@ const NavigationBar = ({ userType }) => {
         const fileInput = document.getElementById("profile-input");
         const previewImg = document.getElementById("profile-preview");
 
-        changeBtn.dataset.action = "";
-        deleteBtn.dataset.action = "";
-
-        changeBtn.addEventListener("click", () => {
-          fileInput.click();
-        });
-
-        fileInput.addEventListener("change", () => {
-          if (fileInput.files && fileInput.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              previewImg.src = e.target.result;
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-            changeBtn.dataset.action = "change";
-            deleteBtn.dataset.action = "";
-          }
-        });
-
-        deleteBtn.addEventListener("click", () => {
-          deleteBtn.dataset.action = "delete";
+        if (changeBtn) {
           changeBtn.dataset.action = "";
-          previewImg.src =
-            "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
-        });
-
-        previewImg.addEventListener("click", () => {
-          const overlay = document.createElement("div");
-          overlay.style.position = "fixed";
-          overlay.style.top = "0";
-          overlay.style.left = "0";
-          overlay.style.width = "100%";
-          overlay.style.height = "100%";
-          overlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
-          overlay.style.display = "flex";
-          overlay.style.alignItems = "center";
-          overlay.style.justifyContent = "center";
-          overlay.style.zIndex = "9999";
-
-          const fullImg = document.createElement("img");
-          fullImg.src = previewImg.src;
-          fullImg.style.maxWidth = "90%";
-          fullImg.style.maxHeight = "90%";
-          fullImg.style.borderRadius = "10px";
-
-          const closeBtn = document.createElement("button");
-          closeBtn.textContent = "Close Preview";
-          closeBtn.style.position = "absolute";
-          closeBtn.style.top = "20px";
-          closeBtn.style.right = "20px";
-          closeBtn.style.padding = "10px 20px";
-          closeBtn.style.backgroundColor = "#fff";
-          closeBtn.style.border = "none";
-          closeBtn.style.borderRadius = "5px";
-          closeBtn.style.cursor = "pointer";
-
-          closeBtn.addEventListener("click", () => {
-            document.body.removeChild(overlay);
+          changeBtn.addEventListener("click", () => {
+            if (fileInput) fileInput.click();
           });
+        }
+        if (deleteBtn) {
+          deleteBtn.dataset.action = "";
+          deleteBtn.addEventListener("click", () => {
+            deleteBtn.dataset.action = "delete";
+            if (changeBtn) changeBtn.dataset.action = "";
+            if (previewImg)
+              previewImg.src =
+                "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+          });
+        }
+        if (fileInput && previewImg) {
+          fileInput.addEventListener("change", () => {
+            if (fileInput.files && fileInput.files[0]) {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                previewImg.src = e.target.result;
+              };
+              reader.readAsDataURL(fileInput.files[0]);
+              if (changeBtn) changeBtn.dataset.action = "change";
+              if (deleteBtn) deleteBtn.dataset.action = "";
+            }
+          });
+        }
+        if (previewImg) {
+          previewImg.addEventListener("click", () => {
+            const overlay = document.createElement("div");
+            overlay.style.position = "fixed";
+            overlay.style.top = "0";
+            overlay.style.left = "0";
+            overlay.style.width = "100%";
+            overlay.style.height = "100%";
+            overlay.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
+            overlay.style.display = "flex";
+            overlay.style.alignItems = "center";
+            overlay.style.justifyContent = "center";
+            overlay.style.zIndex = "9999";
 
-          overlay.appendChild(fullImg);
-          overlay.appendChild(closeBtn);
-          document.body.appendChild(overlay);
-        });
+            const fullImg = document.createElement("img");
+            fullImg.src = previewImg.src;
+            fullImg.style.maxWidth = "90%";
+            fullImg.style.maxHeight = "90%";
+            fullImg.style.borderRadius = "10px";
+
+            const closeBtn = document.createElement("button");
+            closeBtn.textContent = "Close Preview";
+            closeBtn.style.position = "absolute";
+            closeBtn.style.top = "20px";
+            closeBtn.style.right = "20px";
+            closeBtn.style.padding = "10px 20px";
+            closeBtn.style.backgroundColor = "#fff";
+            closeBtn.style.border = "none";
+            closeBtn.style.borderRadius = "5px";
+            closeBtn.style.cursor = "pointer";
+
+            closeBtn.addEventListener("click", () => {
+              document.body.removeChild(overlay);
+            });
+
+            overlay.appendChild(fullImg);
+            overlay.appendChild(closeBtn);
+            document.body.appendChild(overlay);
+          });
+        }
       },
     });
 
@@ -374,108 +362,47 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ---------- Change Password Functionality ----------
+  // ------------------ Change Password Functionality ------------------
+
   const handleChangePassword = async () => {
     const { value: formValues } = await Swal.fire({
       title: "Change Password",
-      html: (
-        <>
-          <div style={{ position: "relative" }}>
-            <i
-              id="toggle-old-password"
-              className="fa fa-eye-slash"
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-              }}
-            ></i>
-            <input
-              type="password"
-              id="old-password"
-              className="swal2-input"
-              placeholder="Old Password"
-              style={{ paddingLeft: "2.5rem" }}
-            />
-          </div>
-          <div style={{ position: "relative" }}>
-            <i
-              id="toggle-new-password"
-              className="fa fa-eye-slash"
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-              }}
-            ></i>
-            <input
-              type="password"
-              id="new-password"
-              className="swal2-input"
-              placeholder="New Password"
-              style={{ paddingLeft: "2.5rem" }}
-            />
-          </div>
-          <div style={{ position: "relative" }}>
-            <i
-              id="toggle-confirm-new-password"
-              className="fa fa-eye-slash"
-              style={{
-                position: "absolute",
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-              }}
-            ></i>
-            <input
-              type="password"
-              id="confirm-new-password"
-              className="swal2-input"
-              placeholder="Confirm New Password"
-              style={{ paddingLeft: "2.5rem" }}
-            />
-          </div>
-          <div
-            id="password-strength"
-            style={{ marginTop: "10px", textAlign: "left", fontSize: "0.9rem" }}
-          ></div>
-        </>
-      ),
+      html: `
+        <div style="position: relative;">
+          <i id="toggle-old-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="old-password" class="swal2-input" placeholder="Old Password" style="padding-left: 2.5rem;">
+        </div>
+        <div style="position: relative;">
+          <i id="toggle-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="new-password" class="swal2-input" placeholder="New Password" style="padding-left: 2.5rem;">
+        </div>
+        <div style="position: relative;">
+          <i id="toggle-confirm-new-password" class="fa fa-eye-slash" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;"></i>
+          <input type="password" id="confirm-new-password" class="swal2-input" placeholder="Confirm New Password" style="padding-left: 2.5rem;">
+        </div>
+        <div id="password-strength" style="margin-top:10px; text-align:left; font-size:0.9rem;"></div>
+      `,
       focusConfirm: false,
       showCancelButton: true,
       preConfirm: () => {
-        const oldPassword = document.getElementById("old-password").value;
-        const newPassword = document.getElementById("new-password").value;
-        const confirmNewPassword = document.getElementById("confirm-new-password")
-          .value;
+        const oldPassword = document.getElementById("old-password")?.value;
+        const newPassword = document.getElementById("new-password")?.value;
+        const confirmNewPassword = document.getElementById("confirm-new-password")?.value;
         if (!oldPassword || !newPassword || !confirmNewPassword) {
-          Swal.showValidationMessage(
-            "Please enter old password, new password, and confirm new password"
-          );
+          Swal.showValidationMessage("Please enter old password, new password, and confirm new password");
           return;
         }
         if (oldPassword === newPassword) {
-          Swal.showValidationMessage(
-            "New password cannot be the same as the old password"
-          );
+          Swal.showValidationMessage("New password cannot be the same as the old password");
           return;
         }
         if (newPassword !== confirmNewPassword) {
-          Swal.showValidationMessage(
-            "New password and confirm new password do not match"
-          );
+          Swal.showValidationMessage("New password and confirm new password do not match");
           return;
         }
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         if (!passwordRegex.test(newPassword)) {
-          Swal.showValidationMessage(
-            "New password must include uppercase, lowercase, a number, and be at least 8 characters long."
-          );
+          Swal.showValidationMessage("New password must include uppercase, lowercase, a number, and be at least 8 characters long.");
           return;
         }
         Swal.resetValidationMessage();
@@ -492,17 +419,19 @@ const NavigationBar = ({ userType }) => {
         const toggleConfirm = document.getElementById("toggle-confirm-new-password");
 
         const addToggleListener = (toggleElem, inputElem) => {
-          toggleElem.addEventListener("click", () => {
-            if (inputElem.type === "password") {
-              inputElem.type = "text";
-              toggleElem.classList.remove("fa-eye-slash");
-              toggleElem.classList.add("fa-eye");
-            } else {
-              inputElem.type = "password";
-              toggleElem.classList.remove("fa-eye");
-              toggleElem.classList.add("fa-eye-slash");
-            }
-          });
+          if (toggleElem && inputElem) {
+            toggleElem.addEventListener("click", () => {
+              if (inputElem.type === "password") {
+                inputElem.type = "text";
+                toggleElem.classList.remove("fa-eye-slash");
+                toggleElem.classList.add("fa-eye");
+              } else {
+                inputElem.type = "password";
+                toggleElem.classList.remove("fa-eye");
+                toggleElem.classList.add("fa-eye-slash");
+              }
+            });
+          }
         };
 
         addToggleListener(toggleOld, oldPasswordInput);
@@ -510,44 +439,33 @@ const NavigationBar = ({ userType }) => {
         addToggleListener(toggleConfirm, confirmNewPasswordInput);
 
         let oldIndicator = document.getElementById("old-password-indicator");
-        if (!oldIndicator) {
+        if (!oldIndicator && oldPasswordInput) {
           oldIndicator = document.createElement("span");
           oldIndicator.id = "old-password-indicator";
           oldIndicator.style.marginLeft = "8px";
           oldIndicator.style.display = "inline-block";
           oldIndicator.style.width = "20px";
-          oldPasswordInput.parentNode.insertBefore(
-            oldIndicator,
-            oldPasswordInput.nextSibling
-          );
+          oldPasswordInput.parentNode.insertBefore(oldIndicator, oldPasswordInput.nextSibling);
         }
-        oldIndicator.innerHTML = "&nbsp;";
+        if (oldIndicator) oldIndicator.innerHTML = "&nbsp;";
 
         let newIndicator = document.getElementById("new-password-indicator");
-        if (!newIndicator) {
+        if (!newIndicator && newPasswordInput) {
           newIndicator = document.createElement("span");
           newIndicator.id = "new-password-indicator";
           newIndicator.style.marginLeft = "8px";
           newIndicator.style.display = "inline-block";
           newIndicator.style.width = "20px";
-          newPasswordInput.parentNode.insertBefore(
-            newIndicator,
-            newPasswordInput.nextSibling
-          );
+          newPasswordInput.parentNode.insertBefore(newIndicator, newPasswordInput.nextSibling);
         }
-        let confirmIndicator = document.getElementById(
-          "confirm-new-password-indicator"
-        );
-        if (!confirmIndicator) {
+        let confirmIndicator = document.getElementById("confirm-new-password-indicator");
+        if (!confirmIndicator && confirmNewPasswordInput) {
           confirmIndicator = document.createElement("span");
           confirmIndicator.id = "confirm-new-password-indicator";
           confirmIndicator.style.marginLeft = "8px";
           confirmIndicator.style.display = "inline-block";
           confirmIndicator.style.width = "20px";
-          confirmNewPasswordInput.parentNode.insertBefore(
-            confirmIndicator,
-            confirmNewPasswordInput.nextSibling
-          );
+          confirmNewPasswordInput.parentNode.insertBefore(confirmIndicator, confirmNewPasswordInput.nextSibling);
         }
 
         const calculateStrength = (pwd) => {
@@ -599,51 +517,58 @@ const NavigationBar = ({ userType }) => {
         };
 
         const updateStrengthMeter = () => {
-          const pwd = newPasswordInput.value;
+          const pwd = newPasswordInput ? newPasswordInput.value : "";
           const strength = calculateStrength(pwd);
           const strengthText = getStrengthText(strength);
           const strengthColor = getStrengthColor(strength);
-          strengthDiv.innerHTML = `
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-sm font-medium text-gray-700">${strengthText}</span>
-            </div>
-            <div class="w-full h-2 bg-gray-200 rounded">
-              <div class="h-2 rounded transition-all duration-300 ${strengthColor}" style="width: ${(strength / 5) * 100}%"></div>
-            </div>
-          `;
+          if (strengthDiv) {
+            strengthDiv.innerHTML = `
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700">${strengthText}</span>
+              </div>
+              <div class="w-full h-2 bg-gray-200 rounded">
+                <div class="h-2 rounded transition-all duration-300 ${strengthColor}" style="width: ${(strength/5)*100}%"></div>
+              </div>
+            `;
+          }
         };
 
         const updateNewAndConfirmIndicators = () => {
-          const newPwd = newPasswordInput.value;
-          const confirmPwd = confirmNewPasswordInput.value;
+          const newPwd = newPasswordInput ? newPasswordInput.value : "";
+          const confirmPwd = confirmNewPasswordInput ? confirmNewPasswordInput.value : "";
           if (!newPwd || !confirmPwd) {
-            newIndicator.innerHTML = "";
-            confirmIndicator.innerHTML = "";
+            if(newIndicator) newIndicator.innerHTML = "";
+            if(confirmIndicator) confirmIndicator.innerHTML = "";
             return;
           }
           if (newPwd === confirmPwd) {
-            newIndicator.innerHTML = `<i class="fa fa-check" style="color: green;"></i>`;
-            confirmIndicator.innerHTML = `<i class="fa fa-check" style="color: green;"></i>`;
+            if(newIndicator) newIndicator.innerHTML = `<i class="fa fa-check" style="color: green;"></i>`;
+            if(confirmIndicator) confirmIndicator.innerHTML = `<i class="fa fa-check" style="color: green;"></i>`;
           } else {
-            newIndicator.innerHTML = `<i class="fa fa-times" style="color: red;"></i>`;
-            confirmIndicator.innerHTML = `<i class="fa fa-times" style="color: red;"></i>`;
+            if(newIndicator) newIndicator.innerHTML = `<i class="fa fa-times" style="color: red;"></i>`;
+            if(confirmIndicator) confirmIndicator.innerHTML = `<i class="fa fa-times" style="color: red;"></i>`;
           }
         };
 
-        newPasswordInput.addEventListener("input", () => {
-          Swal.resetValidationMessage();
-          updateStrengthMeter();
-          updateNewAndConfirmIndicators();
-        });
-        confirmNewPasswordInput.addEventListener("input", () => {
-          Swal.resetValidationMessage();
-          updateNewAndConfirmIndicators();
-        });
-        oldPasswordInput.addEventListener("input", () => {
-          Swal.resetValidationMessage();
-          updateNewAndConfirmIndicators();
-        });
-
+        if(newPasswordInput) {
+          newPasswordInput.addEventListener("input", () => {
+            Swal.resetValidationMessage();
+            updateStrengthMeter();
+            updateNewAndConfirmIndicators();
+          });
+        }
+        if(confirmNewPasswordInput) {
+          confirmNewPasswordInput.addEventListener("input", () => {
+            Swal.resetValidationMessage();
+            updateNewAndConfirmIndicators();
+          });
+        }
+        if(oldPasswordInput) {
+          oldPasswordInput.addEventListener("input", () => {
+            Swal.resetValidationMessage();
+            updateNewAndConfirmIndicators();
+          });
+        }
         updateStrengthMeter();
         updateNewAndConfirmIndicators();
       },
@@ -682,11 +607,36 @@ const NavigationBar = ({ userType }) => {
     }
   };
 
-  // ---------- Change Personal Details (Jobseeker Only) ----------
-  // Helper function to fetch the current detail, allow editing, and update via POST request.
+  // ------------------ Personal Details Functions ------------------
+
+  // Reset a personal detail via POST.
+  const handleResetPersonalDetail = async (type, label) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/reset-job-seeker-details`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ email: user.email, type }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || `Failed to reset ${label}`);
+      }
+      Swal.fire("Reset!", data.message, "success");
+    } catch (error) {
+      Swal.fire("Error", error.message, "error");
+    }
+  };
+
+  // Edit a personal detail with integrated Reset option.
   const handleEditPersonalDetail = async (type, label) => {
     try {
-      // Fetch current detail from backend
       const getResponse = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/personal/job-seeker-details?email=${encodeURIComponent(
           user.email
@@ -703,7 +653,6 @@ const NavigationBar = ({ userType }) => {
         throw new Error("Failed to fetch current detail");
       }
       const getData = await getResponse.json();
-      // Format current value for dob to MM/DD/YYYY if applicable
       let currentValue = getData[type] || "Not set";
       if (type === "dob" && currentValue !== "Not set") {
         currentValue = new Date(currentValue).toLocaleDateString("en-US", {
@@ -712,14 +661,11 @@ const NavigationBar = ({ userType }) => {
           year: "numeric",
         });
       }
-      // For date of birth, use a date picker input; otherwise, use a text input.
       const inputField =
         type === "dob"
           ? `<input type="date" id="swal-input-new" class="swal2-input" />`
           : `<input id="swal-input-new" class="swal2-input" placeholder="Enter new ${label}" />`;
-
-      // Prompt user for a new value
-      const { value: newValue } = await Swal.fire({
+      const { isConfirmed, isDenied, value: newValue } = await Swal.fire({
         title: `Change ${label}`,
         html: `
           <div>
@@ -729,16 +675,18 @@ const NavigationBar = ({ userType }) => {
         `,
         focusConfirm: false,
         showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Update",
+        denyButtonText: "Reset",
         preConfirm: () => {
-          const inputValue = document.getElementById("swal-input-new").value;
+          const inputValue = document.getElementById("swal-input-new")?.value;
           if (!inputValue) {
             Swal.showValidationMessage(`Please enter a new ${label}`);
           }
           return inputValue;
         },
       });
-      if (newValue) {
-        // Make POST request to update the detail
+      if (isConfirmed) {
         const token = localStorage.getItem("token");
         const updateResponse = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/update-job-seeker-details`,
@@ -760,6 +708,8 @@ const NavigationBar = ({ userType }) => {
           throw new Error(updateData.message || "Failed to update detail");
         }
         Swal.fire("Updated!", `Your ${label} has been updated.`, "success");
+      } else if (isDenied) {
+        await handleResetPersonalDetail(type, label);
       }
     } catch (error) {
       console.error(error);
@@ -772,33 +722,17 @@ const NavigationBar = ({ userType }) => {
       title: "Change Personal Details",
       html: `
         <div class="flex flex-col space-y-4">
-          <button
-            id="change-dob"
-            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
-          >
-            <i class="fas fa-birthday-cake" style="margin-right: 8px;"></i>
-            Change Date of Birth
+          <button id="change-dob" class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100">
+            <i class="fas fa-birthday-cake" style="margin-right: 8px;"></i>Change Date of Birth
           </button>
-          <button
-            id="change-phone"
-            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
-          >
-            <i class="fas fa-phone" style="margin-right: 8px;"></i>
-            Change Phone Number
+          <button id="change-phone" class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100">
+            <i class="fas fa-phone" style="margin-right: 8px;"></i>Change Phone Number
           </button>
-          <button
-            id="change-github"
-            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
-          >
-            <i class="fab fa-github" style="margin-right: 8px;"></i>
-            Change Github Link
+          <button id="change-github" class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100">
+            <i class="fab fa-github" style="margin-right: 8px;"></i>Change Github Link
           </button>
-          <button
-            id="change-linkedin"
-            class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100"
-          >
-            <i class="fab fa-linkedin" style="margin-right: 8px;"></i>
-            Change LinkedIn URL
+          <button id="change-linkedin" class="flex items-center justify-center p-4 border border-gray-300 rounded hover:bg-blue-100">
+            <i class="fab fa-linkedin" style="margin-right: 8px;"></i>Change LinkedIn URL
           </button>
         </div>
       `,
@@ -806,7 +740,6 @@ const NavigationBar = ({ userType }) => {
       confirmButtonText: "Close",
       focusConfirm: false,
       didOpen: () => {
-        // Use a short timeout to ensure the modal's HTML is rendered
         setTimeout(() => {
           const changeDob = document.getElementById("change-dob");
           if (changeDob) {

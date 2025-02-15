@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { changePassword, changeProfilePic, deleteProfilePic, getProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails } = require('../controllers/personalDetailsController');
+const { changePassword, changeProfilePic, deleteProfilePic, getProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails } = require('../controllers/personalDetailsController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
 
@@ -22,5 +22,8 @@ router.get('/job-seeker-details', protect, getJobSeekerPersonalDetails);
 
 // Route to update current jobSeeker personal details
 router.post('/update-job-seeker-details', protect, updateJobSeekerPersonalDetails);
+
+// Route to reset current jobSeeker personal details
+router.post('/reset-job-seeker-details', protect, resetJobSeekerPersonalDetails);
 
 module.exports = router;

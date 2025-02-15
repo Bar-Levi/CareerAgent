@@ -306,6 +306,7 @@ const getJobSeekerPersonalDetails = async (req, res) => {
  * - value: the new value to set.
  * 
  * Validates the new value and updates the corresponding field.
+ * For "dob", the date is formatted as a nicely formatted string, e.g. "January 1, 2020".
  */
 const updateJobSeekerPersonalDetails = async (req, res) => {
   try {
@@ -352,7 +353,7 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
         if (dobDate > new Date()) {
           return res.status(400).json({ message: "Date of birth cannot be in the future." });
         }
-        // Format the date as a nice string, e.g. "January 1, 2020"
+        // Format the date as a nicely formatted string, e.g. "January 1, 2020"
         const formattedDate = dobDate.toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
@@ -372,6 +373,60 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
   }
 };
 
+/**
+ * Controller to reset a jobseeker's personal detail.
+ * Expects:
+ * - email: the user's unique email (in req.body).
+ * - type: the detail type to reset ("github", "linkedin", "phone", or "dob").
+ * 
+ * Sets the corresponding field to an empty string and returns a dynamic message.
+ */
+const resetJobSeekerPersonalDetails = async (req, res) => {
+  try {
+    const { email, type } = req.body;
+    if (!email || !type) {
+      return res.status(400).json({ message: "Email and type are required." });
+    }
+    // Find the jobseeker by email.
+    const user = await jobSeekerModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Jobseeker not found." });
+    }
+
+    switch (type.toLowerCase()) {
+      case "github":
+        user.githubUrl = "";
+        break;
+      case "linkedin":
+        user.linkedinUrl = "";
+        break;
+      case "phone":
+        user.phone = "";
+        break;
+      case "dob":
+        user.dateOfBirth = "";
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid detail type. Valid types: github, linkedin, phone, dob." });
+    }
+
+    await user.save();
+
+    // Map type to a proper detail name for dynamic messaging.
+    const detailNames = {
+      github: "GitHub URL",
+      linkedin: "LinkedIn URL",
+      phone: "Phone Number",
+      dob: "Date of Birth",
+    };
+
+    return res.status(200).json({ message: `${detailNames[type.toLowerCase()]} reset successfully.` });
+  } catch (error) {
+    console.error("Error resetting personal details:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   changePassword,
   changeProfilePic,
@@ -379,4 +434,5 @@ module.exports = {
   getProfilePic,
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
+  resetJobSeekerPersonalDetails,
 };
