@@ -32,26 +32,95 @@ const NavigationBar = ({ userType }) => {
   const [onlineUsers, setOnlineUsers] = useState(new Map());
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // -------------------- Notification Handler --------------------
   const handleNotificationClick = (notificationData) => {
-    localStorage.setItem(
-      "stateAddition",
-      JSON.stringify(notificationData.extraData.stateAddition)
-    );
-    const updatedState = {
-      ...location.state,
-      refreshToken: location.state.refreshToken + 1,
-    };
-    navigate(notificationData.extraData.goToRoute, { state: updatedState });
+    // Save notification extraData on localStorage.
+    localStorage.setItem('stateAddition', JSON.stringify(notificationData.extraData.stateAddition));
+    const updatedState = { ...location.state, refreshToken: location.state.refreshToken + 1 };
+    console.log("Updated state:", updatedState);
+    navigate(notificationData.extraData.goToRoute, {state: updatedState});
   };
 
-  // -------------------- Fetch Notifications --------------------
+  
+  useEffect(() => {
+          // Connect the socket
+          socket.connect();
+          
+          // Join the room using the user's ID (as a string)
+          if (user && user._id) {
+            socket.emit("join", user._id);
+            console.log("Socket joined room:", user._id);
+          }
+        
+          // Listen for the updateOnlineUsers event
+          socket.on("updateOnlineUsers", (onlineUsersData) => {
+            console.log("Updated online users:", onlineUsersData);
+            // Here, you can update your state.
+            // For simplicity, we store the array of online user IDs.
+            setOnlineUsers(onlineUsersData);
+          });
+
+          socket.on("user-online", (data) => {
+            console.log("User online:", data);
+          });
+
+          socket.on("user-offline", (data) => {
+            console.log("User offline:", data);
+          });
+
+          // Log when connected
+          socket.on("connect", () => {
+            console.log("Socket connected with ID:", socket.id);
+          });
+      
+          // Listen for new notifications
+          socket.on("newNotification", (notificationData) => {
+          toast.info(
+            <div className="flex items-center space-x-2">
+            {notificationData.type === "chat" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
+              </div>
+            ) : notificationData.type === "apply" ? (
+              <div className="p-4 w-[10%] flex justify-center">
+                <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+              </div>
+            ) : null}
+              <span>
+                {notificationData.message.length > 30
+                  ? notificationData.message.slice(0, 30) + "..."
+                  : notificationData.message}
+              </span>
+              </div>,
+            {
+              onClick: () => {
+                handleNotificationClick(notificationData);
+              },
+              autoClose: 5000,
+              pauseOnHover: true,
+              draggable: true,
+              closeButton: false,
+              closeOnClick: true,
+              pauseOnFocusLoss: true,
+              icon: false,
+              toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
+            }
+          );
+          
+
+          fetchNotifications();
+          });
+          // Clean up on component unmount
+          return () => {
+          socket.off("updateOnlineUsers");
+          socket.off("newNotification");
+          socket.disconnect();
+          };
+      }, [user]);
+
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
-          user.email
-        )}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
         {
           method: "GET",
           headers: {
@@ -62,6 +131,7 @@ const NavigationBar = ({ userType }) => {
       );
       if (!response.ok) {
         const errorMessage = `Error ${response.status}: ${response.statusText}`;
+        console.error(errorMessage);
         throw new Error(errorMessage);
       }
       const data = await response.json();
@@ -70,82 +140,37 @@ const NavigationBar = ({ userType }) => {
       console.error("Failed to fetch notifications:", error.message);
     }
   };
-
-  // -------------------- Socket Setup --------------------
-  useEffect(() => {
-    if (!socket.connected) {
-      socket.connect();
-    }
-    if (user && user._id) {
-      socket.emit("join", user._id);
-    }
-    socket.on("updateOnlineUsers", (onlineUsersData) => {
-      setOnlineUsers(onlineUsersData);
-    });
-    socket.on("user-online", (data) => {
-      console.log("User online:", data);
-    });
-    socket.on("user-offline", (data) => {
-      console.log("User offline:", data);
-    });
-    socket.on("connect", () => {
-      console.log("Socket connected with ID:", socket.id);
-    });
-    socket.on("newNotification", (notificationData) => {
-      // Display just the message string (truncated if needed)
-      const messageStr =
-        notificationData.message.length > 30
-          ? notificationData.message.slice(0, 30) + "..."
-          : notificationData.message;
-      toast.info(messageStr, {
-        onClick: () => {
-          handleNotificationClick(notificationData);
-        },
-        autoClose: 5000,
-        pauseOnHover: true,
-        draggable: true,
-        closeButton: false,
-        closeOnClick: true,
-        pauseOnFocusLoss: true,
-        icon: false,
-        toastClassName: "cursor-pointer bg-blue-100 text-blue-900 p-4 rounded",
-      });
-      fetchNotifications();
-    });
-    return () => {
-      socket.off("updateOnlineUsers");
-      socket.off("newNotification");
-      socket.disconnect();
-    };
-  }, [user]);
-
-  // -------------------- Close Panel on Outside Click --------------------
+    
+  // Close the panel if a click occurs outside of it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
         setPanelOpen(false);
       }
     };
+
     if (panelOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [panelOpen]);
 
-  useEffect(() => {
+  useEffect(() => {;
     fetchNotifications();
   }, []);
 
-  // -------------------- Active Navigation Styling --------------------
+  // Function to determine active styling
   const isActive = (path) =>
     location.pathname === path
       ? "bg-brand-primary text-brand-secondary"
       : "bg-brand-secondary text-brand-primary hover:text-brand-secondary hover:bg-brand-primary";
 
+  // Close dropdown on outside click
   useEffect(() => {
     const closeDropdown = (e) => {
       if (!e.target.closest(".dropdown")) setDropdownOpen(false);
