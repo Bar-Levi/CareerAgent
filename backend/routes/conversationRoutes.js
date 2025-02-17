@@ -9,8 +9,10 @@ const {
     addMessageToConversation,
     updateMessageInConversation,
     deleteMessageFromConversation,
-    getJobListingConversations
+    getJobListingConversations,
+    markMessagesAsRead
 } = require("../controllers/conversationController");
+const { protect } = require("../middleware/authMiddleware");
 
 // Routes for conversations
 router.get("/", getAllConversations);
@@ -18,6 +20,10 @@ router.get("/:conversationId", getConversationById);
 router.post("/", createConversation);
 router.put("/:id", updateConversation);
 router.delete("/:id", deleteConversation);
+
+// Mark messages as read
+router.patch("/:conversationId/markAsRead", protect, markMessagesAsRead);
+
 
 // Get conversations of a specific jobListing
 router.get("/jobListing/:jobListingId", getJobListingConversations);

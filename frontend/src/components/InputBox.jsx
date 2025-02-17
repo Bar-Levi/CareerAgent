@@ -31,9 +31,9 @@ const InputBox = ({ onSend }) => {
         />
         <button
           onClick={handleSend}
-          disabled={!text.trim() && !file}
+          disabled={!text.trim()}
           className={`px-4 py-2 rounded-md font-semibold ${
-            text.trim() || file
+            text.trim()
               ? "bg-blue-500 hover:bg-blue-600 text-white"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}

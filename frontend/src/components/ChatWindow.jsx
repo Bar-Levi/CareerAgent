@@ -35,6 +35,10 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const [hasMore, setHasMore] = useState(true);
   // Dummy spacer height to force scrollability when needed.
   const [dummySpacerHeight, setDummySpacerHeight] = useState(0);
+  const chatEndRef = useRef(null);
+  const [profilePics, setProfilePics] = useState(null);
+
+
 
   // Refs for scrolling.
   const messagesContainerRef = useRef(null);
@@ -49,7 +53,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     }
   };
 
-  // Load the initial (latest) messages.
+  // Load the initial (latest) messages. --------- previous was fetchMessages
   const loadInitialMessages = async () => {
     if (!currentOpenConversationId) return;
     try {
@@ -60,12 +64,17 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const conversation = await response.json();
+
+      const { conversation, pics } = await response.json();
       const initialMessages = conversation.messages;
       // Reverse the messages so that the oldest is first and the newest is last.
       setMessages(initialMessages.reverse());
       // If we received fewer than the batch size, assume no more older messages.
       setHasMore(initialMessages.length >= MESSAGE_BATCH_SIZE);
+
+      setProfilePics(pics);
+      
+      setMessages(conversation.messages);
     } catch (error) {
       console.error("Error fetching chat messages", error);
     } finally {
@@ -85,7 +94,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const conversation = await response.json();
+      const { conversation } = await response.json();
       const olderMessages = conversation.messages;
       if (olderMessages.length < MESSAGE_BATCH_SIZE) {
         setHasMore(false);
@@ -93,6 +102,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       const reversedOlderMessages = olderMessages.reverse();
       // Prepend the older messages to the current list.
       setMessages((prev) => [...reversedOlderMessages, ...prev]);
+
 
       // Adjust scroll position so the view doesn't jump.
       if (messagesContainerRef.current) {
@@ -140,18 +150,59 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
 
   // Set up the socket connection and listen for new notifications.
   useEffect(() => {
-    socket.connect();
+
+    // Ensure socket is connected
+    if (!socket.connected) {
+      socket.connect();
+    }
     if (user && user._id) {
       socket.emit("join", user._id);
     }
-    socket.on("newNotification", fetchLatestMessage);
-    return () => {
-      socket.off("newNotification");
+  
+    const handleNewNotification = (notificationData) => {
+      
+      if (notificationData.type === "chat") {
+        setMessages((prev) => [...prev, notificationData.messageObject]);
+        if (notificationData.conversationId === currentOpenConversationId) {
+          
+          socket.emit("messagesRead", {
+            conversationId: currentOpenConversationId,
+            readerId: user._id,
+          });
+        }
+      }
     };
-  }, [user]);
 
-  // When the conversation changes, reset the initialLoadRef so the chat always scrolls to the bottom,
-  // then load the initial batch of messages.
+  
+    const handleUpdateReadMessages = (readConversationId) => {
+      
+      
+    
+      if (currentOpenConversationId === readConversationId) {
+        setMessages((prevMessages) => {
+          const updatedMessages = prevMessages.map((msg) =>
+           (msg.senderId === user._id ? { ...msg, read: true } : msg)
+          );
+          
+          return updatedMessages;
+        });
+      }
+    };
+    
+    
+  
+    socket.on("newNotification", handleNewNotification);
+    socket.on("updateReadMessages", handleUpdateReadMessages);
+    
+    return () => {
+      socket.off("newNotification", handleNewNotification);
+      socket.off("updateReadMessages", handleUpdateReadMessages);
+    };
+  }, [user?._id, currentOpenConversationId]);
+  
+
+  // Fetch messages when jobId or conversation ID changes
+
   useEffect(() => {
     initialLoadRef.current = true;
     loadInitialMessages();
@@ -203,7 +254,10 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         formData.append("folder", currentOpenConversationId);
         const uploadResponse = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`,
-          { method: "POST", body: formData }
+          {
+            method: "POST",
+            body: formData,
+          }
         );
         if (!uploadResponse.ok) {
           throw new Error(`File upload failed: ${uploadResponse.statusText}`);
@@ -219,6 +273,8 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         return;
       }
     }
+
+    // Create the new message object
     const newMessage = {
       senderId: user._id,
       senderRole: user.role,
@@ -231,6 +287,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     // Optimistically update the UI.
     setMessages((prev) => [...prev, newMessage]);
     scrollToBottom();
+
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`,
@@ -244,13 +301,43 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("Message sent successfully:", data);
+      
     } catch (error) {
       console.error("Error sending message", error);
-      // Optionally revert the optimistic update here.
     }
   };
 
+  useEffect(() => {
+    if (!currentOpenConversationId) return;
+  
+    const markMessagesAsRead = async () => {
+      try {
+        // Call your backend API to mark messages as read
+        await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/markAsRead`, 
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ readerId: user._id })
+          }
+        );
+        
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            msg.senderId !== user._id ? { ...msg, read: true } : msg
+          )
+        );
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+  
+    markMessagesAsRead();
+  }, [currentOpenConversationId, user._id]);
+  
   return (
     <div className="w-full h-full max-w-lg md:max-w-xl lg:max-w-2xl border border-gray-300 rounded-lg bg-white shadow-lg dark:bg-gray-800 flex flex-col">
       <div className="m-2 flex justify-center bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
@@ -290,12 +377,13 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
             </svg>
           </div>
         )}
+
         {loading
           ? [...Array(5)].map((_, index) => (
               <MessageSkeleton key={index} isSender={index % 2 === 0} />
             ))
-          : messages.map((msg, index) => (
-              <MessageBubble key={index} message={msg} currentUser={user} />
+          : messages.length > 0 && messages.map((msg, index) => (
+              <MessageBubble key={index} message={msg} currentUser={user} profilePics={profilePics} />
             ))}
       </div>
       <InputBox onSend={sendMessage} />

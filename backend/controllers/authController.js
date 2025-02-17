@@ -368,24 +368,50 @@ const resetPassword = async (req, res) => {
 // Get User Details
 const getUserDetails = async (req, res) => {
     try {
-        const email = req.query.email;
-        if (!email) {
-            return res.status(400).json({ message: 'Email is required.' });
-        }
-        let user = await JobSeeker.findOne({ email });
+      const { email, id } = req.query;
+  
+      if (!email && !id) {
+        return res.status(400).json({ message: "Email or ID is required." });
+      }
+  
+      let user = null;
+  
+      if (email) {
+        user = await JobSeeker.findOne({ email });
         if (!user) {
-            user = await Recruiter.findOne({ email });
+          user = await Recruiter.findOne({ email });
         }
+      } else if (id) {
+        user = await JobSeeker.findById(id);
         if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
+          user = await Recruiter.findById(id);
         }
-
-        res.status(200).json(user);
+      }
+  
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+  
+      // Convert user document to a plain object and add the property
+      const userObj = user.toObject();
+  
+      // If the user is a JobSeeker, explicitly add jobSeekerId
+      if (user.constructor.modelName === "JobSeeker") {
+        userObj.jobSeekerId = user._id;
+      }
+      // If it's a Recruiter, you might add recruiterId instead
+      else if (user.constructor.modelName === "Recruiter") {
+        userObj.recruiterId = user._id;
+      }
+  
+      res.status(200).json(userObj);
     } catch (error) {
-        console.error('Error fetching user details:', error);
-        res.status(500).json({ message: 'Failed to fetch user details.' });
+      console.error("Error fetching user details:", error);
+      res.status(500).json({ message: "Failed to fetch user details." });
     }
-};
+  };
+  
+  
 
 
 const uploadCV = async (req, res) => {

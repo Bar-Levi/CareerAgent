@@ -13,10 +13,6 @@ const messageSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId, 
       required: true,
     },
-    senderProfilePic: {
-      type: String,
-      required: true,
-    },
     senderName: {
       type: String,
       required: true,
@@ -30,6 +26,10 @@ const messageSchema = new mongoose.Schema(
       default: Date.now,
     },
     attachments: [attachmentSchema],
+    read: {
+      type: Boolean,
+      default: false,
+    },
     edited: {
       type: Boolean,
       default: false,

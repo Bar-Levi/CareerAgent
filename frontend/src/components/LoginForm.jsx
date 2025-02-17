@@ -121,8 +121,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
 
             const { token, user } = await response.json();
             localStorage.setItem('token', token);
-
-
+            
             navigate('/dashboard', {
                 state: {
                     email: formData.email,
