@@ -17,24 +17,37 @@ const getAllConversations = async (req, res) => {
 
 const getConversationById = async (req, res) => {
   try {
+    // Read pagination parameters from the query string, with defaults.
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const skip = parseInt(req.query.skip, 10) || 0;
 
     const conversation = await Conversation.findById(req.params.conversationId)
       .populate("jobListingId")
-      .populate("messages"); // No direct ref, fetching manually later
+      .populate("messages"); // Populating messages
 
     if (!conversation) {
       
       return res.status(404).json({ message: "Conversation not found" });
     }
-    console.log("Conversation.participants: ", conversation._id);
+
+  
+  // If there are messages, sort them so the newest come first.
+    let messages = conversation.messages || [];
+    messages = messages.sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+    );
+
+    // Slice the sorted array based on skip and limit values.
+    const paginatedMessages = messages.slice(skip, skip + limit);
+
+    // Convert the conversation document to a plain object and replace messages.
+    const conversationObj = conversation.toObject();
+    conversationObj.messages = paginatedMessages;
+    
     const recruiterId = conversation.participants[0];
-    console.log("RecruiterID: ", recruiterId);
     const recruiter = await Recruiter.findById(recruiterId);
-    console.log("Recruiter: ", recruiter);
     const jobSeekerId = conversation.participants[1];
-    console.log("Job SeekerID: ", jobSeekerId);
     const jobSeeker = await JobSeeker.findById(jobSeekerId);
-    console.log("Job Seeker: ", jobSeeker);
 
     const profilePics = [
       {
@@ -49,12 +62,13 @@ const getConversationById = async (req, res) => {
       }
     ] || [];
 
-    res.json({ conversation, pics: profilePics });
+    res.json({ conversation: conversationObj, pics: profilePics });
   } catch (err) {
     console.error("Error fetching conversation:", err);
     res.status(500).json({ message: "Server error while fetching conversation" });
   }
 };
+
 
 const createConversation = async (req, res) => {
   const { participants, jobListingId, isGroupChat, groupChatName } = req.body;
@@ -140,9 +154,6 @@ const addMessageToConversation = async (req, res) => {
     conversation.messages.push(newMessage);
     conversation.lastMessage = conversation.messages[conversation.messages.length - 1];
 
-
-    
-
     await conversation.save();
 
     // Assuming the recruiter is at index 0 in the participants array and job seeker at index 1.
@@ -152,7 +163,6 @@ const addMessageToConversation = async (req, res) => {
     // Determine the receiver based on the sender's role
     const recieverId = senderRole === "recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
 
-    
     const reciever = senderRole === "recruiter" ?
       await JobSeeker.findById(recieverId) :
       await Recruiter.findById(recieverId);
@@ -162,9 +172,7 @@ const addMessageToConversation = async (req, res) => {
     }
 
     const jobListing = await JobListing.findById(conversation.jobListingId);
-    
-    
-    
+
     // Create and push a new notification to the receiver
     const newNotification = {
       type: "chat",
@@ -201,7 +209,6 @@ const addMessageToConversation = async (req, res) => {
     res.status(400).json({ message: err.message });
   }
 };
-
 
 const updateMessageInConversation = async (req, res) => {
   try {
@@ -263,7 +270,6 @@ const getJobListingConversations = async (req, res) => {
   }
 };
 
-
 const markMessagesAsReadInternal = async (conversationId, readerId) => {
   // Update all messages (where the sender is not the reader) to read: true
   const conversation = await Conversation.findByIdAndUpdate(
@@ -310,9 +316,6 @@ const markMessagesAsRead = async (req, res) => {
   }
 };
 
-module.exports = { markMessagesAsRead, markMessagesAsReadInternal };
-
-
 module.exports = {
   getAllConversations,
   getConversationById,
@@ -325,4 +328,5 @@ module.exports = {
   getJobListingConversations,
   markMessagesAsRead,
   markMessagesAsReadInternal,
+  markMessagesAsRead
 };
