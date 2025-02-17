@@ -1,3 +1,4 @@
+// NotificationPanel.jsx
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaComments, FaUser } from 'react-icons/fa';
@@ -108,7 +109,7 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
                   handleDeleteNotification(notification._id);
                 }}
                 className="p-1 text-red-500 hover:bg-red-100 focus:outline-none rounded-full"
-                >
+              >
                 X
               </button>
             </div>
