@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import ChatWindow from "../../components/ChatWindow"; // This component is wrapped in React.memo
 import { FaSpinner } from "react-icons/fa";
+import { getCandidateInfo } from "../../utils/auth";
 
 const CandidateMessages = ({
   user,
@@ -9,54 +10,14 @@ const CandidateMessages = ({
   selectedConversationId,
   setSelectedConversationId,
   onlineUsers, // Assume onlineUsers is an array of objects, each with { userId, ... }
+  selectedCandidate,
+  setSelectedCandidate
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
   // candidateInfoMap maps conversation._id to candidate info
   const [candidateInfoMap, setCandidateInfoMap] = useState({});
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
 
-  // Async helper: Get candidate info from a conversation by scanning its messages
-  const getCandidateInfo = async (conversation) => {
-    if (!conversation.messages || conversation.messages.length === 0) return null;
-
-    // Find the first message where senderId is not the recruiterId.
-    const candidateMessage = conversation.messages.find(
-      (msg) => msg.senderId.toString() !== recruiterId
-    );
-
-    if (candidateMessage) {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?id=${encodeURIComponent(
-            candidateMessage.senderId
-          )}`,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch candidate profile picture");
-        }
-        const data = await response.json();
-        console.log("data.profilePic: ", data.profilePic);
-        return {
-          profilePic: data.profilePic,
-          name: candidateMessage.senderName,
-          senderId: candidateMessage.senderId,
-        };
-      } catch (error) {
-        console.error("Error fetching profile picture:", error);
-        // Fallback to a default value or rethrow the error as needed.
-        return {
-          profilePic: candidateMessage.senderProfilePic || "",
-          name: candidateMessage.senderName,
-          senderId: candidateMessage.senderId,
-        };
-      }
-    }
-    return null;
-  };
 
   // Fetch candidate conversations for the given job listing
   useEffect(() => {
@@ -79,12 +40,15 @@ const CandidateMessages = ({
         }
         const data = await response.json();
         const jobListingConversations = data.jobListingConversations;
+        
         // Filter conversations that have at least one message from a candidate
-        const candidateConversations = jobListingConversations.filter(
-          (convo) =>
-            convo.messages &&
-            convo.messages.some((msg) => msg.senderId.toString() !== recruiterId)
-        );
+        // const candidateConversations = jobListingConversations.filter(
+        //   (convo) =>
+        //     convo.messages &&
+        //     convo.messages.some((msg) => msg.senderId.toString() !== recruiterId)
+        // );
+        const candidateConversations = jobListingConversations;
+        console.log("candidateConversations: ", candidateConversations)
         setConversations(candidateConversations);
 
         // Prefetch candidate info for each conversation and build a map

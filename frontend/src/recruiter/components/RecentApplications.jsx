@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import convertMongoObject from "../../utils/convertMongoObject";
+import { getCandidateInfo } from "../../utils/auth";
 
-const RecentApplications = ({ applications = [] }) => {
+const RecentApplications = ({ applications = [], setSelectedConversationId, setSelectedJobListing, setSelectedCandidate }) => {
   console.log("Applications: ", applications);
+  const { state } = useLocation();
+  const user = state?.user;
+
   const [applicantsData, setApplicantsData] = useState({});
 
   // Helper function: Get applicant data for a job seeker
@@ -34,6 +40,40 @@ const RecentApplications = ({ applications = [] }) => {
     console.log("ApplicantData: ", applicantData);
     return applicantData;
   };
+
+  const handleChatButtonClick = async (applicant) => {
+    try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              participants: [user._id, applicant.jobSeekerId],
+              jobListingId: applicant.jobId,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json(); // Try to get error details from the server
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
+        }
+
+        const { conversation, jobListingObject } = await response.json();
+        console.log("New conversation created:", conversation);
+        console.log("Job listing object: ", jobListingObject);
+        setSelectedJobListing(convertMongoObject(jobListingObject));
+        setSelectedConversationId(conversation._id);
+
+        const candidateInfo = await getCandidateInfo(conversation);
+        setSelectedCandidate(candidateInfo);
+      
+    } catch (error) {
+        console.error('Error creating conversation:', error);
+        // Handle error (e.g., display an error message to the user)
+        alert("Failed to create chat. Please try again later.") // Example alert
+    }
+};
 
   // Pre-fetch applicant data for all applications when they change.
   useEffect(() => {
@@ -142,6 +182,7 @@ const RecentApplications = ({ applications = [] }) => {
                       {/* Chat Button */}
                       <button
                         className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-semibold rounded-full shadow-lg transform transition-transform duration-200 hover:scale-105 hover:shadow-xl"
+                        onClick={() => handleChatButtonClick(app)}
                       >
                         Chat with Applicant
                       </button>

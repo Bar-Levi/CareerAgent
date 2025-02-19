@@ -77,7 +77,13 @@ const createConversation = async (req, res) => {
     return res.status(400).json({ message: "jobListingId is required" });
   }
 
+
   try {
+    const jobListingObject = await JobListing.findById(jobListingId);
+    if (!jobListingObject) {
+      return res.status(404).json({ message: "Job listing not found" });
+    }
+    console.log("jobListing object: ", jobListingObject);
     // Check if a conversation with the same participants and jobListingId already exists
     const existingConversation = await Conversation.findOne({
       participants: { $all: participants, $size: participants.length },
@@ -85,13 +91,16 @@ const createConversation = async (req, res) => {
     });
 
     if (existingConversation) {
-      return res.status(200).json(existingConversation);
+      return res.status(200).json({ conversation: existingConversation, jobListingObject });
     }
 
     // If no existing conversation is found, create a new one
     const conversation = new Conversation(req.body);
     const newConversation = await conversation.save();
-    res.status(201).json(newConversation);
+
+    console.log("New conversation: ", newConversation);
+    console.log("Job listing: ", jobListingObject);
+    res.status(201).json({ conversation: newConversation, jobListingObject });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

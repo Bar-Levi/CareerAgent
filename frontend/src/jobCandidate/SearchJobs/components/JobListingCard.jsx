@@ -48,9 +48,9 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
             throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
         }
 
-        const newConversation = await response.json();
-        console.log("New conversation created:", newConversation);
-        setCurrentOpenConversationId(newConversation._id);
+        const { conversation } = await response.json();
+        console.log("New conversation created:", conversation);
+        setCurrentOpenConversationId(conversation._id);
       
 
     } catch (error) {

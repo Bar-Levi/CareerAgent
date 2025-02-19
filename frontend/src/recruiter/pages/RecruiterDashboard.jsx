@@ -51,6 +51,8 @@ const RecruiterDashboard = () => {
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  
 
   useEffect(() => {
     console.log("selectedJobListing", selectedJobListing);
@@ -178,6 +180,7 @@ const RecruiterDashboard = () => {
     }));
     fetchJobListings();
   };
+  
 
   return (
     <div key={state.refreshToken} className="h-screen flex flex-col bg-gray-100 animate-fade-in">
@@ -208,7 +211,6 @@ const RecruiterDashboard = () => {
             showNotification={showNotification}
             jobListings={jobListings}
             setJobListings={setJobListings}
-            // Pass the selected job listing object and the setter
             selectedJobListing={selectedJobListing}
             setSelectedJobListing={setSelectedJobListing}
             setMetrics={setMetrics}
@@ -227,6 +229,8 @@ const RecruiterDashboard = () => {
             jobListing={selectedJobListing}
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
+            selectedCandidate={selectedCandidate}
+            setSelectedCandidate={setSelectedCandidate}
             onlineUsers={onlineUsers}
           />
         </div>
@@ -234,7 +238,13 @@ const RecruiterDashboard = () => {
 
       {/* Other Sections */}
       <div className="flex flex-col items-center p-6 space-y-8">
-        <RecentApplications applications={recentApplications} />
+        <RecentApplications
+          applications={recentApplications}
+          setSelectedConversationId={setSelectedConversationId}
+          setSelectedJobListing={setSelectedJobListing}
+          setSelectedCandidate={setSelectedCandidate}
+
+        />
         <JobListingInput
           user={user}
           onPostSuccess={handlePostSuccess}
