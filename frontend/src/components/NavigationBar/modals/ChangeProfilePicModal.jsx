@@ -5,7 +5,7 @@ const getCurrentProfilePic = async (user) => {
   const token = localStorage.getItem("token");
   try {
     const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(
+      `${process.env.REACT_APP_BACKEND_URL}/api/personal/name-and-profile-pic?email=${encodeURIComponent(
         user.email
       )}`,
       {

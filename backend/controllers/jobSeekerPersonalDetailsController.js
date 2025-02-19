@@ -208,8 +208,9 @@ const deleteProfilePic = async (req, res) => {
  * 
  * Searches the user by its email.
  */
-const getProfilePic = async (req, res) => {
+const getNameAndProfilePic = async (req, res) => {
   try {
+    console.log("getNameAndProfilePic");
     // Destructure email and id from the query parameters.
     const { email, id } = req.query;
     let user = null;
@@ -235,8 +236,9 @@ const getProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
-    return res.status(200).json({ profilePic: user.profilePic });
+    console.log("DATA -");
+    console.log({ profilePic: user.profilePic, name: user.fullName} );
+    return res.status(200).json({ profilePic: user.profilePic, name: user.fullName});
   } catch (error) {
     console.error("Error fetching profile picture:", error);
     return res.status(500).json({ message: "Server error." });
@@ -431,7 +433,7 @@ module.exports = {
   changePassword,
   changeProfilePic,
   deleteProfilePic,
-  getProfilePic,
+  getNameAndProfilePic,
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,
