@@ -40,6 +40,13 @@ const SearchJobs = () => {
     }
   }, [state.refreshToken]);
 
+  // Listen for changes in location state and update user accordingly
+  useEffect(() => {
+    if (state && state.user) {
+      setUser(state.user);
+    }
+  }, [state]);
+
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
