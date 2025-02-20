@@ -21,6 +21,7 @@ const RecruiterDashboard = () => {
   const [recentApplications, setRecentApplications] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
+  const [newConversationCandidate, setNewConversationCandidate] = useState(null);
 
   const [onlineUsers, setOnlineUsers] = useState([]);
 
@@ -215,6 +216,7 @@ const RecruiterDashboard = () => {
             setSelectedJobListing={setSelectedJobListing}
             setMetrics={setMetrics}
             setSelectedConversationId={setSelectedConversationId}
+            setSelectedCandidate={setSelectedCandidate}
           />
         </div>
         {/* Right Pane: Candidate Messages & Chat (55% width) */}
@@ -243,7 +245,6 @@ const RecruiterDashboard = () => {
           setSelectedConversationId={setSelectedConversationId}
           setSelectedJobListing={setSelectedJobListing}
           setSelectedCandidate={setSelectedCandidate}
-
         />
         <JobListingInput
           user={user}

@@ -41,13 +41,15 @@ const CandidateMessages = ({
         const data = await response.json();
         const jobListingConversations = data.jobListingConversations;
         
+        console.log("senderId- ", selectedCandidate?.senderId);
+
         // Filter conversations that have at least one message from a candidate
-        // const candidateConversations = jobListingConversations.filter(
-        //   (convo) =>
-        //     convo.messages &&
-        //     convo.messages.some((msg) => msg.senderId.toString() !== recruiterId)
-        // );
-        const candidateConversations = jobListingConversations;
+        const candidateConversations = jobListingConversations.filter(
+          (convo) =>
+            (convo.messages && convo.messages.some((msg) => msg.senderId.toString() !== recruiterId)) ||
+            convo.participants[1] === selectedCandidate?.senderId
+        );
+        
         console.log("candidateConversations: ", candidateConversations)
         setConversations(candidateConversations);
 
@@ -75,7 +77,7 @@ const CandidateMessages = ({
     // Log them separately
     console.log("jobListing:", jobListing);
     console.log("recruiterId:", recruiterId);
-  }, [jobListing, recruiterId]);
+  }, [jobListing, recruiterId, selectedCandidate]);
 
   // When a candidate is selected, update conversation and candidate state
   const handleCandidateSelect = async (conversation) => {
