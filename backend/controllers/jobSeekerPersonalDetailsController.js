@@ -1,9 +1,12 @@
+// backend/controllers/userController.js
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const jobSeekerModel = require('../models/jobSeekerModel');
 const recruiterModel = require('../models/recruiterModel');
-const jobListingModel = require('../models/jobListingModel'); // Import JobListing model
+const jobListingModel = require('../models/jobListingModel');
+const multer = require('multer');
+const path = require('path');
 
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
@@ -45,12 +48,6 @@ const deleteFromCloudinary = (publicId) => {
 
 /**
  * Controller to change a user's password.
- * Expects:
- * - email: the user's unique email.
- * - oldPassword: the user's current password.
- * - newPassword: the new password the user wants to set.
- * 
- * Searches the user by its email.
  */
 const changePassword = async (req, res) => {
   try {
@@ -91,11 +88,6 @@ const changePassword = async (req, res) => {
 
 /**
  * Controller to change a user's profile picture.
- * Expects:
- * - email: the user's unique email.
- * - A file uploaded via multer (available in req.file).
- * 
- * Searches the user by its email.
  */
 const changeProfilePic = async (req, res) => {
   try {
@@ -113,7 +105,6 @@ const changeProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    // Delete current profile picture from Cloudinary if not default
     if (user.profilePic && user.profilePic !== defaultProfilePic) {
       const publicId = extractPublicId(user.profilePic);
       if (publicId) {
@@ -121,11 +112,9 @@ const changeProfilePic = async (req, res) => {
           await deleteFromCloudinary(publicId);
         } catch (error) {
           console.error("Failed to delete old image from Cloudinary:", error);
-          // Proceed even if deletion fails
         }
       }
     }
-    // Upload new file via Cloudinary
     const uploadStream = cloudinary.uploader.upload_stream(
       { folder: "profile_pictures" },
       async (error, result) => {
@@ -135,7 +124,6 @@ const changeProfilePic = async (req, res) => {
         }
         user.profilePic = result.secure_url;
         await user.save();
-        // If the user is a recruiter, update all job listings with the new recruiterProfileImage
         if (user.role === "recruiter") {
           await jobListingModel.updateMany(
             { recruiterId: user._id },
@@ -154,11 +142,6 @@ const changeProfilePic = async (req, res) => {
 
 /**
  * Controller to delete a user's profile picture.
- * Expects:
- * - email: the user's unique email.
- * 
- * Resets the profilePic field to the default URL.
- * Searches the user by its email.
  */
 const deleteProfilePic = async (req, res) => {
   try {
@@ -173,7 +156,6 @@ const deleteProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    // Delete current profile picture from Cloudinary if not default
     if (user.profilePic && user.profilePic !== defaultProfilePic) {
       const publicId = extractPublicId(user.profilePic);
       if (publicId) {
@@ -181,13 +163,11 @@ const deleteProfilePic = async (req, res) => {
           await deleteFromCloudinary(publicId);
         } catch (error) {
           console.error("Failed to delete old image from Cloudinary:", error);
-          // Proceed even if deletion fails
         }
       }
     }
     user.profilePic = defaultProfilePic;
     await user.save();
-    // If the user is a recruiter, update job listings with the default profile pic
     if (user.role === "recruiter") {
       await jobListingModel.updateMany(
         { recruiterId: user._id },
@@ -202,43 +182,29 @@ const deleteProfilePic = async (req, res) => {
 };
 
 /**
- * Controller to get the current profile picture URL for the user.
- * Expects:
- * - email: the user's unique email.
- * 
- * Searches the user by its email.
+ * Controller to get the current profile picture URL and name for the user.
  */
 const getNameAndProfilePic = async (req, res) => {
   try {
     console.log("getNameAndProfilePic");
-    // Destructure email and id from the query parameters.
     const { email, id } = req.query;
     let user = null;
-
-    // If email is provided, search by email.
     if (email) {
       user =
         (await jobSeekerModel.findOne({ email })) ||
         (await recruiterModel.findOne({ email }));
-    }
-    // If email is not provided but id is provided, search by id.
-    else if (id) {
+    } else if (id) {
       user =
         (await jobSeekerModel.findOne({ _id: id })) ||
         (await recruiterModel.findOne({ _id: id }));
     } else {
-      // Neither email nor id provided.
-      return res
-        .status(400)
-        .json({ message: "Email or ID is required to fetch profile picture." });
+      return res.status(400).json({ message: "Email or ID is required to fetch profile picture." });
     }
-
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    console.log("DATA -");
-    console.log({ profilePic: user.profilePic, name: user.fullName} );
-    return res.status(200).json({ profilePic: user.profilePic, name: user.fullName});
+    console.log("DATA -", { profilePic: user.profilePic, name: user.fullName });
+    return res.status(200).json({ profilePic: user.profilePic, name: user.fullName });
   } catch (error) {
     console.error("Error fetching profile picture:", error);
     return res.status(500).json({ message: "Server error." });
@@ -247,12 +213,6 @@ const getNameAndProfilePic = async (req, res) => {
 
 /**
  * Controller to get personal details for a jobseeker.
- * Expects:
- * - email: the user's unique email (via query).
- * - type: (optional) the specific detail to retrieve ("github", "linkedin", "phone", or "dob").
- * 
- * If type is provided, returns the corresponding detail.
- * If not, returns all available personal details.
  */
 const getJobSeekerPersonalDetails = async (req, res) => {
   try {
@@ -260,12 +220,10 @@ const getJobSeekerPersonalDetails = async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: "Email is required." });
     }
-    // Find the user in the jobSeeker collection only.
     const user = await jobSeekerModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Jobseeker not found." });
     }
-    // Decide what to return based on the type parameter.
     if (type) {
       let detail;
       switch (type.toLowerCase()) {
@@ -286,7 +244,6 @@ const getJobSeekerPersonalDetails = async (req, res) => {
       }
       return res.status(200).json({ [type]: detail });
     } else {
-      // If no type is provided, return all details.
       return res.status(200).json({
         github: user.githubUrl,
         linkedin: user.linkedinUrl,
@@ -302,13 +259,6 @@ const getJobSeekerPersonalDetails = async (req, res) => {
 
 /**
  * Controller to update a jobseeker's personal detail.
- * Expects:
- * - email: the user's unique email (in req.body).
- * - type: the detail type to update ("github", "linkedin", "phone", or "dob").
- * - value: the new value to set.
- * 
- * Validates the new value and updates the corresponding field.
- * For "dob", the date is formatted as a nicely formatted string, e.g. "January 1, 2020".
  */
 const updateJobSeekerPersonalDetails = async (req, res) => {
   try {
@@ -316,37 +266,30 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
     if (!email || !type || value === undefined) {
       return res.status(400).json({ message: "Email, type, and value are required." });
     }
-    // Find the jobseeker by email.
     const user = await jobSeekerModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Jobseeker not found." });
     }
-
-    // Validate and update based on the type.
     switch (type.toLowerCase()) {
       case "github":
-        // Validate GitHub URL (must start with https://github.com/)
         if (!/^https:\/\/github\.com\/[A-Za-z0-9_.-]+$/.test(value.trim())) {
           return res.status(400).json({ message: "Invalid GitHub URL." });
         }
         user.githubUrl = value.trim();
         break;
       case "linkedin":
-        // Validate LinkedIn URL (must start with https://www.linkedin.com/in/)
         if (!/^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/.test(value.trim())) {
           return res.status(400).json({ message: "Invalid LinkedIn URL." });
         }
         user.linkedinUrl = value.trim();
         break;
       case "phone":
-        // Validate phone number (allow optional + and 7-15 digits)
         if (!/^\+?[0-9]{7,15}$/.test(value.trim())) {
           return res.status(400).json({ message: "Invalid phone number." });
         }
         user.phone = value.trim();
         break;
       case "dob":
-        // Validate date of birth: check if it's a valid date and not in the future.
         const parsedDate = Date.parse(value);
         if (isNaN(parsedDate)) {
           return res.status(400).json({ message: "Invalid date of birth." });
@@ -355,7 +298,6 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
         if (dobDate > new Date()) {
           return res.status(400).json({ message: "Date of birth cannot be in the future." });
         }
-        // Format the date as a nicely formatted string, e.g. "January 1, 2020"
         const formattedDate = dobDate.toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
@@ -366,9 +308,8 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
       default:
         return res.status(400).json({ message: "Invalid detail type. Valid types: github, linkedin, phone, dob." });
     }
-
     await user.save();
-    return res.status(200).json({ message: "Personal detail updated successfully." , updatedUser: user});
+    return res.status(200).json({ message: "Personal detail updated successfully.", updatedUser: user });
   } catch (error) {
     console.error("Error updating personal details:", error);
     return res.status(500).json({ message: "Server error." });
@@ -377,11 +318,6 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
 
 /**
  * Controller to reset a jobseeker's personal detail.
- * Expects:
- * - email: the user's unique email (in req.body).
- * - type: the detail type to reset ("github", "linkedin", "phone", or "dob").
- * 
- * Sets the corresponding field to an empty string and returns a dynamic message.
  */
 const resetJobSeekerPersonalDetails = async (req, res) => {
   try {
@@ -389,12 +325,10 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
     if (!email || !type) {
       return res.status(400).json({ message: "Email and type are required." });
     }
-    // Find the jobseeker by email
     const user = await jobSeekerModel.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "Jobseeker not found." });
     }
-
     switch (type.toLowerCase()) {
       case "github":
         user.githubUrl = "";
@@ -411,21 +345,132 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
       default:
         return res.status(400).json({ message: "Invalid detail type. Valid types: github, linkedin, phone, dob." });
     }
-
     await user.save();
-
-    // Map type to a proper detail name for dynamic messaging.
     const detailNames = {
       github: "GitHub URL",
       linkedin: "LinkedIn URL",
       phone: "Phone Number",
       dob: "Date of Birth",
     };
-
-    return res.status(200).json({ message: `${detailNames[type.toLowerCase()]} reset successfully.` , updatedUser: user});
+    return res.status(200).json({ message: `${detailNames[type.toLowerCase()]} reset successfully.`, updatedUser: user });
   } catch (error) {
     console.error("Error resetting personal details:", error);
     return res.status(500).json({ message: "Server error." });
+  }
+};
+
+/* --------------------------------------------------------------------------
+   NEW: CV Endpoints (get and update CV with analyzed_cv_content)
+-------------------------------------------------------------------------- */
+
+// Set up multer for CV upload using memory storage so we can stream the file
+const cvStorage = multer.memoryStorage();
+const cvFileFilter = (req, file, cb) => {
+  if (file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } else {
+    cb(new Error("Only PDF files are allowed"), false);
+  }
+};
+const uploadCV = multer({ storage: cvStorage, fileFilter: cvFileFilter });
+
+// GET /api/jobseeker/cv?email=<email>
+// Retrieves the current CV link for the jobseeker.
+const getCV = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    res.status(200).json({ cv: jobSeeker.cv || "" });
+  } catch (error) {
+    console.error("Error fetching CV:", error);
+    res.status(500).json({ message: "Failed to get CV" });
+  }
+};
+
+// Updates the jobseeker's CV by first deleting the old CV (if exists) from Cloudinary,
+// then uploading the new PDF to Cloudinary and updating analyzed_cv_content.
+const updateCV = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    
+    // If a CV already exists, delete it from Cloudinary
+    if (jobSeeker.cv) {
+      const publicId = extractPublicId(jobSeeker.cv);
+      if (publicId) {
+        let resourceType = "raw";
+        // Determine resource type based on the stored URL
+        if (jobSeeker.cv.includes("/image/upload/")) {
+          resourceType = "image";
+        }
+        await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+      }
+    }
+
+    // Upload the new CV using a stream.
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: "cvs", resource_type: "auto" },
+      async (error, result) => {
+        if (error) {
+          console.error("Cloudinary upload error:", error);
+          return res.status(500).json({ message: "Failed to upload CV." });
+        }
+        let cvUrl = result.secure_url;
+        // If the URL contains '/raw/upload/', replace it with '/image/upload/'
+        if (cvUrl.includes("/raw/upload/")) {
+          cvUrl = cvUrl.replace("/raw/upload/", "/image/upload/");
+        }
+        jobSeeker.cv = cvUrl;
+        // Update analyzed_cv_content using the value sent in req.body (expects a JSON string)
+        if (req.body.analyzed_cv_content) {
+          try {
+            jobSeeker.analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
+          } catch (err) {
+            console.error("Error parsing analyzed_cv_content:", err);
+            jobSeeker.analyzed_cv_content = "Analysis not available";
+          }
+        } else {
+          jobSeeker.analyzed_cv_content = "Analysis not provided";
+        }
+        await jobSeeker.save();
+        return res.status(200).json({ message: "CV updated successfully", cv: jobSeeker.cv });
+      }
+    );
+    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+  } catch (error) {
+    console.error("Error updating CV:", error);
+    res.status(500).json({ message: "Failed to update CV" });
+  }
+};
+
+
+const deleteCV = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) return res.status(404).json({ message: "Job seeker not found" });
+    if (!jobSeeker.cv) return res.status(400).json({ message: "No CV to delete." });
+    const publicId = extractPublicId(jobSeeker.cv);
+    if (publicId) {
+      // Determine the resource type based on the stored URL.
+      let resourceType = "raw";
+      if (jobSeeker.cv.includes("/image/upload/")) {
+        resourceType = "image";
+      }
+      const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+    }
+    // Remove the cv and analyzed_cv_content fields using $unset
+    await jobSeekerModel.updateOne({ email }, { $unset: { cv: 1, analyzed_cv_content: 1 } });
+    return res.status(200).json({ message: "CV deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting CV:", error);
+    res.status(500).json({ message: "Failed to delete CV" });
   }
 };
 
@@ -437,4 +482,8 @@ module.exports = {
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,
+  getCV,
+  updateCV,
+  deleteCV,
+  uploadCVMiddleware: uploadCV.single("cv")
 };

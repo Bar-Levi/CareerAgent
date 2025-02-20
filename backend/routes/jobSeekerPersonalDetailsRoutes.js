@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { changePassword, changeProfilePic, deleteProfilePic, getNameAndProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails } = require('../controllers/jobSeekerPersonalDetailsController');
+const { deleteCV, changePassword, changeProfilePic, deleteProfilePic, getNameAndProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails, getCV, uploadCVMiddleware, updateCV  } = require('../controllers/jobSeekerPersonalDetailsController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
 
+
+// CV Endpoints for jobseeker
+router.get("/jobseeker/cv", protect, getCV);
+router.post("/jobseeker/cv/update", protect, uploadCVMiddleware, updateCV);
+router.delete("/jobseeker/cv/delete", protect, deleteCV);
 
 // Route to change password
 router.post('/change-password', protect, changePassword);
