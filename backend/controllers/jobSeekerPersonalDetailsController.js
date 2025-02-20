@@ -359,9 +359,9 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
   }
 };
 
-/* --------------------------------------------------------------------------
-   NEW: CV Endpoints (get and update CV with analyzed_cv_content)
--------------------------------------------------------------------------- */
+/* -----------------------------------------------------------------------------------------------
+  CV Endpoints (get and update CV with analyzed_cv_content, delete CV with analyzed_cv_content)
+------------------------------------------------------------------------------------------------ */
 
 // Set up multer for CV upload using memory storage so we can stream the file
 const cvStorage = multer.memoryStorage();
@@ -374,7 +374,6 @@ const cvFileFilter = (req, file, cb) => {
 };
 const uploadCV = multer({ storage: cvStorage, fileFilter: cvFileFilter });
 
-// GET /api/jobseeker/cv?email=<email>
 // Retrieves the current CV link for the jobseeker.
 const getCV = async (req, res) => {
   const { email } = req.query;
