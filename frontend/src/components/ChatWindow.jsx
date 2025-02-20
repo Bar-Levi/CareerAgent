@@ -350,8 +350,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
         ref={messagesContainerRef}
         className="flex-1 overflow-y-scroll p-4 space-y-3 h-64"
       >
-        {/* Dummy spacer to force scrollability */}
-        {dummySpacerHeight > 0 && <div style={{ height: dummySpacerHeight }} />}
+        
         {/* Loading spinner when fetching older messages */}
         {isLoadingMore && (
           <div className="flex justify-center items-center mb-4">

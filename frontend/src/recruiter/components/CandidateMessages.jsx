@@ -46,7 +46,7 @@ const CandidateMessages = ({
         // Filter conversations that have at least one message from a candidate
         const candidateConversations = jobListingConversations.filter(
           (convo) =>
-            (convo.messages && convo.messages.some((msg) => msg.senderId.toString() !== recruiterId)) ||
+            convo.messages ||
             convo.participants[1] === selectedCandidate?.senderId
         );
         
