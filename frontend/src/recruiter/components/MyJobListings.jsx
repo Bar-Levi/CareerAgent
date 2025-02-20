@@ -89,7 +89,9 @@ const MyJobListings = ({
   selectedJobListing,
   setSelectedJobListing,
   setMetrics,
-  setSelectedConversationId
+  setSelectedConversationId,
+  setSelectedCandidate
+
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
@@ -231,6 +233,7 @@ const MyJobListings = ({
                     onClick={() => {
                       setSelectedJobListing(listing);
                       setSelectedConversationId(null);
+                      setSelectedCandidate(null);
                     }}
                     className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded hover:bg-blue-700"
                   >

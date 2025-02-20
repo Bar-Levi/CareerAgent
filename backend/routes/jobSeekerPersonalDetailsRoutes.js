@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { changePassword, changeProfilePic, deleteProfilePic, getProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails } = require('../controllers/jobSeekerPersonalDetailsController');
+const { changePassword, changeProfilePic, deleteProfilePic, getNameAndProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails } = require('../controllers/jobSeekerPersonalDetailsController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
 
@@ -15,7 +15,7 @@ router.post('/change-profile-pic', protect, upload.single('file'), changeProfile
 router.delete('/profile-pic', protect, deleteProfilePic);
 
 // Route to Get current profile picture
-router.get('/profile-pic', protect, getProfilePic);
+router.get('/name-and-profile-pic', protect, getNameAndProfilePic);
 
 // Route to Get current jobSeeker personal details
 router.get('/job-seeker-details', protect, getJobSeekerPersonalDetails);
