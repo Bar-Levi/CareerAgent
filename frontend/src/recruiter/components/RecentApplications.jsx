@@ -4,7 +4,6 @@ import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
 
 const RecentApplications = ({ applications = [], setSelectedConversationId, setSelectedJobListing, setSelectedCandidate}) => {
-  console.log("Applications: ", applications);
   const { state } = useLocation();
   const user = state?.user;
 
@@ -12,9 +11,9 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
 
   // Helper function: Get applicant data for a job seeker
   const getApplicantDataAsJobSeeker = async (application) => {
-    console.log("Application: ", application);
 
-    console.log("Application.jobSeekerId: " + application.jobSeekerId);
+
+
     // Fetch API request using jobSeekerId from the application
     const response = await fetch(
       `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?id=${encodeURIComponent(
@@ -37,7 +36,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
     }
 
     const applicantData = await response.json();
-    console.log("ApplicantData: ", applicantData);
+
     return applicantData;
   };
 
@@ -60,8 +59,8 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
         }
 
         const { conversation, jobListingObject } = await response.json();
-        console.log("New conversation created:", conversation);
-        console.log("Job listing object: ", jobListingObject);
+    
+    
         setSelectedJobListing(convertMongoObject(jobListingObject));
         setSelectedConversationId(conversation._id);
 

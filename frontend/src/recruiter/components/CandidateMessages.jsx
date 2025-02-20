@@ -41,7 +41,7 @@ const CandidateMessages = ({
         const data = await response.json();
         const jobListingConversations = data.jobListingConversations;
         
-        console.log("senderId- ", selectedCandidate?.senderId);
+        
 
         // Filter conversations that have at least one message from a candidate
         const candidateConversations = jobListingConversations.filter(
@@ -50,7 +50,7 @@ const CandidateMessages = ({
             convo.participants[1] === selectedCandidate?.senderId
         );
         
-        console.log("candidateConversations: ", candidateConversations)
+        
         setConversations(candidateConversations);
 
         // Prefetch candidate info for each conversation and build a map
@@ -73,10 +73,8 @@ const CandidateMessages = ({
     };
 
     fetchConversations();
-
-    // Log them separately
-    console.log("jobListing:", jobListing);
-    console.log("recruiterId:", recruiterId);
+    
+    
   }, [jobListing, recruiterId, selectedCandidate]);
 
   // When a candidate is selected, update conversation and candidate state
@@ -85,13 +83,13 @@ const CandidateMessages = ({
     // Use prefetched candidate info if available, otherwise fetch it.
     const candidateInfo =
       candidateInfoMap[conversation._id] || (await getCandidateInfo(conversation));
-    console.log("\n\ncandidateInfo: ", candidateInfo);
+    
     setSelectedCandidate(candidateInfo);
   };
 
   // Memoize the ChatWindow so that it only re-renders when its own props change.
   const memoizedChatWindow = useMemo(() => {
-    console.log("SelectedCandidate: ", selectedCandidate);
+    
     const profilePics = [
       {
         role: "Recruiter",
@@ -154,7 +152,7 @@ const CandidateMessages = ({
                   {conversations.map((conversation) => {
                     // Use prefetched candidate info from our map
                     const candidateInfo = candidateInfoMap[conversation._id];
-                    console.log("candidate info: ", candidateInfo)
+                    
                     const isSelected = conversation._id === selectedConversationId;
                     // Check if candidate is online based on senderId
                     const isOnline =

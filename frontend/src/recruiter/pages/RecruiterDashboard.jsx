@@ -25,10 +25,6 @@ const RecruiterDashboard = () => {
 
   const [onlineUsers, setOnlineUsers] = useState([]);
 
-  useEffect(() => {
-      // console.log("Online users:", onlineUsers);
-    }, [onlineUsers]);
-
  
   useEffect(() => {
     // If the socket isn't already connected, connect it.
@@ -38,7 +34,7 @@ const RecruiterDashboard = () => {
 
     // Listen for updates on online users
     socket.on("updateOnlineUsers", (onlineUserIds) => {
-      console.log("Updated online users:", onlineUserIds);
+
       // Update state as needed (here we assume onlineUserIds is an array of user IDs)
       setOnlineUsers(onlineUserIds);
     });
@@ -56,8 +52,6 @@ const RecruiterDashboard = () => {
   
 
   useEffect(() => {
-    console.log("selectedJobListing", selectedJobListing);
-    console.log("selectedJobListing._id", selectedJobListing?._id);
   }, [selectedJobListing]);
 
   // This function is called when a notification is clicked.
@@ -75,8 +69,6 @@ const RecruiterDashboard = () => {
         localStorage.removeItem("stateAddition");
 
       }
-    } else {
-      console.log("No state addition found.");
     }
   }, [state.refreshToken]); // Run once on mount
 
