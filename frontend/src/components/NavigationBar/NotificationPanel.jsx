@@ -70,7 +70,7 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
         </div>
       </div>
       <ul className="max-h-80 overflow-y-auto">
-        {notifications.map((notification) => (
+        {notifications.sort((a, b) => new Date(b.date) - new Date(a.date)).map((notification) => (
           <li
             key={notification._id}
             className="flex items-center p-4 border-b hover:bg-gray-100 cursor-pointer"
