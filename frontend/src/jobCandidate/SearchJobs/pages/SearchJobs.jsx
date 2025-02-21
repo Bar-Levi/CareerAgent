@@ -1,4 +1,4 @@
-// frontend/src/pages/SearchJobs.jsx
+// frontend/src/jobCandidate/SearchJobs/pages/SearchJobs.jsx
 import React, { useState, useEffect } from "react";
 import JobListingCardsList from "../components/JobListingCardsList";
 import SearchFilters from "../components/SearchFilters";
@@ -12,14 +12,16 @@ import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
 
 const SearchJobs = () => {
+  // Get state from location and initialize our user state
   const { state } = useLocation();
   const [user, setUser] = useState(state.user);
   const navigate = useNavigate();
+  const locationObj = useLocation(); // renamed to avoid conflicts
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
 
-  // Initialize conversation and job listing states (if comes from a notification)
+  // Initialize conversation and job listing states from notification (if any)
   const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
 
@@ -40,13 +42,14 @@ const SearchJobs = () => {
     }
   }, [state.refreshToken]);
 
-  // Listen for changes in location state and update user accordingly
+  // Update user state when location state changes
   useEffect(() => {
     if (state && state.user) {
       setUser(state.user);
     }
   }, [state]);
 
+  // Function to show notifications
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
@@ -70,6 +73,7 @@ const SearchJobs = () => {
   const [sortingMethod, setSortingMethod] = useState("newest");
   const [showModal, setShowModal] = useState(false);
 
+  // Open the modal if no CV is uploaded
   useEffect(() => {
     if (!user.cv || user.cv === "") {
       setShowModal(true);
@@ -112,8 +116,87 @@ const SearchJobs = () => {
     setSortingMethod(e.target.value);
   };
 
+  // This function is used to handle CV upload.
+  // The email is passed via query string.
+  // After success, it updates the user state with new cv and analyzed_cv_content.
   const handleCVUpload = async (file) => {
-    // ... existing handleCVUpload logic ...
+    try {
+      // Get token from state or localStorage
+      const token = state.token || localStorage.getItem("token");
+
+      // Process the CV file: extract text and send it to our AI endpoint
+      const processCV = async (cvFile) => {
+        try {
+          const cvContent = await extractTextFromPDF(cvFile);
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
+            method: "POST",
+            body: JSON.stringify({ prompt: cvContent }),
+            headers: { "Content-Type": "application/json" },
+          });
+          if (!response.ok) {
+            throw new Error("Failed to generate AI CV.");
+          }
+          const jsonResponse = await response.json();
+          const jsonRaw = jsonResponse.response;
+          const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
+          if (!match) {
+            throw new Error("Invalid JSON format in response.");
+          }
+          const jsonString = match[1];
+          const prettyJson = JSON.parse(jsonString);
+          return prettyJson;
+        } catch (error) {
+          console.error("Error processing CV:", error.message);
+          throw error;
+        }
+      };
+
+      // Process file to get analyzed content
+      const analyzedContent = await processCV(file);
+
+      // Build form data for upload
+      const formData = new FormData();
+      formData.append("cv", file);
+      formData.append("analyzed_cv_content", JSON.stringify(analyzedContent));
+
+      // Call our update endpoint
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/personal/jobseeker/cv/update?email=${encodeURIComponent(user.email)}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to upload CV.");
+      }
+      const data = await response.json();
+
+      // Build our updated user object with new cv and analyzed_cv_content
+      const updatedUser = {
+        ...user,
+        cv: data.cv,
+        analyzed_cv_content: analyzedContent,
+      };
+      // Build new state including the full user object
+      const newState = {
+        email: user.email,
+        role: user.role,
+        token: token,
+        user: updatedUser,
+        refreshToken: 0,
+        isVerified: user.isVerified,
+      };
+      // Update our local user state and navigate to the same page with new state
+      setUser(updatedUser);
+      navigate(locationObj.pathname, { state: newState });
+      showNotification("success", "CV uploaded successfully!");
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error uploading CV:", error);
+      showNotification("error", "Failed to upload CV. Please try again.");
+    }
   };
 
   return (
