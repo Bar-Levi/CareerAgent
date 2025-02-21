@@ -1,4 +1,3 @@
-// frontend/src/jobCandidate/SearchJobs/pages/SearchJobs.jsx
 import React, { useState, useEffect } from "react";
 import JobListingCardsList from "../components/JobListingCardsList";
 import SearchFilters from "../components/SearchFilters";
