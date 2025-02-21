@@ -403,12 +403,7 @@ const updateCV = async (req, res) => {
     if (jobSeeker.cv) {
       const publicId = extractPublicId(jobSeeker.cv);
       if (publicId) {
-        let resourceType = "raw";
-        // Determine resource type based on the stored URL
-        if (jobSeeker.cv.includes("/image/upload/")) {
-          resourceType = "image";
-        }
-        await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+        await deleteFromCloudinary(publicId);
       }
     }
 
@@ -457,12 +452,7 @@ const deleteCV = async (req, res) => {
     if (!jobSeeker.cv) return res.status(400).json({ message: "No CV to delete." });
     const publicId = extractPublicId(jobSeeker.cv);
     if (publicId) {
-      // Determine the resource type based on the stored URL.
-      let resourceType = "raw";
-      if (jobSeeker.cv.includes("/image/upload/")) {
-        resourceType = "image";
-      }
-      const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+      await deleteFromCloudinary(publicId);
     }
     // Remove the cv and analyzed_cv_content fields using $unset
     await jobSeekerModel.updateOne({ email }, { $unset: { cv: 1, analyzed_cv_content: 1 } });
