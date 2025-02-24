@@ -17,23 +17,58 @@ const getAllConversations = async (req, res) => {
 
 const getConversationById = async (req, res) => {
   try {
+    // Read pagination parameters from the query string, with defaults.
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const skip = parseInt(req.query.skip, 10) || 0;
 
     const conversation = await Conversation.findById(req.params.conversationId)
-      .populate("participants")
       .populate("jobListingId")
-      .populate("messages"); // No direct ref, fetching manually later
+      .populate("messages"); // Populating messages
 
     if (!conversation) {
-      console.log("Conversation not found for ID:", req.params.conversationId);
+      
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    res.json(conversation);
+  
+  // If there are messages, sort them so the newest come first.
+    let messages = conversation.messages || [];
+    messages = messages.sort(
+      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+    );
+
+    // Slice the sorted array based on skip and limit values.
+    const paginatedMessages = messages.slice(skip, skip + limit);
+
+    // Convert the conversation document to a plain object and replace messages.
+    const conversationObj = conversation.toObject();
+    conversationObj.messages = paginatedMessages;
+    
+    const recruiterId = conversation.participants[0];
+    const recruiter = await Recruiter.findById(recruiterId);
+    const jobSeekerId = conversation.participants[1];
+    const jobSeeker = await JobSeeker.findById(jobSeekerId);
+
+    const profilePics = [
+      {
+        role: "Recruiter",
+        id: recruiterId,
+        profilePic: recruiter.profilePic
+      },
+      {
+        role: "JobSeeker",
+        id: jobSeekerId,
+        profilePic: jobSeeker.profilePic
+      }
+    ] || [];
+
+    res.json({ conversation: conversationObj, pics: profilePics });
   } catch (err) {
     console.error("Error fetching conversation:", err);
     res.status(500).json({ message: "Server error while fetching conversation" });
   }
 };
+
 
 const createConversation = async (req, res) => {
   const { participants, jobListingId, isGroupChat, groupChatName } = req.body;
@@ -42,7 +77,13 @@ const createConversation = async (req, res) => {
     return res.status(400).json({ message: "jobListingId is required" });
   }
 
+
   try {
+    const jobListingObject = await JobListing.findById(jobListingId);
+    if (!jobListingObject) {
+      return res.status(404).json({ message: "Job listing not found" });
+    }
+    console.log("jobListing object: ", jobListingObject);
     // Check if a conversation with the same participants and jobListingId already exists
     const existingConversation = await Conversation.findOne({
       participants: { $all: participants, $size: participants.length },
@@ -50,13 +91,16 @@ const createConversation = async (req, res) => {
     });
 
     if (existingConversation) {
-      return res.status(200).json(existingConversation);
+      return res.status(200).json({ conversation: existingConversation, jobListingObject });
     }
 
     // If no existing conversation is found, create a new one
     const conversation = new Conversation(req.body);
     const newConversation = await conversation.save();
-    res.status(201).json(newConversation);
+
+    console.log("New conversation: ", newConversation);
+    console.log("Job listing: ", jobListingObject);
+    res.status(201).json({ conversation: newConversation, jobListingObject });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -102,25 +146,22 @@ const deleteConversation = async (req, res) => {
 // Controller functions for messages within a conversation
 const addMessageToConversation = async (req, res) => {
   try {
-    console.log("Add message to conversation:", req.params.id);
-    const { senderId, senderRole, senderProfilePic, senderName, text, attachments } = req.body;
     
-    if (!senderId || !senderProfilePic || !senderName || !text) {
+    const { senderId, senderRole, senderName, text, attachments } = req.body;
+    
+    if (!senderId || !senderName || !text) {
       return res.status(400).json({ message: "Missing required message fields" });
     }
-    console.log("Attachments: ", attachments);
+    
     const conversation = await Conversation.findById(req.params.id);
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const newMessage = { senderId, senderProfilePic, senderName, text, attachments };
-    console.log("New message:", newMessage);
+    const newMessage = { senderId, senderName, text, attachments };
+    
     conversation.messages.push(newMessage);
     conversation.lastMessage = conversation.messages[conversation.messages.length - 1];
-
-
-    console.log("Conversation.lastMessage:", conversation.lastMessage);
 
     await conversation.save();
 
@@ -131,7 +172,6 @@ const addMessageToConversation = async (req, res) => {
     // Determine the receiver based on the sender's role
     const recieverId = senderRole === "recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
 
-    console.log("Reciever ID:", recieverId);
     const reciever = senderRole === "recruiter" ?
       await JobSeeker.findById(recieverId) :
       await Recruiter.findById(recieverId);
@@ -141,13 +181,12 @@ const addMessageToConversation = async (req, res) => {
     }
 
     const jobListing = await JobListing.findById(conversation.jobListingId);
-    
-    console.log("JobListing:", jobListing)
-    console.log("senderRole:", senderRole);
+
     // Create and push a new notification to the receiver
     const newNotification = {
       type: "chat",
       message: `${senderName}: ${text}`,
+      conversationId: conversation._id,
       extraData: {
         goToRoute: senderRole === "recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
@@ -161,20 +200,24 @@ const addMessageToConversation = async (req, res) => {
     }
     reciever.notifications.push(newNotification);
     await reciever.save();
-    console.log("Notification added to reciever:", reciever.email);
+    
     // Retrieve the Socket.IO instance from the app and emit the notification event.
     const io = req.app.get("io");
+
+    let notificationWithMessageObject = newNotification;
+    notificationWithMessageObject.messageObject = newMessage;
+
+    notificationWithMessageObject.messageObject.timestamp = new Date().toISOString();
+
     
     // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
-    io.to(reciever._id.toString()).emit("newNotification", newNotification);
-    console.log("Emitting notification to: " + reciever._id);
+    io.to(reciever._id.toString()).emit("newNotification", notificationWithMessageObject);
 
     res.status(201).json(conversation);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
-
 
 const updateMessageInConversation = async (req, res) => {
   try {
@@ -236,6 +279,52 @@ const getJobListingConversations = async (req, res) => {
   }
 };
 
+const markMessagesAsReadInternal = async (conversationId, readerId) => {
+  // Update all messages (where the sender is not the reader) to read: true
+  const conversation = await Conversation.findByIdAndUpdate(
+    conversationId,
+    {
+      $set: { "messages.$[elem].read": true },
+    },
+    {
+      new: true,
+      arrayFilters: [{ "elem.senderId": { $ne: readerId } }],
+    }
+  );
+
+  if (!conversation) {
+    throw new Error("Conversation not found.");
+  }
+
+  // Assume participants[0] is the recruiter and participants[1] is the jobseeker.
+  const recruiterParticipantId = conversation.participants[0].toString();
+  const jobSeekerParticipantId = conversation.participants[1].toString();
+
+  // Determine the "other" party (i.e. the one who did not read)
+  const participantToUpdateId =
+    readerId === recruiterParticipantId ? jobSeekerParticipantId : recruiterParticipantId;
+
+  return { conversation, participantToUpdateId };
+};
+
+const markMessagesAsRead = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { readerId } = req.body;
+
+    const { conversation, participantToUpdateId } = await markMessagesAsReadInternal(conversationId, readerId);
+
+    // Get the io instance from the app locals and emit to the other party.
+    const io = req.app.get("io");
+    io.to(participantToUpdateId).emit("updateReadMessages", conversationId);
+
+    res.status(200).json({ message: "Messages marked as read", conversation });
+  } catch (error) {
+    console.error("Error marking messages as read:", error.message);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
 module.exports = {
   getAllConversations,
   getConversationById,
@@ -245,5 +334,8 @@ module.exports = {
   addMessageToConversation,
   updateMessageInConversation,
   deleteMessageFromConversation,
-  getJobListingConversations
+  getJobListingConversations,
+  markMessagesAsRead,
+  markMessagesAsReadInternal,
+  markMessagesAsRead
 };

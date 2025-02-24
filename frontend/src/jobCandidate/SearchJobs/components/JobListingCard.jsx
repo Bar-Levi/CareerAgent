@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 
-const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotification, setCurrentOpenConversationId
+const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrentOpenConversationId
 }) => {
   const {
     jobRole,
@@ -21,6 +22,10 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
     recruiterId,
     createdAt,
   } = jobListing;
+
+  const { state } = useLocation();
+  const user = state?.user;
+  console.log("state: ", state)
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
@@ -43,9 +48,9 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
             throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
         }
 
-        const newConversation = await response.json();
-        console.log("New conversation created:", newConversation);
-        setCurrentOpenConversationId(newConversation._id);
+        const { conversation } = await response.json();
+        console.log("New conversation created:", conversation);
+        setCurrentOpenConversationId(conversation._id);
       
 
     } catch (error) {
@@ -80,7 +85,6 @@ const JobListingCard = ({ jobListing, user, setUser, setShowModal, showNotificat
             recruiterId: recruiterId,
             jobSeekerId: user._id,
             jobTitle: jobRole,
-            profilePic: user.profilePic,
           }),
         }
       );

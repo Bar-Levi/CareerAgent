@@ -1,7 +1,7 @@
 // /pages/RecruiterDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import NavigationBar from "../../components/NavigationBar";
+import NavigationBar from "../../components/NavigationBar/NavigationBar";
 import Botpress from "../../botpress/Botpress";
 import Notification from "../../components/Notification";
 import MetricsOverview from "../components/MetricsOverview";
@@ -21,12 +21,9 @@ const RecruiterDashboard = () => {
   const [recentApplications, setRecentApplications] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
+  const [newConversationCandidate, setNewConversationCandidate] = useState(null);
 
   const [onlineUsers, setOnlineUsers] = useState([]);
-
-  useEffect(() => {
-      // console.log("Online users:", onlineUsers);
-    }, [onlineUsers]);
 
  
   useEffect(() => {
@@ -37,7 +34,7 @@ const RecruiterDashboard = () => {
 
     // Listen for updates on online users
     socket.on("updateOnlineUsers", (onlineUserIds) => {
-      console.log("Updated online users:", onlineUserIds);
+
       // Update state as needed (here we assume onlineUserIds is an array of user IDs)
       setOnlineUsers(onlineUserIds);
     });
@@ -51,10 +48,10 @@ const RecruiterDashboard = () => {
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  
 
   useEffect(() => {
-    console.log("selectedJobListing", selectedJobListing);
-    console.log("selectedJobListing._id", selectedJobListing?._id);
   }, [selectedJobListing]);
 
   // This function is called when a notification is clicked.
@@ -72,8 +69,6 @@ const RecruiterDashboard = () => {
         localStorage.removeItem("stateAddition");
 
       }
-    } else {
-      console.log("No state addition found.");
     }
   }, [state.refreshToken]); // Run once on mount
 
@@ -178,6 +173,7 @@ const RecruiterDashboard = () => {
     }));
     fetchJobListings();
   };
+  
 
   return (
     <div key={state.refreshToken} className="h-screen flex flex-col bg-gray-100 animate-fade-in">
@@ -208,11 +204,11 @@ const RecruiterDashboard = () => {
             showNotification={showNotification}
             jobListings={jobListings}
             setJobListings={setJobListings}
-            // Pass the selected job listing object and the setter
             selectedJobListing={selectedJobListing}
             setSelectedJobListing={setSelectedJobListing}
             setMetrics={setMetrics}
             setSelectedConversationId={setSelectedConversationId}
+            setSelectedCandidate={setSelectedCandidate}
           />
         </div>
         {/* Right Pane: Candidate Messages & Chat (55% width) */}
@@ -227,6 +223,8 @@ const RecruiterDashboard = () => {
             jobListing={selectedJobListing}
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
+            selectedCandidate={selectedCandidate}
+            setSelectedCandidate={setSelectedCandidate}
             onlineUsers={onlineUsers}
           />
         </div>
@@ -234,7 +232,12 @@ const RecruiterDashboard = () => {
 
       {/* Other Sections */}
       <div className="flex flex-col items-center p-6 space-y-8">
-        <RecentApplications applications={recentApplications} />
+        <RecentApplications
+          applications={recentApplications}
+          setSelectedConversationId={setSelectedConversationId}
+          setSelectedJobListing={setSelectedJobListing}
+          setSelectedCandidate={setSelectedCandidate}
+        />
         <JobListingInput
           user={user}
           onPostSuccess={handlePostSuccess}

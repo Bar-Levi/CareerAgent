@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import ChatWindow from "../../components/ChatWindow"; // This component is wrapped in React.memo
 import { FaSpinner } from "react-icons/fa";
+import { getCandidateInfo } from "../../utils/auth";
 
 const CandidateMessages = ({
   user,
@@ -9,10 +10,14 @@ const CandidateMessages = ({
   selectedConversationId,
   setSelectedConversationId,
   onlineUsers, // Assume onlineUsers is an array of objects, each with { userId, ... }
+  selectedCandidate,
+  setSelectedCandidate
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  // candidateInfoMap maps conversation._id to candidate info
+  const [candidateInfoMap, setCandidateInfoMap] = useState({});
+
 
   // Fetch candidate conversations for the given job listing
   useEffect(() => {
@@ -35,13 +40,31 @@ const CandidateMessages = ({
         }
         const data = await response.json();
         const jobListingConversations = data.jobListingConversations;
+        
+        
+
         // Filter conversations that have at least one message from a candidate
-        const candidateConversations = jobListingConversations.filter((convo) =>
-          convo.messages && convo.messages.some(
-            (msg) => msg.senderId.toString() !== recruiterId
-          )
+        const candidateConversations = jobListingConversations.filter(
+          (convo) =>
+            convo.messages ||
+            convo.participants[1] === selectedCandidate?.senderId
         );
+        
+        
         setConversations(candidateConversations);
+
+        // Prefetch candidate info for each conversation and build a map
+        const candidateInfoResults = await Promise.all(
+          candidateConversations.map(async (convo) => {
+            const info = await getCandidateInfo(convo);
+            return { id: convo._id, info };
+          })
+        );
+        const infoMap = candidateInfoResults.reduce((acc, { id, info }) => {
+          acc[id] = info;
+          return acc;
+        }, {});
+        setCandidateInfoMap(infoMap);
       } catch (error) {
         console.error("Error fetching candidate conversations:", error);
       } finally {
@@ -50,46 +73,43 @@ const CandidateMessages = ({
     };
 
     fetchConversations();
-
-    // Log them separately
-    console.log("jobListing:", jobListing);
-    console.log("recruiterId:", recruiterId);
     
-  }, [jobListing, recruiterId]);
-
-  // Helper: Get candidate info from a conversation by scanning its messages
-  const getCandidateInfo = (conversation) => {
-    if (!conversation.messages || conversation.messages.length === 0) return null;
-    // Find the first message where senderId is not the recruiterId
-    const candidateMessage = conversation.messages.find(
-      (msg) => msg.senderId.toString() !== recruiterId
-    );
-    if (candidateMessage) {
-      return {
-        profilePic: candidateMessage.senderProfilePic,
-        name: candidateMessage.senderName,
-        senderId: candidateMessage.senderId,
-      };
-    }
-    return null;
-  };
+    
+  }, [jobListing, recruiterId, selectedCandidate]);
 
   // When a candidate is selected, update conversation and candidate state
-  const handleCandidateSelect = (conversation) => {
+  const handleCandidateSelect = async (conversation) => {
     setSelectedConversationId(conversation._id);
-    const candidateInfo = getCandidateInfo(conversation);
+    // Use prefetched candidate info if available, otherwise fetch it.
+    const candidateInfo =
+      candidateInfoMap[conversation._id] || (await getCandidateInfo(conversation));
+    
     setSelectedCandidate(candidateInfo);
   };
 
   // Memoize the ChatWindow so that it only re-renders when its own props change.
   const memoizedChatWindow = useMemo(() => {
+    
+    const profilePics = [
+      {
+        role: "Recruiter",
+        id: user._id,
+        profilePic: user.profilePic
+      },
+      {
+        role: "JobSeeker",
+        id: selectedCandidate?.senderId,
+        profilePic: selectedCandidate?.profilePic
+      }
+    ] || [];
     return selectedConversationId ? (
       <ChatWindow
         key={jobListing ? jobListing._id : "none"}
         jobId={jobListing ? jobListing._id : null}
         user={user} // Passing recruiter info
+        profilePics={profilePics}
         job={{
-          recruiterName: selectedCandidate ? selectedCandidate.name : "Candidate Chat"
+          recruiterName: selectedCandidate ? selectedCandidate.name : "Candidate Chat",
         }}
         currentOpenConversationId={selectedConversationId}
       />
@@ -130,7 +150,9 @@ const CandidateMessages = ({
               ) : (
                 <ul>
                   {conversations.map((conversation) => {
-                    const candidateInfo = getCandidateInfo(conversation);
+                    // Use prefetched candidate info from our map
+                    const candidateInfo = candidateInfoMap[conversation._id];
+                    
                     const isSelected = conversation._id === selectedConversationId;
                     // Check if candidate is online based on senderId
                     const isOnline =
@@ -145,12 +167,14 @@ const CandidateMessages = ({
                         className={`py-2 px-2 cursor-pointer rounded mb-2 transition-colors duration-200 ${
                           isSelected ? "bg-gray-200" : "hover:bg-gray-100"
                         } ${isOnline ? "border border-green-500 shadow-lg" : "border border-transparent"}`}
-                        
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
                             <img
-                              src={candidateInfo?.profilePic || "https://via.placeholder.com/40"}
+                              src={
+                                candidateInfo?.profilePic ||
+                                "https://via.placeholder.com/40"
+                              }
                               alt={candidateInfo?.name || "Candidate"}
                               className="w-10 h-10 rounded-full"
                             />
@@ -169,9 +193,7 @@ const CandidateMessages = ({
               )}
             </div>
             {/* Right Pane: Chat Window (70% width) */}
-            <div className="w-2/3 p-4 overflow-y-auto">
-              {memoizedChatWindow}
-            </div>
+            <div className="w-2/3 p-4 overflow-y-auto">{memoizedChatWindow}</div>
           </div>
         </>
       )}

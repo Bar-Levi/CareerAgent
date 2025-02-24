@@ -1,10 +1,11 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const cloudinaryRoutes = require('./routes/cloudinaryRoutes');
+const personalDetailsRoutes = require('./routes/jobSeekerPersonalDetailsRoutes');
+const recruiterPersonalDetailsRoutes = require('./routes/recruiterPersonalDetailsRoutes');
 const bodyParser = require("body-parser");
 const aiRoutes = require('./routes/aiRoutes');
 const botConversationRoutes = require("./routes/botConversationRoutes");
@@ -28,6 +29,8 @@ app.use(bodyParser.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
+app.use('/api/personal', personalDetailsRoutes);
+app.use('/api/recruiter-personal', recruiterPersonalDetailsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use("/api/bot-conversations", botConversationRoutes);
 app.use("/api/joblistings", jobListingRoutes);
@@ -38,13 +41,13 @@ app.use("/api/conversations", conversationRoutes);
 const http = require("http");
 const server = http.createServer(app);
 const socketIo = require("socket.io");
+const { markMessagesAsReadInternal } = require('./controllers/conversationController');
 const io = socketIo(server, {
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
   }
 });
-
 
 const onlineUsers = new Map();
 
@@ -88,6 +91,19 @@ io.on("connection", (socket) => {
     io.emit("updateOnlineUsers", Array.from(onlineUsers.values()));
   });
 
+  // Listen for "messagesRead" events from the client.
+  socket.on("messagesRead", async ({ conversationId, readerId }) => {
+    console.log(`\nReceived messagesRead for conversation ${conversationId} from reader ${readerId}`);
+    try {
+      const { participantToUpdateId } = await markMessagesAsReadInternal(conversationId, readerId);
+      // Notify the other participant that messages have been read.
+      io.to(participantToUpdateId.toString()).emit("updateReadMessages", conversationId);
+      console.log(`Emitted updateReadMessages to room ${participantToUpdateId}`);
+    } catch (error) {
+      console.error("Error handling messagesRead event:", error);
+    }
+  });
+
   socket.on("disconnect", () => {
     const key = socket.userId;
     if (key && onlineUsers.has(key)) {
@@ -107,8 +123,6 @@ io.on("connection", (socket) => {
     console.log("Client disconnected:", socket.id);
   });
 });
-
-
 
 // Define the port and start listening only if run directly
 const PORT = process.env.PORT || 5000;
