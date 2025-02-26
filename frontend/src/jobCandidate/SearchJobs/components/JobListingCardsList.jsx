@@ -53,15 +53,20 @@ const JobListingCardsList = ({
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
         } else if (sortingMethod === "relevance") {
-          const relevanceList = sortedListings.map((jobListing) => ({
-            jobListing,
-            relevanceScore: calculateRelevanceScore(jobListing, user), // Calculate relevance score
-          }));
-  
+          const relevanceList = sortedListings.map((jobListing) => {
+              const { score, matchedData } = calculateRelevanceScore(jobListing, user); // Extract both score and matchedData
+              return {
+                  jobListing,
+                  relevanceScore: score,
+                  matchedData, // Include matchedData in the result
+              };
+          });
+      
           sortedListings = relevanceList
-            .sort((a, b) => b.relevanceScore - a.relevanceScore) // Descending order
-            .map((item) => ({...item.jobListing, score: item.relevanceScore}));
+              .sort((a, b) => b.relevanceScore - a.relevanceScore) // Sort by relevance score in descending order
+              .map((item) => ({ ...item.jobListing, score: item.relevanceScore, matchedData: item.matchedData })); // Include matchedData in final job listing
         }
+      
 
         setJobListings(sortedListings);
         setJobListingsCount(sortedListings.length);
@@ -108,71 +113,92 @@ useEffect(() => {
 
   function calculateRelevanceScore(jobListing, user) {
     let score = 0;
-    const userData = user.analyzed_cv_content;
+    let matchedData = {
+        jobRole: [],
+        jobType: [],
+        securityClearance: null,
+        education: [],
+        workExperience: [],
+        skills: []
+    };
   
+    const userData = user.analyzed_cv_content;
+
     // Job Roles match
     if (userData.job_role) {
-      for (const job of userData.job_role) {
-        if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
-          score += 10;
-          console.log(`Matched job role: '${job}' with job listing role: '${jobListing.jobRole}' - Added 10 points.`);
+        for (const job of userData.job_role) {
+            if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
+                score += 10;
+                matchedData.jobRole.push(job);
+                console.log(`Matched job role: '${job}' with job listing role: '${jobListing.jobRole}' - Added 10 points.`);
+            }
         }
-      }
     }
-  
+
     // Job Types match
     if (userData.job_role) {
-      if (userData.job_role.includes('Student')) {
-        if (jobListing.jobType === 'Student') {
-          score += 20;
-          console.log(`User is a student, and job listing is for a student role - Added 20 points.`);
-        } else if (jobListing.jobType === 'Part Time') {
-          score += 15;
-          console.log(`User is a student, and job listing is for a part-time role - Added 15 points.`);
+        if (userData.job_role.includes('Student')) {
+            if (jobListing.jobType.includes('Student')) {
+                score += 20;
+                matchedData.jobType.push('Student');
+                console.log(`User is a student, and job listing is for a student role - Added 20 points.`);
+            } else if (jobListing.jobType.includes('Part Time')) {
+                score += 15;
+                matchedData.jobType.push('Part Time');
+                console.log(`User is a student, and job listing is for a part-time role - Added 15 points.`);
+            }
+        } else if (jobListing.jobType === 'Full Time') {
+            score += 20;
+            matchedData.jobType.push('Full Time');
+            console.log(`User is not a student, and job listing is for a full-time role - Added 20 points.`);
         }
-      } else if (jobListing.jobType === 'Full Time') {
-        score += 20;
-        console.log(`User is not a student, and job listing is for a full-time role - Added 20 points.`);
-      }
     }
-  
+
     // Security clearance match
     if (userData.security_clearance && jobListing.securityClearance) {
-      if (userData.security_clearance <= jobListing.securityClearance) {
-        score += 20;
-        console.log(`User's security clearance (${userData.security_clearance}) matches the job listing's requirement (${jobListing.securityClearance}) - Added 20 points.`);
-      }
+        if (userData.security_clearance <= jobListing.securityClearance) {
+            score += 20;
+            matchedData.securityClearance = userData.security_clearance;
+            console.log(`User's security clearance (${userData.security_clearance}) matches the job listing's requirement (${jobListing.securityClearance}) - Added 20 points.`);
+        }
     }
-  
+
     // Education match
     if (userData.education.length > 0 && jobListing.education.length > 0) {
-      userData.education.forEach(edu => {
-        // Checking if the user has the education && the user isn't a student - meaning he FINISHED the degree.
-        if (jobListing.education.includes(edu.degree) && !(userData.job_role.includes('Student'))) {
-          score += 20;
-          console.log(`User's degree '${edu.degree}' matches the job listing education requirement - Added 20 points.`);
-        }
-      });
+        userData.education.forEach(edu => {
+            // Checking if the user has the education && the user isn't a student (meaning they finished the degree)
+            if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
+                score += 20;
+                matchedData.education.push(edu.degree);
+                console.log(`User's degree '${edu.degree}' matches the job listing education requirement - Added 20 points.`);
+            }
+        });
     }
-  
+
     // Previous work experience match
-    const experienceScore = !jobListing.workExperience ? 0 : calculateJobMatch(userData, jobListing);
+    const experienceScore = jobListing.workExperience ? calculateJobMatch(userData, jobListing) : 0;
+    if (experienceScore > 0) {
+        matchedData.workExperience.push(`Experience match score: ${experienceScore}`);
+    }
     score += experienceScore;
     console.log(`Previous work experience match contributed ${experienceScore} points.`);
-  
+
     // Skills match
     if (userData.skills) {
-      const matchedSkills = jobListing.skills.filter(skill =>
-        userData.skills.includes(skill)
-      );
-      const skillsScore = matchedSkills.length * 3;
-      score += skillsScore;
-      console.log(`Matched skills: [${matchedSkills.join(', ')}] - Added ${skillsScore} points.`);
+        const matchedSkills = jobListing.skills.filter(skill =>
+            userData.skills.includes(skill)
+        );
+        const skillsScore = matchedSkills.length * 3;
+        score += skillsScore;
+        matchedData.skills = matchedSkills;
+        console.log(`Matched skills: [${matchedSkills.join(', ')}] - Added ${skillsScore} points.`);
     }
-  
+
     console.log(`Final score for job role '${jobListing.jobRole}' is ${score}`);
-    return score;
-  }
+
+    return { score, matchedData };
+}
+
   
   
   return (

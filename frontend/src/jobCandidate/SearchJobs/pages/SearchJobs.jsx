@@ -239,9 +239,9 @@ const SearchJobs = () => {
                   <option value="oldest">Posting Time: Oldest First</option>
                 </select>
 
-                <div className="relative group">
+                <div className="relative group cursor-help">
                   {/* Custom Tooltip */}
-                  <span className="cursor-pointer text-white text-lg">
+                  <span className="text-white text-lg">
                     <i className="ml-1 fa fa-info-circle" />
                   </span>
                   {user.analyzed_cv_content ? (

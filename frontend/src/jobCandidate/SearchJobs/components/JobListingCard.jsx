@@ -21,7 +21,8 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
     _id: jobId,
     recruiterId,
     createdAt,
-    score = undefined
+    score = undefined,
+    matchedData = undefined,
   } = jobListing;
 
   const { state } = useLocation();
@@ -233,11 +234,85 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
         <span className="px-4 py-2 text-gray-800 font-semibold rounded cursor-default">
           Applied: {appliedCounter || 0}
         </span>
-        { score !== undefined && 
-        <span>
-          Score: {score}
-        </span>
-        }
+        
+        
+
+        {score !== undefined && (
+          <div className="flex justify-center items-center">
+          <span className="px-4 py-2 text-gray-800 font-semibold rounded">
+            Score: {score}
+          </span>
+          
+          <div className="relative group cursor-help">
+          {/* Score Display with Tooltip */}
+          <span className=" text-gray-800 text-lg">
+            <i className="ml-1 fa fa-info-circle" />
+          </span>
+
+          {matchedData && (
+            <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+              <p className="text-lg font-bold mb-3 border-b pb-2">
+                Matched Criteria
+              </p>
+              <ul className="list-none pl-0 space-y-1">
+                {/* Job Roles */}
+                {matchedData.jobRole.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600">Job Role:</strong>
+                    <span>{matchedData.jobRole.join(", ")}</span>
+                  </li>
+                )}
+        
+                {/* Job Type */}
+                {matchedData.jobType.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600">Job Type:</strong>
+                    <span>{matchedData.jobType.join(", ")}</span>
+                  </li>
+                )}
+        
+                {/* Security Clearance */}
+                {matchedData.securityClearance !== null && (
+                  <li>
+                    <strong className="block text-blue-600">Security Clearance:</strong>
+                    <span>{matchedData.securityClearance}</span>
+                  </li>
+                )}
+        
+                {/* Education */}
+                {matchedData.education.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600">Education:</strong>
+                    <span>{matchedData.education.join(", ")}</span>
+                  </li>
+                )}
+        
+                {/* Work Experience */}
+                {matchedData.workExperience.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600">Work Experience:</strong>
+                    <span>{matchedData.workExperience.join(", ")}</span>
+                  </li>
+                )}
+        
+                {/* Skills */}
+                {matchedData.skills.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600">Skills:</strong>
+                    <span>{matchedData.skills.length > 5
+                      ? matchedData.skills.slice(0, 5).join(", ") + ", ..."
+                      : matchedData.skills.join(", ")}
+                    </span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+          </div>
+        </div>
+      
+        )}
+
       </div>
     </div>
   );
