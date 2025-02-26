@@ -234,10 +234,10 @@ const SearchJobs = () => {
                   className="text-sm px-2 py-1 w-fit border rounded text-gray-700 bg-white shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option disabled={!user.analyzed_cv_content} value="relevance">
-                    Relevance: Relevant First
+                    Most Relevant First
                   </option>
-                  <option value="newest">Posting Time: Newest First</option>
-                  <option value="oldest">Posting Time: Oldest First</option>
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
                 </select>
 
                 <div className="relative group cursor-help">
@@ -324,8 +324,8 @@ const SearchJobs = () => {
                             user.analyzed_cv_content.skills.length > 0
                               ? user.analyzed_cv_content.skills.length > 5
                                 ? user.analyzed_cv_content.skills
-                                    .slice(0, 5)
-                                    .join(", ") + ", ..."
+                                    .slice(0, -1)
+                                    .join(", ") + ", " + user.analyzed_cv_content.skills[user.analyzed_cv_content.skills.length - 1]
                                 : user.analyzed_cv_content.skills.join(", ")
                               : "None"}
                           </span>
