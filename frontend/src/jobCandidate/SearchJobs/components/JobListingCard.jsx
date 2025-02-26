@@ -26,7 +26,6 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
 
   const { state } = useLocation();
   const user = state?.user;
-  console.log("state: ", state)
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);

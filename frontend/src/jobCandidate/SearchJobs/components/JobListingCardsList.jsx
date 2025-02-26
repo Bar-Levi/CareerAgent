@@ -161,9 +161,9 @@ useEffect(() => {
     console.log(`Previous work experience match contributed ${experienceScore} points.`);
   
     // Skills match
-    if (user.skills) {
+    if (userData.skills) {
       const matchedSkills = jobListing.skills.filter(skill =>
-        user.skills.includes(skill)
+        userData.skills.includes(skill)
       );
       const skillsScore = matchedSkills.length * 3;
       score += skillsScore;

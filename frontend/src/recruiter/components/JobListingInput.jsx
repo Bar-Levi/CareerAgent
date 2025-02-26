@@ -65,8 +65,13 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
                     "Authorization": `Bearer ${token}`,
                 },
             });
+            const data = await response.json();
 
             if (!response.ok) {
+                if (response.status === 400) {
+                    // Handle missing fields
+                    handleMissingFields(data.jsonToFill);
+                }
                 throw new Error("Failed to save job listing.");
             }
 
