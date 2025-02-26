@@ -222,7 +222,7 @@ const SearchJobs = () => {
 
         {/* Central Area */}
         <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
-          <div className="flex sticky top-0">
+          <div className="flex sticky top-0 z-10">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
               <h1>Search Results</h1>
               <div className="relative flex">
