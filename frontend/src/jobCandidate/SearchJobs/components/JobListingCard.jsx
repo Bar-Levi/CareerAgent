@@ -21,6 +21,7 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
     _id: jobId,
     recruiterId,
     createdAt,
+    score = undefined
   } = jobListing;
 
   const { state } = useLocation();
@@ -233,6 +234,11 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
         <span className="px-4 py-2 text-gray-800 font-semibold rounded cursor-default">
           Applied: {appliedCounter || 0}
         </span>
+        { score !== undefined && 
+        <span>
+          Score: {score}
+        </span>
+        }
       </div>
     </div>
   );

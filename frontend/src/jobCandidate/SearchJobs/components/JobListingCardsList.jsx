@@ -60,7 +60,7 @@ const JobListingCardsList = ({
   
           sortedListings = relevanceList
             .sort((a, b) => b.relevanceScore - a.relevanceScore) // Descending order
-            .map((item) => item.jobListing); // Extract sorted job listings
+            .map((item) => ({...item.jobListing, score: item.relevanceScore}));
         }
 
         setJobListings(sortedListings);
