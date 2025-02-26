@@ -75,7 +75,8 @@ const SearchJobs = () => {
   // Open the modal if no CV is uploaded
   useEffect(() => {
     if (!user.cv || user.cv === "") {
-      setShowModal(true);
+      setShowModal(true);   
+      setSortingMethod("newest");  
     }
   }, [user.cv]);
 

@@ -20,7 +20,7 @@ const JobListingCardsList = ({
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchAndSortJobListings = async () => {
+    const fetchAndSortJobListings = async (triesLeft) => {
       try {
         // Fetch job listings
         const query = new URLSearchParams(filters).toString();
@@ -36,9 +36,15 @@ const JobListingCardsList = ({
         );
   
         if (!response.ok) {
+          triesLeft -= 1;
+          if (triesLeft) {
+            setTimeout(() => {
+            fetchAndSortJobListings(triesLeft);
+            }, 100);
+          } else {
           throw new Error("Failed to fetch job listings.");
+          }
         }
-  
         const data = await response.json();
   
         // Sort job listings
@@ -97,14 +103,18 @@ const JobListingCardsList = ({
         setJobListingsCount(sortedListings.length);
         setLoading(false);
       } catch (err) {
-        setError("Failed to load job listings.");
         setLoading(false);
       }
     };
   
-    fetchAndSortJobListings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sortingMethod, user]);
+    setTimeout(() => {
+       fetchAndSortJobListings(3);
+      }, 100);    
+    if(!jobListings)
+      setError("Failed to load job listings.");
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, sortingMethod, user, user.cv]);
   
 useEffect(() => {
   try {
