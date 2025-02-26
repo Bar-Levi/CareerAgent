@@ -53,19 +53,44 @@ const JobListingCardsList = ({
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
         } else if (sortingMethod === "relevance") {
+          const localStorageKey = `relevance_data_${user.id || user._id}`;
+          let storedRelevanceData = JSON.parse(localStorage.getItem(localStorageKey)) || [];
+      
+          // Create a map for quick lookup
+          const relevanceMap = new Map(storedRelevanceData.map(item => [item.jobId, item]));
+      
           const relevanceList = sortedListings.map((jobListing) => {
-              const { score, matchedData } = calculateRelevanceScore(jobListing, user); // Extract both score and matchedData
+              const jobId = jobListing.id || jobListing._id; // Unique job identifier
+              let score, matchedData;
+      
+              if (relevanceMap.has(jobId)) {
+                  // Retrieve from stored data
+                  ({ score, matchedData } = relevanceMap.get(jobId));
+              } else {
+                  // Calculate if not stored
+                  ({ score, matchedData } = calculateRelevanceScore(jobListing, user));
+      
+                  // Store new calculation in the map
+                  relevanceMap.set(jobId, { jobId, score, matchedData });
+              }
+      
               return {
                   jobListing,
                   relevanceScore: score,
-                  matchedData, // Include matchedData in the result
+                  matchedData,
               };
           });
+      
+          // Convert map back to an array and update localStorage
+          storedRelevanceData = Array.from(relevanceMap.values());
+          localStorage.setItem(localStorageKey, JSON.stringify(storedRelevanceData));
       
           sortedListings = relevanceList
               .sort((a, b) => b.relevanceScore - a.relevanceScore) // Sort by relevance score in descending order
               .map((item) => ({ ...item.jobListing, score: item.relevanceScore, matchedData: item.matchedData })); // Include matchedData in final job listing
-        }
+      }
+      
+      
       
 
         setJobListings(sortedListings);
@@ -112,6 +137,7 @@ useEffect(() => {
   }
 
   function calculateRelevanceScore(jobListing, user) {
+    console.log("Calculating relevance score!");
     let score = 0;
     let matchedData = {
         jobRole: [],
