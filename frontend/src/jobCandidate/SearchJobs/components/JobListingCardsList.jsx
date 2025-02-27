@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
 import { FaSpinner } from "react-icons/fa";
-import calculateJobMatch from "../utils/calculateJobMatch";
+import calculateWorkExperienceMatch from "../utils/calculateWorkExperienceMatch";
 
 const JobListingCardsList = ({ 
   filters,
@@ -147,7 +147,9 @@ useEffect(() => {
   }
 
   function calculateRelevanceScore(jobListing, user) {
-    console.log("Calculating relevance score!");
+    console.log(`Calculating relevance score for ${jobListing.jobRole}!`);
+    console.log("jobListing: ", jobListing);
+
     let score = 0;
     let matchedData = {
         jobRole: [],
@@ -160,13 +162,19 @@ useEffect(() => {
   
     const userData = user.analyzed_cv_content;
 
+    const matchedJobRolePoints = 10;
+    const matchedSecurityClearancePoints = 20;
+    const matchedEducationPoints = 20;
+    const matchedSkillPoints = 3;
+    const matchedWorkExperiencePoints = 30;
+
     // Job Roles match
     if (userData.job_role) {
         for (const job of userData.job_role) {
             if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
-                score += 10;
+                score += matchedJobRolePoints;
                 matchedData.jobRole.push(job);
-                console.log(`Matched job role: '${job}' with job listing role: '${jobListing.jobRole}' - Added 10 points.`);
+                console.log(`Matched job role: '${job}' with job listing role: '${jobListing.jobRole}' - Added ${matchedJobRolePoints} points.`);
             }
         }
     }
@@ -193,9 +201,9 @@ useEffect(() => {
     // Security clearance match
     if (userData.security_clearance && jobListing.securityClearance) {
         if (userData.security_clearance <= jobListing.securityClearance) {
-            score += 20;
+            score += matchedSecurityClearancePoints;
             matchedData.securityClearance = userData.security_clearance;
-            console.log(`User's security clearance (${userData.security_clearance}) matches the job listing's requirement (${jobListing.securityClearance}) - Added 20 points.`);
+            console.log(`User's security clearance (${userData.security_clearance}) matches the job listing's requirement (${jobListing.securityClearance}) - Added ${matchedSecurityClearancePoints} points.`);
         }
     }
 
@@ -204,27 +212,31 @@ useEffect(() => {
         userData.education.forEach(edu => {
             // Checking if the user has the education && the user isn't a student (meaning they finished the degree)
             if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
-                score += 20;
+                score += matchedEducationPoints;
                 matchedData.education.push(edu.degree);
-                console.log(`User's degree '${edu.degree}' matches the job listing education requirement - Added 20 points.`);
+                console.log(`User's degree '${edu.degree}' matches the job listing education requirement - Added ${matchedEducationPoints} points.`);
             }
         });
     }
 
     // Previous work experience match
-    const experienceScore = jobListing.workExperience ? calculateJobMatch(userData, jobListing) : 0;
+    const { matchedJobs = [], experienceScore = 0 } = 
+    jobListing.workExperience ? calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints) || {} : {};
+
     if (experienceScore > 0) {
-        matchedData.workExperience.push(`Experience match score: ${experienceScore}`);
+    matchedData.workExperience.push(...matchedJobs);
     }
+
     score += experienceScore;
     console.log(`Previous work experience match contributed ${experienceScore} points.`);
+
 
     // Skills match
     if (userData.skills) {
         const matchedSkills = jobListing.skills.filter(skill =>
             userData.skills.includes(skill)
         );
-        const skillsScore = matchedSkills.length * 3;
+        const skillsScore = matchedSkills.length * matchedSkillPoints;
         score += skillsScore;
         matchedData.skills = matchedSkills;
         console.log(`Matched skills: [${matchedSkills.join(', ')}] - Added ${skillsScore} points.`);
