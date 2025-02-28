@@ -389,6 +389,36 @@ const getCV = async (req, res) => {
   }
 };
 
+const getRelevancePoints = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    res.status(200).json({ relevancePoints: jobSeeker.relevancePoints || {} });
+  } catch (error) {
+    console.error("Error fetching relevance points:", error);
+    res.status(500).json({ message: "Failed to get relevance points" });
+  }
+};
+
+const setRelevancePoints = async (req, res) => {
+  const { email, relevancePoints } = req.body;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    jobSeeker.relevancePoints = relevancePoints;
+    await jobSeeker.save();
+    res.status(200).json({ message: "Relevance points updated successfully." });
+  } catch (error) {
+    console.error("Error updating relevance points:", error);
+    res.status(500).json({ message: "Failed to update relevance points" });
+  }
+};
+
 // Updates the jobseeker's CV by first deleting the old CV (if exists) from Cloudinary,
 // then uploading the new PDF to Cloudinary and updating analyzed_cv_content.
 const updateCV = async (req, res) => {
@@ -468,6 +498,8 @@ module.exports = {
   changeProfilePic,
   deleteProfilePic,
   getNameAndProfilePic,
+  getRelevancePoints,
+  setRelevancePoints,
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,

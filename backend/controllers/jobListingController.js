@@ -1,9 +1,17 @@
 const JobListing = require("../models/jobListingModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 
+const normalizeNullValues = (data) => {
+    return Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [key, value === "null" ? null : value])
+    );
+};
+
 
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
+    console.log("req.body:" , req.body);
+    const normalizedBody = normalizeNullValues(req.body);
     try {
         // Extract job listing data from the request body
         const {
@@ -24,11 +32,14 @@ const saveJobListing = async (req, res) => {
             recruiterId,
             recruiterName,
             recruiterProfileImage,
-        } = req.body;
-
+        } = normalizedBody;
+        console.log("normalizedBody: ", normalizedBody);
+        console.log("!experienceLevel: ", !experienceLevel);
+        console.log("experienceLevel:"+ experienceLevel + '.');
         // Validate required fields
         if (!jobRole || !location || !company || !experienceLevel || !jobType || !remote || !description) {
-            return res.status(400).json({ message: "Missing required fields." });
+            console.log("Missing required fields.");
+            return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
 
         // Create a new job listing document

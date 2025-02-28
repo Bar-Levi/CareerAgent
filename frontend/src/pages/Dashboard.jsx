@@ -8,7 +8,6 @@ const Dashboard = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { state } = useLocation();
-    console.log("State: ", state);
     const email = state?.email; // Email from navigation state
     const role = state?.role;
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
