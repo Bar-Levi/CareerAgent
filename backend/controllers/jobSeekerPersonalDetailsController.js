@@ -419,6 +419,36 @@ const setRelevancePoints = async (req, res) => {
   }
 };
 
+const getMinPointsForUpdate = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    res.status(200).json({ minPointsForUpdate: jobSeeker.minPointsForUpdate || 0 });
+  } catch (error) {
+    console.error("Error fetching minimum points for update:", error);
+    res.status(500).json({ message: "Failed to get minimum points for update" });
+  }
+};
+
+const setMinPointsForUpdate = async (req, res) => {
+  const { email, minPointsForUpdate } = req.body;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    jobSeeker.minPointsForUpdate = parseInt(minPointsForUpdate);
+    await jobSeeker.save();
+    res.status(200).json({ message: "Minimum points for update updated successfully." });
+  } catch (error) {
+    console.error("Error updating minimum points for update:", error);
+    res.status(500).json({ message: "Failed to update minimum points for update" });
+  }
+};
+
 // Updates the jobseeker's CV by first deleting the old CV (if exists) from Cloudinary,
 // then uploading the new PDF to Cloudinary and updating analyzed_cv_content.
 const updateCV = async (req, res) => {
@@ -500,11 +530,13 @@ module.exports = {
   getNameAndProfilePic,
   getRelevancePoints,
   setRelevancePoints,
+  getMinPointsForUpdate,
+  setMinPointsForUpdate,
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,
   getCV,
   updateCV,
   deleteCV,
-  uploadCVMiddleware: uploadCV.single("cv")
+  uploadCVMiddleware: uploadCV.single("cv"),
 };
