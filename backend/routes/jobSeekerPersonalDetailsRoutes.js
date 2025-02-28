@@ -10,7 +10,9 @@ const {
     uploadCVMiddleware,
     updateCV,
     getRelevancePoints,
-    setRelevancePoints
+    setRelevancePoints,
+    getMinPointsForUpdate,
+    setMinPointsForUpdate,
  } = require('../controllers/jobSeekerPersonalDetailsController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
@@ -38,6 +40,12 @@ router.get('/relevance-points', protect, getRelevancePoints);
 
 // Route to set current relevance points
 router.post('/set-relevance-points', protect, setRelevancePoints);
+
+// Route to get current relevance points
+router.get('/min-points-for-update', protect, getMinPointsForUpdate);
+
+// Route to set current relevance points
+router.post('/set-min-points-for-update', protect, setMinPointsForUpdate);
 
 // Route to Get current jobSeeker personal details
 router.get('/job-seeker-details', protect, getJobSeekerPersonalDetails);
