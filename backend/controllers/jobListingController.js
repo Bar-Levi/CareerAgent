@@ -1,5 +1,7 @@
 const JobListing = require("../models/jobListingModel");
+const JobSeeker = require("../models/jobSeekerModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
+const { sendJobNotificationEmail } = require("../utils/emailService");
 
 const normalizeNullValues = (data) => {
     return Object.fromEntries(
@@ -7,7 +9,144 @@ const normalizeNullValues = (data) => {
     );
 };
 
+// Calculate relevance score function
+async function calculateRelevanceScore(jobListing, user, relevancePoints) {
+    let score = 0;
+    console.log("User: ", user);
+    let matchedData = {
+      jobRole: [],
+      jobType: [],
+      securityClearance: null,
+      education: [],
+      workExperience: [],
+      skills: []
+    };
+  
+    const userData = user.analyzed_cv_content;
+  
+    // Destructure relevance point values
+    const {
+      matchedJobRolePoints,
+      matchedSecurityClearancePoints,
+      matchedEducationPoints,
+      matchedSkillPoints,
+      matchedWorkExperiencePoints
+    } = relevancePoints;
+  
+    // Job Roles match
+    if (userData.job_role) {
+      for (const job of userData.job_role) {
+        if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
+          score += matchedJobRolePoints;
+          matchedData.jobRole.push(`${job} (${matchedJobRolePoints})`);
+        }
+      }
+    }
+  
+    // Job Types match
+    if (userData.job_role) {
+      if (userData.job_role.includes('Student')) {
+        if (jobListing.jobType.includes('Student')) {
+          score += 20;
+          matchedData.jobType.push(`Student (20)`);
+        } else if (jobListing.jobType.includes('Part Time')) {
+          score += 15;
+          matchedData.jobType.push(`Part Time (15)`);
+        }
+      } else if (jobListing.jobType === 'Full Time') {
+        score += 20;
+        matchedData.jobType.push(`Full Time (20)`);
+      }
+    }
+  
+    // Security clearance match
+    if (userData.security_clearance && jobListing.securityClearance) {
+      if (userData.security_clearance <= jobListing.securityClearance) {
+        score += matchedSecurityClearancePoints;
+        matchedData.securityClearance = `${userData.security_clearance} (${matchedSecurityClearancePoints})`;
+      }
+    }
+  
+    // Education match
+    if (userData.education.length > 0 && jobListing.education.length > 0) {
+      userData.education.forEach(edu => {
+        if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
+          score += matchedEducationPoints;
+          matchedData.education.push(`${edu.degree} (${matchedEducationPoints})`);
+        }
+      });
+    }
+  
+    // Previous work experience match
+    const { matchedJobs = [], experienceScore = 0 } =
+      jobListing.workExperience
+        ? calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints) || {}
+        : {};
+    if (experienceScore > 0) {
+      matchedData.workExperience.push(...matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
+    }
+    score += experienceScore;
+  
+    // Skills match
+    if (userData.skills) {
+      const matchedSkills = jobListing.skills.filter(skill =>
+        userData.skills.includes(skill)
+      );
+      const skillsScore = matchedSkills.length * matchedSkillPoints;
+      score += skillsScore;
+      matchedData.skills = matchedSkills.map(skill => `${skill} (${matchedSkillPoints})`);
+    }
+  
+    return { score, matchedData };
+  }
 
+async function getCandidatesToNotify(newJobListing, jobSeekers) {
+    const candidatesToNotify = [];
+    
+    for (const candidate of jobSeekers) {
+      // Use candidate's own relevancePoints configuration.
+      const relevancePoints = candidate.relevancePoints || {
+        matchedJobRolePoints: 10,
+        matchedSecurityClearancePoints: 20,
+        matchedEducationPoints: 20,
+        matchedSkillPoints: 3,
+        matchedWorkExperiencePoints: 30,
+      };
+      
+      // Calculate the match score for this candidate.
+      const { score } = await calculateRelevanceScore(newJobListing, candidate, relevancePoints);
+      
+      // If the score meets or exceeds the candidate's minPointsForUpdate, add candidate to notification list.
+      if (score >= candidate.minPointsForUpdate) {
+        candidatesToNotify.push({ email: candidate.email, score });
+      }
+    }
+    
+    return candidatesToNotify;
+  }
+  
+async function notifyRelevantJobSeekers(newJobListing) {
+    try {
+        const jobSeekers = await JobSeeker.find(
+            { analyzed_cv_content: { $exists: true, $ne: null } },
+            'email analyzed_cv_content relevancePoints minPointsForUpdate'
+            );
+        const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
+
+        // Optionally, log the number of notifications
+        console.log(`Sending notifications to ${candidates.length} job seekers.`);
+        
+        // Send emails (you might process this in parallel with Promise.all)
+        await Promise.all(
+            candidates.map(candidate =>
+                sendJobNotificationEmail(candidate.email, newJobListing)
+            )
+        );
+    } catch (error) {
+    console.error("Error in notifying job seekers:", error);
+    }
+  }
+  
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
     console.log("req.body:" , req.body);
@@ -65,6 +204,7 @@ const saveJobListing = async (req, res) => {
 
         // Save the job listing to the database
         const savedJobListing = await newJobListing.save();
+        notifyRelevantJobSeekers(newJobListing);
 
         // Respond with the saved job listing
         res.status(201).json({

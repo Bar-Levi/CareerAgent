@@ -120,7 +120,11 @@ const jobSeekerSchema = new mongoose.Schema({
             matchedSkillPoints: 3,
             matchedWorkExperiencePoints: 30,
         },
-    },        
+    },
+    minPointsForUpdate: {
+        type: Number,
+        default: 30,
+    },
     notifications: [notificationSchema],
 });
 
