@@ -123,7 +123,7 @@ const jobSeekerSchema = new mongoose.Schema({
     },
     minPointsForUpdate: {
         type: Number,
-        default: 30,
+        default: 50,
     },
     notifications: [notificationSchema],
 });
