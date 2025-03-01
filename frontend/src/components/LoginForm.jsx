@@ -3,16 +3,15 @@ import '@fortawesome/fontawesome-free/css/all.css';
 import { useNavigate } from 'react-router-dom';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import Swal from 'sweetalert2';
+import CryptoJS from 'crypto-js';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
     const [forgotPasswordFormData, setForgotPasswordFormData] = useState({ forgot_password_email: '', forgot_password_PIN: '' });
-    const [forgotPasswordEmail, setForgotPasswordEmail] = useState(''); // Separate state for forgot password form
-    const [forgotPasswordPIN, setForgotPasswordPIN] = useState(''); // Separate
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
-    const [loading, setLoading] = useState(false); // Login form loading state
-    const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false); // Forgot password form loading state
+    const [loading, setLoading] = useState(false);
+    const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const navigate = useNavigate();
 
@@ -32,12 +31,16 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         setMessage(null);
 
         try {
+            // Encrypt the password before sending it
+            const encryptedPassword = CryptoJS.AES.encrypt(formData.password, process.env.REACT_APP_SECRET_KEY).toString();
+            const payload = { ...formData, password: encryptedPassword };
+
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -79,11 +82,12 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     });
                 
                     if (pin) {
-                        // Send the secret PIN to reset login attempts
+                        // Encrypt the PIN before sending it
+                        const encryptedPin = CryptoJS.AES.encrypt(pin, process.env.REACT_APP_SECRET_KEY).toString();
                         const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ pin, email: formData.email }), // Include email or any other necessary identifiers
+                            body: JSON.stringify({ pin: encryptedPin, email: formData.email }),
                         });
                 
                         const resetData = await resetResponse.json();
@@ -105,7 +109,7 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         }
                     }
                 }
-                 else if (response.status === 401) {
+                else if (response.status === 401) {
                     setMessage({
                         type: 'error',
                         text: errorData.message || 'Invalid login credentials.',
@@ -148,12 +152,19 @@ const LoginForm = ({ toggleForm, setUserType }) => {
         setMessage(null);
 
         try {
+            // Encrypt the forgot password PIN before sending it
+            const encryptedForgotPasswordPIN = CryptoJS.AES.encrypt(forgotPasswordFormData.forgot_password_PIN, process.env.REACT_APP_SECRET_KEY).toString();
+            const payload = { 
+                ...forgotPasswordFormData, 
+                forgot_password_PIN: encryptedForgotPasswordPIN 
+            };
+
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/request-password-reset`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(forgotPasswordFormData),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
@@ -264,7 +275,6 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                 onChange={handleForgotPasswordInputChange}
                 loading={forgotPasswordLoading}
                 />}
-
 
             <button
                 onClick={toggleForm}

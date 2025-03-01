@@ -1,10 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const BlacklistedToken = require('../models/BlacklistedTokenModel');
-const crypto = require('crypto'); // For generating secure tokens
-const { sendVerificationCode, sendResetPasswordEmail, generateResetToken} = require('../utils/emailService');
-const JobSeeker = require('../models/jobSeekerModel'); // Import JobSeeker model
-const Recruiter = require('../models/recruiterModel'); // Import Recruiter model
+const crypto = require('crypto');
+const { sendVerificationCode, sendResetPasswordEmail, generateResetToken } = require('../utils/emailService');
+const JobSeeker = require('../models/jobSeekerModel');
+const Recruiter = require('../models/recruiterModel');
+const CryptoJS = require("crypto-js");
 require('dotenv').config();
 
 // Helper Function: Get Schema Based on Role
@@ -21,7 +22,7 @@ const getPasswordStrength = (password) => {
     if (/[a-z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    return strength
+    return strength;
 };
 
 // Register JobSeeker
@@ -48,17 +49,20 @@ const registerJobSeeker = async (req, res) => {
             return res.status(400).json({ message: 'Email is already registered.' });
         }
 
-        if (!/^\d{6}$/.test(pin)) {
+        // Decrypt the password and PIN
+        const decryptedPassword = CryptoJS.AES.decrypt(password, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const decryptedPin = CryptoJS.AES.decrypt(pin, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
+        if (!/^\d{6}$/.test(decryptedPin)) {
             return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
         }
 
-        if (getPasswordStrength(password) < 4) {
+        if (getPasswordStrength(decryptedPassword) < 4) {
             return res.status(400).json({ message: 'Nice try, we gothca! ;)' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const hashedPin = await bcrypt.hash(pin.toString(), 10);
+        const hashedPassword = await bcrypt.hash(decryptedPassword, 10);
+        const hashedPin = await bcrypt.hash(decryptedPin, 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
         const userData = {
@@ -76,7 +80,6 @@ const registerJobSeeker = async (req, res) => {
             pin: hashedPin,
         };
         
-        // Conditionally add `cv` if it's not null
         if (cv) {
             userData.cv = cv;
             userData.analyzed_cv_content = analyzed_cv_content;
@@ -87,7 +90,6 @@ const registerJobSeeker = async (req, res) => {
         
         const user = await JobSeeker.create(userData);
         
-
         await sendVerificationCode(user.email, user.fullName, verificationCode);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
     } catch (error) {
@@ -108,16 +110,20 @@ const registerRecruiter = async (req, res) => {
             return res.status(400).json({ message: 'Email is already registered.' });
         }
 
-        if (!/^\d{6}$/.test(pin)) {
+        // Decrypt the password and PIN
+        const decryptedPassword = CryptoJS.AES.decrypt(password, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const decryptedPin = CryptoJS.AES.decrypt(pin, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
+        if (!/^\d{6}$/.test(decryptedPin)) {
             return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
         }
         
-        if (getPasswordStrength(password) < 4) {
+        if (getPasswordStrength(decryptedPassword) < 4) {
             return res.status(400).json({ message: 'Nice try, we gothca! ;)' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const hashedPin = await bcrypt.hash(pin.toString(), 10);
+        const hashedPassword = await bcrypt.hash(decryptedPassword, 10);
+        const hashedPin = await bcrypt.hash(decryptedPin, 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
         const user = await Recruiter.create({
@@ -149,7 +155,6 @@ const verifyCode = async (req, res) => {
 
     try {
         const Schema = getSchemaByRole(role);
-
         const user = await Schema.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'No account associated with this email.' });
@@ -181,7 +186,6 @@ const loginUser = async (req, res) => {
     const { email, password, role } = req.body;
 
     try {
-        // Resolve schema by role (jobseeker or recruiter)
         const Schema = getSchemaByRole(role);
         const user = await Schema.findOne({ email });
 
@@ -189,14 +193,13 @@ const loginUser = async (req, res) => {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // Check password validity
-        const isMatch = await bcrypt.compare(password, user.password);
+        // Decrypt the password
+        const decryptedPassword = CryptoJS.AES.decrypt(password, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const isMatch = await bcrypt.compare(decryptedPassword, user.password);
         if (!isMatch) {
             user.loginAttemptsLeft--;
 
-            // Lock account if no attempts remain
             if (user.loginAttemptsLeft <= 0) {
-                
                 return res.status(405).json({
                     message: 'Too many failed attempts. Your account is now blocked - Please enter your PIN in order to reset your login attempts.',
                 });
@@ -206,18 +209,15 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: `Incorrect password. You have ${user.loginAttemptsLeft} attempts remaining.` });
         }
 
-        // Check account verification
         if (!user.isVerified) {
             const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
             return res.status(403).json({ message: 'Please verify your email before logging in.', token, user});
         }
 
-        // Reset login attempts after successful login
         user.loginAttemptsLeft = 7;
-        user.resetLoginAttemptsToken = undefined; // Invalidate the token
+        user.resetLoginAttemptsToken = undefined;
         await user.save();
 
-        // Generate JWT token for successful login
         const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
         res.status(200).json({ message: 'Login successful.', token, user});
     } catch (error) {
@@ -228,26 +228,23 @@ const loginUser = async (req, res) => {
 
 // Reset Login Attempts
 const resetLoginAttempts = async (req, res) => {
-    const { email, pin } = req.body; // Extract email and PIN from the request body
+    const { email, pin } = req.body;
     try {
-        // Find the user (either job seeker or recruiter) based on email
         const jobSeeker = await JobSeeker.findOne({ email });
         const recruiter = await Recruiter.findOne({ email });
-
         const user = jobSeeker || recruiter;
 
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // Verify the PIN
-        const isPinValid = await bcrypt.compare(pin, user.pin); // Assuming hashedPin is stored in the database
+        const decryptedPin = CryptoJS.AES.decrypt(pin, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const isPinValid = await bcrypt.compare(decryptedPin, user.pin);
         if (!isPinValid) {
             return res.status(401).json({ message: 'Invalid PIN. Access denied.' });
         }
 
-        // Reset login attempts and clear lock state
-        user.loginAttemptsLeft = 7; // Reset to the default allowed attempts
+        user.loginAttemptsLeft = 7;
         await user.save();
 
         res.status(200).json({ message: 'Login attempts have been reset successfully.' });
@@ -263,25 +260,21 @@ const resendVerificationCode = async (req, res) => {
 
     try {
         const Schema = getSchemaByRole(role);
-
         const user = await Schema.findOne({ email });
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        // Check if the verification code was sent recently
         const now = new Date();
         if (user.verificationCodeSentAt && now - user.verificationCodeSentAt < 60000) {
             return res.status(444).json({ message: 'You can only request a new verification code once every minute.' });
         }
 
-        // Generate a new verification code and update the user
         const verificationCode = crypto.randomInt(100000, 999999);
         user.verificationCode = verificationCode;
         user.verificationCodeSentAt = now;
         await user.save();
 
-        // Send the verification code via email
         await sendVerificationCode(user.email, user.fullName, verificationCode);
 
         res.status(200).json({ message: 'Verification code resent successfully.' });
@@ -298,19 +291,19 @@ const requestPasswordReset = async (req, res) => {
     try {
         const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
         const recruiter = await Recruiter.findOne({ email: forgot_password_email });
-
         const user = jobSeeker || recruiter;
         if (!user) {
             return res.status(404).json({ message: 'No user found with that email.' });
         }
 
-        const isPinMatch = await bcrypt.compare(forgot_password_PIN, user.pin);
+        const decryptedPin = CryptoJS.AES.decrypt(forgot_password_PIN, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const isPinMatch = await bcrypt.compare(decryptedPin, user.pin);
         if (!isPinMatch) {
             return res.status(401).json({ message: 'Incorrect PIN.' });
         }
 
         const resetToken = generateResetToken();
-        const tokenExpiry = Date.now() + 3600000; // 1 hour
+        const tokenExpiry = Date.now() + 3600000;
 
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = tokenExpiry;
@@ -348,12 +341,13 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired token.' });
         }
 
-        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        const decryptedNewPassword = CryptoJS.AES.decrypt(newPassword, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+        const isSamePassword = await bcrypt.compare(decryptedNewPassword, user.password);
         if (isSamePassword) {
             return res.status(400).json({ message: 'New password must be different from the current password.' });
         }
 
-        user.password = await bcrypt.hash(newPassword, 10);
+        user.password = await bcrypt.hash(decryptedNewPassword, 10);
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await user.save();
@@ -392,15 +386,11 @@ const getUserDetails = async (req, res) => {
         return res.status(404).json({ message: "User not found." });
       }
   
-      // Convert user document to a plain object and add the property
       const userObj = user.toObject();
   
-      // If the user is a JobSeeker, explicitly add jobSeekerId
       if (user.constructor.modelName === "JobSeeker") {
         userObj.jobSeekerId = user._id;
-      }
-      // If it's a Recruiter, you might add recruiterId instead
-      else if (user.constructor.modelName === "Recruiter") {
+      } else if (user.constructor.modelName === "Recruiter") {
         userObj.recruiterId = user._id;
       }
   
@@ -409,26 +399,23 @@ const getUserDetails = async (req, res) => {
       console.error("Error fetching user details:", error);
       res.status(500).json({ message: "Failed to fetch user details." });
     }
-  };
+};
   
-  
-
-
 const uploadCV = async (req, res) => {
     try {
       const { id } = req.params;
-      const cvPath = req.body.cv; // Path to the uploaded file
+      const cvPath = req.body.cv;
       const analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
   
       console.log("analyzed_cv_content: " + analyzed_cv_content);
-      console.dir(analyzed_cv_content, {depth: null})
+      console.dir(analyzed_cv_content, {depth: null});
       const user = await JobSeeker.findById(id);
       if (!user) {
         return res.status(404).json({ message: "User not found." });
       }
   
-      user.cv = cvPath; // Update CV path in the database
-      user.analyzed_cv_content = analyzed_cv_content; // Update analyzed CV content in the database
+      user.cv = cvPath;
+      user.analyzed_cv_content = analyzed_cv_content;
       await user.save();
   
       res.status(200).json({ message: "CV uploaded successfully.", cv: cvPath, analyzed_cv_content });
@@ -445,14 +432,12 @@ const logout = async (req, res) => {
           return res.status(400).json({ error: 'Token not provided' });
         }
     
-        // Decode the token to extract its expiration time
         const decoded = jwt.decode(token);
         if (!decoded || !decoded.exp) {
           return res.status(400).json({ error: 'Invalid token' });
         }
     
-        // Add the token to the blacklist with its expiration time
-        const expiresAt = new Date(decoded.exp * 1000); // Convert `exp` (in seconds) to Date
+        const expiresAt = new Date(decoded.exp * 1000);
         await BlacklistedToken.create({ token, expiresAt });
     
         res.status(200).json({ message: 'Logged out successfully. Token blacklisted.' });
@@ -464,13 +449,12 @@ const logout = async (req, res) => {
 
 const checkBlacklist = async (req, res) => {
     try {
-      const { token } = req.body; // Get token from request body
+      const { token } = req.body;
   
       if (!token) {
         return res.status(400).json({ error: 'Token not provided' });
       }
   
-      // Check if the token exists in the blacklist
       const blacklistedToken = await BlacklistedToken.findOne({ token });
       if (blacklistedToken) {
         return res.status(200).json({ isBlacklisted: true });
@@ -483,17 +467,11 @@ const checkBlacklist = async (req, res) => {
     }
 };
 
-/**
- * Delete a notification from a user's notifications array.
- * Expects userId and notificationId in req.params.
- */
 const deleteNotification = async (req, res) => {
     try {
       const { userId, notificationId } = req.params;
   
-      // First, try finding the user in JobSeeker collection
       let user = await JobSeeker.findById(userId);
-      // If not found, try in Recruiter collection
       if (!user) {
         user = await Recruiter.findById(userId);
       }
@@ -502,12 +480,10 @@ const deleteNotification = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
   
-      // Filter out the notification with the matching ID
       user.notifications = user.notifications.filter(
         (notification) => notification._id.toString() !== notificationId
       );
   
-      // Save the updated user document
       await user.save();
   
       res.status(200).json({
@@ -518,33 +494,20 @@ const deleteNotification = async (req, res) => {
       console.error("Error deleting notification:", error.message);
       res.status(500).json({ message: error.message });
     }
-  };
+};
 
-/**
- * Delete all notifications from a user's notifications array.
- * Expects userId in req.params.
- */
 const deleteAllNotifications = async (req, res) => {
   try {
     const { userId } = req.params;
-
-    // Try to find the user in the JobSeeker collection
     let user = await JobSeeker.findById(userId);
-    // If not found, try in the Recruiter collection
     if (!user) {
       user = await Recruiter.findById(userId);
     }
-
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-
-    // Clear the notifications array
     user.notifications = [];
-
-    // Save the updated user document
     await user.save();
-
     res.status(200).json({
       message: "All notifications deleted successfully.",
       notifications: user.notifications,
@@ -554,7 +517,6 @@ const deleteAllNotifications = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-    
 
 module.exports = {
     registerRecruiter,

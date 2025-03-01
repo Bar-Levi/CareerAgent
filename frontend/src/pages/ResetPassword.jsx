@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Notification from '../components/Notification';
 import Botpress from '../botpress/Botpress';
+import CryptoJS from 'crypto-js';
 
 const ResetPassword = () => {
     const [formData, setFormData] = useState({ token: '', newPassword: '' });
@@ -60,18 +61,25 @@ const ResetPassword = () => {
         setMessage(null);
 
         try {
+            // Encrypt the new password before sending it to the backend
+            const encryptedNewPassword = CryptoJS.AES.encrypt(
+                formData.newPassword,
+                process.env.REACT_APP_SECRET_KEY
+            ).toString();
+
+            const payload = { ...formData, newPassword: encryptedNewPassword };
+
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 405) {
-                    // Handle account block error
                     showNotification('error', errorData.message);
-                    return; // Exit early
+                    return;
                 }
                 throw new Error(errorData.message || 'An error occurred.');
             }
