@@ -55,6 +55,7 @@ jobs:
           echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
           echo "BACKEND_URL=${{ secrets.BACKEND_URL }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
         working-directory: backend
 
       # Step 5: Run backend tests
@@ -77,6 +78,7 @@ jobs:
           echo "REACT_APP_BOTPRESS_BOT_ID=${{ secrets.REACT_APP_BOTPRESS_BOT_ID }}" >> .env
           echo "REACT_APP_BOTPRESS_WEBCHAT_URL=${{ secrets.REACT_APP_BOTPRESS_WEBCHAT_URL }}" >> .env
           echo "REACT_APP_CUSTOM_BOT_SCRIPT_URL=${{ secrets.REACT_APP_CUSTOM_BOT_SCRIPT_URL }}" >> .env
+          echo "REACT_APP_SECRET_KEY=${{ secrets.REACT_APP_SECRET_KEY }}" >> .env
           echo "Frontend environment variables configured:"
         working-directory: frontend
 

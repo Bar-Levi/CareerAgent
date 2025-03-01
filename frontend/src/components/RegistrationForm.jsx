@@ -4,16 +4,17 @@ import Notification from './Notification';
 import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
 import OptionalDetailsRecruiterForm from './OptionalDetailsRecruiterForm';
 import Swal from 'sweetalert2';
+import CryptoJS from 'crypto-js';
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({
-        fullName: '' ,
-        email:'',
-        password:'',
-        confirmPassword:'',
-        role:'jobseeker', // Default role
-        companyName:'', // For recruiters
-        companySize:'', // For recruiters,
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'jobseeker', // Default role
+        companyName: '', // For recruiters
+        companySize: '', // For recruiters
         pin: Math.floor(Math.random() * 899999) + 100000
     });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -70,10 +71,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             return;
         }
         if (passwordStrength < 4 || formData.password.length < 8) {
-            showNotification(
-                'error',
-                passwordRules
-            );
+            showNotification('error', passwordRules);
             return;
         }
         if (formData.role === 'recruiter') {
@@ -101,17 +99,17 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const handleOptionalSubmit = async (optionalData) => {
         try {
-            console.dir(optionalData, { depth: null});
+            console.dir(optionalData, { depth: null });
             setIsLoading(true);
 
             const uploadFile = async (file, folder) => {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('folder', folder);
+                const fileData = new FormData();
+                fileData.append('file', file);
+                fileData.append('folder', folder);
 
                 const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
                     method: 'POST',
-                    body: formData,
+                    body: fileData,
                 });
                 if (!uploadResponse.ok) {
                     throw new Error('Failed to upload file to Cloudinary.');
@@ -129,6 +127,20 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures');
             }
 
+            // Prepare final payload by merging formData with optionalData.
+            // Remove confirmPassword from the payload.
+            const finalFormData = { ...formData };
+            delete finalFormData.confirmPassword;
+            // Encrypt the password and PIN before sending
+            finalFormData.password = CryptoJS.AES.encrypt(
+                finalFormData.password,
+                process.env.REACT_APP_SECRET_KEY
+            ).toString();
+            finalFormData.pin = CryptoJS.AES.encrypt(
+                finalFormData.pin.toString(),
+                process.env.REACT_APP_SECRET_KEY
+            ).toString();
+
             const apiUrl =
                 formData.role === 'jobseeker'
                     ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
@@ -136,9 +148,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json',             
-                 },
-                body: JSON.stringify({ ...formData, ...optionalData }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...finalFormData, ...optionalData }),
             });
 
             const data = await response.json();
@@ -174,10 +185,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     confirmButtonText: 'I Understand',
                     confirmButtonColor: '#3085d6',
                     didRender: () => {
-                        // Attach the event listener to the "Copy PIN" button after the modal renders
                         const copyButton = document.getElementById('copy-pin-btn');
                         const pinText = document.getElementById('pin-text').textContent;
-                
                         copyButton.addEventListener('click', () => {
                             navigator.clipboard.writeText(pinText).then(() => {
                                 Swal.fire('Copied!', 'The PIN has been copied to your clipboard.', 'success');
@@ -265,7 +274,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 paddingBottom: '10px',
                             }}
                         >
-                            {formData.role === 'job' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
+                            {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
                         </p>
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -325,16 +334,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                 required
                             />
-                            {/* Toggle visibility icon */}
                             <span
                                 className="absolute right-10 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-xl"
                                 onClick={() => setIsPasswordVisible((prev) => !prev)}
                             >
                                 <i className={`fa ${isPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
                             </span>
-
-                            
-                            {/* Custom Tooltip */}
                             <span
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-lg group-hover:text-gray-700"
                             >
@@ -342,17 +347,16 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             </span>
                             <div className="z-10 absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-3 w-64">
                                 <p>
-                                Password must:
-                                <ul className="list-disc pl-4">
-                                    <li>Be at least 8 characters long</li>
-                                    <li>Contain an uppercase letter</li>
-                                    <li>Include a number</li>
-                                    <li>Have a special character</li>
-                                </ul>
+                                    Password must:
+                                    <ul className="list-disc pl-4">
+                                        <li>Be at least 8 characters long</li>
+                                        <li>Contain an uppercase letter</li>
+                                        <li>Include a number</li>
+                                        <li>Have a special character</li>
+                                    </ul>
                                 </p>
                             </div>
                         </div>
-
 
                         <div className="mt-2">
                             <div className="flex items-center justify-between mb-1">
@@ -449,4 +453,3 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 };
 
 export default RegistrationForm;
-

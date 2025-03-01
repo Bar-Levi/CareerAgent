@@ -1,3 +1,7 @@
+// Set a default secret key for testing if not already set
+process.env.SECRET_KEY = process.env.SECRET_KEY || 'testSecretKey';
+
+const CryptoJS = require('crypto-js');
 const {
   registerRecruiter,
   registerJobSeeker,
@@ -33,12 +37,16 @@ describe('AuthController Tests', () => {
 
   describe('registerJobSeeker', () => {
     it('should register a new job seeker with a 6-digit PIN and send a verification code', async () => {
+      const secretKey = process.env.SECRET_KEY;
+      const encryptedPassword = CryptoJS.AES.encrypt('Password123', secretKey).toString();
+      const encryptedPin = CryptoJS.AES.encrypt('123456', secretKey).toString();
+
       const req = {
         body: {
           fullName: 'John Doe',
           email: 'johndoe@example.com',
-          password: 'Password123',
-          pin: '123456',
+          password: encryptedPassword,
+          pin: encryptedPin,
         },
       };
       const res = {
@@ -75,12 +83,16 @@ describe('AuthController Tests', () => {
     });
 
     it('should return an error if the PIN is not a 6-digit number', async () => {
+      const secretKey = process.env.SECRET_KEY;
+      const encryptedPassword = CryptoJS.AES.encrypt('password123', secretKey).toString();
+      const encryptedPin = CryptoJS.AES.encrypt('123', secretKey).toString();
+
       const req = {
         body: {
           fullName: 'John Doe',
           email: 'johndoe@example.com',
-          password: 'password123',
-          pin: '123', // Invalid PIN
+          password: encryptedPassword,
+          pin: encryptedPin, // Invalid PIN
         },
       };
       const res = {
@@ -119,7 +131,7 @@ describe('AuthController Tests', () => {
 
       expect(mockUser.isVerified).toBeTruthy();
       expect(mockUser.verificationCode).toBeNull();
-      expect(mockUser.save).toHaveBeenCalled(); // Ensure save is called
+      expect(mockUser.save).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ message: 'Account verified successfully!' });
     });
@@ -145,8 +157,10 @@ describe('AuthController Tests', () => {
 
   describe('loginUser', () => {
     it('should log in a verified user with correct credentials', async () => {
+      const secretKey = process.env.SECRET_KEY;
+      const encryptedPassword = CryptoJS.AES.encrypt('password123', secretKey).toString();
       const req = {
-        body: { email: 'johndoe@example.com', password: 'password123', role: 'jobseeker' },
+        body: { email: 'johndoe@example.com', password: encryptedPassword, role: 'jobseeker' },
       };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -188,8 +202,10 @@ describe('AuthController Tests', () => {
     });
 
     it('should return an error for incorrect password', async () => {
+      const secretKey = process.env.SECRET_KEY;
+      const encryptedPassword = CryptoJS.AES.encrypt('wrongpassword', secretKey).toString();
       const req = {
-        body: { email: 'johndoe@example.com', password: 'wrongpassword', role: 'jobseeker' },
+        body: { email: 'johndoe@example.com', password: encryptedPassword, role: 'jobseeker' },
       };
       const res = {
         status: jest.fn().mockReturnThis(),

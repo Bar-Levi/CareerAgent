@@ -1,5 +1,5 @@
-// ChangePasswordModal.jsx
 import Swal from "sweetalert2";
+import CryptoJS from "crypto-js";
 
 const showChangePasswordModal = async (user) => {
   const { value: formValues } = await Swal.fire({
@@ -215,6 +215,11 @@ const showChangePasswordModal = async (user) => {
     try {
       const token = localStorage.getItem("token");
       formValues.email = user.email;
+      // Encrypt the old and new passwords using AES before sending them
+      const secretKey = process.env.REACT_APP_SECRET_KEY;
+      formValues.oldPassword = CryptoJS.AES.encrypt(formValues.oldPassword, secretKey).toString();
+      formValues.newPassword = CryptoJS.AES.encrypt(formValues.newPassword, secretKey).toString();
+
       return fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-password`,
         {
