@@ -1,5 +1,6 @@
 // backend/controllers/userController.js
 const bcrypt = require('bcryptjs');
+const CryptoJS = require('crypto-js');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const jobSeekerModel = require('../models/jobSeekerModel');
@@ -55,6 +56,11 @@ const changePassword = async (req, res) => {
     if (!email || !oldPassword || !newPassword) {
       return res.status(400).json({ message: "Email, old password and new password are required." });
     }
+    
+    // Decrypt the encrypted passwords from the client using the secret key
+    const decryptedOldPassword = CryptoJS.AES.decrypt(oldPassword, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    const decryptedNewPassword = CryptoJS.AES.decrypt(newPassword, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
     let user = await jobSeekerModel.findOne({ email });
     if (!user) {
       user = await recruiterModel.findOne({ email });
@@ -62,29 +68,33 @@ const changePassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    
+    const isMatch = await bcrypt.compare(decryptedOldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Old password is incorrect." });
     }
-    if (oldPassword === newPassword) {
+    if (decryptedOldPassword === decryptedNewPassword) {
       return res.status(400).json({ message: "New password cannot equal the old password." });
     }
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(newPassword)) {
+    if (!passwordRegex.test(decryptedNewPassword)) {
       return res.status(400).json({
         message: "New password does not meet the required criteria: Password must include uppercase, lowercase, a number, and be at least 8 characters long."
       });
     }
+    
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(decryptedNewPassword, salt);
     user.password = hashedPassword;
     await user.save();
+    
     return res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
     console.error("Error updating password:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
+
 
 /**
  * Controller to change a user's profile picture.
