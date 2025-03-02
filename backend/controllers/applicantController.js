@@ -79,7 +79,7 @@ const getRecruiterApplicants = async (req, res) => {
     const { recruiterId } = req.params;
     try {
         // Find applicants where the recruiterId matches
-        const applicants = await Applicant.find({ recruiterId: recruiterId })
+        const applicants = await Applicant.find({ recruiterId }).hint({ recruiterId: 1 })
             .populate('recruiterId');
 
         if (!applicants || applicants.length === 0) {
