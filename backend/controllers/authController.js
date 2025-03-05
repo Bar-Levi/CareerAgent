@@ -82,6 +82,9 @@ const registerJobSeeker = async (req, res) => {
         
         if (cv) {
             userData.cv = cv;
+            userData.analyzed_cv_content.education.forEach((edu) => {
+              edu.degree = addIn(edu.degree);
+            });
             userData.analyzed_cv_content = analyzed_cv_content;
         }
 

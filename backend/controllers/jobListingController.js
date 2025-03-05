@@ -2,6 +2,7 @@ const JobListing = require("../models/jobListingModel");
 const JobSeeker = require("../models/jobSeekerModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 const { sendJobNotificationEmail } = require("../utils/emailService");
+const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 
 const normalizeNullValues = (data) => {
     return Object.fromEntries(
@@ -240,6 +241,13 @@ const saveJobListing = async (req, res) => {
             console.log("Missing required fields.");
             return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
+
+        education.forEach((edu) => {
+          edu = checkAndInsertIn(edu);
+        });
+        
+        
+        
 
         // Create a new job listing document
         const newJobListing = new JobListing({

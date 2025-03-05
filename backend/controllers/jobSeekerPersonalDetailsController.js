@@ -495,6 +495,9 @@ const updateCV = async (req, res) => {
         if (req.body.analyzed_cv_content) {
           try {
             jobSeeker.analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
+            jobSeeker.analyzed_cv_content.education.forEach((edu) => {
+              edu.degree = addIn(edu.degree);
+            });
           } catch (err) {
             console.error("Error parsing analyzed_cv_content:", err);
             jobSeeker.analyzed_cv_content = "Analysis not available";
