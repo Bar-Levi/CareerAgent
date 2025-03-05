@@ -240,7 +240,7 @@ const JobListingCardsList = ({
           score += 15;
           matchedData.jobType.push(`Part Time (15)`);
         }
-      } else if (jobListing.jobType === 'Full Time') {
+      } else if (jobListing.jobType.includes('Full Time')) {
         score += 20;
         matchedData.jobType.push(`Full Time (20)`);
       }
