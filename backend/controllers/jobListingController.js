@@ -194,6 +194,18 @@ async function notifyRelevantJobSeekers(newJobListing) {
     console.error("Error in notifying job seekers:", error);
     }
   }
+
+// Helper function to convert a value to Title Case
+function toTitleCase(value) {
+  // Ensure the value is a string. If it's falsy (like undefined or null), use an empty string.
+  const str = typeof value === 'string' ? value : String(value || '');
+  return str
+    .split(/[\s-_]+/) // split on spaces, hyphens, or underscores
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+
   
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
@@ -234,10 +246,10 @@ const saveJobListing = async (req, res) => {
             jobRole,
             location,
             company,
-            experienceLevel,
+            experienceLevel: toTitleCase(experienceLevel),
+            jobType: toTitleCase(jobType),
+            remote: toTitleCase(remote),
             companySize,
-            jobType,
-            remote,
             description,
             companyWebsite,
             securityClearance,
