@@ -227,21 +227,21 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
       Talk with Chatbot
     </button>
 
-    <span className="px-4 py-2 text-gray-800 font-semibold rounded cursor-default">
+    <span className=" py-2 text-gray-800 font-semibold rounded cursor-default">
       Applied: {appliedCounter || 0}
     </span>
 
     {/* Score Display with Tooltip */}
     {score !== undefined && (
       <div className="flex justify-center items-center">
-        <span className="px-4 py-2 text-gray-800 font-semibold rounded">
+        <span className="py-2 text-gray-800 font-semibold rounded">
           Score: {score}
         </span>
 
         {score !== 0 && matchedData && (
           <div className="relative group cursor-help">
-            <span className="text-gray-800 text-lg">
-              <i className="ml-1 fa fa-info-circle" />
+            <span className="text-gray-800 text-md">
+              <i className="ml-3 fa fa-info-circle" />
             </span>
 
             {/* Tooltip */}
