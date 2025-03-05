@@ -8,6 +8,7 @@ const recruiterModel = require('../models/recruiterModel');
 const jobListingModel = require('../models/jobListingModel');
 const multer = require('multer');
 const path = require('path');
+const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
@@ -496,7 +497,7 @@ const updateCV = async (req, res) => {
           try {
             jobSeeker.analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
             jobSeeker.analyzed_cv_content.education.forEach((edu) => {
-              edu.degree = addIn(edu.degree);
+              edu.degree = checkAndInsertIn(edu.degree);
             });
           } catch (err) {
             console.error("Error parsing analyzed_cv_content:", err);
