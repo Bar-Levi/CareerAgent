@@ -4,7 +4,7 @@
 </p>
 
 # CareerAgent
-CareerAgent is a multi-tier application designed to streamline job-seeking processes using a **Node.js Express backend**, a **React frontend**, and a **Python AI server**. This project demonstrates the integration of modern web and AI technologies to deliver a robust and efficient solution.
+CareerAgent is a multi-tier application designed to streamline job-seeking processes using a **Node.js Express backend** and a **React frontend**. This project demonstrates the integration of modern web and AI technologies to deliver a robust and efficient solution.
 
 ---
 
@@ -14,7 +14,6 @@ CareerAgent is a multi-tier application designed to streamline job-seeking proce
 CareerAgent/
 ├── backend/        # Node.js Express backend
 ├── frontend/       # React frontend
-├── aiservice/      # Python AI server
 └── README.md       # Project description
 ```
 
@@ -31,9 +30,7 @@ Follow these instructions to set up and run the project locally.
 Make sure you have the following installed:
 - **Node.js** (LTS version recommended)
 - **npm** or **yarn**
-- **Python 3.8+**
-- **pip**
-
+  
 ---
 
 ### Installation
@@ -77,28 +74,6 @@ cd CareerAgent
    ```
 4. The frontend will run on `http://localhost:3000`.
 
-#### 4. AI Server Setup
-
-1. Navigate to the `aiservice` folder:
-   ```bash
-   cd ../aiservice
-   ```
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate       # For Linux/Mac
-   venv\Scripts\activate        # For Windows
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Run the AI server:
-   ```bash
-   python server.py
-   ```
-5. The AI server will run on `http://localhost:5000`.
-
 ---
 
 ## Running the Application
@@ -106,7 +81,7 @@ cd CareerAgent
 1. Start the backend server:
    ```bash
    cd backend
-   node server.js
+   npm start
    ```
 
 2. Start the frontend server:
@@ -115,13 +90,7 @@ cd CareerAgent
    npm start
    ```
 
-3. Start the AI server:
-   ```bash
-   cd aiservice
-   python server.py
-   ```
-
-4. Open your browser and navigate to `http://localhost:3000` to use the application.
+3. Open your browser and navigate to `http://localhost:3000` to use the application.
 
 ---
 
