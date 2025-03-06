@@ -29,88 +29,110 @@ const PersonalOverview = ({ user }) => {
   const profileCompletion = Math.round((filledCount / requiredFields.length) * 100);
 
   return (
-    <div className="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-center mb-6 text-purple-700">Personal Overview</h2>
-      
+    <div className="max-w-2xl mx-auto bg-white border border-gray-300 rounded p-6">
+      {/* Top Section: Name & Job Roles */}
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">
+          {user?.fullName || "N/A"}
+        </h2>
+        <p className="text-gray-700 italic">{job_roles}</p>
+      </div>
+
       {/* Personal Information Section */}
-      <div className="mb-6 border-b pb-4">
-        <p className="text-lg mb-1">
-          <span className="font-semibold text-purple-600">Name:</span> {user?.fullName || "N/A"}
+      <div className="mb-6 pb-4 border-b border-gray-300">
+
+        <p className="text-base mb-1">
+          <span className="font-semibold text-gray-800">Name:</span>{" "}
+          {user?.fullName || "N/A"}
         </p>
-        <p className="text-lg mb-1">
-          <span className="font-semibold text-purple-600">Email:</span> {user?.email || "N/A"}
+
+        <p className="text-base mb-1">
+          <span className="font-semibold text-gray-800">Email:</span>{" "}
+          {user?.email || "N/A"}
         </p>
-        <p className="text-lg mb-1">
-          <span className="font-semibold text-purple-600">Phone:</span> {user?.phone || "N/A"}
+
+        { user?.phone &&
+        (
+        <p className="text-base mb-1">
+          <span className="font-semibold text-gray-800">Phone:</span>{" "}
+          {user?.phone}
         </p>
-        <p className="text-lg mb-1">
-          <span className="font-semibold text-purple-600">Birthday:</span> {user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "N/A"}
+        )}
+
+        {user?.dateOfBirth &&
+        (
+        <p className="text-base mb-1">
+          <span className="font-semibold text-gray-800">Birthday:</span>{" "}
+          {new Date(user.dateOfBirth).toLocaleDateString()}
         </p>
-        <p className="text-lg mb-1">
-          <span className="font-semibold text-purple-600">Linkedin:</span>{" "}
-          {user?.linkedinUrl ? (
-            <a 
-              href={user.linkedinUrl} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+        )}
+
+        {user?.linkedinUrl && 
+        (
+        <p className="text-base mb-1">
+          <span className="font-semibold text-gray-800">LinkedIn:</span>{" "}
+            <a
+              href={user.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 underline"
             >
               {user.linkedinUrl}
             </a>
-          ) : (
-            "N/A"
-          )}
         </p>
-        <p className="text-lg mb-1">
-          <span className="font-semibold text-purple-600">Github:</span>{" "}
-          {user?.githubUrl ? (
-            <a 
-              href={user.githubUrl} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+        )}
+
+        {user?.githubUrl && 
+        (
+        <p className="text-base mb-1">
+          <span className="font-semibold text-gray-800">GitHub:</span>{" "}
+          
+            <a
+              href={user.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-blue-600 underline"
             >
               {user.githubUrl}
             </a>
-          ) : (
-            "N/A"
-          )}
         </p>
-
-
-        <p className="text-lg">
-          <span className="font-semibold text-purple-600">CV:</span>{" "}
-          {user?.cv ? (
-            <a 
-              href={user.cv} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="underline text-blue-600"
+        )}
+        
+        {user?.cv && 
+        (
+        <p className="text-base">
+          <span className="font-semibold text-gray-800">CV:</span>{" "}
+            <a
+              href={user.cv}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
             >
               Quick Look
             </a>
-          ) : (
-            "N/A"
-          )}
         </p>
+        )}
+
       </div>
-      
+
       {/* Profile Completion Section */}
       <div className="mb-6">
-        <p className="text-sm text-gray-600 mb-1">Profile Completion</p>
-        <div className="bg-gray-300 h-4 rounded-full overflow-hidden">
-          <div 
-            className="bg-purple-600 h-full" 
+        <p className="text-sm text-gray-700 mb-2">Profile Completion</p>
+        <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden">
+          <div
+            className="bg-gray-600 h-full"
             style={{ width: `${profileCompletion}%` }}
           ></div>
         </div>
-        <p className="text-sm mt-1 text-gray-600">{profileCompletion}% Complete</p>
+        <p className="text-sm mt-2 text-gray-700">
+          {profileCompletion}% Complete
+        </p>
         {profileCompletion < 100 && (
           <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-            <p className="text-red-600 text-sm">
+            <p className="text-red-700 text-sm font-semibold mb-1">
               Your profile is incomplete. Please update the following:
             </p>
-            <ul className="list-disc ml-5 text-red-600 text-sm">
+            <ul className="list-disc ml-5 text-red-700 text-sm">
               {missingFields.map((field, index) => (
                 <li key={index}>{field}</li>
               ))}
@@ -118,67 +140,7 @@ const PersonalOverview = ({ user }) => {
           </div>
         )}
       </div>
-      
-      {/* Analyzed CV Data Section */}
-      <div className="bg-gray-100 border border-gray-300 rounded-lg p-4">
-        <h3 className="text-xl font-bold mb-3 text-purple-700">Analyzed CV Data</h3>
-        <ul className="space-y-3 text-gray-700">
-          {/* Job Roles */}
-          <li>
-            <span className="font-semibold">Job Roles:</span>{" "}
-            {Array.isArray(user.analyzed_cv_content?.job_role) &&
-            user.analyzed_cv_content.job_role.length > 0
-              ? user.analyzed_cv_content.job_role.join(", ")
-              : "None"}
-          </li>
-          {/* Security Clearance */}
-          <li>
-            <span className="font-semibold">Security Clearance:</span>{" "}
-            {user.analyzed_cv_content?.security_clearance || "None"}
-          </li>
-          {/* Education */}
-          <li>
-            <span className="font-semibold">Education:</span>{" "}
-            {Array.isArray(user.analyzed_cv_content?.education) &&
-            user.analyzed_cv_content.education.length > 0 ? (
-              user.analyzed_cv_content.education.map((edu, index) => (
-                <span key={index} className="block">
-                  {edu.degree} from <span className="font-medium">{edu.institution}</span>
-                </span>
-              ))
-            ) : (
-              "None"
-            )}
-          </li>
-          {/* Work Experience */}
-          <li>
-            <span className="font-semibold">Work Experience:</span>{" "}
-            {Array.isArray(user.analyzed_cv_content?.work_experience) &&
-            user.analyzed_cv_content.work_experience.length > 0 ? (
-              user.analyzed_cv_content.work_experience.map((exp, index) => {
-                const yearsOfExperience =
-                  (exp.end_year || new Date().getFullYear()) - exp.start_year;
-                return (
-                  <span key={index} className="block">
-                    {exp.job_title} at <span className="font-medium">{exp.company}</span> (
-                    {exp.start_year} - {exp.end_year || "Present"}) - {yearsOfExperience} year(s)
-                  </span>
-                );
-              })
-            ) : (
-              "None"
-            )}
-          </li>
-          {/* Skills */}
-          <li>
-            <span className="font-semibold">Skills:</span>{" "}
-            {Array.isArray(user.analyzed_cv_content?.skills) &&
-            user.analyzed_cv_content.skills.length > 0
-              ? user.analyzed_cv_content.skills.join(", ")
-              : "None"}
-          </li>
-        </ul>
-      </div>
+
     </div>
   );
 };
