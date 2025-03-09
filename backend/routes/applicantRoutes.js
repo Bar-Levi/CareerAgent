@@ -5,7 +5,8 @@ const {
     getApplicantById, 
     updateApplicant, 
     deleteApplicant,
-    getRecruiterApplicants
+    getRecruiterApplicants,
+    getJobSeekerApplicants
 } = require('../controllers/applicantController');
 
 const {
@@ -25,6 +26,9 @@ router.get('/:id', protect, getApplicantById);
 
 // Get a specific applicant by ID
 router.get('/getRecruiterApplicants/:recruiterId', protect, getRecruiterApplicants);
+
+// Get all applicants for a specific job seeker
+router.get('/getJobSeekerApplications/:jobSeekerId', protect, getJobSeekerApplicants);
 
 // Update a specific applicant by ID
 router.put('/:id', protect, updateApplicant);

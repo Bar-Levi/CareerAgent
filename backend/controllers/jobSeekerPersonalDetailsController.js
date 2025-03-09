@@ -1,5 +1,6 @@
 // backend/controllers/userController.js
 const bcrypt = require('bcryptjs');
+const CryptoJS = require('crypto-js');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 const jobSeekerModel = require('../models/jobSeekerModel');
@@ -7,6 +8,7 @@ const recruiterModel = require('../models/recruiterModel');
 const jobListingModel = require('../models/jobListingModel');
 const multer = require('multer');
 const path = require('path');
+const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
@@ -55,6 +57,11 @@ const changePassword = async (req, res) => {
     if (!email || !oldPassword || !newPassword) {
       return res.status(400).json({ message: "Email, old password and new password are required." });
     }
+    
+    // Decrypt the encrypted passwords from the client using the secret key
+    const decryptedOldPassword = CryptoJS.AES.decrypt(oldPassword, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    const decryptedNewPassword = CryptoJS.AES.decrypt(newPassword, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+
     let user = await jobSeekerModel.findOne({ email });
     if (!user) {
       user = await recruiterModel.findOne({ email });
@@ -62,29 +69,33 @@ const changePassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    
+    const isMatch = await bcrypt.compare(decryptedOldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Old password is incorrect." });
     }
-    if (oldPassword === newPassword) {
+    if (decryptedOldPassword === decryptedNewPassword) {
       return res.status(400).json({ message: "New password cannot equal the old password." });
     }
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(newPassword)) {
+    if (!passwordRegex.test(decryptedNewPassword)) {
       return res.status(400).json({
         message: "New password does not meet the required criteria: Password must include uppercase, lowercase, a number, and be at least 8 characters long."
       });
     }
+    
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(decryptedNewPassword, salt);
     user.password = hashedPassword;
     await user.save();
+    
     return res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
     console.error("Error updating password:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
+
 
 /**
  * Controller to change a user's profile picture.
@@ -389,6 +400,66 @@ const getCV = async (req, res) => {
   }
 };
 
+const getRelevancePoints = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    res.status(200).json({ relevancePoints: jobSeeker.relevancePoints || {} });
+  } catch (error) {
+    console.error("Error fetching relevance points:", error);
+    res.status(500).json({ message: "Failed to get relevance points" });
+  }
+};
+
+const setRelevancePoints = async (req, res) => {
+  const { email, relevancePoints } = req.body;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    jobSeeker.relevancePoints = relevancePoints;
+    await jobSeeker.save();
+    res.status(200).json({ message: "Relevance points updated successfully." });
+  } catch (error) {
+    console.error("Error updating relevance points:", error);
+    res.status(500).json({ message: "Failed to update relevance points" });
+  }
+};
+
+const getMinPointsForUpdate = async (req, res) => {
+  const { email } = req.query;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    res.status(200).json({ minPointsForUpdate: jobSeeker.minPointsForUpdate || 0 });
+  } catch (error) {
+    console.error("Error fetching minimum points for update:", error);
+    res.status(500).json({ message: "Failed to get minimum points for update" });
+  }
+};
+
+const setMinPointsForUpdate = async (req, res) => {
+  const { email, minPointsForUpdate } = req.body;
+  try {
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    jobSeeker.minPointsForUpdate = parseInt(minPointsForUpdate);
+    await jobSeeker.save();
+    res.status(200).json({ message: "Minimum points for update updated successfully." });
+  } catch (error) {
+    console.error("Error updating minimum points for update:", error);
+    res.status(500).json({ message: "Failed to update minimum points for update" });
+  }
+};
+
 // Updates the jobseeker's CV by first deleting the old CV (if exists) from Cloudinary,
 // then uploading the new PDF to Cloudinary and updating analyzed_cv_content.
 const updateCV = async (req, res) => {
@@ -425,6 +496,9 @@ const updateCV = async (req, res) => {
         if (req.body.analyzed_cv_content) {
           try {
             jobSeeker.analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
+            jobSeeker.analyzed_cv_content.education.forEach((edu) => {
+              edu.degree = checkAndInsertIn(edu.degree);
+            });
           } catch (err) {
             console.error("Error parsing analyzed_cv_content:", err);
             jobSeeker.analyzed_cv_content = "Analysis not available";
@@ -468,11 +542,15 @@ module.exports = {
   changeProfilePic,
   deleteProfilePic,
   getNameAndProfilePic,
+  getRelevancePoints,
+  setRelevancePoints,
+  getMinPointsForUpdate,
+  setMinPointsForUpdate,
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,
   getCV,
   updateCV,
   deleteCV,
-  uploadCVMiddleware: uploadCV.single("cv")
+  uploadCVMiddleware: uploadCV.single("cv"),
 };

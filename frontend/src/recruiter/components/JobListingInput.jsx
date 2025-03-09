@@ -65,17 +65,21 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
                     "Authorization": `Bearer ${token}`,
                 },
             });
+            const result = await response.json();
 
             if (!response.ok) {
+                if (response.status === 400) {
+                    // Handle missing fields
+                    handleMissingFields(result.jsonToFill);
+                }
                 throw new Error("Failed to save job listing.");
             }
 
-            const result = await response.json();
             setJobListings([...jobListings, updatedJobListingData]);
-            showNotification("success", "Job listing successfully saved in the database!");
+            showNotification("success", "Job listing was posted successfully!");
             return result;
         } catch (error) {
-            console.error("Error saving job listing:", error.message);
+            console.error("Error posting job listing:", error.message);
             throw error;
         }
     };

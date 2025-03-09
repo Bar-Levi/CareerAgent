@@ -9,18 +9,21 @@ function normalizeText(text) {
 }
 
 
-function calculateJobMatch(userData, jobListing) {
+function calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints) {
   let counter = 0; // Initialize counter for matching years of experience
+  const matchedJobs = [];
+
+  const normalizedJobListingRole = normalizeText(jobListing.jobRole);
+  const listingTokens = new Set(normalizedJobListingRole.split(" "));
 
   userData.work_experience.forEach((experience) => {
     // Normalize the job titles
     const normalizedUserJobTitle = normalizeText(experience.job_title);
-    const normalizedJobListingRole = normalizeText(jobListing.jobRole);
-
-
+  
     // Tokenize and match based on subset of tokens
     const userTokens = new Set(normalizedUserJobTitle.split(" "));
-    const listingTokens = new Set(normalizedJobListingRole.split(" "));
+
+    
     const isMatch = [...userTokens].every((token) => listingTokens.has(token)) || [...listingTokens].every((token) => userTokens.has(token))
 
     // If the job_title matches the jobRole
@@ -29,27 +32,20 @@ function calculateJobMatch(userData, jobListing) {
       const endYear = experience.end_year || new Date().getFullYear(); // Use current year if end_year is null
       const yearsOfExperience = endYear - startYear;
       counter += yearsOfExperience;
-
-      console.log(
-        `Matched user job title '${experience.job_title}' with job listing role '${jobListing.jobRole}'. ` +
-        `Duration: ${startYear}-${endYear} (${yearsOfExperience} years). Current total: ${counter} years.`
-      );
+      matchedJobs.push(jobListing.jobRole + " - " + yearsOfExperience + " years of experience");
     }
   });
 
   // Check if the total experience meets or exceeds the required work experience
   if (counter >= jobListing.workExperience) {
-    console.log(
-      `Total matched experience (${counter} years) meets or exceeds job requirement (${jobListing.workExperience} years). Added 30 points.`
-    );
-    return 30;
+    return {
+      matchedJobs,
+      experienceScore: matchedWorkExperiencePoints,
+    };
   } else {
-    console.log(
-      `Total matched experience (${counter} years) is less than job requirement (${jobListing.workExperience} years). No points added.`
-    );
     return 0;
   }
 }
 
 
-export default calculateJobMatch;
+export default calculateWorkExperienceMatch;

@@ -126,6 +126,11 @@ const showUpdateCVModal = async (user, navigate, location) => {
               refreshToken: 0,
               isVerified: user.isVerified,
             };
+
+            // Remove local storage stored jobListings relevance scores since CV was deleted.
+            const localStorageKey = `relevance_data_${user.id || user._id}`;
+            localStorage.removeItem(localStorageKey);
+      
             navigate(location.pathname, { state: newState });
           });
         } else {
@@ -169,6 +174,11 @@ const showUpdateCVModal = async (user, navigate, location) => {
             refreshToken: 0,
             isVerified: user.isVerified,
           };
+
+          // Remove local storage stored jobListings relevance scores since CV was changed.
+          const localStorageKey = `relevance_data_${user.id || user._id}`;
+          localStorage.removeItem(localStorageKey);
+
           navigate(location.pathname, { state: newState });
         });
       } else {

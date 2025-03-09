@@ -5,6 +5,7 @@ import showChangeProfilePicModal from "./modals/ChangeProfilePicModal";
 import { showJobSeekerPersonalDetailsModal } from "./modals/PersonalDetailsModal";
 import showRecruiterDetailsModal from "./modals/RecruiterDetailsModal";
 import showUpdateCVModal from "./modals/UpdateCVModal"; // Import Update CV modal
+import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal"; // Import Edit Relevance Points modal
 import { useNavigate, useLocation } from "react-router-dom";
 
 const ProfileMenu = ({ userType, user }) => {
@@ -39,6 +40,11 @@ const ProfileMenu = ({ userType, user }) => {
   // Pass navigate and location to UpdateCVModal
   const handleUpdateCV = () => {
     showUpdateCVModal(user, navigate, location);
+  };
+
+  // Handle Edit Relevance Points
+  const handleEditRelevancePoints = () => {
+    showEditRelevancePointsModal(user, navigate, location);
   };
 
   const handleLogout = async () => {
@@ -84,12 +90,20 @@ const ProfileMenu = ({ userType, user }) => {
             Change Personal Details
           </button>
           {userType === "jobseeker" && (
-            <button
-              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-              onClick={() => { setDropdownOpen(false); handleUpdateCV(); }}
-            >
-              Update CV
-            </button>
+            <>
+              <button
+                className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                onClick={() => { setDropdownOpen(false); handleUpdateCV(); }}
+              >
+                Update CV
+              </button>
+              <button
+                className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                onClick={() => { setDropdownOpen(false); handleEditRelevancePoints(); }}
+              >
+                Edit Relevance Points
+              </button>
+            </>
           )}
           <button
             className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
