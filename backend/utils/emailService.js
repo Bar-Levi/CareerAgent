@@ -114,6 +114,7 @@ const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 
 // Send a mail for job notification.
 const sendJobNotificationEmail = async (email, jobListing) => {
+    try {
     const mailOptions = {
       from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -142,6 +143,9 @@ const sendJobNotificationEmail = async (email, jobListing) => {
   
     await transporter.sendMail(mailOptions);
     console.log(`Job notification email sent to ${email}`);
+    } catch(error) {
+        console.error(`Error sending job notification email to ${email}:`, error);
+    }
   };
 
 

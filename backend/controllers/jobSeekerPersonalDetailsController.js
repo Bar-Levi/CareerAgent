@@ -497,15 +497,13 @@ const updateCV = async (req, res) => {
           try {
             jobSeeker.analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
             jobSeeker.analyzed_cv_content.education.forEach((edu) => {
-              edu.degree = checkAndInsertIn(edu.degree);
+            if(edu.degree) edu.degree = checkAndInsertIn(edu.degree);
             });
           } catch (err) {
             console.error("Error parsing analyzed_cv_content:", err);
-            jobSeeker.analyzed_cv_content = "Analysis not available";
           }
-        } else {
-          jobSeeker.analyzed_cv_content = "Analysis not provided";
         }
+        
         await jobSeeker.save();
         return res.status(200).json({ message: "CV updated successfully", cv: jobSeeker.cv });
       }

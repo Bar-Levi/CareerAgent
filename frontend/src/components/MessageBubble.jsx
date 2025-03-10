@@ -57,7 +57,7 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
 
   return (
     <div
-      className={`flex items-start mb-4 ${
+      className={`flex items-start mb-4 w-full ${
         isSender ? "justify-end" : "justify-start"
       }`}
     >
@@ -68,7 +68,21 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
             <div className="text-sm font-semibold text-gray-900 dark:text-gray-200">
               {message.senderName}
             </div>
-            <p className="text-gray-700 dark:text-gray-300">{message.text}</p>
+            {
+              message.text.startsWith("http") ? 
+              <a 
+                className="text-blue-700 dark:text-blue-300"
+                href={message.text}
+                target="_blank" 
+                >
+                  {message.text}
+              </a>
+              :
+              <p className="text-gray-700 dark:text-gray-300">{message.text}</p>
+
+              
+            }
+            
             {renderAttachments()}
             <div className="flex items-center space-x-1 mt-1">
               <span className="text-xs text-gray-500 dark:text-gray-400">

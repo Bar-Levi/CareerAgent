@@ -127,7 +127,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
                     {/* Candidate Info */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">
-                        {app.candidate}
+                        {app.name}
                       </h3>
                       <p className="text-sm text-gray-500">
                         Applied for: {app.jobTitle}

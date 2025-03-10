@@ -320,7 +320,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       </div>
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-scroll p-4 space-y-3 h-64"
+        className="flex-1 overflow-y-scroll p-4 space-y-3 h-64 w-full"
       >
         {isLoadingMore && (
           <div className="flex justify-center items-center mb-4">

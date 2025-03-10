@@ -58,8 +58,8 @@ const calculateWorkExperienceMatch = (userData, jobListing, matchedWorkExperienc
   }
 }
 
-// Calculate relevance score function
 async function calculateRelevanceScore(jobListing, user, relevancePoints) {
+  try {
     let score = 0;
     console.log("User: ", user);
     let matchedData = {
@@ -70,9 +70,9 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       workExperience: [],
       skills: []
     };
-  
+
     const userData = user.analyzed_cv_content;
-  
+
     // Destructure relevance point values
     const {
       matchedJobRolePoints,
@@ -81,7 +81,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       matchedSkillPoints,
       matchedWorkExperiencePoints
     } = relevancePoints;
-  
+
     // Job Roles match
     if (userData.job_role) {
       for (const job of userData.job_role) {
@@ -91,7 +91,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         }
       }
     }
-  
+
     // Job Types match
     if (userData.job_role) {
       if (userData.job_role.includes('Student')) {
@@ -107,7 +107,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         matchedData.jobType.push(`Full Time (20)`);
       }
     }
-  
+
     // Security clearance match
     if (userData.security_clearance && jobListing.securityClearance) {
       if (userData.security_clearance <= jobListing.securityClearance) {
@@ -115,7 +115,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         matchedData.securityClearance = `${userData.security_clearance} (${matchedSecurityClearancePoints})`;
       }
     }
-  
+
     // Education match
     if (userData.education.length > 0 && jobListing.education.length > 0) {
       userData.education.forEach(edu => {
@@ -125,7 +125,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         }
       });
     }
-  
+
     // Previous work experience match
     const { matchedJobs = [], experienceScore = 0 } =
       jobListing.workExperience
@@ -135,7 +135,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       matchedData.workExperience.push(...matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
     }
     score += experienceScore;
-  
+
     // Skills match
     if (userData.skills) {
       const matchedSkills = jobListing.skills.filter(skill =>
@@ -145,9 +145,15 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       score += skillsScore;
       matchedData.skills = matchedSkills.map(skill => `${skill} (${matchedSkillPoints})`);
     }
-  
+
     return { score, matchedData };
+  } catch (error) {
+    console.error("Error in calculateRelevanceScore:", error);
+    return { score: 0, matchedData: {} };
+
   }
+}
+
 
 async function getCandidatesToNotify(newJobListing, jobSeekers) {
     const candidatesToNotify = [];
@@ -185,12 +191,22 @@ async function notifyRelevantJobSeekers(newJobListing) {
         // Optionally, log the number of notifications
         console.log(`Sending notifications to ${candidates.length} job seekers.`);
         
-        // Send emails (you might process this in parallel with Promise.all)
-        await Promise.all(
-            candidates.map(candidate =>
-                sendJobNotificationEmail(candidate.email, newJobListing)
-            )
+          // Send emails using Promise.allSettled to avoid one failure stopping the process
+        const results = await Promise.allSettled(
+          candidates.map(candidate =>
+            sendJobNotificationEmail(candidate.email, newJobListing)
+          )
         );
+
+        // Log results for each candidate
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            console.log(`Email sent to ${candidates[index].email}`);
+          } else {
+            console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
+          }
+        });
+      
     } catch (error) {
     console.error("Error in notifying job seekers:", error);
     }
