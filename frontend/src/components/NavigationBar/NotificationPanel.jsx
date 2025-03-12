@@ -57,7 +57,7 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
   };
 
   return (
-    <div className="absolute right-0 mt-2 w-80 bg-white border rounded-lg shadow-lg z-50">
+    <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
       <div className="p-4 border-b flex justify-between items-center">
         <h3 className="text-lg font-semibold">Notifications</h3>
         <div className="flex space-x-2">
@@ -93,9 +93,7 @@ const NotificationPanel = ({ notifications, setNotifications, onClose, handleNot
             {/* Message Text: 80% width */}
             <div className="p-4 w-[80%] flex flex-col justify-center break-words">
               <p className="text-sm">
-                {notification.message.length > 20
-                  ? notification.message.slice(0, 20) + "..."
-                  : notification.message}
+                {notification.message}
               </p>
               <p className="text-xs text-gray-500">
                 {new Date(notification.date).toLocaleString()}
