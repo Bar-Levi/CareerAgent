@@ -294,10 +294,14 @@ const JobListingCardsList = ({
       {jobListings.map((jobListing) => (
         <div
           key={jobListing._id}
-          onClick={() => onJobSelect(jobListing)}
+          onClick={() => {
+            onJobSelect(jobListing);
+            setCurrentOpenConversationId(null);
+          }}
           className="cursor-pointer"
         >
           <JobListingCard
+            onJobSelect={onJobSelect}
             jobListing={jobListing}
             user={user}
             setUser={setUser}

@@ -9,6 +9,7 @@ import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from "../../../utils/pdfUtils";
 import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
+import JobListingDescription from "../components/JobListingDescription";
 
 const SearchJobs = () => {
   // Get state from location and initialize our user state
@@ -104,7 +105,8 @@ const SearchJobs = () => {
     });
   };
 
-  const handleJobSelect = (job) => {
+  const handleSelectJob = (job) => {
+    console.log("handleSelectJob");
     setSelectedJob(job);
   };
 
@@ -349,7 +351,7 @@ const SearchJobs = () => {
           <JobListingCardsList
             key={`${user.cv}-${JSON.stringify(filters)}`}
             filters={filters}
-            onJobSelect={handleJobSelect}
+            onJobSelect={handleSelectJob}
             user={user}
             setUser={setUser}
             setShowModal={setShowModal}
@@ -364,16 +366,21 @@ const SearchJobs = () => {
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
           {selectedJob ? (
-            <ChatWindow
-              jobId={selectedJob._id}
-              user={user}
-              job={selectedJob}
-              currentOpenConversationId={currentOpenConversationId}
-            />
+            currentOpenConversationId ? (
+              <ChatWindow
+                jobId={selectedJob._id}
+                user={user}
+                job={selectedJob}
+                currentOpenConversationId={currentOpenConversationId}
+              />
+            ) : (
+              <JobListingDescription jobListing={selectedJob} />
+            )
           ) : (
             <p className="text-gray-500">Select a job to view details.</p>
           )}
         </div>
+
       </div>
 
       {showModal && (
