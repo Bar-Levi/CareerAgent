@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import NavigationBar from "../components/NavigationBar/NavigationBar";
+import Botpress from "../botpress/Botpress";
 
 // Sub-component for individual FAQ item
 const FAQItem = ({ faq, onToggle }) => (
-  <div className="border border-gray-600 rounded bg-gray-800 p-4 mb-4">
+  <div className="border border-gray-300 rounded bg-white p-4 mb-4">
     <h3
       onClick={onToggle}
-      className="text-lg font-semibold cursor-pointer text-blue-300"
+      className="text-lg font-semibold cursor-pointer text-blue-600"
     >
       {faq.question}
     </h3>
-    {faq.open && <p className="mt-2 text-gray-300">{faq.answer}</p>}
+    {faq.open && <p className="mt-2 text-gray-700">{faq.answer}</p>}
   </div>
 );
+
 
 // The main FAQ data
 const FAQ_DATA = {
@@ -133,14 +136,14 @@ const FAQ = () => {
   }, [searchQuery, faqs]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
-      {/* Optional: NavigationBar, Botpress, etc. */}
-      {/* <NavigationBar userType={state?.user?.role} ... /> */}
-      {/* <Botpress /> */}
-
+    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+      {/* Optional Navigation & Botpress */}
+      <NavigationBar userType={state?.user?.role} />
+      <Botpress />
+  
       {/* Page Header */}
       <header className="my-6 text-center">
-        <div className="bg-gray-800 text-white py-6 rounded-lg shadow-lg">
+        <div className="bg-white text-gray-900 py-6 rounded-lg shadow-lg">
           <h1 className="text-3xl font-bold tracking-wide">
             Frequently Asked Questions
           </h1>
@@ -156,18 +159,18 @@ const FAQ = () => {
           />
         </div>
       </header>
-
+  
       {/* FAQ Sections */}
       <div className="mx-auto px-4" style={{ maxWidth: "1000px" }}>
         {Object.keys(filteredFaqs).map((subject) => (
           <div key={subject} className="mb-8">
             {/* Subject Title */}
-            <h2 className="text-xl font-bold text-blue-300 mb-4 sticky top-0 bg-gray-900 py-2 z-10 text-center">
-              <span className="bg-gray-700 text-gray-100 px-3 py-3 rounded-md">
+            <h2 className="text-xl font-bold text-blue-600 mb-4 sticky top-0 bg-gray-50 py-2 z-10 text-center">
+              <span className="bg-blue-100 text-blue-800 px-3 py-3 rounded-md">
                 {subject}
               </span>
             </h2>
-
+  
             {/* Render each FAQItem */}
             {filteredFaqs[subject].map((faq) => (
               <FAQItem
@@ -181,6 +184,7 @@ const FAQ = () => {
       </div>
     </div>
   );
+  
 };
 
 export default FAQ;
