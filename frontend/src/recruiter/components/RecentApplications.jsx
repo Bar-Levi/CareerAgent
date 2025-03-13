@@ -46,6 +46,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
             body: JSON.stringify({ 
               participants: [user._id, applicant.jobSeekerId],

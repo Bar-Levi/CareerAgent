@@ -30,36 +30,39 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
+  const token = localStorage.getItem('token');
 
   const handleChatButtonClick = async () => {
     try {
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-              participants: [recruiterId, user._id],
-              jobListingId: jobId,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json(); // Try to get error details from the server
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
-        }
-
-        const { conversation } = await response.json();
-        console.log("New conversation created:", conversation);
-        setCurrentOpenConversationId(conversation._id);
-      
-
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Use the existing token variable
+        },
+        body: JSON.stringify({
+          participants: [recruiterId, user._id],
+          jobListingId: jobId,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json(); // Try to get error details from the server
+        throw new Error(
+          `HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`
+        );
+      }
+  
+      const { conversation } = await response.json();
+      console.log("New conversation created:", conversation);
+      setCurrentOpenConversationId(conversation._id);
     } catch (error) {
-        console.error('Error creating conversation:', error);
-        // Handle error (e.g., display an error message to the user)
-        alert("Failed to create chat. Please try again later.") // Example alert
+      console.error('Error creating conversation:', error);
+      // Handle error (e.g., display an error message to the user)
+      alert("Failed to create chat. Please try again later."); // Example alert
     }
-};
+  };
+  
   const handleApplyNow = async () => {
     if (!user.cv || user.cv === "") {
       setShowModal(true); // Show modal if CV is missing
