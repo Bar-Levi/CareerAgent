@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import NavigationLinks from "./NavigationLinks";
 import ProfileMenu from "./ProfileMenu";
-import NotificationBell from "./NotificationBell";
 import socket from "../../socket";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -20,7 +19,9 @@ const NavigationBar = ({ userType }) => {
 
   // Socket & notification logic
   useEffect(() => {
-    socket.connect();
+    if (!socket.connected) {
+      socket.connect();
+    }
     if (user && user._id) {
       socket.emit("join", user._id);
       console.log("Socket joined room:", user._id);
@@ -69,7 +70,7 @@ const NavigationBar = ({ userType }) => {
       socket.disconnect();
     };
   }, [user]);
-
+  
   const handleNotificationClick = (notificationData) => {
     // Save extra data in localStorage and navigate accordingly.
     localStorage.setItem(

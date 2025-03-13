@@ -4,11 +4,10 @@ import { FaCheckDouble, FaEye } from "react-icons/fa";
 const MessageBubble = ({ message, currentUser, profilePics }) => {
   const isSender = message.senderId === currentUser._id;
 
-  console.log("ProfilePics:" ,  profilePics);
   // Look up the profile picture for this message sender from the profilePics array.
   const profilePic =
     profilePics?.find((item) => item.id === message.senderId)?.profilePic ||
-    "https://via.placeholder.com/40";
+    'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
 
   // Format the timestamp
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {

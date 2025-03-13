@@ -32,6 +32,7 @@ const NavigationLinks = ({
   return (
     <nav className="flex space-x-4 items-center">
       <NotificationBell
+        key={notifications.length}
         panelOpen={panelOpen}
         setPanelOpen={setPanelOpen}
         notifications={notifications}

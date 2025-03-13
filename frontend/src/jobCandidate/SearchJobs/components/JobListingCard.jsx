@@ -148,7 +148,7 @@ const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotificatio
     {/* Recruiter Image */}
     <div className="flex-shrink-0">
       <img
-        src={recruiterProfileImage || "https://via.placeholder.com/48"}
+        src={recruiterProfileImage ||'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png'}
         alt="Recruiter"
         className="w-16 h-16 object-cover border-2 border-black rounded-full p-1"
       />

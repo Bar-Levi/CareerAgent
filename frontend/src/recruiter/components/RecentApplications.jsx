@@ -117,7 +117,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
                       <img
                         src={
                           applicantData?.profilePic ||
-                          "https://via.placeholder.com/48"
+                          'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png'
                         }
                         alt={`${app.candidate || "Candidate"}'s profile`}
                         className="w-full h-full object-cover border-2 border-black rounded-full p-1"
