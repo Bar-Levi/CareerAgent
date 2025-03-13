@@ -148,11 +148,7 @@ const JobListingDescription = ({ jobListing }) => {
           {new Date(closingTime).toLocaleDateString()}
         </div>
       )}
-      {typeof views === "number" && (
-        <div className="mb-2">
-          <span className="font-semibold">Views:</span> {views}
-        </div>
-      )}
+      
     </div>
   );
 };
