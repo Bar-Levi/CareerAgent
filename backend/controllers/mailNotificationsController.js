@@ -25,19 +25,18 @@ const unsubscribeUser = async (req, res) => {
       return res.status(200).json({ message: "You are already unsubscribed." });
     }
     
-    // // Decrypt the AES encoded pin using CryptoJS and validate its format
-    // const decryptedPin = CryptoJS.AES.decrypt(pin, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
-    // if (!/^\d{6}$/.test(decryptedPin)) {
-    //   return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
-    // }
+    // Decrypt the AES encoded pin using CryptoJS and validate its format
+    const decryptedPin = CryptoJS.AES.decrypt(pin, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    if (!/^\d{6}$/.test(decryptedPin)) {
+     return res.status(400).json({ message: 'PIN must be a 6-digit number.' });
+    }
     
     // Compare the decrypted pin with the stored hashed pin using bcrypt
-    const isMatch = await bcrypt.compare(pin, user.pin);
+    const isMatch = await bcrypt.compare(decryptedPin, user.pin);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid pin." });
     }
 
-    
     // Update the user's isSubscribed field to false
     user.isSubscribed = false;
     await user.save();

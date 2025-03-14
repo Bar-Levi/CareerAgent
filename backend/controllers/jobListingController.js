@@ -180,37 +180,43 @@ async function getCandidatesToNotify(newJobListing, jobSeekers) {
     return candidatesToNotify;
   }
   
-async function notifyRelevantJobSeekers(newJobListing) {
+  async function notifyRelevantJobSeekers(newJobListing) {
     try {
-        const jobSeekers = await JobSeeker.find(
-            { analyzed_cv_content: { $exists: true, $ne: null } },
-            'email analyzed_cv_content relevancePoints minPointsForUpdate'
-            );
-        const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
-
-        // Optionally, log the number of notifications
-        console.log(`Sending notifications to ${candidates.length} job seekers.`);
-        
-          // Send emails using Promise.allSettled to avoid one failure stopping the process
-        const results = await Promise.allSettled(
-          candidates.map(candidate =>
-            sendJobNotificationEmail(candidate.email, newJobListing)
-          )
-        );
-
-        // Log results for each candidate
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            console.log(`Email sent to ${candidates[index].email}`);
-          } else {
-            console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
-          }
-        });
+      // Find job seekers who have analyzed_cv_content and are subscribed
+      const jobSeekers = await JobSeeker.find(
+        { 
+          analyzed_cv_content: { $exists: true, $ne: null },
+          isSubscribed: true
+        },
+        'email analyzed_cv_content relevancePoints minPointsForUpdate'
+      );
+  
+      const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
+  
+      // Optionally, log the number of notifications
+      console.log(`Sending notifications to ${candidates.length} job seekers.`);
+      
+      // Send emails using Promise.allSettled to avoid one failure stopping the process
+      const results = await Promise.allSettled(
+        candidates.map(candidate =>
+          sendJobNotificationEmail(candidate.email, newJobListing)
+        )
+      );
+  
+      // Log results for each candidate
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          console.log(`Email sent to ${candidates[index].email}`);
+        } else {
+          console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
+        }
+      });
       
     } catch (error) {
-    console.error("Error in notifying job seekers:", error);
+      console.error("Error in notifying job seekers:", error);
     }
   }
+  
 
 // Helper function to convert a value to Title Case
 function toTitleCase(value) {
