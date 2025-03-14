@@ -13,7 +13,6 @@
     "@tsparticles/all": "^3.7.1",
     "@tsparticles/react": "^3.0.0",
     "animate.css": "^4.1.1",
-    "axios": "^1.7.7",
     "cloudinary": "^2.5.1",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.4.7",
