@@ -12,6 +12,7 @@ const botConversationRoutes = require("./routes/botConversationRoutes");
 const jobListingRoutes = require("./routes/jobListingRoutes");
 const applicantsRoutes = require('./routes/applicantRoutes');
 const conversationRoutes = require("./routes/conversationRoutes");
+const mailNotificationRoutes = require("./routes/mailNotifications");
 require('./tasks/cleanupTokens');
 
 // Load environment variables and connect to DB
@@ -36,6 +37,7 @@ app.use("/api/bot-conversations", botConversationRoutes);
 app.use("/api/joblistings", jobListingRoutes);
 app.use("/api/applicants", applicantsRoutes);
 app.use("/api/conversations", conversationRoutes);
+app.use('/api/mailNotifications', mailNotificationRoutes);
 
 // Create HTTP server and integrate Socket.IO
 const http = require("http");
