@@ -137,9 +137,9 @@ const Dashboard = () => {
         );
     }
 
-    return role === "jobseeker" ? (
+    return role === "JobSeeker" ? (
         <JobCandidateDashboard />
-    ) : role === "recruiter" ? (
+    ) : role === "Recruiter" ? (
         <RecruiterDashboard />
     ) : (
         <p>Invalid dashboard type</p>

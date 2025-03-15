@@ -112,7 +112,7 @@ describe('AuthController Tests', () => {
   describe('verifyCode', () => {
     it('should verify the user with a correct code', async () => {
       const req = {
-        body: { email: 'johndoe@example.com', code: '123456', role: 'jobseeker' },
+        body: { email: 'johndoe@example.com', code: '123456', role: 'JobSeeker' },
       };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -138,7 +138,7 @@ describe('AuthController Tests', () => {
 
     it('should return an error if the code is incorrect', async () => {
       const req = {
-        body: { email: 'johndoe@example.com', code: '123456', role: 'jobseeker' },
+        body: { email: 'johndoe@example.com', code: '123456', role: 'JobSeeker' },
       };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -160,7 +160,7 @@ describe('AuthController Tests', () => {
       const secretKey = process.env.SECRET_KEY;
       const encryptedPassword = CryptoJS.AES.encrypt('password123', secretKey).toString();
       const req = {
-        body: { email: 'johndoe@example.com', password: encryptedPassword, role: 'jobseeker' },
+        body: { email: 'johndoe@example.com', password: encryptedPassword, role: 'JobSeeker' },
       };
       const res = {
         status: jest.fn().mockReturnThis(),
@@ -172,7 +172,7 @@ describe('AuthController Tests', () => {
         email: req.body.email,
         password: 'hashedPassword',
         isVerified: true,
-        role: 'jobseeker',
+        role: 'JobSeeker',
         loginAttemptsLeft: 7,
         save: jest.fn(),
       };
@@ -205,7 +205,7 @@ describe('AuthController Tests', () => {
       const secretKey = process.env.SECRET_KEY;
       const encryptedPassword = CryptoJS.AES.encrypt('wrongpassword', secretKey).toString();
       const req = {
-        body: { email: 'johndoe@example.com', password: encryptedPassword, role: 'jobseeker' },
+        body: { email: 'johndoe@example.com', password: encryptedPassword, role: 'JobSeeker' },
       };
       const res = {
         status: jest.fn().mockReturnThis(),

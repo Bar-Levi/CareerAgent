@@ -10,6 +10,7 @@ import { extractTextFromPDF } from "../../../utils/pdfUtils";
 import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
 import JobListingDescription from "../components/JobListingDescription";
+import MessagingBar from "../components/MessagingBar";
 
 const SearchJobs = () => {
   // Get state from location and initialize our user state
@@ -24,6 +25,7 @@ const SearchJobs = () => {
   // Initialize conversation and job listing states from notification (if any)
   const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [titleName, setTitleName] = useState(null);
 
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
@@ -31,6 +33,7 @@ const SearchJobs = () => {
       try {
         const parsedAddition = JSON.parse(stateAddition);
         setCurrentOpenConversationId(parsedAddition.conversationId);
+        setTitleName(parsedAddition.titleName);
         setSelectedJob(convertMongoObject(parsedAddition.jobListing));
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -203,7 +206,7 @@ const SearchJobs = () => {
 
   return (
     <div key={state.refreshToken} className="bg-gray-100 h-screen flex flex-col">
-      <NavigationBar userType={state?.user?.role} />
+      <NavigationBar userType={state?.user?.role}/>
       <Botpress />
       {notification && (
         <Notification
@@ -225,6 +228,11 @@ const SearchJobs = () => {
 
         {/* Central Area */}
         <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
+          <MessagingBar
+            user={user}
+            onSelectConversation={setCurrentOpenConversationId}
+            setTitleName={setTitleName}
+            />
           <div className="flex sticky top-0 z-10">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
               <h1>Search Results</h1>
@@ -360,25 +368,22 @@ const SearchJobs = () => {
             sortingMethod={sortingMethod}
             setEducationListedOptions={setEducationListedOptions}
             setCurrentOpenConversationId={setCurrentOpenConversationId}
+            setTitleName={setTitleName}
           />
         </div>
 
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
-          {selectedJob ? (
-            currentOpenConversationId ? (
+          { (titleName && currentOpenConversationId) ? (
               <ChatWindow
-                jobId={selectedJob._id}
                 user={user}
-                job={selectedJob}
+                titleName={titleName}
                 currentOpenConversationId={currentOpenConversationId}
               />
             ) : (
               <JobListingDescription jobListing={selectedJob} />
             )
-          ) : (
-            <p className="text-gray-500">Select a job to view details.</p>
-          )}
+          }
         </div>
 
       </div>

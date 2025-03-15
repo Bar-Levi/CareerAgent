@@ -64,7 +64,7 @@ describe('Auth Routes', () => {
       fullName: 'John Doe',
       email: 'john.doe@example.com',
       password: await bcrypt.hash('password123', 10),
-      role: 'jobseeker',
+      role: 'JobSeeker',
       isVerified: true,
     });
     await jobSeeker.save();
@@ -75,7 +75,7 @@ describe('Auth Routes', () => {
     const response = await request(app).post('/api/auth/login').send({
       email: 'john.doe@example.com',
       password: encryptedPassword,
-      role: 'jobseeker',
+      role: 'JobSeeker',
     });
 
     expect(response.status).toBe(200);

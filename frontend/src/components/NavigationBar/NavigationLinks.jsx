@@ -48,7 +48,7 @@ const NavigationLinks = ({
       >
         <FaTachometerAlt className="mr-2" /> Dashboard
       </button>
-      {userType === "jobseeker" && (
+      {userType === "JobSeeker" && (
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
             "/searchjobs"

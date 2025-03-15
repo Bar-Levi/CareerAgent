@@ -30,9 +30,9 @@ const ProfileMenu = ({ userType, user }) => {
   };
 
   const handleChangePersonalDetails = () => {
-    if (userType === "jobseeker") {
+    if (userType === "JobSeeker") {
       showJobSeekerPersonalDetailsModal(user, navigate, location);
-    } else if (userType === "recruiter") {
+    } else if (userType === "Recruiter") {
       showRecruiterDetailsModal(user);
     }
   };
@@ -89,7 +89,7 @@ const ProfileMenu = ({ userType, user }) => {
           >
             Change Personal Details
           </button>
-          {userType === "jobseeker" && (
+          {userType === "JobSeeker" && (
             <>
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"

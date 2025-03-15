@@ -13,7 +13,8 @@ const JobListingCardsList = ({
   setJobListingsCount,
   sortingMethod,
   setEducationListedOptions,
-  setCurrentOpenConversationId
+  setCurrentOpenConversationId,
+  setTitleName
 }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -308,6 +309,7 @@ const JobListingCardsList = ({
             setShowModal={setShowModal}
             showNotification={showNotification}
             setCurrentOpenConversationId={setCurrentOpenConversationId}
+            setTitleName={setTitleName}
           />
         </div>
       ))}

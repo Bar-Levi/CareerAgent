@@ -47,9 +47,9 @@ const recruiterSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['recruiter'],
+        enum: ['Recruiter'],
         required: [true, 'Role is required'],
-        default: 'recruiter',
+        default: 'Recruiter',
     },
     profilePic: {
         type: String,

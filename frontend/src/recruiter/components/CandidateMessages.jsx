@@ -47,7 +47,7 @@ const CandidateMessages = ({
         const candidateConversations = jobListingConversations.filter(
           (convo) =>
             convo.messages ||
-            convo.participants[1] === selectedCandidate?.senderId
+            convo.participants[1].userId === selectedCandidate?.senderId
         );
         
         
@@ -108,9 +108,7 @@ const CandidateMessages = ({
         jobId={jobListing ? jobListing._id : null}
         user={user} // Passing recruiter info
         profilePics={profilePics}
-        job={{
-          recruiterName: selectedCandidate ? selectedCandidate.name : "Candidate Chat",
-        }}
+        titleName={selectedCandidate ? selectedCandidate.name : "Candidate Chat"}
         currentOpenConversationId={selectedConversationId}
       />
     ) : (

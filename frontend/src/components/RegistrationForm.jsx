@@ -12,7 +12,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'jobseeker', // Default role
+        role: 'JobSeeker', // Default role
         companyName: '', // For recruiters
         companySize: '', // For recruiters
         pin: Math.floor(Math.random() * 899999) + 100000
@@ -74,7 +74,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             showNotification('error', passwordRules);
             return;
         }
-        if (formData.role === 'recruiter') {
+        if (formData.role === 'Recruiter') {
             if (!formData.companyName || !formData.companySize) {
                 showNotification('error', 'Company Name and Company Size are required for recruiters.');
                 return;
@@ -142,7 +142,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             ).toString();
 
             const apiUrl =
-                formData.role === 'jobseeker'
+                formData.role === 'JobSeeker'
                     ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
                     : `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerRecruiter`;
 
@@ -270,11 +270,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         <p
                             className="text-gray-600"
                             style={{
-                                marginTop: formData.role === 'recruiter' ? '-5px' : '0px',
+                                marginTop: formData.role === 'Recruiter' ? '-5px' : '0px',
                                 paddingBottom: '10px',
                             }}
                         >
-                            {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
+                            {formData.role === 'JobSeeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
                         </p>
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -298,7 +298,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                             required
                         />
-                        {formData.role === 'recruiter' && (
+                        {formData.role === 'Recruiter' && (
                             <>
                                 <input
                                     type="text"
@@ -398,8 +398,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             }}
                             className="w-full px-4 py-2.5 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                         >
-                            <option value="jobseeker">Job Candidate</option>
-                            <option value="recruiter">Recruiter</option>
+                            <option value="JobSeeker">Job Candidate</option>
+                            <option value="Recruiter">Recruiter</option>
                         </select>
                         <div className="flex items-center space-x-2">
                             <input
@@ -434,7 +434,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 </div>
 
                 <div className={`backface-hidden rotateY-180 ${isOptionalFormVisible ? '' : 'hidden'}`}>
-                    {formData.role === 'jobseeker' ? (
+                    {formData.role === 'JobSeeker' ? (
                         <OptionalDetailsJobSeekerForm onSubmit={handleOptionalSubmit} />
                     ) : (
                         <OptionalDetailsRecruiterForm onSubmit={handleOptionalSubmit} />

@@ -42,21 +42,39 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const participantSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    refPath: 'participants.role'
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  profilePic: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+    enum: ["JobSeeker", "Recruiter"], 
+    required: true,
+  },
+});
+
 
 const conversationSchema = new mongoose.Schema(
   {
-    participants: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "JobSeeker", // Reference the User model
-        required: true,
+    participants: {
+      type: [participantSchema],
+      validate: {
+        validator: function (arr) {
+          return arr.length === 2; // if you only allow exactly two participants
+        },
+        message: "There must be exactly 2 participants in a conversation.",
       },
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Recruiter", // Reference the User model
-        required: true,
-      },
-    ],
+    },
     jobListingId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "JobListing",
@@ -80,4 +98,5 @@ const conversationSchema = new mongoose.Schema(
   { timestamps: true } // Add timestamps to the conversation
 );
 
+conversationSchema.index({ "participants.1": 1 });
 module.exports = mongoose.model("Conversation", conversationSchema);

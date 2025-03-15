@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 
-const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotification, setCurrentOpenConversationId
+const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotification, setCurrentOpenConversationId, setTitleName
 }) => {
   const {
     jobRole,
@@ -33,13 +33,27 @@ const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotificatio
 
   const handleChatButtonClick = async () => {
     try {
+        const participants = [
+          {
+            userId: user._id.toString(),
+            name: user.fullName,
+            profilePic: user.profilePic,
+            role: user.role
+          },
+          {
+            userId: recruiterId.toString(),
+            profilePic: recruiterProfileImage,
+            name: recruiterName,
+            role: "Recruiter"
+          }
+        ]
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-              participants: [recruiterId, user._id],
+              participants,
               jobListingId: jobId,
             }),
         });
@@ -53,6 +67,8 @@ const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotificatio
         console.log("New conversation created:", conversation);
         onJobSelect(jobListing);
         setCurrentOpenConversationId(conversation._id);
+        setTitleName(recruiterName);
+
       
 
     } catch (error) {
@@ -83,6 +99,7 @@ const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotificatio
             linkedinUrl: user.linkedinUrl,
             githubUrl: user.githubUrl,
             cv: user.cv,
+            profilePic: user.profilePic,
             jobId: jobId,
             recruiterId: recruiterId,
             jobSeekerId: user._id,

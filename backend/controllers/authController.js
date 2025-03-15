@@ -11,8 +11,8 @@ require('dotenv').config();
 
 // Helper Function: Get Schema Based on Role
 const getSchemaByRole = (role) => {
-    if (role === 'jobseeker') return JobSeeker;
-    if (role === 'recruiter') return Recruiter;
+    if (role === 'JobSeeker') return JobSeeker;
+    if (role === 'Recruiter') return Recruiter;
     throw new Error('Invalid role specified.');
 };
 
@@ -70,7 +70,7 @@ const registerJobSeeker = async (req, res) => {
             fullName,
             email,
             password: hashedPassword,
-            role: 'jobseeker',
+            role: 'JobSeeker',
             isVerified: false,
             verificationCode,
             verificationCodeSentAt: new Date(),
@@ -134,7 +134,7 @@ const registerRecruiter = async (req, res) => {
             fullName,
             email,
             password: hashedPassword,
-            role: 'recruiter',
+            role: 'Recruiter',
             isVerified: false,
             verificationCode,
             verificationCodeSentAt: new Date(),

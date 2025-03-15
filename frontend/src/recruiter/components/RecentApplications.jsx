@@ -42,13 +42,27 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
 
   const handleChatButtonClick = async (applicant) => {
     try {
+      const participants = [
+        {
+          userId: applicant.jobSeekerId,
+          name: applicant.name,
+          profilePic: applicant.profilePic,
+          role: "JobSeeker"
+        },
+        {
+          userId: user._id,
+          name: user.fullName,
+          profilePic: user.profilePic,
+          role: user.role
+        }        
+      ]
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-              participants: [user._id, applicant.jobSeekerId],
+              participants,
               jobListingId: applicant.jobId,
             }),
         });

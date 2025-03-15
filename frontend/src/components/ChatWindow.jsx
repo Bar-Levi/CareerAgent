@@ -26,7 +26,7 @@ const MessageSkeleton = ({ isSender }) => {
   );
 };
 
-const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
+const ChatWindow = ({ user, titleName, currentOpenConversationId }) => {
   // How many messages to load per request.
   const MESSAGE_BATCH_SIZE = 20;
   const [messages, setMessages] = useState([]);
@@ -182,11 +182,11 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     };
   }, [user?._id, currentOpenConversationId]);
 
-  // Fetch messages when jobId or conversation ID changes.
+  // Fetch messages when conversation ID changes.
   useEffect(() => {
     initialLoadRef.current = true;
     loadInitialMessages();
-  }, [jobId, currentOpenConversationId]);
+  }, [currentOpenConversationId]);
 
   // Attach a scroll event listener to trigger lazy loading when scrolling near the top.
   useEffect(() => {
@@ -315,13 +315,14 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     <div className="w-full h-full max-w-lg md:max-w-xl lg:max-w-2xl border border-gray-300 rounded-lg bg-white shadow-lg dark:bg-gray-800 flex flex-col">
       <div className="m-2 flex justify-center bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
         <span className="font-semibold text-gray-800 dark:text-gray-300">
-          Chat with {job.recruiterName}
+          Chat with {titleName}
         </span>
       </div>
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-scroll p-4 space-y-3 h-64 w-full"
+        className="flex-1 overflow-y-auto p-4 space-y-3"
       >
+      
         {isLoadingMore && (
           <div className="flex justify-center items-center mb-4">
             <svg
@@ -351,7 +352,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           ? [...Array(5)].map((_, index) => (
               <MessageSkeleton key={index} isSender={index % 2 === 0} />
             ))
-          : messages.length > 0 &&
+          : ( messages.length > 0 ?
             messages.map((msg, index) => (
               <MessageBubble
                 key={index}
@@ -359,7 +360,11 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
                 currentUser={user}
                 profilePics={profilePics}
               />
-            ))}
+            )) 
+          :
+            <div className="flex justify-center items-center text-gray-600 dark:text-gray-400">
+              Start a conversation by sending a message.
+            </div>)}
       </div>
       {/* Pass currentOpenConversationId and user._id to InputBox for draft saving */}
       <InputBox
