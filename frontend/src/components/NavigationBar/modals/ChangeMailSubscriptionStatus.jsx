@@ -49,7 +49,7 @@ const changeMailSubscriptionStatus = async (user) => {
         const postResponse = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/subscribeOrUnsubscribe`,
           {
-            method: "POST",
+            method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,

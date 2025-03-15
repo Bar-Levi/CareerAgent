@@ -59,7 +59,7 @@ router.post('/update-job-seeker-details', protect, updateJobSeekerPersonalDetail
 router.post('/reset-job-seeker-details', protect, resetJobSeekerPersonalDetails);
 
 // Route to subscribe or unsubscribe from email notifications
-router.post('/subscribeOrUnsubscribe', protect, subscribeOrUnsubscribe);
+router.put('/subscribeOrUnsubscribe', protect, subscribeOrUnsubscribe);
 
 // Route to get mail notifications subscription status
 router.get('/getIsSubscribed', protect, getIsSubscribed);
