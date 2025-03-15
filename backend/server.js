@@ -12,7 +12,7 @@ const botConversationRoutes = require("./routes/botConversationRoutes");
 const jobListingRoutes = require("./routes/jobListingRoutes");
 const applicantsRoutes = require('./routes/applicantRoutes');
 const conversationRoutes = require("./routes/conversationRoutes");
-const mailNotificationRoutes = require("./routes/mailNotifications");
+const mailNotificationRoutes = require("./routes/mailNotificationsRoutes");
 require('./tasks/cleanupTokens');
 
 // Load environment variables and connect to DB
