@@ -10,9 +10,8 @@ import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
 import convertMongoObject from "../../utils/convertMongoObject";
-import socket from "../../socket";
 
-const RecruiterDashboard = () => {
+const RecruiterDashboard = ({onlineUsers}) => {
   const location = useLocation();
   const state = location.state;
   const user = state?.user;
@@ -23,27 +22,7 @@ const RecruiterDashboard = () => {
   const [notification, setNotification] = useState(null);
   const [newConversationCandidate, setNewConversationCandidate] = useState(null);
 
-  const [onlineUsers, setOnlineUsers] = useState([]);
-
- 
-  useEffect(() => {
-    // If the socket isn't already connected, connect it.
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    // Listen for updates on online users
-    socket.on("updateOnlineUsers", (onlineUserIds) => {
-
-      // Update state as needed (here we assume onlineUserIds is an array of user IDs)
-      setOnlineUsers(onlineUserIds);
-    });
-
-    // Clean up on component unmount
-    return () => {
-      socket.off("updateOnlineUsers");
-    };
-  }, [user]);
+  
 
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);

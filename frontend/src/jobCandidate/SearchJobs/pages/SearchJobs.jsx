@@ -12,7 +12,7 @@ import convertMongoObject from "../../../utils/convertMongoObject";
 import JobListingDescription from "../components/JobListingDescription";
 import MessagingBar from "../components/MessagingBar";
 
-const SearchJobs = () => {
+const SearchJobs = ({onlineUsers}) => {
   // Get state from location and initialize our user state
   const { state } = useLocation();
   const [user, setUser] = useState(state.user);
@@ -232,6 +232,7 @@ const SearchJobs = () => {
             user={user}
             onSelectConversation={setCurrentOpenConversationId}
             setTitle={setTitle}
+            onlineUsers={onlineUsers}
             />
           <div className="flex sticky top-0 z-10">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">

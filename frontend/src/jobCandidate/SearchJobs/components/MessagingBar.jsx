@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ChatWindow from "../../../components/ChatWindow";
 
-const MessagingBar = ({ user, setTitle }) => {
+const MessagingBar = ({ user, setTitle, onlineUsers }) => {
   // Collapsible conversation panel open/closed
   const [isOpen, setIsOpen] = useState(false);
 
@@ -32,6 +32,9 @@ const MessagingBar = ({ user, setTitle }) => {
     fetchConversations();
   }, [user?._id]);
 
+  useEffect(() => {
+    console.log("Online Users: ", onlineUsers);
+  }, [onlineUsers]);
   /**
    * handleSelectConversation:
    * 1) If conversation is already open, reorder it to the end (the "front").
@@ -113,7 +116,7 @@ const MessagingBar = ({ user, setTitle }) => {
      */
     <div
       className="
-        fixed bottom-0 right-0
+        fixed bottom-0 right-20
         z-50
         flex
         items-end
@@ -181,38 +184,83 @@ const MessagingBar = ({ user, setTitle }) => {
 
                   return (
                     <li
-                      key={conv._id}
-                      onClick={() => {
-                        handleSelectConversation(conv._id, participantName, conv.jobListingRole);
-                        setTitle?.(participantName);
-                      }}
-                      className="
-                        flex items-center px-3 py-2 
-                        hover:bg-gray-100 cursor-pointer 
-                        transition-colors duration-200
-                      "
-                    >
+                    key={conv._id}
+                    onClick={() => {
+                      handleSelectConversation(conv._id, participantName, conv.jobListingRole);
+                      setTitle?.(participantName);
+                    }}
+                    className="
+                      group
+                      flex items-start gap-3
+                      px-4 py-3
+                      border-b last:border-b-0 border-gray-100
+                      hover:bg-gray-50
+                      cursor-pointer
+                      transition-colors duration-200
+                    "
+                  >
+                    {/* Profile Picture + Online Indicator */}
+                    <div className="relative">
                       <img
-                        src={secondParticipant?.profilePic || "fallback.jpg"}
+                        src={secondParticipant?.profilePic || 'fallback.jpg'}
                         alt="profilePic"
-                        className="w-10 h-10 rounded-full object-cover mr-3"
+                        className="w-10 h-10 rounded-full object-cover"
                       />
-                      <div className="flex flex-col flex-1">
-                        <span className="font-medium text-gray-700">
-                          {participantName}
+                      {/* Online Dot */}
+                      {onlineUsers?.some(
+                        (onlineObj) => onlineObj.userId === secondParticipant?.userId
+                      ) && (
+                        <span
+                          className="
+                            absolute
+                            bottom-0 right-0
+                            w-3 h-3
+                            bg-green-500
+                            border-2 border-white
+                            dark:border-gray-800
+                            rounded-full
+                          "
+                        />
+                      )}
+                    </div>
+                  
+                    {/* Conversation Info */}
+                    <div className="flex flex-col flex-1">
+                      {/* Participant Name & Role Badge */}
+                      <span className="font-semibold text-gray-800 group-hover:text-gray-900 leading-5">
+                        {participantName}
+                      </span>
+                      {conv.jobListingRole && (
+                        <span className="
+                          inline-block
+                          mt-1
+                          w-fit
+                          text-xs
+                          text-gray-600
+                          bg-gray-200
+                          px-2
+                          py-0.5
+                          rounded-full
+                        ">
+                          {conv.jobListingRole}
                         </span>
-                        {lastMessage && (
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                              {lastMessage.senderName}: {lastMessage.text}
-                            </span>
-                            <span className="text-xs text-gray-400 ml-2">
-                              {formattedTime}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </li>
+                      )}
+                  
+                      {/* Last Message (if any) */}
+                      {lastMessage && (
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-xs text-gray-500 truncate max-w-[150px]">
+                            {lastMessage.senderName}: {lastMessage.text}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                            {formattedTime}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                  
+
                   );
                 })}
               </ul>
