@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
 import ChatWindow from "../../../components/ChatWindow";
 
-const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingConversationData }) => {
-  // Collapsible conversation panel open/closed
+const MessagingBar = ({
+  user,
+  onlineUsers,
+  renderingConversationKey,
+  renderingConversationData,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  // All possible conversation previews for this user
   const [conversations, setConversations] = useState([]);
-
-  // Array of open chats, each: { id, title, minimized: boolean }
   const [openChats, setOpenChats] = useState([]);
 
-  // Toggle the conversation list open/closed
+  // Toggle conversation list
   const toggleOpen = () => setIsOpen((prev) => !prev);
 
   // Fetch conversation list
@@ -24,7 +24,8 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
         );
         if (!response.ok) throw new Error("Failed to fetch conversations");
         const data = await response.json();
-        setConversations(data.conversations.filter((conv) => conv.messages.length) || []);
+        // Filter out conversations with zero messages
+        setConversations(data.conversations.filter((c) => c.messages.length) || []);
       } catch (error) {
         console.error("Error fetching conversations:", error);
       }
@@ -32,21 +33,32 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
     fetchConversations();
   }, [user?._id]);
 
-
-
-
+  // If renderingConversationData has a convId, select that conversation
   useEffect(() => {
-    console.log("Checking - renderingConversationData.convId: ", renderingConversationData.convId);
     if (renderingConversationData.convId) {
-      handleSelectConversation(renderingConversationData.convId, renderingConversationData.participantName, renderingConversationData.jobListingRole);
+      handleSelectConversation(
+        renderingConversationData.convId,
+        renderingConversationData.participantName,
+        renderingConversationData.jobListingRole
+      );
     }
-  }, [renderingConversationKey]);
-
+  }, [renderingConversationKey]); // triggers whenever renderingConversationKey changes
 
   useEffect(() => {
     console.log("Updated openChats: ", openChats);
   }, [openChats]);
 
+  // Helper: find the last un-minimized chat -> active
+  const getActiveChatId = () => {
+    // If there's at least one un-minimized, return the last one in openChats
+    const unMinimized = openChats.filter((c) => !c.minimized);
+    if (unMinimized.length) {
+      return unMinimized[unMinimized.length - 1].id;
+    }
+    return null;
+  };
+
+  const activeChatId = getActiveChatId();
 
   /**
    * handleSelectConversation:
@@ -65,7 +77,7 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
       if (existingIndex !== -1) {
         // Move existing chat to the end
         const [existingChat] = updated.splice(existingIndex, 1);
-        existingChat.minimized = false; // un-minimize if it was minimized
+        existingChat.minimized = false; // un-minimize if minimized
         updated.push(existingChat);
       } else {
         // 2) Otherwise, open a new chat
@@ -81,10 +93,8 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
       // 3) If more than 2 un-minimized, minimize the oldest other one
       const unMinimized = updated.filter((c) => !c.minimized);
       if (unMinimized.length > 2) {
-        // We'll minimize the first un-minimized from the left (except the newly opened last item)
         for (let i = 0; i < updated.length; i++) {
-          // skip the last item (the newly opened) if it's un-minimized
-          if (i === updated.length - 1) break;
+          if (i === updated.length - 1) break; // skip newly opened last item
           if (!updated[i].minimized) {
             updated[i].minimized = true;
             break;
@@ -92,9 +102,8 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
         }
       }
 
-      // 4) If we now have more than 3 total in the array, remove the oldest entirely
+      // 4) If we have more than 3 total, remove the oldest entirely
       if (updated.length > 3) {
-        // Remove the leftmost item
         updated.shift();
       }
 
@@ -108,7 +117,6 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
   };
 
   // Minimize or restore a chat
-  // (No special logic here besides flipping minimized.)
   const handleMinimizeChat = (conversationId) => {
     setOpenChats((prev) =>
       prev.map((chat) =>
@@ -119,16 +127,9 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
     );
   };
 
-  console.log(openChats);
+  console.log("openChats:", openChats);
 
   return (
-    /**
-     * PARENT CONTAINER:
-     *  - fixed at bottom-right
-     *  - display: flex
-     *  - align-items: flex-end ensures all children align at the bottom edge
-     *  - gap for spacing
-     */
     <div
       className="
         fixed bottom-0 right-20
@@ -139,10 +140,6 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
         p-4
       "
     >
-      {/**
-       * Child container with `flex-row-reverse` so the newest chat is on the right.
-       * Use `items-end` to anchor them at the bottom.
-       */}
       <div className="flex flex-row-reverse items-end gap-2">
         {/* 1) Conversation List */}
         <div
@@ -150,6 +147,7 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
             border border-gray-300 shadow-md bg-white
             ${isOpen ? "rounded-t-lg" : "rounded-lg"}
             cursor-pointer
+            transition-all duration-300
           `}
           style={{ width: "300px" }}
         >
@@ -157,7 +155,7 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
           <div
             className={`flex items-center p-2 ${
               isOpen ? "rounded-b-none" : "rounded-b-lg"
-            }`}
+            } transition-all duration-300 ease-in-out hover:bg-gray-50`}
             onClick={toggleOpen}
           >
             <img
@@ -169,17 +167,19 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
               {isOpen ? "Hide" : "View"} Conversations
             </span>
             <i
-              className={`fa fa-chevron-${isOpen ? "down" : "up"} text-gray-600`}
+              className={`fa fa-chevron-${
+                isOpen ? "down" : "up"
+              } text-gray-600 transition-transform duration-300`}
             />
           </div>
 
           {/* If open, show conversation list */}
           {isOpen && (
-            <div className="h-[32rem] overflow-y-auto flex flex-col border-t border-gray-300">
+            <div className="h-[32rem] overflow-y-auto flex flex-col border-t border-gray-300 transition-all duration-300 ease-in-out">
               {/* Optional search bar */}
               <div className="p-2 border-b flex justify-between items-center">
                 <input
-                  className="flex-1 border px-2 py-1 rounded text-sm"
+                  className="flex-1 border px-2 py-1 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
                   placeholder="Search messages"
                 />
               </div>
@@ -197,85 +197,95 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
                     : "";
                   const participantName = secondParticipant?.name || "Conversation";
 
+                  const isOnline = onlineUsers?.some(
+                    (onlineObj) => onlineObj.userId === secondParticipant?.userId
+                  );
+                  // Check if this conv is "active" (last un-minimized)
+                  const isActive = conv._id === activeChatId;
+
                   return (
                     <li
-                    key={conv._id}
-                    onClick={() => {
-                      handleSelectConversation(conv._id, participantName, conv.jobListingRole);
-              
-                    }}
-                    className="
-                      group
-                      flex items-start gap-3
-                      px-4 py-3
-                      border-b last:border-b-0 border-gray-100
-                      hover:bg-gray-50
-                      cursor-pointer
-                      transition-colors duration-200
-                    "
-                  >
-                    {/* Profile Picture + Online Indicator */}
-                    <div className="relative">
-                      <img
-                        src={secondParticipant?.profilePic || 'fallback.jpg'}
-                        alt="profilePic"
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      {/* Online Dot */}
-                      {onlineUsers?.some(
-                        (onlineObj) => onlineObj.userId === secondParticipant?.userId
-                      ) && (
-                        <span
-                          className="
-                            absolute
-                            bottom-0 right-0
-                            w-3 h-3
-                            bg-green-500
-                            border-2 border-white
-                            dark:border-gray-800
-                            rounded-full
-                          "
+                      key={conv._id}
+                      onClick={() => {
+                        handleSelectConversation(
+                          conv._id,
+                          participantName,
+                          conv.jobListingRole
+                        );
+                      }}
+                      className={`
+                        group
+                        flex items-start gap-3
+                        px-4 py-3
+                        border-b last:border-b-0 border-gray-100
+                        cursor-pointer
+                        transition-all duration-200
+                        ${
+                          isActive
+                            ? "bg-blue-100 border-l-4"
+                            : "hover:bg-gray-50"
+                        }
+                      `}
+                    >
+                      {/* Profile Picture + Online Indicator */}
+                      <div className="relative">
+                        <img
+                          src={secondParticipant?.profilePic || "fallback.jpg"}
+                          alt="profilePic"
+                          className="w-10 h-10 rounded-full object-cover"
                         />
-                      )}
-                    </div>
-                  
-                    {/* Conversation Info */}
-                    <div className="flex flex-col flex-1">
-                      {/* Participant Name & Role Badge */}
-                      <span className="font-semibold text-gray-800 group-hover:text-gray-900 leading-5">
-                        {participantName}
-                      </span>
-                      {conv.jobListingRole && (
-                        <span className="
-                          inline-block
-                          mt-1
-                          w-fit
-                          text-xs
-                          text-gray-600
-                          bg-gray-200
-                          px-2
-                          py-0.5
-                          rounded-full
-                        ">
-                          {conv.jobListingRole}
-                        </span>
-                      )}
-                  
-                      {/* Last Message (if any) */}
-                      {lastMessage && (
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                            {lastMessage.senderName}: {lastMessage.text}
-                          </span>
-                          <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
-                            {formattedTime}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </li>
-                  
+                        {isOnline && (
+                          <span
+                            className="
+                              absolute
+                              bottom-0 right-0
+                              w-3 h-3
+                              bg-green-500
+                              border-2 border-white
+                              dark:border-gray-800
+                              rounded-full
+                            "
+                          />
+                        )}
+                      </div>
 
+                      {/* Conversation Info */}
+                      <div className="flex flex-col flex-1">
+                        {/* Participant Name & Role Badge */}
+                        <span className="font-semibold text-gray-800 group-hover:text-gray-900 leading-5">
+                          {participantName}
+                        </span>
+                        {conv.jobListingRole && (
+                          <span
+                            className="
+                              inline-block
+                              mt-1
+                              w-fit
+                              text-xs
+                              text-gray-600
+                              bg-gray-200
+                              px-2
+                              py-0.5
+                              rounded-full
+                            "
+                          >
+                            {conv.jobListingRole}
+                          </span>
+                        )}
+
+                        {/* Last Message (if any) */}
+                        {lastMessage && (
+                          <div className="flex justify-between items-center mt-2">
+                            <span className="text-xs text-gray-500 truncate max-w-[150px]">
+                              {lastMessage.senderName}: {lastMessage.text}
+                            </span>
+                            <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                              {formattedTime}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </li>
                   );
                 })}
               </ul>
@@ -284,64 +294,87 @@ const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingCo
         </div>
 
         {/* 2) Chat Windows */}
-        {openChats.map((chat) => (
-          <div
-            key={chat.id}
-            className={`
-              border rounded-md shadow-lg bg-white
-              transition-all duration-500
-              ${chat.minimized ? "w-64 h-12" : "w-[20rem]"}
-            `}
-          >
-            {chat.minimized ? (
-              // Minimized bar
-              <div
-                className="bg-gray-50 shadow-inner p-2 flex items-center justify-between cursor-pointer h-full"
-                onClick={() => handleMinimizeChat(chat.id)}
-              >
-                <span className="font-semibold text-gray-700 text-sm">
-                  {chat.title} ({chat.role})
-                </span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCloseChat(chat.id);
-                  }}
-                  className="text-red-600 hover:text-red-800"
+        {openChats.map((chat) => {
+          // optional: check if chat participant is online
+          // e.g. if you store chat.participantId
+          // const isOnline = onlineUsers?.some(
+          //   (onlineObj) => onlineObj.userId === chat.participantId
+          // );
+
+          return (
+            <div
+              key={chat.id}
+              className={`
+                border rounded-md shadow-lg bg-white
+                transition-all duration-500 ease-in-out
+                ${
+                  chat.minimized
+                    ? "w-64 h-12"
+                    : "w-[20rem] hover:shadow-xl"
+                }
+              `}
+            >
+              {chat.minimized ? (
+                // Minimized bar
+                <div
+                  className="
+                    bg-gray-50
+                    shadow-inner
+                    p-2
+                    flex
+                    items-center
+                    justify-between
+                    cursor-pointer
+                    h-full
+                    transition-all
+                    duration-300
+                  "
+                  onClick={() => handleMinimizeChat(chat.id)}
                 >
-                  <i className="fa fa-times" />
-                </button>
-              </div>
-            ) : (
-              // Not minimized
-              <div className="flex flex-col min-h-0 h-[32rem]">
-                {/* Chat Header */}
-                <div className="bg-gray-200 p-2 flex items-center justify-between">
-                  <span className="font-semibold text-gray-700">
-                    {chat.title}
+                  <span className="font-semibold text-gray-700 text-sm">
+                    {chat.title} ({chat.role})
                   </span>
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => handleMinimizeChat(chat.id)}>
-                      <i className="fa fa-minus" />
-                    </button>
-                    <button onClick={() => handleCloseChat(chat.id)}>
-                      <i className="fa fa-times text-red-600 hover:text-red-800" />
-                    </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCloseChat(chat.id);
+                    }}
+                    className="text-red-600 hover:text-red-800 transition-colors duration-200"
+                  >
+                    <i className="fa fa-times" />
+                  </button>
+                </div>
+              ) : (
+                // Not minimized
+                <div className="flex flex-col min-h-0 h-[32rem]">
+                  {/* Chat Header */}
+                  <div className="bg-gray-200 p-2 flex items-center justify-between transition-all duration-300 hover:bg-gray-300">
+                    <span className="font-semibold text-gray-700">
+                      {chat.title}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button onClick={() => handleMinimizeChat(chat.id)}>
+                        <i className="fa fa-minus" />
+                      </button>
+                      <button onClick={() => handleCloseChat(chat.id)}>
+                        <i className="fa fa-times text-red-600 hover:text-red-800" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* The actual chat layout */}
+                  <div className="flex-1 flex flex-col min-h-0 transition-all duration-300">
+                    <ChatWindow
+                      title={"Recruiting a " + chat.role}
+                      currentOpenConversationId={chat.id}
+                      user={user}
+                    />
                   </div>
                 </div>
-
-                {/* The actual chat layout */}
-                <div className="flex-1 flex flex-col min-h-0">
-                  <ChatWindow
-                    title={"Recruiting a " + chat.role}
-                    currentOpenConversationId={chat.id}
-                    user={user}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
