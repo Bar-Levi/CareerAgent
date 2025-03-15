@@ -4,6 +4,7 @@ import MessageBubble from "./MessageBubble";
 import InputBox from "./InputBox";
 import socket from "../socket";
 
+
 const MessageSkeleton = ({ isSender }) => {
   return (
     <div
@@ -33,6 +34,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   const [loading, setLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(null);
   // Dummy spacer height to force scrollability when needed.
   const [dummySpacerHeight, setDummySpacerHeight] = useState(0);
   const chatEndRef = useRef(null);
@@ -52,7 +54,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     }
   };
 
-  const loadInitialMessages = async () => {
+  const loadInitialMessages = async () => { // Error state
     if (!currentOpenConversationId) return;
     try {
       setLoading(true);

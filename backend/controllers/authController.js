@@ -290,40 +290,50 @@ const resendVerificationCode = async (req, res) => {
 
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
-    const { forgot_password_email, forgot_password_PIN } = req.body;
+  const { forgot_password_email, forgot_password_PIN } = req.body;
 
-    try {
-        const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
-        const recruiter = await Recruiter.findOne({ email: forgot_password_email });
-        const user = jobSeeker || recruiter;
-        if (!user) {
-            return res.status(404).json({ message: 'No user found with that email.' });
-        }
-
-        const decryptedPin = CryptoJS.AES.decrypt(forgot_password_PIN, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
-        const isPinMatch = await bcrypt.compare(decryptedPin, user.pin);
-        if (!isPinMatch) {
-            return res.status(401).json({ message: 'Incorrect PIN.' });
-        }
-
-        const resetToken = generateResetToken();
-        const tokenExpiry = Date.now() + 3600000;
-
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = tokenExpiry;
-        await user.save();
-
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-        await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
-
-        res.status(200).json({ 
-            message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox."
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Failed to process password reset request.' });
+  try {
+    const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
+    const recruiter = await Recruiter.findOne({ email: forgot_password_email });
+    const user = jobSeeker || recruiter;
+    if (!user) {
+      return res.status(404).json({ message: 'No user found with that email.' });
     }
+
+    const decryptedPin = CryptoJS.AES.decrypt(forgot_password_PIN, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    const isPinMatch = await bcrypt.compare(decryptedPin, user.pin);
+    if (!isPinMatch) {
+      return res.status(401).json({ message: 'Incorrect PIN.' });
+    }
+    const resetToken = generateResetToken();
+    const tokenExpiry = Date.now() + 3600000;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = tokenExpiry;
+    
+    // Fix for role validation: correct for both Recruiter and JobSeeker
+    if (user.role === "Recruiter") {
+      user.role = "recruiter";
+    } else if (user.role === "JobSeeker") {
+      user.role = "jobseeker";
+    }
+    
+    await user.save();
+    console.log('here6');
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    console.log('here7');
+    await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
+    console.log('here8');
+
+    res.status(200).json({ 
+      message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox."
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to process password reset request.' });
+  }
 };
+
+module.exports = requestPasswordReset;
 
 // Reset Password
 const resetPassword = async (req, res) => {
