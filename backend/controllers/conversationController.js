@@ -110,8 +110,10 @@ const createConversation = async (req, res) => {
       return res.status(200).json({ conversation: existingConversation, jobListingObject });
     }
 
+    const newConversationObject = req.body;
+    newConversationObject.jobListingRole = jobListingObject.jobRole;
     // If no existing conversation is found, create a new one
-    const conversation = new Conversation(req.body);
+    const conversation = new Conversation(newConversationObject);
     const newConversation = await conversation.save();
 
     console.log("New conversation: ", newConversation);
@@ -206,7 +208,7 @@ const addMessageToConversation = async (req, res) => {
       extraData: {
         goToRoute: senderRole === "Recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
-          titleName: senderName,
+          title: "Chatting with " + senderName,
           conversationId: conversation._id,
           jobListing,
         },

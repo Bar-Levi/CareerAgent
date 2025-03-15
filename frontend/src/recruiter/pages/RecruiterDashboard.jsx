@@ -49,6 +49,7 @@ const RecruiterDashboard = () => {
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [title, setTitle] = useState(null);
   
 
   useEffect(() => {
@@ -60,8 +61,11 @@ const RecruiterDashboard = () => {
     if (stateAddition) {
       try {
         const parsedAddition = JSON.parse(stateAddition);
+        console.log("Parsed addition: ", parsedAddition);
         setSelectedConversationId(parsedAddition.conversationId);
         setSelectedJobListing(convertMongoObject(parsedAddition.jobListing));
+        setTitle(parsedAddition.title);
+
         // Only remove after you are sure the state is updated (or use a flag)
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -224,6 +228,7 @@ const RecruiterDashboard = () => {
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
             selectedCandidate={selectedCandidate}
+            title={title}
             setSelectedCandidate={setSelectedCandidate}
             onlineUsers={onlineUsers}
           />

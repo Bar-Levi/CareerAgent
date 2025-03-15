@@ -8,7 +8,7 @@ const MessagingBar = ({ user, setTitleName }) => {
   // All possible conversation previews for this user
   const [conversations, setConversations] = useState([]);
 
-  // Array of open chats, each: { id, title, minimized }
+  // Array of open chats, each: { id, title, minimized: boolean }
   const [openChats, setOpenChats] = useState([]);
 
   // Toggle the conversation list open/closed
@@ -34,25 +34,54 @@ const MessagingBar = ({ user, setTitleName }) => {
 
   /**
    * handleSelectConversation:
-   * - If conversation is already open, move it to the rightmost (front).
-   * - Otherwise, open a new chat. If more than 2 are open, remove the oldest.
+   * 1) If conversation is already open, reorder it to the end (the "front").
+   *    - Also un-minimize it if it was minimized.
+   * 2) If it's brand new, push it at the end as minimized=false.
+   * 3) If >2 are un-minimized, minimize the oldest other one.
+   * 4) If the array length >3, remove the oldest from the entire array.
    */
-  const handleSelectConversation = (conversationId, conversationTitle) => {
+  const handleSelectConversation = (conversationId, conversationTitle, conversationRole) => {
     setOpenChats((prev) => {
-      const existingIndex = prev.findIndex((c) => c.id === conversationId);
+      let updated = [...prev];
+
+      // 1) Check if it already exists
+      const existingIndex = updated.findIndex((c) => c.id === conversationId);
       if (existingIndex !== -1) {
-        // Move existing chat to the end of array
-        const updated = [...prev];
+        // Move existing chat to the end
         const [existingChat] = updated.splice(existingIndex, 1);
+        existingChat.minimized = false; // un-minimize if it was minimized
         updated.push(existingChat);
-        return updated;
+      } else {
+        // 2) Otherwise, open a new chat
+        const newChat = {
+          id: conversationId,
+          title: conversationTitle,
+          role: conversationRole,
+          minimized: false,
+        };
+        updated.push(newChat);
       }
-      // Otherwise, open new
-      const newChat = { id: conversationId, title: conversationTitle, minimized: false };
-      const updated = [...prev, newChat];
-      if (updated.length > 2) {
-        updated.shift(); // limit to 2
+
+      // 3) If more than 2 un-minimized, minimize the oldest other one
+      const unMinimized = updated.filter((c) => !c.minimized);
+      if (unMinimized.length > 2) {
+        // We'll minimize the first un-minimized from the left (except the newly opened last item)
+        for (let i = 0; i < updated.length; i++) {
+          // skip the last item (the newly opened) if it's un-minimized
+          if (i === updated.length - 1) break;
+          if (!updated[i].minimized) {
+            updated[i].minimized = true;
+            break;
+          }
+        }
       }
+
+      // 4) If we now have more than 3 total in the array, remove the oldest entirely
+      if (updated.length > 3) {
+        // Remove the leftmost item
+        updated.shift();
+      }
+
       return updated;
     });
   };
@@ -63,6 +92,7 @@ const MessagingBar = ({ user, setTitleName }) => {
   };
 
   // Minimize or restore a chat
+  // (No special logic here besides flipping minimized.)
   const handleMinimizeChat = (conversationId) => {
     setOpenChats((prev) =>
       prev.map((chat) =>
@@ -96,10 +126,7 @@ const MessagingBar = ({ user, setTitleName }) => {
        * Use `items-end` to anchor them at the bottom.
        */}
       <div className="flex flex-row-reverse items-end gap-2">
-        {/** 
-         * 1) Conversation List
-         *    Placed on the right in a row-reverse layout, so it appears last in the DOM but on the right visually.
-         */}
+        {/* 1) Conversation List */}
         <div
           className={`
             border border-gray-300 shadow-md bg-white
@@ -110,7 +137,9 @@ const MessagingBar = ({ user, setTitleName }) => {
         >
           {/* Header that toggles open/close */}
           <div
-            className={`flex items-center p-2 ${isOpen ? "rounded-b-none" : "rounded-b-lg"}`}
+            className={`flex items-center p-2 ${
+              isOpen ? "rounded-b-none" : "rounded-b-lg"
+            }`}
             onClick={toggleOpen}
           >
             <img
@@ -121,7 +150,9 @@ const MessagingBar = ({ user, setTitleName }) => {
             <span className="font-semibold text-gray-700 flex-1">
               {isOpen ? "Hide" : "View"} Conversations
             </span>
-            <i className={`fa fa-chevron-${isOpen ? "down" : "up"} text-gray-600`} />
+            <i
+              className={`fa fa-chevron-${isOpen ? "down" : "up"} text-gray-600`}
+            />
           </div>
 
           {/* If open, show conversation list */}
@@ -152,7 +183,7 @@ const MessagingBar = ({ user, setTitleName }) => {
                     <li
                       key={conv._id}
                       onClick={() => {
-                        handleSelectConversation(conv._id, participantName);
+                        handleSelectConversation(conv._id, participantName, conv.jobListingRole);
                         setTitleName?.(participantName);
                       }}
                       className="
@@ -189,66 +220,65 @@ const MessagingBar = ({ user, setTitleName }) => {
           )}
         </div>
 
-        {/** 
-         * 2) Chat Windows
-         *    Appear to the LEFT of the conversation list in row-reverse order.
-         */}
+        {/* 2) Chat Windows */}
         {openChats.map((chat) => (
-  <div
-    key={chat.id}
-    className={`
-      border rounded-md shadow-lg bg-white
-      transition-all duration-500
-      ${chat.minimized ? "w-64 h-12" : "w-[20rem]"}
-    `}
-  >
-    {/* If minimized, just show a small bar */}
-    {chat.minimized ? (
-      <div
-        className="bg-gray-200 p-2 flex items-center justify-between cursor-pointer h-full"
-        onClick={() => handleMinimizeChat(chat.id)}
-      >
-        <span className="font-semibold text-gray-700 text-sm">
-          {chat.title}
-        </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCloseChat(chat.id);
-          }}
-          className="text-red-600 hover:text-red-800"
-        >
-          <i className="fa fa-times" />
-        </button>
-      </div>
-    ) : (
-      // Not minimized
-      <div className="flex flex-col min-h-0 h-[32rem]">
-        {/* Chat Header */}
-        <div className="bg-gray-200 p-2 flex items-center justify-between">
-          <span className="font-semibold text-gray-700">{chat.title}</span>
-          <div className="flex items-center space-x-2">
-            <button onClick={() => handleMinimizeChat(chat.id)}>
-              <i className="fa fa-minus" />
-            </button>
-            <button onClick={() => handleCloseChat(chat.id)}>
-              <i className="fa fa-times text-red-600 hover:text-red-800" />
-            </button>
-          </div>
-        </div>
+          <div
+            key={chat.id}
+            className={`
+              border rounded-md shadow-lg bg-white
+              transition-all duration-500
+              ${chat.minimized ? "w-64 h-12" : "w-[20rem]"}
+            `}
+          >
+            {chat.minimized ? (
+              // Minimized bar
+              <div
+                className="bg-gray-200 p-2 flex items-center justify-between cursor-pointer h-full"
+                onClick={() => handleMinimizeChat(chat.id)}
+              >
+                <span className="font-semibold text-gray-700 text-sm">
+                  {chat.title}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCloseChat(chat.id);
+                  }}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <i className="fa fa-times" />
+                </button>
+              </div>
+            ) : (
+              // Not minimized
+              <div className="flex flex-col min-h-0 h-[32rem]">
+                {/* Chat Header */}
+                <div className="bg-gray-200 p-2 flex items-center justify-between">
+                  <span className="font-semibold text-gray-700">
+                    {chat.title}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => handleMinimizeChat(chat.id)}>
+                      <i className="fa fa-minus" />
+                    </button>
+                    <button onClick={() => handleCloseChat(chat.id)}>
+                      <i className="fa fa-times text-red-600 hover:text-red-800" />
+                    </button>
+                  </div>
+                </div>
 
-        {/* The actual chat layout */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <ChatWindow
-            titleName={chat.title}
-            currentOpenConversationId={chat.id}
-            user={user}
-          />
-        </div>
-      </div>
-    )}
-  </div>
-))}
+                {/* The actual chat layout */}
+                <div className="flex-1 flex flex-col min-h-0">
+                  <ChatWindow
+                    title={"Recruiting for " + chat.role}
+                    currentOpenConversationId={chat.id}
+                    user={user}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

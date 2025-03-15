@@ -26,7 +26,7 @@ const MessageSkeleton = ({ isSender }) => {
   );
 };
 
-const ChatWindow = ({ user, titleName, currentOpenConversationId }) => {
+const ChatWindow = ({ user, title, currentOpenConversationId}) => {
   // How many messages to load per request.
   const MESSAGE_BATCH_SIZE = 20;
   const [messages, setMessages] = useState([]);
@@ -313,11 +313,13 @@ const ChatWindow = ({ user, titleName, currentOpenConversationId }) => {
 
   return (
     <div className="w-full h-full max-w-lg md:max-w-xl lg:max-w-2xl border border-gray-300 rounded-lg bg-white shadow-lg dark:bg-gray-800 flex flex-col">
+      
       <div className="m-2 flex justify-center bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
         <span className="font-semibold text-gray-800 dark:text-gray-300">
-          Chat with {titleName}
+          {title}
         </span>
       </div>
+      
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-3"

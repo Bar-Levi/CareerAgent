@@ -80,6 +80,10 @@ const conversationSchema = new mongoose.Schema(
       ref: "JobListing",
       required: true,
     },
+    jobListingRole: {
+      type: String,
+      required: true,
+    },
     messages: [messageSchema], // Use the messageSchema as a subdocument array
     isGroupChat: {
       type: Boolean,

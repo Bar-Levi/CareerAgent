@@ -25,7 +25,7 @@ const SearchJobs = () => {
   // Initialize conversation and job listing states from notification (if any)
   const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [titleName, setTitleName] = useState(null);
+  const [title, setTitle] = useState(null);
 
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
@@ -33,7 +33,7 @@ const SearchJobs = () => {
       try {
         const parsedAddition = JSON.parse(stateAddition);
         setCurrentOpenConversationId(parsedAddition.conversationId);
-        setTitleName(parsedAddition.titleName);
+        setTitle(parsedAddition.title);
         setSelectedJob(convertMongoObject(parsedAddition.jobListing));
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -231,7 +231,7 @@ const SearchJobs = () => {
           <MessagingBar
             user={user}
             onSelectConversation={setCurrentOpenConversationId}
-            setTitleName={setTitleName}
+            setTitle={setTitle}
             />
           <div className="flex sticky top-0 z-10">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
@@ -368,16 +368,16 @@ const SearchJobs = () => {
             sortingMethod={sortingMethod}
             setEducationListedOptions={setEducationListedOptions}
             setCurrentOpenConversationId={setCurrentOpenConversationId}
-            setTitleName={setTitleName}
+            setTitle={setTitle}
           />
         </div>
 
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
-          { (titleName && currentOpenConversationId) ? (
+          { (title && currentOpenConversationId) ? (
               <ChatWindow
                 user={user}
-                titleName={titleName}
+                title={title}
                 currentOpenConversationId={currentOpenConversationId}
               />
             ) : (

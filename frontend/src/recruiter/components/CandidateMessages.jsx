@@ -11,7 +11,8 @@ const CandidateMessages = ({
   setSelectedConversationId,
   onlineUsers, // Assume onlineUsers is an array of objects, each with { userId, ... }
   selectedCandidate,
-  setSelectedCandidate
+  setSelectedCandidate,
+  title
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -108,7 +109,7 @@ const CandidateMessages = ({
         jobId={jobListing ? jobListing._id : null}
         user={user} // Passing recruiter info
         profilePics={profilePics}
-        titleName={selectedCandidate ? selectedCandidate.name : "Candidate Chat"}
+        title={title ? title : "Chat with Candidate"}
         currentOpenConversationId={selectedConversationId}
       />
     ) : (
