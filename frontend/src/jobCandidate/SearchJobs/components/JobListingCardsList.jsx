@@ -13,8 +13,8 @@ const JobListingCardsList = ({
   setJobListingsCount,
   sortingMethod,
   setEducationListedOptions,
-  setCurrentOpenConversationId,
-  setTitle
+  setRenderingConversationKey,
+  setRenderingConversationData
 }) => {
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -297,7 +297,6 @@ const JobListingCardsList = ({
           key={jobListing._id}
           onClick={() => {
             onJobSelect(jobListing);
-            setCurrentOpenConversationId(null);
           }}
           className="cursor-pointer"
         >
@@ -308,8 +307,8 @@ const JobListingCardsList = ({
             setUser={setUser}
             setShowModal={setShowModal}
             showNotification={showNotification}
-            setCurrentOpenConversationId={setCurrentOpenConversationId}
-            setTitle={setTitle}
+            setRenderingConversationKey={setRenderingConversationKey}
+            setRenderingConversationData={setRenderingConversationData}
           />
         </div>
       ))}

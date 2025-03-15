@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ChatWindow from "../../../components/ChatWindow";
 
-const MessagingBar = ({ user, setTitle, onlineUsers }) => {
+const MessagingBar = ({ user, onlineUsers, renderingConversationKey, renderingConversationData }) => {
   // Collapsible conversation panel open/closed
   const [isOpen, setIsOpen] = useState(false);
 
@@ -24,7 +24,7 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
         );
         if (!response.ok) throw new Error("Failed to fetch conversations");
         const data = await response.json();
-        setConversations(data.conversations || []);
+        setConversations(data.conversations.filter((conv) => conv.messages.length) || []);
       } catch (error) {
         console.error("Error fetching conversations:", error);
       }
@@ -32,9 +32,22 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
     fetchConversations();
   }, [user?._id]);
 
+
+
+
   useEffect(() => {
-    console.log("Online Users: ", onlineUsers);
-  }, [onlineUsers]);
+    console.log("Checking - renderingConversationData.convId: ", renderingConversationData.convId);
+    if (renderingConversationData.convId) {
+      handleSelectConversation(renderingConversationData.convId, renderingConversationData.participantName, renderingConversationData.jobListingRole);
+    }
+  }, [renderingConversationKey]);
+
+
+  useEffect(() => {
+    console.log("Updated openChats: ", openChats);
+  }, [openChats]);
+
+
   /**
    * handleSelectConversation:
    * 1) If conversation is already open, reorder it to the end (the "front").
@@ -106,6 +119,8 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
     );
   };
 
+  console.log(openChats);
+
   return (
     /**
      * PARENT CONTAINER:
@@ -160,7 +175,7 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
 
           {/* If open, show conversation list */}
           {isOpen && (
-            <div className="h-64 overflow-y-auto flex flex-col border-t border-gray-300">
+            <div className="h-[32rem] overflow-y-auto flex flex-col border-t border-gray-300">
               {/* Optional search bar */}
               <div className="p-2 border-b flex justify-between items-center">
                 <input
@@ -187,7 +202,7 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
                     key={conv._id}
                     onClick={() => {
                       handleSelectConversation(conv._id, participantName, conv.jobListingRole);
-                      setTitle?.(participantName);
+              
                     }}
                     className="
                       group
@@ -281,11 +296,11 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
             {chat.minimized ? (
               // Minimized bar
               <div
-                className="bg-gray-200 p-2 flex items-center justify-between cursor-pointer h-full"
+                className="bg-gray-50 shadow-inner p-2 flex items-center justify-between cursor-pointer h-full"
                 onClick={() => handleMinimizeChat(chat.id)}
               >
                 <span className="font-semibold text-gray-700 text-sm">
-                  {chat.title}
+                  {chat.title} ({chat.role})
                 </span>
                 <button
                   onClick={(e) => {
@@ -318,7 +333,7 @@ const MessagingBar = ({ user, setTitle, onlineUsers }) => {
                 {/* The actual chat layout */}
                 <div className="flex-1 flex flex-col min-h-0">
                   <ChatWindow
-                    title={"Recruiting for " + chat.role}
+                    title={"Recruiting a " + chat.role}
                     currentOpenConversationId={chat.id}
                     user={user}
                   />

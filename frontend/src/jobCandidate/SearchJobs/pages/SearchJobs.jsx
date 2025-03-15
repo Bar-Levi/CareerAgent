@@ -23,17 +23,28 @@ const SearchJobs = ({onlineUsers}) => {
   const [educationListedOptions, setEducationListedOptions] = useState([]);
 
   // Initialize conversation and job listing states from notification (if any)
-  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [title, setTitle] = useState(null);
+
+  const [renderingConversationKey, setRenderingConversationKey] = useState(0);
+  const [renderingConversationData, setRenderingConversationData] = useState({
+    convId: null,
+    participantName: null,
+    jobListingRole: null,
+  });
+
 
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
     if (stateAddition) {
       try {
         const parsedAddition = JSON.parse(stateAddition);
-        setCurrentOpenConversationId(parsedAddition.conversationId);
-        setTitle(parsedAddition.title);
+        setRenderingConversationData({
+          convId: parsedAddition.conversationId,
+          participantName: parsedAddition.title,
+          jobListingRole: parsedAddition.jobListing.jobRole,
+        });
+        setRenderingConversationKey((prev) => prev + 1);
+
         setSelectedJob(convertMongoObject(parsedAddition.jobListing));
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -230,9 +241,9 @@ const SearchJobs = ({onlineUsers}) => {
         <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
           <MessagingBar
             user={user}
-            onSelectConversation={setCurrentOpenConversationId}
-            setTitle={setTitle}
             onlineUsers={onlineUsers}
+            renderingConversationData={renderingConversationData}
+            renderingConversationKey={renderingConversationKey}
             />
           <div className="flex sticky top-0 z-10">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
@@ -360,7 +371,7 @@ const SearchJobs = ({onlineUsers}) => {
           <JobListingCardsList
             key={`${user.cv}-${JSON.stringify(filters)}`}
             filters={filters}
-            onJobSelect={handleSelectJob}
+            onJobSelect={setSelectedJob}
             user={user}
             setUser={setUser}
             setShowModal={setShowModal}
@@ -368,22 +379,15 @@ const SearchJobs = ({onlineUsers}) => {
             setJobListingsCount={setJobListingsCount}
             sortingMethod={sortingMethod}
             setEducationListedOptions={setEducationListedOptions}
-            setCurrentOpenConversationId={setCurrentOpenConversationId}
-            setTitle={setTitle}
-          />
+            setRenderingConversationKey={setRenderingConversationKey}
+            setRenderingConversationData={setRenderingConversationData}
+            />
         </div>
 
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
-          { (title && currentOpenConversationId) ? (
-              <ChatWindow
-                user={user}
-                title={title}
-                currentOpenConversationId={currentOpenConversationId}
-              />
-            ) : (
+          { selectedJob &&
               <JobListingDescription jobListing={selectedJob} />
-            )
           }
         </div>
 

@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 
-const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotification, setCurrentOpenConversationId, setTitle
+const JobListingCard = ({ 
+  onJobSelect,
+  jobListing,
+  setShowModal,
+  showNotification,
+  setRenderingConversationKey,
+  setRenderingConversationData
 }) => {
   const {
     jobRole,
@@ -66,15 +72,21 @@ const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotificatio
         const { conversation } = await response.json();
         console.log("New conversation created:", conversation);
         onJobSelect(jobListing);
-        setCurrentOpenConversationId(conversation._id);
-        setTitle(recruiterName);
+
+        setRenderingConversationData({
+          convId: conversation._id,
+          participantName: recruiterName,
+          jobListingRole: jobRole,
+        });
+        setRenderingConversationKey((prev) => prev + 1);
+
 
       
 
     } catch (error) {
         console.error('Error creating conversation:', error);
         // Handle error (e.g., display an error message to the user)
-        alert("Failed to create chat. Please try again later.") // Example alert
+        alert("Failed to create chat. Please try again later.")
     }
 };
   const handleApplyNow = async () => {
