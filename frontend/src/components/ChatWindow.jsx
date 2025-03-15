@@ -153,8 +153,8 @@ const ChatWindow = ({ user, title, currentOpenConversationId}) => {
   
     const handleNewNotification = (notificationData) => {
       if (notificationData.type === "chat") {
-        setMessages((prev) => [...prev, notificationData.messageObject]);
         if (notificationData.conversationId === currentOpenConversationId) {
+          setMessages((prev) => [...prev, notificationData.messageObject]);
           socket.emit("messagesRead", {
             conversationId: currentOpenConversationId,
             readerId: user._id,

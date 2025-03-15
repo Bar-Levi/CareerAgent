@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 
-const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotification, setCurrentOpenConversationId, setTitleName
+const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotification, setCurrentOpenConversationId, setTitle
 }) => {
   const {
     jobRole,
@@ -67,7 +67,7 @@ const JobListingCard = ({ onJobSelect, jobListing, setShowModal, showNotificatio
         console.log("New conversation created:", conversation);
         onJobSelect(jobListing);
         setCurrentOpenConversationId(conversation._id);
-        setTitleName(recruiterName);
+        setTitle(recruiterName);
 
       
 

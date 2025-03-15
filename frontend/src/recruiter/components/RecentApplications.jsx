@@ -62,7 +62,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-              participants,
+              participants, 
               jobListingId: applicant.jobId,
             }),
         });

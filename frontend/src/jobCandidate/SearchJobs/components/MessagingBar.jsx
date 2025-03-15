@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ChatWindow from "../../../components/ChatWindow";
 
-const MessagingBar = ({ user, setTitleName }) => {
+const MessagingBar = ({ user, setTitle }) => {
   // Collapsible conversation panel open/closed
   const [isOpen, setIsOpen] = useState(false);
 
@@ -184,7 +184,7 @@ const MessagingBar = ({ user, setTitleName }) => {
                       key={conv._id}
                       onClick={() => {
                         handleSelectConversation(conv._id, participantName, conv.jobListingRole);
-                        setTitleName?.(participantName);
+                        setTitle?.(participantName);
                       }}
                       className="
                         flex items-center px-3 py-2 
