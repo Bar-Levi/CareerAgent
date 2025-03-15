@@ -11,6 +11,9 @@ const MessagingBar = ({
   const [conversations, setConversations] = useState([]);
   const [openChats, setOpenChats] = useState([]);
 
+  // **New**: state to track search input
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Toggle conversation list
   const toggleOpen = () => setIsOpen((prev) => !prev);
 
@@ -43,22 +46,6 @@ const MessagingBar = ({
       );
     }
   }, [renderingConversationKey]); // triggers whenever renderingConversationKey changes
-
-  useEffect(() => {
-    console.log("Updated openChats: ", openChats);
-  }, [openChats]);
-
-  // Helper: find the last un-minimized chat -> active
-  const getActiveChatId = () => {
-    // If there's at least one un-minimized, return the last one in openChats
-    const unMinimized = openChats.filter((c) => !c.minimized);
-    if (unMinimized.length) {
-      return unMinimized[unMinimized.length - 1].id;
-    }
-    return null;
-  };
-
-  const activeChatId = getActiveChatId();
 
   /**
    * handleSelectConversation:
@@ -127,7 +114,26 @@ const MessagingBar = ({
     );
   };
 
-  console.log("openChats:", openChats);
+  // Helper to find the last un-minimized chat -> active
+  const getActiveChatId = () => {
+    const unMinimized = openChats.filter((c) => !c.minimized);
+    if (unMinimized.length) {
+      return unMinimized[unMinimized.length - 1].id;
+    }
+    return null;
+  };
+  const activeChatId = getActiveChatId();
+
+  // **Filter** conversations by searchTerm
+  const filteredConversations = conversations.filter((conv) => {
+    const secondParticipant = conv?.participants?.[1];
+    const participantName = secondParticipant?.name?.toLowerCase() || "";
+    const role = conv.jobListingRole?.toLowerCase() || "";
+    const term = searchTerm.toLowerCase();
+
+    // Show if participantName OR role includes the search term
+    return participantName.includes(term) || role.includes(term);
+  });
 
   return (
     <div
@@ -176,17 +182,19 @@ const MessagingBar = ({
           {/* If open, show conversation list */}
           {isOpen && (
             <div className="h-[32rem] overflow-y-auto flex flex-col border-t border-gray-300 transition-all duration-300 ease-in-out">
-              {/* Optional search bar */}
+              {/* Search bar */}
               <div className="p-2 border-b flex justify-between items-center">
                 <input
                   className="flex-1 border px-2 py-1 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-                  placeholder="Search messages"
+                  placeholder="Search by name or role..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
               {/* Conversation List */}
               <ul className="flex-1 overflow-y-auto divide-y divide-gray-200">
-                {conversations.map((conv) => {
+                {filteredConversations.map((conv) => {
                   const secondParticipant = conv?.participants?.[1];
                   const { lastMessage } = conv || {};
                   const formattedTime = lastMessage?.timestamp
@@ -197,10 +205,11 @@ const MessagingBar = ({
                     : "";
                   const participantName = secondParticipant?.name || "Conversation";
 
+                  // Is participant online?
                   const isOnline = onlineUsers?.some(
                     (onlineObj) => onlineObj.userId === secondParticipant?.userId
                   );
-                  // Check if this conv is "active" (last un-minimized)
+                  // Is this conv the "active" one?
                   const isActive = conv._id === activeChatId;
 
                   return (
@@ -222,7 +231,7 @@ const MessagingBar = ({
                         transition-all duration-200
                         ${
                           isActive
-                            ? "bg-blue-100 border-l-4"
+                            ? "bg-blue-50 border-l-4 border-blue-400"
                             : "hover:bg-gray-50"
                         }
                       `}
@@ -294,87 +303,79 @@ const MessagingBar = ({
         </div>
 
         {/* 2) Chat Windows */}
-        {openChats.map((chat) => {
-          // optional: check if chat participant is online
-          // e.g. if you store chat.participantId
-          // const isOnline = onlineUsers?.some(
-          //   (onlineObj) => onlineObj.userId === chat.participantId
-          // );
-
-          return (
-            <div
-              key={chat.id}
-              className={`
-                border rounded-md shadow-lg bg-white
-                transition-all duration-500 ease-in-out
-                ${
-                  chat.minimized
-                    ? "w-64 h-12"
-                    : "w-[20rem] hover:shadow-xl"
-                }
-              `}
-            >
-              {chat.minimized ? (
-                // Minimized bar
-                <div
-                  className="
-                    bg-gray-50
-                    shadow-inner
-                    p-2
-                    flex
-                    items-center
-                    justify-between
-                    cursor-pointer
-                    h-full
-                    transition-all
-                    duration-300
-                  "
-                  onClick={() => handleMinimizeChat(chat.id)}
+        {openChats.map((chat) => (
+          <div
+            key={chat.id}
+            className={`
+              border rounded-md shadow-lg bg-white
+              transition-all duration-500 ease-in-out
+              ${
+                chat.minimized
+                  ? "w-64 h-12"
+                  : "w-[20rem] hover:shadow-xl"
+              }
+            `}
+          >
+            {chat.minimized ? (
+              // Minimized bar
+              <div
+                className="
+                  bg-gray-50
+                  shadow-inner
+                  p-2
+                  flex
+                  items-center
+                  justify-between
+                  cursor-pointer
+                  h-full
+                  transition-all
+                  duration-300
+                "
+                onClick={() => handleMinimizeChat(chat.id)}
+              >
+                <span className="font-semibold text-gray-700 text-sm">
+                  {chat.title} ({chat.role})
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCloseChat(chat.id);
+                  }}
+                  className="text-red-600 hover:text-red-800 transition-colors duration-200"
                 >
-                  <span className="font-semibold text-gray-700 text-sm">
-                    {chat.title} ({chat.role})
+                  <i className="fa fa-times" />
+                </button>
+              </div>
+            ) : (
+              // Not minimized
+              <div className="flex flex-col min-h-0 h-[32rem]">
+                {/* Chat Header */}
+                <div className="bg-gray-200 p-2 flex items-center justify-between transition-all duration-300 hover:bg-gray-300">
+                  <span className="font-semibold text-gray-700">
+                    {chat.title}
                   </span>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCloseChat(chat.id);
-                    }}
-                    className="text-red-600 hover:text-red-800 transition-colors duration-200"
-                  >
-                    <i className="fa fa-times" />
-                  </button>
-                </div>
-              ) : (
-                // Not minimized
-                <div className="flex flex-col min-h-0 h-[32rem]">
-                  {/* Chat Header */}
-                  <div className="bg-gray-200 p-2 flex items-center justify-between transition-all duration-300 hover:bg-gray-300">
-                    <span className="font-semibold text-gray-700">
-                      {chat.title}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <button onClick={() => handleMinimizeChat(chat.id)}>
-                        <i className="fa fa-minus" />
-                      </button>
-                      <button onClick={() => handleCloseChat(chat.id)}>
-                        <i className="fa fa-times text-red-600 hover:text-red-800" />
-                      </button>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => handleMinimizeChat(chat.id)}>
+                      <i className="fa fa-minus" />
+                    </button>
+                    <button onClick={() => handleCloseChat(chat.id)}>
+                      <i className="fa fa-times text-red-600 hover:text-red-800" />
+                    </button>
                   </div>
+                </div>
 
-                  {/* The actual chat layout */}
-                  <div className="flex-1 flex flex-col min-h-0 transition-all duration-300">
-                    <ChatWindow
-                      title={"Recruiting a " + chat.role}
-                      currentOpenConversationId={chat.id}
-                      user={user}
-                    />
-                  </div>
+                {/* The actual chat layout */}
+                <div className="flex-1 flex flex-col min-h-0 transition-all duration-300">
+                  <ChatWindow
+                    title={"Recruiting a " + chat.role}
+                    currentOpenConversationId={chat.id}
+                    user={user}
+                  />
                 </div>
-              )}
-            </div>
-          );
-        })}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
