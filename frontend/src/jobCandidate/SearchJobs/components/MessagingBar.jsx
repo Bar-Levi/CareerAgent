@@ -286,7 +286,7 @@ const MessagingBar = ({
                         {lastMessage && (
                           <div className="flex justify-between items-center mt-2">
                             <span className="text-xs text-gray-500 truncate max-w-[150px]">
-                              {lastMessage.senderName}: {lastMessage.text}
+                              <b>{lastMessage.senderName}:</b> {lastMessage.text}
                             </span>
                             <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
                               {formattedTime}

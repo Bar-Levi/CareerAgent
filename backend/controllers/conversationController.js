@@ -208,7 +208,7 @@ const addMessageToConversation = async (req, res) => {
       extraData: {
         goToRoute: senderRole === "Recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
-          title: "Chatting with " + senderName,
+          title: senderName,
           conversationId: conversation._id,
           secondParticipantProfilePic: senderRole === "Recruiter" ? conversation.participants[1].profilePic : conversation.participants[0].profilePic,
           jobListing,

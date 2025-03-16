@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
 
-const RecentApplications = ({ applications = [], setSelectedConversationId, setSelectedJobListing, setSelectedCandidate}) => {
+const RecentApplications = ({ applications = [], setSelectedConversationId, setSelectedJobListing, setSelectedCandidate, setTitle}) => {
   const { state } = useLocation();
   const user = state?.user;
 
@@ -77,9 +77,11 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
     
         setSelectedJobListing(convertMongoObject(jobListingObject));
         setSelectedConversationId(conversation._id);
+        
 
         const candidateInfo = await getCandidateInfo(conversation);
         setSelectedCandidate(candidateInfo);
+        setTitle(candidateInfo.name);
       
     } catch (error) {
         console.error('Error creating conversation:', error);

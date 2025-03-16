@@ -85,14 +85,10 @@ const getRecruiterApplicants = async (req, res) => {
         if (!applicants || applicants.length === 0) {
             return res.status(404).json({ message: 'No applicants found for this recruiter' });
         }
-
-        const applications = applicants.map((applicant, index) => {
-            return applicant;
-        });
         
         res.status(200).json({
             message: 'Applicants fetched successfully',
-            applications,
+            applications: applicants,
         });
     } catch (error) {
         console.error('Error fetching applicants:', error);

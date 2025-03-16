@@ -221,6 +221,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
           setSelectedConversationId={setSelectedConversationId}
           setSelectedJobListing={setSelectedJobListing}
           setSelectedCandidate={setSelectedCandidate}
+          setTitle={setTitle}
         />
         <JobListingInput
           user={user}
