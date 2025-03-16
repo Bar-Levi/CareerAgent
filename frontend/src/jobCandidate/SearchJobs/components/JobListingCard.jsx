@@ -94,6 +94,7 @@ const JobListingCard = ({
   };
   
   const handleApplyNow = async () => {
+    console.log(user);
     if (!user.cv || user.cv === "") {
       setShowModal(true); // Show modal if CV is missing
       return;

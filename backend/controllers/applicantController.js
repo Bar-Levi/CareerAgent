@@ -9,7 +9,7 @@ const createApplicant = async (req, res) => {
 
         // Make sure that joblisting's status is active
         const jobListing = await JobListing.findById(req.body.jobId);
-        if (jobListing.status!== 'active') {
+        if (jobListing.status !== 'Active') {
             return res.status(400).json({ message: 'Job listing is not active anymore - please refresh the page.' });
         }
 
@@ -22,42 +22,40 @@ const createApplicant = async (req, res) => {
         if (existingApplicant) {
             return res.status(400).json({ message: 'User has already applied for this job.' });
         }
-
         // Check if the user has a valid CV
         if (!req.body.cv || req.body.cv === "") {
             return res.status(400).json({ message: 'CV is required.' });
         }
 
         const newApplicant = new Applicant(req.body);
-
         const savedApplicant = await newApplicant.save();
         res.status(201).json({
             message: 'Applicant created successfully',
             applicant: savedApplicant,
         });
-    const reciever = await Recruiter.findById(req.body.recruiterId);
-    // Create and push a new notification to the receiver
-    const newNotification = {
-        type: "apply",
-        message: `${req.body.name} has applied for the ${req.body.jobTitle} position.`,
-        extraData: {
-          goToRoute: '/dashboard',
-          stateAddition: {
-          },
-        },
-      };
-      if (!reciever.notifications) {
-        reciever.notifications = [];
-      }
-      reciever.notifications.push(newNotification);
-      await reciever.save();
-      console.log("Notification added to reciever:", reciever.email);
-      // Retrieve the Socket.IO instance from the app and emit the notification event.
-      const io = req.app.get("io");
+        const reciever = await Recruiter.findById(req.body.recruiterId);
+        // Create and push a new notification to the receiver
+        const newNotification = {
+            type: "apply",
+            message: `${req.body.name} has applied for the ${req.body.jobTitle} position.`,
+            extraData: {
+            goToRoute: '/dashboard',
+            stateAddition: {
+            },
+            },
+        };
+        if (!reciever.notifications) {
+            reciever.notifications = [];
+        }
+        reciever.notifications.push(newNotification);
+        await reciever.save();
+        console.log("Notification added to reciever:", reciever.email);
+        // Retrieve the Socket.IO instance from the app and emit the notification event.
+        const io = req.app.get("io");
 
-      // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
-      io.to(reciever._id.toString()).emit("newNotification", newNotification);
-      console.log("Emitting notification to: " + reciever._id);
+        // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
+        io.to(reciever._id.toString()).emit("newNotification", newNotification);
+        console.log("Emitting notification to: " + reciever._id);
   
     } catch (error) {
         console.error('Error creating applicant:', error);

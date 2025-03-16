@@ -48,8 +48,8 @@ const getConversationById = async (req, res) => {
     const recruiter = await Recruiter.findById(recruiterId);
     const jobSeeker = await JobSeeker.findById(jobSeekerId);
 
-    console.log("recruiter:", recruiter);
-    console.log("jobseeker:", jobSeeker);
+    console.log("Recruiter:", recruiter);
+    console.log("JobSeeker:", jobSeeker);
 
     // Build an array of profilePics.
     // (If recruiter or jobSeeker is null, use optional chaining or defaults.)

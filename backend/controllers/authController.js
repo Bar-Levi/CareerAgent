@@ -314,9 +314,9 @@ const requestPasswordReset = async (req, res) => {
     
     // Fix for role validation: correct for both Recruiter and JobSeeker
     if (user.role === "Recruiter") {
-      user.role = "recruiter";
+      user.role = "Recruiter";
     } else if (user.role === "JobSeeker") {
-      user.role = "jobseeker";
+      user.role = "JobSeeker";
     }
     
     await user.save();

@@ -1,5 +1,6 @@
 const JobListing = require("../models/jobListingModel");
 const JobSeeker = require("../models/jobSeekerModel");
+const Applicant = require("../models/applicantModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 const { sendJobNotificationEmail } = require("../utils/emailService");
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
@@ -180,42 +181,42 @@ async function getCandidatesToNotify(newJobListing, jobSeekers) {
     return candidatesToNotify;
   }
   
-  async function notifyRelevantJobSeekers(newJobListing) {
-    try {
-      // Find job seekers who have analyzed_cv_content and are subscribed
-      const jobSeekers = await JobSeeker.find(
-        { 
-          analyzed_cv_content: { $exists: true, $ne: null },
-          isSubscribed: true
-        },
-        'email analyzed_cv_content relevancePoints minPointsForUpdate'
-      );
-  
-      const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
-  
-      // Optionally, log the number of notifications
-      console.log(`Sending notifications to ${candidates.length} job seekers.`);
-      
-      // Send emails using Promise.allSettled to avoid one failure stopping the process
-      const results = await Promise.allSettled(
-        candidates.map(candidate =>
-          sendJobNotificationEmail(candidate.email, newJobListing)
-        )
-      );
-  
-      // Log results for each candidate
-      results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          console.log(`Email sent to ${candidates[index].email}`);
-        } else {
-          console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
-        }
-      });
-      
-    } catch (error) {
-      console.error("Error in notifying job seekers:", error);
-    }
+async function notifyRelevantJobSeekers(newJobListing) {
+  try {
+    // Find job seekers who have analyzed_cv_content and are subscribed
+    const jobSeekers = await JobSeeker.find(
+      { 
+        analyzed_cv_content: { $exists: true, $ne: null },
+        isSubscribed: true
+      },
+      'email analyzed_cv_content relevancePoints minPointsForUpdate'
+    );
+
+    const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
+
+    // Optionally, log the number of notifications
+    console.log(`Sending notifications to ${candidates.length} job seekers.`);
+    
+    // Send emails using Promise.allSettled to avoid one failure stopping the process
+    const results = await Promise.allSettled(
+      candidates.map(candidate =>
+        sendJobNotificationEmail(candidate.email, newJobListing)
+      )
+    );
+
+    // Log results for each candidate
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        console.log(`Email sent to ${candidates[index].email}`);
+      } else {
+        console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error in notifying job seekers:", error);
   }
+}
   
 
 // Helper function to convert a value to Title Case
@@ -416,24 +417,62 @@ const updateJobListing = async (req, res) => {
 
 // Delete a job listing by ID
 const deleteJobListing = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        const deletedJobListing = await JobListing.findByIdAndDelete(id);
+  try {
+      console.log("Received request to delete job listing:", req.params);
 
-        if (!deletedJobListing) {
-            return res.status(404).json({ message: "Job listing not found." });
-        }
+      const { id } = req.params;
 
-        res.status(200).json({
-            message: "Job listing deleted successfully.",
-            jobListing: deletedJobListing,
-        });
-    } catch (error) {
-        console.error("Error deleting job listing:", error.message);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
+      // Find the job listing before deleting
+      const jobListing = await JobListing.findById(id);
+      if (!jobListing) {
+          console.log("Job listing not found with ID:", id);
+          return res.status(404).json({ message: "Job listing not found." });
+      }
+
+      console.log("Deleting job listing with ID:", id);
+      const deletedJobListing = await JobListing.findByIdAndDelete(id);
+      
+      // Fetch applicants before deleting them
+      const applicants = await Applicant.find({ jobId: id });
+      console.log(`Found ${applicants.length} applicants for job ID: ${id}`);
+
+      // Delete all applicants for this job listing
+      const deleteResult = await Applicant.deleteMany({ jobId: id });
+      console.log(`Deleted ${deleteResult.deletedCount} applicants.`);
+
+      // Send emails using Promise.allSettled to avoid one failure stopping the process
+      if (applicants.length > 0) {
+          console.log("Preparing to send notification emails...");
+          const results = await Promise.allSettled(
+              applicants.map(applicant =>
+                  sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
+              )
+          );
+
+          // Log results for each candidate
+          results.forEach((result, index) => {
+              if (result.status === 'fulfilled') {
+                  console.log(`✅ Email sent successfully to ${applicants[index].email}`);
+              } else {
+                  console.error(`❌ Failed to send email to ${applicants[index].email}:`, result.reason);
+              }
+          });
+      } else {
+          console.log("No applicants found. Skipping email notifications.");
+      }
+
+      res.status(200).json({
+          message: "Job listing deleted successfully.",
+          jobListing: deletedJobListing,
+      });
+
+  } catch (error) {
+      console.error("❌ Error deleting job listing:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
 };
+
+
 
 // Filter from the ACTIVE job listings
 const filterActiveJobListings = async (req, res) => {
@@ -562,8 +601,6 @@ const getMetrics = async (req, res) => {
     });
   }
 };
-
-
 
 // Get specific recruiter job listings.
 const getRecruiterListings = async (req, res) => {
