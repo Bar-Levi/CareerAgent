@@ -12,7 +12,8 @@ const CandidateMessages = ({
   onlineUsers, // Assume onlineUsers is an array of objects, each with { userId, ... }
   selectedCandidate,
   setSelectedCandidate,
-  title
+  title,
+  setTitle
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -86,6 +87,7 @@ const CandidateMessages = ({
       candidateInfoMap[conversation._id] || (await getCandidateInfo(conversation));
     
     setSelectedCandidate(candidateInfo);
+    setTitle(candidateInfo.name);
   };
 
   // Memoize the ChatWindow so that it only re-renders when its own props change.
