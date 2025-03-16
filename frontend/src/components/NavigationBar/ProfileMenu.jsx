@@ -4,8 +4,9 @@ import showChangePasswordModal from "./modals/ChangePasswordModal";
 import showChangeProfilePicModal from "./modals/ChangeProfilePicModal";
 import { showJobSeekerPersonalDetailsModal } from "./modals/PersonalDetailsModal";
 import showRecruiterDetailsModal from "./modals/RecruiterDetailsModal";
-import showUpdateCVModal from "./modals/UpdateCVModal"; // Import Update CV modal
-import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal"; // Import Edit Relevance Points modal
+import showUpdateCVModal from "./modals/UpdateCVModal";
+import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal";
+import changeMailSubscriptionStatus from "./modals/ChangeMailSubscriptionStatus";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const ProfileMenu = ({ userType, user }) => {
@@ -37,14 +38,17 @@ const ProfileMenu = ({ userType, user }) => {
     }
   };
 
-  // Pass navigate and location to UpdateCVModal
   const handleUpdateCV = () => {
     showUpdateCVModal(user, navigate, location);
   };
 
-  // Handle Edit Relevance Points
   const handleEditRelevancePoints = () => {
     showEditRelevancePointsModal(user, navigate, location);
+  };
+
+  const handleChangeMailSubscription = () => {
+    setDropdownOpen(false);
+    changeMailSubscriptionStatus(user);
   };
 
   const handleLogout = async () => {
@@ -73,19 +77,28 @@ const ProfileMenu = ({ userType, user }) => {
         <div className="absolute right-0 mt-2 w-48 bg-brand-secondary shadow-lg rounded-md py-2 z-50">
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => { setDropdownOpen(false); handleChangePassword(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleChangePassword();
+            }}
           >
             Change Password
           </button>
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => { setDropdownOpen(false); handleChangeProfilePic(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleChangeProfilePic();
+            }}
           >
             Change Profile Picture
           </button>
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => { setDropdownOpen(false); handleChangePersonalDetails(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleChangePersonalDetails();
+            }}
           >
             Change Personal Details
           </button>
@@ -93,21 +106,36 @@ const ProfileMenu = ({ userType, user }) => {
             <>
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-                onClick={() => { setDropdownOpen(false); handleUpdateCV(); }}
+                onClick={() => {
+                  setDropdownOpen(false);
+                  handleUpdateCV();
+                }}
               >
                 Update CV
               </button>
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-                onClick={() => { setDropdownOpen(false); handleEditRelevancePoints(); }}
+                onClick={() => {
+                  setDropdownOpen(false);
+                  handleEditRelevancePoints();
+                }}
               >
                 Edit Relevance Points
               </button>
             </>
           )}
           <button
+            className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+            onClick={handleChangeMailSubscription}
+          >
+            Change Mail Subscription
+          </button>
+          <button
             className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
-            onClick={() => { setDropdownOpen(false); handleLogout(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleLogout();
+            }}
           >
             Log Out
           </button>

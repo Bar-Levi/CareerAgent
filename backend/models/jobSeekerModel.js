@@ -125,6 +125,10 @@ const jobSeekerSchema = new mongoose.Schema({
         type: Number,
         default: 50,
     },
+    isSubscribed: {
+        type: Boolean,
+        default: true,
+    },
     notifications: [notificationSchema],
 });
 

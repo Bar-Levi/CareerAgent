@@ -115,39 +115,42 @@ const generateResetToken = () => crypto.randomBytes(32).toString('hex');
 // Send a mail for job notification.
 const sendJobNotificationEmail = async (email, jobListing) => {
     try {
-    const mailOptions = {
-      from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: `New Relevant Job Listing: ${jobListing.jobRole} at ${jobListing.company}`,
-      html: `
-        <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-          <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">New Job Listing Alert!</h1>
-          </div>
-          <div style="padding: 20px; background-color: #ffffff; line-height: 1.6;">
-            <p>Hello,</p>
-            <p>A new job listing that might be relevant to you has been posted:</p>
-            <p><strong>Job Role:</strong> ${jobListing.jobRole}</p>
-            <p><strong>Company:</strong> ${jobListing.company}</p>
-            <p><strong>Location:</strong> ${jobListing.location}</p>
-            <p>Check it out on our platform and apply if you're interested!</p>
-            <p>Best regards,</p>
-            <p><strong>The CareerAgent Team</strong></p>
-          </div>
-          <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px;">
-            <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
-          </div>
-        </div>
-      `,
-    };
-  
-    await transporter.sendMail(mailOptions);
-    console.log(`Job notification email sent to ${email}`);
+        const mailOptions = {
+            from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: `New Relevant Job Listing: ${jobListing.jobRole} at ${jobListing.company}`,
+            html: `
+              <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                  <h1 style="margin: 0; font-size: 24px;">New Job Listing Alert!</h1>
+                </div>
+                <div style="padding: 20px; background-color: #ffffff; line-height: 1.6;">
+                  <p>Hello,</p>
+                  <p>A new job listing that might be relevant to you has been posted:</p>
+                  <p><strong>Job Role:</strong> ${jobListing.jobRole}</p>
+                  <p><strong>Company:</strong> ${jobListing.company}</p>
+                  <p><strong>Location:</strong> ${jobListing.location}</p>
+                  <p>Check it out on our platform and apply if you're interested!</p>
+                  <p>Best regards,</p>
+                  <p><strong>The CareerAgent Team</strong></p>
+                  <p style="font-size: 12px; color: #777;">
+                    If you wish to unsubscribe from these notifications, please 
+                    <a href="${process.env.FRONTEND_URL}/unsubscribe" style="color: #2c2c54; text-decoration: none;">click here</a>.
+                  </p>
+                </div>
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px;">
+                  <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+                </div>
+              </div>
+            `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`Job notification email sent to ${email}`);
     } catch(error) {
         console.error(`Error sending job notification email to ${email}:`, error);
     }
-  };
-
+};
 
 module.exports = {
     sendVerificationCode,

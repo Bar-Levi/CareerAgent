@@ -36,6 +36,7 @@ const JobListingCard = ({
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
+  const token = localStorage.getItem('token');
 
   const handleChatButtonClick = async () => {
     try {
@@ -89,7 +90,8 @@ const JobListingCard = ({
         // Handle error (e.g., display an error message to the user)
         alert("Failed to create chat. Please try again later.")
     }
-};
+  };
+  
   const handleApplyNow = async () => {
     if (!user.cv || user.cv === "") {
       setShowModal(true); // Show modal if CV is missing

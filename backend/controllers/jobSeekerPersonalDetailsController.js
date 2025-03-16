@@ -535,6 +535,62 @@ const deleteCV = async (req, res) => {
   }
 };
 
+const subscribeOrUnsubscribe = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // Find the user in JobSeeker or Recruiter model
+    let user = await jobSeekerModel.findOne({ email });
+    if (!user) {
+      user = await recruiterModel.findOne({ email });
+    }
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Toggle the isSubscribed field
+    user.isSubscribed = !user.isSubscribed;
+    await user.save();
+
+    // Prepare an appropriate message based on new subscription status
+    const statusMessage = user.isSubscribed
+      ? "Successfully subscribed to notifications."
+      : "Successfully unsubscribed from notifications.";
+
+    res.status(200).json({ message: statusMessage });
+  } catch (error) {
+    console.error("Error in subscribeOrUnsubscribe controller:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
+const getIsSubscribed = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // Find the user in JobSeeker or Recruiter model
+    let user = await jobSeekerModel.findOne({ email });
+    if (!user) {
+      user = await recruiterModel.findOne({ email });
+    }
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Return the subscription status
+    res.status(200).json({ isSubscribed: user.isSubscribed });
+  } catch (error) {
+    console.error("Error in getIsSubscribed controller:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   changePassword,
   changeProfilePic,
@@ -551,4 +607,6 @@ module.exports = {
   updateCV,
   deleteCV,
   uploadCVMiddleware: uploadCV.single("cv"),
+  subscribeOrUnsubscribe,
+  getIsSubscribed,
 };

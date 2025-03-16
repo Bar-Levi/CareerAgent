@@ -8,6 +8,7 @@ import ResetPassword from './pages/ResetPassword';
 import TermsAndConditions from './pages/TermsAndConditions';
 import ResetLoginAttempts from './pages/ResetLoginAttempts';
 import ChatsPage from './pages/ChatsPage';
+import UnsubscribePage from './pages/Unsubscribe';
 import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
@@ -47,6 +48,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/authentication" element={<AuthenticationPage />} />
+                <Route path="/unsubscribe" element={<UnsubscribePage />} />
                 <Route path="/reset-login-attempts" element={<ResetLoginAttempts />} />
                 <Route
                     path="/dashboard"

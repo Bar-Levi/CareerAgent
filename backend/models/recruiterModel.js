@@ -105,6 +105,10 @@ const recruiterSchema = new mongoose.Schema({
     pin: {
         type: String,
     },
+    isSubscribed: {
+        type: Boolean,
+        default: true,
+    },
     notifications: [notificationSchema],
 });
 
