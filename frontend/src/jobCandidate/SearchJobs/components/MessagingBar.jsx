@@ -41,6 +41,7 @@ const MessagingBar = ({
     if (renderingConversationData.convId) {
       handleSelectConversation(
         renderingConversationData.convId,
+        renderingConversationData.secondParticipantProfilePic,
         renderingConversationData.participantName,
         renderingConversationData.jobListingRole
       );
@@ -55,7 +56,7 @@ const MessagingBar = ({
    * 3) If >2 are un-minimized, minimize the oldest other one.
    * 4) If the array length >3, remove the oldest from the entire array.
    */
-  const handleSelectConversation = (conversationId, conversationTitle, conversationRole) => {
+  const handleSelectConversation = (conversationId, secondParticipantProfilePic, conversationTitle, conversationRole) => {
     setOpenChats((prev) => {
       let updated = [...prev];
 
@@ -70,6 +71,7 @@ const MessagingBar = ({
         // 2) Otherwise, open a new chat
         const newChat = {
           id: conversationId,
+          secondParticipantProfilePic,
           title: conversationTitle,
           role: conversationRole,
           minimized: false,
@@ -214,28 +216,26 @@ const MessagingBar = ({
 
                   return (
                     <li
-                      key={conv._id}
-                      onClick={() => {
-                        handleSelectConversation(
-                          conv._id,
-                          participantName,
-                          conv.jobListingRole
-                        );
-                      }}
-                      className={`
-                        group
-                        flex items-start gap-3
-                        px-4 py-3
-                        border-b last:border-b-0 border-gray-100
-                        cursor-pointer
-                        transition-all duration-200
-                        ${
-                          isActive
-                            ? "bg-blue-50 border-l-4 border-blue-400"
-                            : "hover:bg-gray-50"
-                        }
-                      `}
-                    >
+  key={conv._id}
+  onClick={() => handleSelectConversation(conv._id, secondParticipant?.profilePic, participantName, conv.jobListingRole)}
+  className={`
+    group
+    relative
+    flex items-start gap-3
+    px-4 py-3
+    border-b last:border-b-0 border-gray-200
+    cursor-pointer
+    transform-gpu
+    transition-all duration-300 ease-out
+    ${
+      isActive
+        ? // ACTIVE STATE
+          "bg-gradient-to-r from-blue-200 to-white border-l-4 border-blue-400 scale-100 shadow-sm"
+        : // HOVER STATE
+          "hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"
+    }
+  `}
+>
                       {/* Profile Picture + Online Indicator */}
                       <div className="relative">
                         <img
@@ -333,6 +333,11 @@ const MessagingBar = ({
                 "
                 onClick={() => handleMinimizeChat(chat.id)}
               >
+                <img
+                  src={chat?.secondParticipantProfilePic || "fallback.jpg"}
+                  alt="Profile"
+                  className="w-8 h-8 rounded-full mr-2"
+                />
                 <span className="font-semibold text-gray-700 text-sm">
                   {chat.title} ({chat.role})
                 </span>
@@ -351,6 +356,11 @@ const MessagingBar = ({
               <div className="flex flex-col min-h-0 h-[32rem]">
                 {/* Chat Header */}
                 <div className="bg-gray-200 p-2 flex items-center justify-between transition-all duration-300 hover:bg-gray-300">
+                  <img
+                    src={chat?.secondParticipantProfilePic || "fallback.jpg"}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
                   <span className="font-semibold text-gray-700">
                     {chat.title}
                   </span>

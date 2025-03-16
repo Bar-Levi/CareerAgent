@@ -75,6 +75,7 @@ const JobListingCard = ({
 
         setRenderingConversationData({
           convId: conversation._id,
+          secondParticipantProfilePic: conversation.participants[1].profilePic,
           participantName: recruiterName,
           jobListingRole: jobRole,
         });

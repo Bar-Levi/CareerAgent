@@ -3,7 +3,6 @@ import React from "react";
 import {
   FaTachometerAlt,
   FaBriefcase,
-  FaEnvelope,
   FaRobot,
   FaQuestionCircle,
 } from "react-icons/fa";
@@ -49,6 +48,7 @@ const NavigationLinks = ({
         <FaTachometerAlt className="mr-2" /> Dashboard
       </button>
       {userType === "JobSeeker" && (
+        <>
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
             "/searchjobs"
@@ -57,15 +57,7 @@ const NavigationLinks = ({
         >
           <FaBriefcase className="mr-2" /> Search Jobs
         </button>
-      )}
-      <button
-        className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-          "/messages"
-        )}`}
-        onClick={() => handleNavClick("/messages")}
-      >
-        <FaEnvelope className="mr-2" /> Messages
-      </button>
+
       <button
         className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
           "/chats"
@@ -74,6 +66,9 @@ const NavigationLinks = ({
       >
         <FaRobot className="mr-2" /> Chatbots
       </button>
+      </>
+      )}
+
       <button
         className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
           "/faq"

@@ -28,6 +28,7 @@ const SearchJobs = ({onlineUsers}) => {
   const [renderingConversationKey, setRenderingConversationKey] = useState(0);
   const [renderingConversationData, setRenderingConversationData] = useState({
     convId: null,
+    secondParticipantProfilePic: null,
     participantName: null,
     jobListingRole: null,
   });
@@ -40,6 +41,7 @@ const SearchJobs = ({onlineUsers}) => {
         const parsedAddition = JSON.parse(stateAddition);
         setRenderingConversationData({
           convId: parsedAddition.conversationId,
+          secondParticipantProfilePic: parsedAddition.secondParticipantProfilePic,
           participantName: parsedAddition.title,
           jobListingRole: parsedAddition.jobListing.jobRole,
         });

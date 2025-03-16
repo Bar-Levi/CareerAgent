@@ -210,6 +210,7 @@ const addMessageToConversation = async (req, res) => {
         stateAddition: {
           title: "Chatting with " + senderName,
           conversationId: conversation._id,
+          secondParticipantProfilePic: senderRole === "Recruiter" ? conversation.participants[1].profilePic : conversation.participants[0].profilePic,
           jobListing,
         },
       },
