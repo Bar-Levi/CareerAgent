@@ -83,10 +83,12 @@ const registerJobSeeker = async (req, res) => {
         
         if (cv) {
             userData.cv = cv;
-            userData.analyzed_cv_content.education.forEach((edu) => {
+            if (userData?.analyzed_cv_content?.education) {
+            userData?.analyzed_cv_content?.education.forEach((edu) => {
               edu.degree = checkAndInsertIn(edu.degree);
             });
             userData.analyzed_cv_content = analyzed_cv_content;
+          }
         }
 
         if (profilePic)

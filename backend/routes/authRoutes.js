@@ -40,7 +40,7 @@ router.post('/check-blacklist',strictLimiter, checkBlacklist);
 
 // Less critical routes with generalLimiter
 router.post("/request-password-reset", generalLimiter, requestPasswordReset);
-router.post("/reset-password", generalLimiter, resetPassword);
+router.post("/reset-password", protect, generalLimiter, resetPassword);
 
 // Protected route with generalLimiter
 router.get("/user-details", protect, generalLimiter, getUserDetails);

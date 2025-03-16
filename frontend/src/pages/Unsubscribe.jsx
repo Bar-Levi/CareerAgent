@@ -40,7 +40,10 @@ const Unsubscribe = () => {
 
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/mailNotifications/unsubscribe`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
         body: JSON.stringify(payload),
       });
 

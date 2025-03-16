@@ -149,7 +149,10 @@ const SearchJobs = ({onlineUsers}) => {
           const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
             method: "POST",
             body: JSON.stringify({ prompt: cvContent }),
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            },
           });
           if (!response.ok) {
             throw new Error("Failed to generate AI CV.");

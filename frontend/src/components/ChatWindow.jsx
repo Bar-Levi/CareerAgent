@@ -71,8 +71,9 @@ const ChatWindow = ({ user, title, currentOpenConversationId}) => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      console.log("data: ", data);
       // Handle response: update the state with the messages received
-      setMessages(data.messages);
+      setMessages(data.conversation.messages || []);
     } catch (error) {
       // Handle error: log it and update an error state
       console.error('Error loading messages:', error);
@@ -240,7 +241,7 @@ const fetchLatestMessage = async () => {
       scrollToBottom();
       initialLoadRef.current = false;
     }
-  }, [loading, messages.length]);
+  }, [loading, messages?.length]);
 
  // Send a new message.
 const sendMessage = async ({ text, file }) => {

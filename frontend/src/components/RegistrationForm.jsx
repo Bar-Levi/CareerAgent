@@ -127,6 +127,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures');
             }
 
+            if (!optionalData.profilePic) {
+                optionalData.profilePic = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+            }
+
+
             // Prepare final payload by merging formData with optionalData.
             // Remove confirmPassword from the payload.
             const finalFormData = { ...formData };
