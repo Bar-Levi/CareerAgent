@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import CryptoJS from 'crypto-js';
 
 const LoginForm = ({ toggleForm, setUserType }) => {
-    const [formData, setFormData] = useState({ email: '', password: '', role: 'jobseeker' });
+    const [formData, setFormData] = useState({ email: '', password: '', role: 'JobSeeker' });
     const [forgotPasswordFormData, setForgotPasswordFormData] = useState({ forgot_password_email: '', forgot_password_PIN: '' });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -234,8 +234,8 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                     }}
                     className="w-full px-4 py-3 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                 >
-                    <option value="jobseeker">Job Candidate</option>
-                    <option value="recruiter">Recruiter</option>
+                    <option value="JobSeeker">Job Candidate</option>
+                    <option value="Recruiter">Recruiter</option>
                 </select>
                 <button
                     data-cy="login-submit"

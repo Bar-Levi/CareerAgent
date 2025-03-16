@@ -135,7 +135,7 @@ const changeProfilePic = async (req, res) => {
         }
         user.profilePic = result.secure_url;
         await user.save();
-        if (user.role === "recruiter") {
+        if (user.role === "Recruiter") {
           await jobListingModel.updateMany(
             { recruiterId: user._id },
             { recruiterProfileImage: result.secure_url }
@@ -179,7 +179,7 @@ const deleteProfilePic = async (req, res) => {
     }
     user.profilePic = defaultProfilePic;
     await user.save();
-    if (user.role === "recruiter") {
+    if (user.role === "Recruiter") {
       await jobListingModel.updateMany(
         { recruiterId: user._id },
         { recruiterProfileImage: defaultProfilePic }

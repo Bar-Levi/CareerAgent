@@ -1,5 +1,5 @@
 const testPassword = 'TestPassword123';
-const testRole = 'jobseeker';
+const testRole = 'JobSeeker';
 const testUserEmail = `testuser${Math.floor(Math.random() * 899999) + 100000}@example.com`;
 let pinCode; // Declare a variable to store the PIN
 
@@ -71,7 +71,7 @@ describe('Registration and Authentication Flow Tests', () => {
         it('should display an error message for invalid credentials', () => {
             cy.get('[data-cy="login-email"]', { force: true }).type('invalid@admin.com', { force: true });
             cy.get('[data-cy="login-password"]', { force: true }).type('WrongPassword', { force: true });
-            cy.get('[data-cy="login-role"]', { force: true }).select('jobseeker', { force: true });
+            cy.get('[data-cy="login-role"]', { force: true }).select('JobSeeker', { force: true });
             cy.get('[data-cy="login-submit"]', { force: true }).click({ force: true });
 
             // Assert the error message is shown

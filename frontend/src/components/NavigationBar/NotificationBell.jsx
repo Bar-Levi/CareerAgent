@@ -1,5 +1,5 @@
 // NotificationBell.jsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaBell } from 'react-icons/fa';
 import NotificationPanel from './NotificationPanel';
 
@@ -11,6 +11,15 @@ const NotificationBell = ({
   panelRef,
   handleNotificationClick,
 }) => {
+
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(notifications.length);
+
+  useEffect(() => {
+    setUnreadNotificationsCount(
+      notifications.filter((notification) => notification.read === false).length
+    );
+  }, [notifications]);
+
   return (
     <div className="relative">
       <button
@@ -18,9 +27,9 @@ const NotificationBell = ({
         onClick={() => setPanelOpen(!panelOpen)}
       >
         <FaBell className="text-xl" />
-        {notifications.length > 0 && (
+        {unreadNotificationsCount > 0 && (
           <span className="absolute top-0 right-0 bg-red-600 text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-            {notifications.length}
+            {unreadNotificationsCount}
           </span>
         )}
       </button>
@@ -29,8 +38,9 @@ const NotificationBell = ({
           <NotificationPanel
             notifications={notifications}
             setNotifications={setNotifications}
-            onClose={() => setPanelOpen(false)}
+            closePanel={() => setPanelOpen(false)}
             handleNotificationClick={handleNotificationClick}
+            setUnreadNotificationsCount={setUnreadNotificationsCount}
           />
         </div>
       )}

@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 
-const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrentOpenConversationId
+const JobListingCard = ({ 
+  onJobSelect,
+  jobListing,
+  setShowModal,
+  showNotification,
+  setRenderingConversationKey,
+  setRenderingConversationData
 }) => {
   const {
     jobRole,
@@ -34,32 +40,55 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
 
   const handleChatButtonClick = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Use the existing token variable
-        },
-        body: JSON.stringify({
-          participants: [recruiterId, user._id],
-          jobListingId: jobId,
-        }),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json(); // Try to get error details from the server
-        throw new Error(
-          `HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`
-        );
-      }
-  
-      const { conversation } = await response.json();
-      console.log("New conversation created:", conversation);
-      setCurrentOpenConversationId(conversation._id);
+        const participants = [
+          {
+            userId: user._id.toString(),
+            name: user.fullName,
+            profilePic: user.profilePic,
+            role: user.role
+          },
+          {
+            userId: recruiterId.toString(),
+            profilePic: recruiterProfileImage,
+            name: recruiterName,
+            role: "Recruiter"
+          }
+        ]
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              participants,
+              jobListingId: jobId,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json(); // Try to get error details from the server
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.message || response.statusText}`);
+        }
+
+        const { conversation } = await response.json();
+        console.log("New conversation created:", conversation);
+        onJobSelect(jobListing);
+
+        setRenderingConversationData({
+          convId: conversation._id,
+          secondParticipantProfilePic: conversation.participants[1].profilePic,
+          participantName: recruiterName,
+          jobListingRole: jobRole,
+        });
+        setRenderingConversationKey((prev) => prev + 1);
+
+
+      
+
     } catch (error) {
-      console.error('Error creating conversation:', error);
-      // Handle error (e.g., display an error message to the user)
-      alert("Failed to create chat. Please try again later."); // Example alert
+        console.error('Error creating conversation:', error);
+        // Handle error (e.g., display an error message to the user)
+        alert("Failed to create chat. Please try again later.")
     }
   };
   
@@ -85,6 +114,7 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
             linkedinUrl: user.linkedinUrl,
             githubUrl: user.githubUrl,
             cv: user.cv,
+            profilePic: user.profilePic,
             jobId: jobId,
             recruiterId: recruiterId,
             jobSeekerId: user._id,
@@ -150,7 +180,7 @@ const JobListingCard = ({ jobListing, setShowModal, showNotification, setCurrent
     {/* Recruiter Image */}
     <div className="flex-shrink-0">
       <img
-        src={recruiterProfileImage || "https://via.placeholder.com/48"}
+        src={recruiterProfileImage ||'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png'}
         alt="Recruiter"
         className="w-16 h-16 object-cover border-2 border-black rounded-full p-1"
       />

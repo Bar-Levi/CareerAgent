@@ -9,8 +9,10 @@ import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from "../../../utils/pdfUtils";
 import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
+import JobListingDescription from "../components/JobListingDescription";
+import MessagingBar from "../components/MessagingBar";
 
-const SearchJobs = () => {
+const SearchJobs = ({onlineUsers}) => {
   // Get state from location and initialize our user state
   const { state } = useLocation();
   const [user, setUser] = useState(state.user);
@@ -21,15 +23,30 @@ const SearchJobs = () => {
   const [educationListedOptions, setEducationListedOptions] = useState([]);
 
   // Initialize conversation and job listing states from notification (if any)
-  const [currentOpenConversationId, setCurrentOpenConversationId] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
+
+  const [renderingConversationKey, setRenderingConversationKey] = useState(0);
+  const [renderingConversationData, setRenderingConversationData] = useState({
+    convId: null,
+    secondParticipantProfilePic: null,
+    participantName: null,
+    jobListingRole: null,
+  });
+
 
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
     if (stateAddition) {
       try {
         const parsedAddition = JSON.parse(stateAddition);
-        setCurrentOpenConversationId(parsedAddition.conversationId);
+        setRenderingConversationData({
+          convId: parsedAddition.conversationId,
+          secondParticipantProfilePic: parsedAddition.secondParticipantProfilePic,
+          participantName: parsedAddition.title,
+          jobListingRole: parsedAddition.jobListing.jobRole,
+        });
+        setRenderingConversationKey((prev) => prev + 1);
+
         setSelectedJob(convertMongoObject(parsedAddition.jobListing));
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -104,7 +121,8 @@ const SearchJobs = () => {
     });
   };
 
-  const handleJobSelect = (job) => {
+  const handleSelectJob = (job) => {
+    console.log("handleSelectJob");
     setSelectedJob(job);
   };
 
@@ -201,7 +219,7 @@ const SearchJobs = () => {
 
   return (
     <div key={state.refreshToken} className="bg-gray-100 h-screen flex flex-col">
-      <NavigationBar userType={state?.user?.role} />
+      <NavigationBar userType={state?.user?.role}/>
       <Botpress />
       {notification && (
         <Notification
@@ -223,6 +241,12 @@ const SearchJobs = () => {
 
         {/* Central Area */}
         <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
+          <MessagingBar
+            user={user}
+            onlineUsers={onlineUsers}
+            renderingConversationData={renderingConversationData}
+            renderingConversationKey={renderingConversationKey}
+            />
           <div className="flex sticky top-0 z-10">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
               <h1>Search Results</h1>
@@ -349,7 +373,7 @@ const SearchJobs = () => {
           <JobListingCardsList
             key={`${user.cv}-${JSON.stringify(filters)}`}
             filters={filters}
-            onJobSelect={handleJobSelect}
+            onJobSelect={setSelectedJob}
             user={user}
             setUser={setUser}
             setShowModal={setShowModal}
@@ -357,23 +381,18 @@ const SearchJobs = () => {
             setJobListingsCount={setJobListingsCount}
             sortingMethod={sortingMethod}
             setEducationListedOptions={setEducationListedOptions}
-            setCurrentOpenConversationId={setCurrentOpenConversationId}
-          />
+            setRenderingConversationKey={setRenderingConversationKey}
+            setRenderingConversationData={setRenderingConversationData}
+            />
         </div>
 
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
-          {selectedJob ? (
-            <ChatWindow
-              jobId={selectedJob._id}
-              user={user}
-              job={selectedJob}
-              currentOpenConversationId={currentOpenConversationId}
-            />
-          ) : (
-            <p className="text-gray-500">Select a job to view details.</p>
-          )}
+          { selectedJob &&
+              <JobListingDescription jobListing={selectedJob} />
+          }
         </div>
+
       </div>
 
       {showModal && (

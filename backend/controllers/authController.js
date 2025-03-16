@@ -11,8 +11,8 @@ require('dotenv').config();
 
 // Helper Function: Get Schema Based on Role
 const getSchemaByRole = (role) => {
-    if (role === 'jobseeker') return JobSeeker;
-    if (role === 'recruiter') return Recruiter;
+    if (role === 'JobSeeker') return JobSeeker;
+    if (role === 'Recruiter') return Recruiter;
     throw new Error('Invalid role specified.');
 };
 
@@ -70,7 +70,7 @@ const registerJobSeeker = async (req, res) => {
             fullName,
             email,
             password: hashedPassword,
-            role: 'jobseeker',
+            role: 'JobSeeker',
             isVerified: false,
             verificationCode,
             verificationCodeSentAt: new Date(),
@@ -134,7 +134,7 @@ const registerRecruiter = async (req, res) => {
             fullName,
             email,
             password: hashedPassword,
-            role: 'recruiter',
+            role: 'Recruiter',
             isVerified: false,
             verificationCode,
             verificationCodeSentAt: new Date(),
@@ -510,6 +510,44 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+const markAsReadNotification = async (req, res) => {
+  try {
+    console.log("Marking notification as read");
+    const { userId, notificationId } = req.params;
+    console.log("Data: ", userId, notificationId);
+    let user = await JobSeeker.findById(userId);
+    if (!user) {
+      user = await Recruiter.findById(userId);
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const notification = user.notifications.find(
+      (notification) => notification._id.toString() === notificationId
+    );
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    notification.read = true;
+    await user.save();
+    res.status(200).json({
+      message: "Notification marked as read successfully",
+      notifications: user.notifications,
+    });
+  } catch (err) {
+    console.error("Error marking notification as read:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+    
+
+
+
+};
+
 const deleteAllNotifications = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -546,5 +584,6 @@ module.exports = {
     logout,
     checkBlacklist,
     deleteNotification,
-    deleteAllNotifications
+    deleteAllNotifications,
+    markAsReadNotification
 };

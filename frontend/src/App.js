@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AuthenticationPage from './pages/AuthenticationPage';
@@ -12,11 +12,35 @@ import UnsubscribePage from './pages/Unsubscribe';
 import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
+import socket from "./socket";
+
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
+    const [onlineUsers, setOnlineUsers] = useState([]);
+
+ 
+    useEffect(() => {
+      // If the socket isn't already connected, connect it.
+      if (!socket.connected) {
+        socket.connect();
+      }
+  
+      // Listen for updates on online users
+      socket.on("updateOnlineUsers", (onlineUserIds) => {
+  
+        // Update state as needed (here we assume onlineUserIds is an array of user IDs)
+        setOnlineUsers(onlineUserIds);
+      });
+  
+      // Clean up on component unmount
+      return () => {
+        socket.off("updateOnlineUsers");
+      };
+    }, []);
+  
     return (
         <>
         <ToastContainer position="top-right" autoClose={5000} />
@@ -30,7 +54,7 @@ function App() {
                     path="/dashboard"
                     element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <Dashboard onlineUsers={onlineUsers}/>
                         </ProtectedRoute>
                     }
                 />
@@ -45,7 +69,7 @@ function App() {
                 <Route path="/FAQ" element={<FAQ />} />
                 <Route path="/searchjobs" element={
                     <ProtectedRoute>
-                        <SearchJobs />
+                        <SearchJobs onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
                     } />
 

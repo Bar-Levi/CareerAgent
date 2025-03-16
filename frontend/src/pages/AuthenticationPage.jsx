@@ -10,7 +10,7 @@ const AuthenticationPage = () => {
     const [isFlipped, setIsFlipped] = useState(false);
     const [mouseX, setMouseX] = useState(0);
     const [mouseY, setMouseY] = useState(0);
-    const [userType, setUserType] = useState('jobseeker');
+    const [userType, setUserType] = useState('JobSeeker');
     const { state } = useLocation();
 
     const [notification, setNotification] = useState(null);
@@ -41,7 +41,7 @@ const AuthenticationPage = () => {
     };
 
     const descriptions = {
-        jobseeker: {
+        JobSeeker: {
             login: {
                 heading: 'Your Next Career Step Awaits',
                 body: 'Dive back into your personalized dashboard and explore new job opportunities tailored just for you.',
@@ -53,7 +53,7 @@ const AuthenticationPage = () => {
                 cta: 'Your career transformation begins now.',
             },
         },
-        recruiter: {
+        Recruiter: {
             login: {
                 heading: 'Your Next Great Hire Awaits',
                 body: 'Access your recruiter dashboard and manage job postings with ease. Discover, review, and connect with top candidates faster than ever before.',

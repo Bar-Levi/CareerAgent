@@ -15,14 +15,7 @@ export const isAuthenticated = (token) => {
 export const getCandidateInfo = async (conversation) => {
     // if (!conversation.messages || conversation.messages.length === 0) return null;
 
-    const jobSeekerId = conversation.participants[1];
-
-    // // Find the first message where senderId is not the recruiterId.
-    // const candidateMessage = conversation.messages.find(
-    //   (msg) => msg.senderId.toString() !== recruiterId
-    // );
-
-
+    const jobSeekerId = conversation.participants[0].userId;
 
       try {
         const response = await fetch(

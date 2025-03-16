@@ -11,7 +11,8 @@ const CandidateMessages = ({
   setSelectedConversationId,
   onlineUsers, // Assume onlineUsers is an array of objects, each with { userId, ... }
   selectedCandidate,
-  setSelectedCandidate
+  setSelectedCandidate,
+  title
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -47,7 +48,7 @@ const CandidateMessages = ({
         const candidateConversations = jobListingConversations.filter(
           (convo) =>
             convo.messages ||
-            convo.participants[1] === selectedCandidate?.senderId
+            convo.participants[1].userId === selectedCandidate?.senderId
         );
         
         
@@ -108,9 +109,7 @@ const CandidateMessages = ({
         jobId={jobListing ? jobListing._id : null}
         user={user} // Passing recruiter info
         profilePics={profilePics}
-        job={{
-          recruiterName: selectedCandidate ? selectedCandidate.name : "Candidate Chat",
-        }}
+        title={title ? title : "Chat with Candidate"}
         currentOpenConversationId={selectedConversationId}
       />
     ) : (
@@ -173,7 +172,7 @@ const CandidateMessages = ({
                             <img
                               src={
                                 candidateInfo?.profilePic ||
-                                "https://via.placeholder.com/40"
+                                'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png'
                               }
                               alt={candidateInfo?.name || "Candidate"}
                               className="w-10 h-10 rounded-full"

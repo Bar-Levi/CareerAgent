@@ -10,7 +10,8 @@ const {
     updateMessageInConversation,
     deleteMessageFromConversation,
     getJobListingConversations,
-    markMessagesAsRead
+    markMessagesAsRead,
+    getConversationByJobCandidateId
 } = require("../controllers/conversationController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -27,6 +28,9 @@ router.patch("/:conversationId/markAsRead", protect, markMessagesAsRead);
 
 // Get conversations of a specific jobListing
 router.get("/jobListing/:jobListingId", protect, getJobListingConversations);
+
+// Get conversation of a specific user
+router.get("/getJobCandidateConversations/:userId", getConversationByJobCandidateId);
 
 // Routes for messages within a conversation
 router.post("/:id/messages", protect, addMessageToConversation); // POST to add a new message

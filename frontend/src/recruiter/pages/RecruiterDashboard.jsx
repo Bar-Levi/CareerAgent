@@ -10,9 +10,8 @@ import RecentApplications from "../components/RecentApplications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
 import convertMongoObject from "../../utils/convertMongoObject";
-import socket from "../../socket";
 
-const RecruiterDashboard = () => {
+const RecruiterDashboard = ({onlineUsers}) => {
   const location = useLocation();
   const state = location.state;
   const user = state?.user;
@@ -23,32 +22,13 @@ const RecruiterDashboard = () => {
   const [notification, setNotification] = useState(null);
   const [newConversationCandidate, setNewConversationCandidate] = useState(null);
 
-  const [onlineUsers, setOnlineUsers] = useState([]);
-
- 
-  useEffect(() => {
-    // If the socket isn't already connected, connect it.
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    // Listen for updates on online users
-    socket.on("updateOnlineUsers", (onlineUserIds) => {
-
-      // Update state as needed (here we assume onlineUserIds is an array of user IDs)
-      setOnlineUsers(onlineUserIds);
-    });
-
-    // Clean up on component unmount
-    return () => {
-      socket.off("updateOnlineUsers");
-    };
-  }, [user]);
+  
 
   // Initialize conversation and job listing states (if comes from a notification)
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [selectedJobListing, setSelectedJobListing] = useState(convertMongoObject(null));
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [title, setTitle] = useState(null);
   
 
   useEffect(() => {
@@ -60,8 +40,11 @@ const RecruiterDashboard = () => {
     if (stateAddition) {
       try {
         const parsedAddition = JSON.parse(stateAddition);
+        console.log("Parsed addition: ", parsedAddition);
         setSelectedConversationId(parsedAddition.conversationId);
         setSelectedJobListing(convertMongoObject(parsedAddition.jobListing));
+        setTitle(parsedAddition.title);
+
         // Only remove after you are sure the state is updated (or use a flag)
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -224,6 +207,7 @@ const RecruiterDashboard = () => {
             selectedConversationId={selectedConversationId}
             setSelectedConversationId={setSelectedConversationId}
             selectedCandidate={selectedCandidate}
+            title={title}
             setSelectedCandidate={setSelectedCandidate}
             onlineUsers={onlineUsers}
           />
@@ -237,6 +221,7 @@ const RecruiterDashboard = () => {
           setSelectedConversationId={setSelectedConversationId}
           setSelectedJobListing={setSelectedJobListing}
           setSelectedCandidate={setSelectedCandidate}
+          setTitle={setTitle}
         />
         <JobListingInput
           user={user}

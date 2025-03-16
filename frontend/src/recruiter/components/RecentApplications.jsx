@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
 
-const RecentApplications = ({ applications = [], setSelectedConversationId, setSelectedJobListing, setSelectedCandidate}) => {
+const RecentApplications = ({ applications = [], setSelectedConversationId, setSelectedJobListing, setSelectedCandidate, setTitle}) => {
   const { state } = useLocation();
   const user = state?.user;
 
@@ -42,6 +42,20 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
 
   const handleChatButtonClick = async (applicant) => {
     try {
+      const participants = [
+        {
+          userId: applicant.jobSeekerId,
+          name: applicant.name,
+          profilePic: applicant.profilePic,
+          role: "JobSeeker"
+        },
+        {
+          userId: user._id,
+          name: user.fullName,
+          profilePic: user.profilePic,
+          role: user.role
+        }        
+      ]
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations`, {
             method: 'POST',
             headers: {
@@ -49,7 +63,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
             body: JSON.stringify({ 
-              participants: [user._id, applicant.jobSeekerId],
+              participants, 
               jobListingId: applicant.jobId,
             }),
         });
@@ -64,9 +78,11 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
     
         setSelectedJobListing(convertMongoObject(jobListingObject));
         setSelectedConversationId(conversation._id);
+        
 
         const candidateInfo = await getCandidateInfo(conversation);
         setSelectedCandidate(candidateInfo);
+        setTitle(candidateInfo.name);
       
     } catch (error) {
         console.error('Error creating conversation:', error);
@@ -118,7 +134,7 @@ const RecentApplications = ({ applications = [], setSelectedConversationId, setS
                       <img
                         src={
                           applicantData?.profilePic ||
-                          "https://via.placeholder.com/48"
+                          'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png'
                         }
                         alt={`${app.candidate || "Candidate"}'s profile`}
                         className="w-full h-full object-cover border-2 border-black rounded-full p-1"

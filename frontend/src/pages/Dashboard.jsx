@@ -3,14 +3,17 @@ import RecruiterDashboard from "../recruiter/pages/RecruiterDashboard";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const Dashboard = () => {
+
+const Dashboard = ({onlineUsers}) => {
     const [userData, setUserData] = useState(null);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { state } = useLocation();
+    const user = state?.user; // User object from navigation state
     const email = state?.email; // Email from navigation state
     const role = state?.role;
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
+
 
     // Check if the token is blacklisted
     const isTokenBlacklisted = async (token) => {
@@ -137,10 +140,10 @@ const Dashboard = () => {
         );
     }
 
-    return role === "jobseeker" ? (
+    return role === "JobSeeker" ? (
         <JobCandidateDashboard />
-    ) : role === "recruiter" ? (
-        <RecruiterDashboard />
+    ) : role === "Recruiter" ? (
+        <RecruiterDashboard onlineUsers={onlineUsers}/>
     ) : (
         <p>Invalid dashboard type</p>
     );
