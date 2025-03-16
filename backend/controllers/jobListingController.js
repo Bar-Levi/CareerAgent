@@ -440,11 +440,13 @@ const deleteJobListing = async (req, res) => {
       const deleteResult = await Applicant.deleteMany({ jobId: id });
       console.log(`Deleted ${deleteResult.deletedCount} applicants.`);
 
+      const applicantToNotify = applicants.filter((applicant) => applicant.isSubscribed);
+
       // Send emails using Promise.allSettled to avoid one failure stopping the process
-      if (applicants.length > 0) {
+      if (applicantToNotify.length > 0) {
           console.log("Preparing to send notification emails...");
           const results = await Promise.allSettled(
-              applicants.map(applicant =>
+              applicantToNotify.map(applicant =>
                   sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
               )
           );
@@ -452,9 +454,9 @@ const deleteJobListing = async (req, res) => {
           // Log results for each candidate
           results.forEach((result, index) => {
               if (result.status === 'fulfilled') {
-                  console.log(`✅ Email sent successfully to ${applicants[index].email}`);
+                  console.log(`✅ Email sent successfully to ${applicantToNotify[index].email}`);
               } else {
-                  console.error(`❌ Failed to send email to ${applicants[index].email}:`, result.reason);
+                  console.error(`❌ Failed to send email to ${applicantToNotify[index].email}:`, result.reason);
               }
           });
       } else {
