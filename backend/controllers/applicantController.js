@@ -1,10 +1,33 @@
 const Applicant = require('../models/applicantModel');
 const Recruiter = require('../models/recruiterModel');
+const JobListing = require('../models/jobListingModel');
 
 // Create a new applicant
 const createApplicant = async (req, res) => {
     try {
         console.log("req: " + JSON.stringify(req.body));
+
+        // Make sure that joblisting's status is active
+        const jobListing = await JobListing.findById(req.body.jobId);
+        if (jobListing.status!== 'active') {
+            return res.status(400).json({ message: 'Job listing is not active anymore - please refresh the page.' });
+        }
+
+        // Check if the user has already applied for this job
+        const existingApplicant = await Applicant.findOne({
+            jobSeekerId: req.body.jobSeekerId,
+            jobId: req.body.jobId,
+        });
+
+        if (existingApplicant) {
+            return res.status(400).json({ message: 'User has already applied for this job.' });
+        }
+
+        // Check if the user has a valid CV
+        if (!req.body.cv || req.body.cv === "") {
+            return res.status(400).json({ message: 'CV is required.' });
+        }
+
         const newApplicant = new Applicant(req.body);
 
         const savedApplicant = await newApplicant.save();

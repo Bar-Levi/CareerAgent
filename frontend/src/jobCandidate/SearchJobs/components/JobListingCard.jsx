@@ -123,9 +123,8 @@ const JobListingCard = ({
           }),
         }
       );
-
+      const applicantData = await applicantResponse.json();
       if (applicantResponse.ok) {
-        const applicantData = await applicantResponse.json();
         console.log("Applicant created successfully:", applicantData);
 
         // Update the job listing's applicants list
@@ -156,7 +155,7 @@ const JobListingCard = ({
           showNotification("error", "Failed to update job listing with the new applicant.");
         }
       } else {
-        showNotification("error", "Failed to create applicant.");
+        showNotification("error", applicantData.message);
       }
     } catch (error) {
       console.error("Error applying for the job:", error);
