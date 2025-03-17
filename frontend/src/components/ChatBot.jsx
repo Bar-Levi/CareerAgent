@@ -54,7 +54,6 @@ const ChatBot = ({
     return () => clearInterval(interval);
   }, [isTyping]);
 
-  // Send message to the AI API
   const sendMessageToAPI = async (userMessage) => {
     setIsTyping(true);
     try {
@@ -83,7 +82,7 @@ const ChatBot = ({
     }
   };
 
-  // Helper function to save a message
+  // Helper function to save a message wrapped in a "message" key
   const saveMessage = async (messageObject) => {
     const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}/messages`, {
       method: "POST",
@@ -91,7 +90,6 @@ const ChatBot = ({
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`
       },
-      // Wrap the message in a key so the backend can read it properly.
       body: JSON.stringify({ message: messageObject }),
     });
     if (!response.ok) {
@@ -103,7 +101,6 @@ const ChatBot = ({
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    // Convert the date to an ISO string for proper serialization.
     const textToSend = input.trim();
     const userMessage = {
       sender: "user",
@@ -111,7 +108,6 @@ const ChatBot = ({
       timestamp: new Date().toISOString(),
     };
 
-    // Update UI optimistically.
     if (messages.length < MAX_MESSAGE_COUNT)
       setMessages((prev) => [...prev, userMessage]);
     setInput("");
@@ -119,7 +115,6 @@ const ChatBot = ({
     try {
       // First, save the user message.
       await saveMessage(userMessage);
-
       // Then get the bot reply.
       const botReply = await sendMessageToAPI(textToSend);
       const botMessage = {
@@ -128,9 +123,8 @@ const ChatBot = ({
         timestamp: new Date().toISOString(),
       };
 
-      // Now, save the bot message.
+      // Save the bot message.
       await saveMessage(botMessage);
-      // Update UI with the bot message.
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Error handling message:", error);
@@ -138,7 +132,7 @@ const ChatBot = ({
     }
   };
 
-  // Auto-send a prompt for interviewer chats.
+  // Auto-send prompt for interviewer chats if conversation is new.
   useEffect(() => {
     if (
       type === "interviewer" &&
@@ -147,12 +141,16 @@ const ChatBot = ({
       !autoPromptSentRef.current
     ) {
       autoPromptSentRef.current = true;
-      const prompt = `I am applying for the position of ${jobData.jobRole}. My skills include ${
-        jobData.skills ? jobData.skills.join(", ") : "N/A"
-      }. Please ask me 10 interview questions relevant to this job posting.`;
+      // Determine the skills text:
+      const skillsText =
+        jobData.skills && jobData.skills.length > 0
+          ? jobData.skills.join(", ")
+          : "this job requires no specific skills";
+      // Build the full prompt with additional details.
+      const prompt = `I am applying for the position of ${jobData.jobRole}. The job requires these skills: ${skillsText}. The required experience level is ${jobData.experienceLevel || "N/A"}, the job is ${jobData.remote ? "remote" : "on-site"}, and the job type is ${jobData.jobType ? jobData.jobType.join(", ") : "N/A"}. Please provide exactly 10 interview questions relevant to this job posting and then evaluate my answers to see if I am correct. Do not ask any additional questions.`;
       (async () => {
         try {
-          // Save the prompt as a user message.
+          // Save the auto-prompt as a user message.
           const userPromptMsg = {
             sender: "user",
             text: prompt,
@@ -160,7 +158,7 @@ const ChatBot = ({
           };
           await saveMessage(userPromptMsg);
           setMessages((prev) => [...prev, userPromptMsg]);
-          // Get and save the bot's reply.
+          // Get the bot reply.
           const botReply = await sendMessageToAPI(prompt);
           const botMessage = {
             sender: "bot",
@@ -177,7 +175,6 @@ const ChatBot = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, jobData, initialMessages]);
 
-  // Use a fallback title if conversationTitle is empty.
   const displayedTitle =
     conversationTitle && conversationTitle.trim().length > 0
       ? conversationTitle
