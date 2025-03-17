@@ -2,7 +2,7 @@
 import Swal from "sweetalert2";
 
 const showEditRelevancePointsModal = async (user, navigate, location) => {
-  // Current relevance points for matching criteria
+  // Current relevance points for matching criteria (state variable)
   const currentPoints = user.relevancePoints || {
     matchedJobRolePoints: 10,
     matchedSecurityClearancePoints: 20,
@@ -20,8 +20,8 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
     matchedWorkExperiencePoints: 30,
   };
 
-  // Current minimum points for update (separate from relevance points)
-  const currentMinPoints = user.minPointsForUpdate || 50;
+  // Use the nullish coalescing operator so that a value of 0 is valid
+  const currentMinPoints = user.minPointsForUpdate ?? 50;
   const defaultMinPoints = 50;
 
   const { value: result } = await Swal.fire({
@@ -160,7 +160,7 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
       const token = localStorage.getItem("token");
 
       try {
-        // Update relevance points
+        // Update relevance points in the database
         const response = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/set-relevance-points`,
           {
@@ -176,9 +176,8 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
         if (!response.ok) {
           throw new Error(data.message || "Failed to update relevance points");
         }
-        localStorage.setItem("relevancePoints", JSON.stringify(updatedPoints));
 
-        // Update minimum points for update
+        // Update minimum points for update in the database
         const responseMin = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/set-min-points-for-update`,
           {
@@ -195,17 +194,31 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
           throw new Error(dataMin.message || "Failed to update minimum points for update");
         }
 
+        // Merge both updated points into one object and save to local storage
+        const relevanceData = { ...updatedPoints, minPointsForUpdate: updatedMinPoints };
+        localStorage.setItem("relevancePoints", JSON.stringify(relevanceData));
+
         // Clear cached relevance data so that new calculations are done
         const localStorageKey = `relevance_data_${user.id || user._id}`;
         localStorage.removeItem(localStorageKey);
 
-        // Update user object in location.state if needed
-        location.state.user.relevancePoints = updatedPoints;
-        location.state.user.minPointsForUpdate = updatedMinPoints;
-        location.state.refreshToken = 0;
+        // Update the user state variable with the new relevance points and minPointsForUpdate
+        const updatedUser = {
+          ...user,
+          relevancePoints: { ...updatedPoints, minPointsForUpdate: updatedMinPoints },
+          minPointsForUpdate: updatedMinPoints,
+        };
 
-        // Trigger a refresh via navigation
-        navigate(location.pathname, { state: location.state });
+        // Prepare the updated state with the expected keys
+        const updatedState = {
+          user: updatedUser,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          isVerified: location.state?.isVerified || true,
+        };
+
+        // Navigate to /dashboard with the updated state
+        navigate("/dashboard", { state: updatedState });
         return { updatedPoints, updatedMinPoints };
       } catch (error) {
         Swal.showValidationMessage(`Request failed: ${error}`);
