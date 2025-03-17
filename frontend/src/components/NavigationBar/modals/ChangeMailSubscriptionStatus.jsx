@@ -11,27 +11,11 @@ const changeMailSubscriptionStatus = async (user, navigate, location) => {
       return;
     }
 
-    // Fetch current subscription status
-    const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/personal/getIsSubscribed?email=${encodeURIComponent(user.email)}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errData = await response.json();
-      throw new Error(errData.message || "Failed to fetch subscription status.");
-    }
-
-    const data = await response.json();
-    const isSubscribed = data.isSubscribed;
+    // Get current subscription status from the user variable
+    const isSubscribed = user.isSubscribed;
     const buttonText = isSubscribed ? "Unsubscribe" : "Subscribe";
 
-    // Display the modal with current status and toggle button
+    // Display the modal with the current status and toggle option
     const result = await MySwal.fire({
       title: "Change Mail Subscription Status",
       html: `
@@ -45,7 +29,7 @@ const changeMailSubscriptionStatus = async (user, navigate, location) => {
       confirmButtonText: buttonText,
       cancelButtonText: "Cancel",
       preConfirm: async () => {
-        // Send POST request to toggle subscription status
+        // Send PUT request to toggle subscription status
         const postResponse = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/subscribeOrUnsubscribe`,
           {
@@ -70,13 +54,12 @@ const changeMailSubscriptionStatus = async (user, navigate, location) => {
     });
 
     if (result.isConfirmed) {
-      // Display the result from the toggle request
+      // Show success message
       Swal.fire("Success", result.value.message, "success");
-      // Update the user's subscription status in the application state
-      location.state.user.isSubscribed =!isSubscribed;
-      console.log("data:", data);
-      console.log("location.state.user: ", location.state.user);
-      navigate(location.pathname, { state: location.state });
+      // Update the user subscription status locally
+      user.isSubscribed = !isSubscribed;
+      // Navigate back to the dashboard with the updated user object
+      navigate("/dashboard", { state: { ...location.state, user } });
     }
   } catch (error) {
     Swal.fire("Error", error.message || "An error occurred", "error");

@@ -15,6 +15,10 @@ const Dashboard = ({onlineUsers}) => {
     const token = localStorage.getItem("token") || ""; // Get token from localStorage
 
 
+    useEffect(() => {
+        console.log("User:", user);
+      }, [user]);
+
     // Check if the token is blacklisted
     const isTokenBlacklisted = async (token) => {
         try {

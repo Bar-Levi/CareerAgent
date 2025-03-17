@@ -567,30 +567,6 @@ const subscribeOrUnsubscribe = async (req, res) => {
   }
 };
 
-const getIsSubscribed = async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-
-    // Find the user in JobSeeker or Recruiter model
-    let user = await jobSeekerModel.findOne({ email });
-    if (!user) {
-      user = await recruiterModel.findOne({ email });
-    }
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    // Return the subscription status
-    res.status(200).json({ isSubscribed: user.isSubscribed });
-  } catch (error) {
-    console.error("Error in getIsSubscribed controller:", error);
-    res.status(500).json({ message: "Server error." });
-  }
-};
-
 module.exports = {
   changePassword,
   changeProfilePic,
@@ -608,5 +584,5 @@ module.exports = {
   deleteCV,
   uploadCVMiddleware: uploadCV.single("cv"),
   subscribeOrUnsubscribe,
-  getIsSubscribed,
+
 };
