@@ -88,9 +88,12 @@ const sendToBot = async (req, res) => {
   await loadSessionHistory(sessionId, token);
 
 
-  // Construct the input with history
-  const formattedHistory = sessionHistory?.map((entry) => `${entry.sender}: ${entry.text}`)
-    .join("\n");
+  // Construct the input with history, filtering out any null or invalid entries.
+  const formattedHistory = sessionHistory
+  .filter(entry => entry && entry.sender && entry.text)
+  .map(entry => `${entry.sender}: ${entry.text}`)
+  .join("\n");
+
 
   const input = `${preprompt}, ${formattedHistory}. Now tell me - ${prompt}`;
 
