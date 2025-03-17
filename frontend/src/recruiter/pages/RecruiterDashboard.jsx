@@ -208,6 +208,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
             setSelectedConversationId={setSelectedConversationId}
             selectedCandidate={selectedCandidate}
             title={title}
+            setTitle={setTitle}
             setSelectedCandidate={setSelectedCandidate}
             onlineUsers={onlineUsers}
           />

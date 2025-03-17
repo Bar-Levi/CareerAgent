@@ -33,6 +33,8 @@ const JobListingCard = ({
 
   const { state } = useLocation();
   const user = state?.user;
+  console.log(user);
+
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
@@ -115,6 +117,7 @@ const JobListingCard = ({
             linkedinUrl: user.linkedinUrl,
             githubUrl: user.githubUrl,
             cv: user.cv,
+            isSubscribed: user.isSubscribed,
             profilePic: user.profilePic,
             jobId: jobId,
             recruiterId: recruiterId,
@@ -123,9 +126,8 @@ const JobListingCard = ({
           }),
         }
       );
-
+      const applicantData = await applicantResponse.json();
       if (applicantResponse.ok) {
-        const applicantData = await applicantResponse.json();
         console.log("Applicant created successfully:", applicantData);
 
         // Update the job listing's applicants list
@@ -156,7 +158,7 @@ const JobListingCard = ({
           showNotification("error", "Failed to update job listing with the new applicant.");
         }
       } else {
-        showNotification("error", "Failed to create applicant.");
+        showNotification("error", applicantData.message);
       }
     } catch (error) {
       console.error("Error applying for the job:", error);
