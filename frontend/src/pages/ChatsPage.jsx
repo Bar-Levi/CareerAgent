@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import ChatBot from "../components/ChatBot";
 import NavigationBar from "../components/NavigationBar/NavigationBar";
 import Notification from "../components/Notification";
@@ -14,6 +14,7 @@ const ChatsPage = () => {
   const [editingChatId, setEditingChatId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
   const { state } = useLocation();
+  const navigate = useNavigate();
   const email = state?.email || "";
   const token = state?.token || "";
   const [notification, setNotification] = useState(null);
@@ -50,19 +51,25 @@ const ChatsPage = () => {
         throw new Error("Failed to fetch chat histories");
       }
       const data = await response.json();
-      const careerChats = data.filter((chat) => chat.type === "careerAdvisor");
-      const interviewChats = data.filter((chat) => chat.type === "interviewer");
-      setCareerChats(careerChats.reverse());
-      setInterviewChats(interviewChats.reverse());
+      const careerChatsData = data.filter((chat) => chat.type === "careerAdvisor");
+      const interviewChatsData = data.filter((chat) => chat.type === "interviewer");
+      setCareerChats(careerChatsData.reverse());
+      setInterviewChats(interviewChatsData.reverse());
     } catch (error) {
       console.error("Error fetching chat histories:", error);
     }
   };
 
   // Create a new conversation.
-  // If jobData is provided (from router state), attach a title and store jobData locally.
+  // If jobData is provided (from router state), attach a title and include jobData in the DB.
   const createNewConversation = async (type, jobData = null) => {
     try {
+      // Build the payload with jobData if available.
+      const payload = { email, type };
+      if (jobData && Object.keys(jobData).length > 0) {
+        payload.jobData = jobData;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/new`,
         {
@@ -71,7 +78,7 @@ const ChatsPage = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ email, type }),
+          body: JSON.stringify(payload),
         }
       );
       if (!response.ok) {
@@ -84,7 +91,7 @@ const ChatsPage = () => {
         return null;
       }
       const newChat = await response.json();
-      // Only attach job data if provided and non-empty.
+      // If jobData is provided, update the conversation title for display.
       if (jobData && Object.keys(jobData).length > 0) {
         newChat.conversationTitle = jobData.jobRole
           ? `Interview for ${jobData.jobRole}`
@@ -106,6 +113,7 @@ const ChatsPage = () => {
   };
 
   // Remove a conversation.
+  // If an interviewer conversation with jobData is removed and exists in sessionStorage, remove its flag.
   const removeConversation = async (chatId, type) => {
     try {
       const response = await fetch(
@@ -124,7 +132,20 @@ const ChatsPage = () => {
       if (type === "careerAdvisor") {
         setCareerChats((prev) => prev.filter((chat) => chat._id !== chatId));
       } else if (type === "interviewer") {
+        // Find the conversation to remove its sessionStorage flag if needed.
+        const removedChat = interviewChats.find((chat) => chat._id === chatId);
         setInterviewChats((prev) => prev.filter((chat) => chat._id !== chatId));
+        const jobId = removedChat?.jobData?._id;
+        if (jobId) {
+          sessionStorage.removeItem("autoCreatedConversation_" + jobId);
+        }
+        // Optionally, clear router state interviewJobData after deletion
+        if (state?.interviewJobData) {
+          navigate(window.location.pathname, {
+            replace: true,
+            state: { ...state, interviewJobData: null },
+          });
+        }
       }
       if (selectedChat && selectedChat._id === chatId) {
         setSelectedChat(null);
@@ -214,7 +235,7 @@ const ChatsPage = () => {
   }, [selectedChat]);
 
   // Auto-create an interviewer conversation only if router state includes valid job data,
-  // no conversation is currently selected, and a flag in sessionStorage is not set.
+  // no conversation is currently selected, and the sessionStorage flag is not set.
   useEffect(() => {
     if (
       state &&
@@ -227,9 +248,14 @@ const ChatsPage = () => {
       if (!sessionStorage.getItem("autoCreatedConversation_" + jobId)) {
         createNewConversation("interviewer", state.interviewJobData);
         sessionStorage.setItem("autoCreatedConversation_" + jobId, "true");
+        // Clear the interviewJobData from router state after auto-creation
+        navigate(window.location.pathname, {
+          replace: true,
+          state: { ...state, interviewJobData: null },
+        });
       }
     }
-  }, [state, selectedChat]);
+  }, [state, selectedChat, navigate]);
 
   return (
     <div className="flex flex-col h-screen">
@@ -281,7 +307,8 @@ const ChatsPage = () => {
                       }
                       onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
                       onKeyDown={(e) =>
-                        e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
+                        e.key === "Enter" &&
+                        saveEditedTitle(chat._id, "careerAdvisor")
                       }
                     />
                   ) : (
@@ -303,7 +330,9 @@ const ChatsPage = () => {
                     }
                   />
                   <button
-                    onClick={() => removeConversation(chat._id, "careerAdvisor")}
+                    onClick={() =>
+                      removeConversation(chat._id, "careerAdvisor")
+                    }
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
@@ -345,7 +374,8 @@ const ChatsPage = () => {
                       }
                       onBlur={() => saveEditedTitle(chat._id, "interviewer")}
                       onKeyDown={(e) =>
-                        e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")
+                        e.key === "Enter" &&
+                        saveEditedTitle(chat._id, "interviewer")
                       }
                     />
                   ) : (
@@ -367,7 +397,9 @@ const ChatsPage = () => {
                     }
                   />
                   <button
-                    onClick={() => removeConversation(chat._id, "interviewer")}
+                    onClick={() =>
+                      removeConversation(chat._id, "interviewer")
+                    }
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
