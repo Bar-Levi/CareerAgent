@@ -15,8 +15,8 @@ const ChatsPage = () => {
   const [editingTitle, setEditingTitle] = useState("");
   const { state } = useLocation();
   const navigate = useNavigate();
-  const email = state?.email || "";
-  const token = state?.token || "";
+  const email = state?.email || state?.user?.email || "";
+  const token = localStorage.getItem("token") || "";
   const [notification, setNotification] = useState(null);
 
   const showNotification = (type, message) => {
@@ -94,7 +94,7 @@ const ChatsPage = () => {
       // If jobData is provided, update the conversation title for display.
       if (jobData && Object.keys(jobData).length > 0) {
         newChat.conversationTitle = jobData.jobRole
-          ? `Interview for ${jobData.jobRole}`
+          ? `Interview for ${jobData.jobRole}. Recruiter: ${jobData.recruiterName}`
           : "Interview Conversation";
         newChat.jobData = jobData;
       }

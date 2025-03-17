@@ -90,7 +90,7 @@ const JobListingCard = ({
     }
   };
 
-  // NEW: When the user clicks "Talk with Chatbot", navigate to /chats with job data in state.
+  // When the user clicks "Talk with Chatbot", navigate to /chats with job data in state.
   const handleInterviewChatClick = () => {
     navigate("/chats", { 
       state: { 
@@ -257,7 +257,7 @@ const JobListingCard = ({
           )}
         </button>
 
-        {/* NEW: Talk with Chatbot button */}
+        {/* Talk with Chatbot button */}
         <button
           className="px-4 py-2 font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg"
           onClick={handleInterviewChatClick}
