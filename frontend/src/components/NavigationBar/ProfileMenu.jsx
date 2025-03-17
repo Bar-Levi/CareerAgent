@@ -58,6 +58,7 @@ const ProfileMenu = ({ userType, user }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       localStorage.clear();
+      sessionStorage.clear();
       navigate("/authentication", { replace: true });
     } catch (error) {
       console.error("Error during logout:", error);
