@@ -38,6 +38,10 @@ const applicantSchema = new mongoose.Schema({
     notes: {
         type: String,
     },
+    isSubscribed: {
+        type: Boolean,
+        default: true,
+    },
     jobId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'JobListing',

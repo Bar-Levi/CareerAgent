@@ -48,7 +48,7 @@ const ProfileMenu = ({ userType, user }) => {
 
   const handleChangeMailSubscription = () => {
     setDropdownOpen(false);
-    changeMailSubscriptionStatus(user);
+    changeMailSubscriptionStatus(user, navigate, location);
   };
 
   const handleLogout = async () => {

@@ -33,6 +33,8 @@ const JobListingCard = ({
 
   const { state } = useLocation();
   const user = state?.user;
+  console.log(user);
+
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
@@ -94,7 +96,6 @@ const JobListingCard = ({
   };
   
   const handleApplyNow = async () => {
-    console.log(user);
     if (!user.cv || user.cv === "") {
       setShowModal(true); // Show modal if CV is missing
       return;
@@ -116,6 +117,7 @@ const JobListingCard = ({
             linkedinUrl: user.linkedinUrl,
             githubUrl: user.githubUrl,
             cv: user.cv,
+            isSubscribed: user.isSubscribed,
             profilePic: user.profilePic,
             jobId: jobId,
             recruiterId: recruiterId,

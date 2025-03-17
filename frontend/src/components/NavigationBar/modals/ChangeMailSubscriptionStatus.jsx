@@ -3,7 +3,7 @@ import withReactContent from "sweetalert2-react-content";
 
 const MySwal = withReactContent(Swal);
 
-const changeMailSubscriptionStatus = async (user) => {
+const changeMailSubscriptionStatus = async (user, navigate, location) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -72,6 +72,11 @@ const changeMailSubscriptionStatus = async (user) => {
     if (result.isConfirmed) {
       // Display the result from the toggle request
       Swal.fire("Success", result.value.message, "success");
+      // Update the user's subscription status in the application state
+      location.state.user.isSubscribed =!isSubscribed;
+      console.log("data:", data);
+      console.log("location.state.user: ", location.state.user);
+      navigate(location.pathname, { state: location.state });
     }
   } catch (error) {
     Swal.fire("Error", error.message || "An error occurred", "error");
