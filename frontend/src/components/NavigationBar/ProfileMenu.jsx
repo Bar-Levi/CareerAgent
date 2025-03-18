@@ -34,7 +34,7 @@ const ProfileMenu = ({ userType, user }) => {
     if (userType === "JobSeeker") {
       showJobSeekerPersonalDetailsModal(user, navigate, location);
     } else if (userType === "Recruiter") {
-      showRecruiterDetailsModal(user);
+      showRecruiterDetailsModal(user, navigate, location);
     }
   };
 
