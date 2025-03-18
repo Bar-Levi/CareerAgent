@@ -5,7 +5,7 @@ const {
     changePassword,
     changeProfilePic,
     deleteProfilePic,
-    getNameAndProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails,
+    getNameAndProfilePic, updateJobSeekerPersonalDetails, resetJobSeekerPersonalDetails,
     uploadCVMiddleware,
     updateCV,
     getRelevancePoints,
@@ -45,9 +45,6 @@ router.get('/min-points-for-update', protect, getMinPointsForUpdate);
 
 // Route to set current relevance points
 router.post('/set-min-points-for-update', protect, setMinPointsForUpdate);
-
-// Route to Get current jobSeeker personal details
-router.get('/job-seeker-details', protect, getJobSeekerPersonalDetails);
 
 // Route to update current jobSeeker personal details
 router.post('/update-job-seeker-details', protect, updateJobSeekerPersonalDetails);
