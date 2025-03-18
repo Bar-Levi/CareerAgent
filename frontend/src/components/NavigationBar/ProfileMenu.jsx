@@ -27,7 +27,7 @@ const ProfileMenu = ({ userType, user }) => {
   };
 
   const handleChangeProfilePic = () => {
-    showChangeProfilePicModal(user);
+    showChangeProfilePicModal(user, navigate, location);
   };
 
   const handleChangePersonalDetails = () => {
