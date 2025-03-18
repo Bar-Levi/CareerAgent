@@ -212,8 +212,6 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
         // Prepare the updated state with the expected keys
         const updatedState = {
           user: updatedUser,
-          email: updatedUser.email,
-          role: updatedUser.role,
           isVerified: location.state?.isVerified || true,
         };
 
