@@ -198,16 +198,13 @@ const SearchJobs = ({onlineUsers}) => {
       const updatedUser = {
         ...user,
         cv: data.cv,
-        analyzed_cv_content: analyzedContent,
+        analyzed_cv_content: analyzedContent
       };
       // Build new state including the full user object
       const newState = {
-        email: user.email,
-        role: user.role,
-        token: token,
         user: updatedUser,
-        refreshToken: 0,
         isVerified: user.isVerified,
+        refreshToken: 0
       };
       // Update our local user state and navigate to the same page with new state
       setUser(updatedUser);

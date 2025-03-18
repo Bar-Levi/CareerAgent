@@ -371,7 +371,7 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
 };
 
 /* -----------------------------------------------------------------------------------------------
-  CV Endpoints (get and update CV with analyzed_cv_content, delete CV with analyzed_cv_content)
+  CV Endpoints (update CV with analyzed_cv_content, delete CV with analyzed_cv_content)
 ------------------------------------------------------------------------------------------------ */
 
 // Set up multer for CV upload using memory storage so we can stream the file
@@ -384,21 +384,6 @@ const cvFileFilter = (req, file, cb) => {
   }
 };
 const uploadCV = multer({ storage: cvStorage, fileFilter: cvFileFilter });
-
-// Retrieves the current CV link for the jobseeker.
-const getCV = async (req, res) => {
-  const { email } = req.query;
-  try {
-    const jobSeeker = await jobSeekerModel.findOne({ email });
-    if (!jobSeeker) {
-      return res.status(404).json({ message: "Job seeker not found" });
-    }
-    res.status(200).json({ cv: jobSeeker.cv || "" });
-  } catch (error) {
-    console.error("Error fetching CV:", error);
-    res.status(500).json({ message: "Failed to get CV" });
-  }
-};
 
 const getRelevancePoints = async (req, res) => {
   const { email } = req.query;
@@ -579,7 +564,6 @@ module.exports = {
   getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,
-  getCV,
   updateCV,
   deleteCV,
   uploadCVMiddleware: uploadCV.single("cv"),

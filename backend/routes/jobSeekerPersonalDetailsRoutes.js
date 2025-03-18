@@ -6,7 +6,6 @@ const {
     changeProfilePic,
     deleteProfilePic,
     getNameAndProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails,
-    getCV,
     uploadCVMiddleware,
     updateCV,
     getRelevancePoints,
@@ -20,7 +19,6 @@ const upload = require('../middleware/upload');
 
 
 // CV Endpoints for jobseeker
-router.get("/jobseeker/cv", protect, getCV);
 router.post("/jobseeker/cv/update", protect, uploadCVMiddleware, updateCV);
 router.delete("/jobseeker/cv/delete", protect, deleteCV);
 
