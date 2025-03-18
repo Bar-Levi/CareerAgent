@@ -217,8 +217,8 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
           isVerified: location.state?.isVerified || true,
         };
 
-        // Navigate to /dashboard with the updated state
-        navigate("/dashboard", { state: updatedState });
+        // Navigate to current location with the updated state
+        navigate(location.pathname, { state: updatedState });
         return { updatedPoints, updatedMinPoints };
       } catch (error) {
         Swal.showValidationMessage(`Request failed: ${error}`);
