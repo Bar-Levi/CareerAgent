@@ -8,7 +8,7 @@ const botConversationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["careerAdvisor", "interviewer"], // Restrict allowed types
+      enum: ["careerAdvisor", "interviewer"],
       required: true,
     },
     conversationId: {
@@ -41,6 +41,11 @@ const botConversationSchema = new mongoose.Schema(
         },
       },
     ],
+    // Optional field to store job related data if available.
+    jobData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   { timestamps: true }
 );

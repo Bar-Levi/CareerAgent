@@ -5,8 +5,7 @@ const {
     changePassword,
     changeProfilePic,
     deleteProfilePic,
-    getNameAndProfilePic,getJobSeekerPersonalDetails,updateJobSeekerPersonalDetails,resetJobSeekerPersonalDetails,
-    getCV,
+    getNameAndProfilePic, updateJobSeekerPersonalDetails, resetJobSeekerPersonalDetails,
     uploadCVMiddleware,
     updateCV,
     getRelevancePoints,
@@ -20,7 +19,6 @@ const upload = require('../middleware/upload');
 
 
 // CV Endpoints for jobseeker
-router.get("/jobseeker/cv", protect, getCV);
 router.post("/jobseeker/cv/update", protect, uploadCVMiddleware, updateCV);
 router.delete("/jobseeker/cv/delete", protect, deleteCV);
 
@@ -47,9 +45,6 @@ router.get('/min-points-for-update', protect, getMinPointsForUpdate);
 
 // Route to set current relevance points
 router.post('/set-min-points-for-update', protect, setMinPointsForUpdate);
-
-// Route to Get current jobSeeker personal details
-router.get('/job-seeker-details', protect, getJobSeekerPersonalDetails);
 
 // Route to update current jobSeeker personal details
 router.post('/update-job-seeker-details', protect, updateJobSeekerPersonalDetails);

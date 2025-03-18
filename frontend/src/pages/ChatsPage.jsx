@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import ChatBot from "../components/ChatBot";
-import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar/NavigationBar";
 import Notification from "../components/Notification";
 import Botpress from "../botpress/Botpress";
 import { FiEdit } from "react-icons/fi";
 
 const ChatsPage = () => {
-  const [careerChats, setCareerChats] = useState([]); // History for Career Advisor
-  const [interviewChats, setInterviewChats] = useState([]); // History for Interviewer
-  const [selectedChat, setSelectedChat] = useState(null); // Selected chat details
-  const [chatType, setChatType] = useState("careerAdvisor"); // Chat type (default: careerAdvisor)
-  const [editingChatId, setEditingChatId] = useState(null); // Currently editing chat ID
-  const [editingTitle, setEditingTitle] = useState(""); // Title being edited
+  const [careerChats, setCareerChats] = useState([]);
+  const [interviewChats, setInterviewChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [chatType, setChatType] = useState("careerAdvisor");
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const { state } = useLocation();
-  const email = state?.email || "";
-  const token = state?.token || "";
+  const navigate = useNavigate();
+  const email = state?.email || state?.user?.email || "";
+  const token = localStorage.getItem("token") || "";
   const [notification, setNotification] = useState(null);
-  
 
-  // Show notification
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
-};
+  };
 
   const prettyDate = (date) => {
     return new Date(date).toLocaleString("en-US", {
@@ -35,7 +34,7 @@ const ChatsPage = () => {
     });
   };
 
-  // Fetch user's history chats
+  // Fetch chat histories from the backend.
   const fetchHistoryChats = async () => {
     try {
       const response = await fetch(
@@ -43,101 +42,111 @@ const ChatsPage = () => {
         {
           method: "GET",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
       );
-      
-
       if (!response.ok) {
         throw new Error("Failed to fetch chat histories");
       }
-
       const data = await response.json();
-
-      // Categorize conversations into Career Advisor and Interviewer
-      const careerChats = data.filter((chat) => chat.type === "careerAdvisor");
-      const interviewChats = data.filter((chat) => chat.type === "interviewer");
-
-      setCareerChats(careerChats.reverse());
-      setInterviewChats(interviewChats.reverse());
-
+      const careerChatsData = data.filter((chat) => chat.type === "careerAdvisor");
+      const interviewChatsData = data.filter((chat) => chat.type === "interviewer");
+      setCareerChats(careerChatsData.reverse());
+      setInterviewChats(interviewChatsData.reverse());
     } catch (error) {
       console.error("Error fetching chat histories:", error);
     }
   };
 
-  // Create a new conversation
-  const createNewConversation = async (type) => {
+  // Create a new conversation.
+  // If jobData is provided (from router state), attach a title and include jobData in the DB.
+  const createNewConversation = async (type, jobData = null) => {
     try {
+      // Build the payload with jobData if available.
+      const payload = { email, type };
+      if (jobData && Object.keys(jobData).length > 0) {
+        payload.jobData = jobData;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/new`,
         {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            email,
-            type,
-          }),
+          body: JSON.stringify(payload),
         }
       );
-
       if (!response.ok) {
-        // Check if the response status is 400 and display the error message
         if (response.status === 400) {
           const errorData = await response.json();
-          showNotification('error', errorData.message);
+          showNotification("error", errorData.message);
         } else {
           throw new Error(`Request failed with status ${response.status}`);
         }
-        return; // Exit the function after handling the error
+        return null;
       }
       const newChat = await response.json();
-
-      // Add the new conversation to the relevant chat list
-      if (type === "careerAdvisor") {
-        setCareerChats((prev) => [newChat, ...prev].slice(0, 10)); // Keep max 10
-      } else if (type === "interviewer") {
-        setInterviewChats((prev) => [newChat, ...prev].slice(0, 10)); // Keep max 10
+      // If jobData is provided, update the conversation title for display.
+      if (jobData && Object.keys(jobData).length > 0) {
+        newChat.conversationTitle = jobData.jobRole
+          ? `Interview for ${jobData.jobRole}. Recruiter: ${jobData.recruiterName}`
+          : "Interview Conversation";
+        newChat.jobData = jobData;
       }
-
-      // Automatically select the new conversation
+      if (type === "careerAdvisor") {
+        setCareerChats((prev) => [newChat, ...prev].slice(0, 10));
+      } else if (type === "interviewer") {
+        setInterviewChats((prev) => [newChat, ...prev].slice(0, 10));
+      }
       setSelectedChat(newChat);
       setChatType(type);
+      return newChat;
     } catch (error) {
       console.error("Error creating a new conversation:", error);
+      return null;
     }
   };
 
-  // Remove a conversation
+  // Remove a conversation.
+  // If an interviewer conversation with jobData is removed and exists in sessionStorage, remove its flag.
   const removeConversation = async (chatId, type) => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
-        { method: "DELETE",
+        {
+          method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
-         }
+        }
       );
-
       if (!response.ok) {
         throw new Error("Failed to remove conversation");
       }
-
-      // Remove the chat from the relevant list
       if (type === "careerAdvisor") {
         setCareerChats((prev) => prev.filter((chat) => chat._id !== chatId));
       } else if (type === "interviewer") {
+        // Find the conversation to remove its sessionStorage flag if needed.
+        const removedChat = interviewChats.find((chat) => chat._id === chatId);
         setInterviewChats((prev) => prev.filter((chat) => chat._id !== chatId));
+        const jobId = removedChat?.jobData?._id;
+        if (jobId) {
+          sessionStorage.removeItem("autoCreatedConversation_" + jobId);
+        }
+        // Optionally, clear router state interviewJobData after deletion
+        if (state?.interviewJobData) {
+          navigate(window.location.pathname, {
+            replace: true,
+            state: { ...state, interviewJobData: null },
+          });
+        }
       }
-
-      // If the removed chat is the selected one, clear the right pane
       if (selectedChat && selectedChat._id === chatId) {
         setSelectedChat(null);
       }
@@ -146,7 +155,7 @@ const ChatsPage = () => {
     }
   };
 
-  // Handle editing a chat title
+  // Editing chat title.
   const startEditingTitle = (chatId, currentTitle) => {
     if (currentTitle.length > 0) {
       setEditingChatId(chatId);
@@ -154,12 +163,9 @@ const ChatsPage = () => {
     }
   };
 
-  // Handle real-time title editing
   const handleTitleChange = (e, chatId, type) => {
     const newTitle = e.target.value;
     setEditingTitle(newTitle);
-
-    // Update the chat title in the corresponding list
     if (type === "careerAdvisor") {
       setCareerChats((prev) =>
         prev.map((chat) =>
@@ -175,88 +181,99 @@ const ChatsPage = () => {
     }
   };
 
-
-  // Handle selecting a chat
   const handleChatSelection = (chat, type) => {
     setSelectedChat(chat);
     setChatType(type);
-    };
-      
+  };
+
   const saveEditedTitle = async (chatId, type) => {
     if (editingTitle === "") {
       showNotification("error", "Title cannot be empty");
     } else {
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
-        {
-          method: "PUT",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-          body: JSON.stringify({
-            conversationTitle: editingTitle, // Update the title
-          }),
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ conversationTitle: editingTitle }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to update conversation title");
         }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update conversation title");
+        if (type === "careerAdvisor") {
+          setCareerChats((prev) =>
+            prev.map((chat) =>
+              chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
+            )
+          );
+        } else if (type === "interviewer") {
+          setInterviewChats((prev) =>
+            prev.map((chat) =>
+              chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
+            )
+          );
+        }
+        if (selectedChat && selectedChat._id === chatId) {
+          setSelectedChat((prev) => ({ ...prev, conversationTitle: editingTitle }));
+        }
+        setEditingChatId(null);
+        setEditingTitle("");
+      } catch (error) {
+        console.error("Error updating conversation title:", error);
       }
-
-      // Update the title in the relevant chat list
-      if (type === "careerAdvisor") {
-        setCareerChats((prev) =>
-          prev.map((chat) =>
-            chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
-          )
-        );
-      } else if (type === "interviewer") {
-        setInterviewChats((prev) =>
-          prev.map((chat) =>
-            chat._id === chatId ? { ...chat, conversationTitle: editingTitle } : chat
-          )
-        );
-      }
-
-      // If the updated chat is selected, update the title in the ChatBot
-      if (selectedChat && selectedChat._id === chatId) {
-        setSelectedChat((prev) => ({ ...prev, conversationTitle: editingTitle }));
-      }
-
-      // Stop editing
-      setEditingChatId(null);
-      setEditingTitle("");
-    } catch (error) {
-      console.error("Error updating conversation title:", error);
     }
-  }
   };
 
-  // Fetch chat histories when component mounts
   useEffect(() => {
     fetchHistoryChats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChat]);
+
+  // Auto-create an interviewer conversation only if router state includes valid job data,
+  // no conversation is currently selected, and the sessionStorage flag is not set.
+  useEffect(() => {
+    if (
+      state &&
+      state.chatType === "interviewer" &&
+      state.interviewJobData &&
+      Object.keys(state.interviewJobData).length > 0 &&
+      !selectedChat
+    ) {
+      const jobId = state.interviewJobData._id;
+      if (!sessionStorage.getItem("autoCreatedConversation_" + jobId)) {
+        createNewConversation("interviewer", state.interviewJobData);
+        sessionStorage.setItem("autoCreatedConversation_" + jobId, "true");
+        // Clear the interviewJobData from router state after auto-creation
+        navigate(window.location.pathname, {
+          replace: true,
+          state: { ...state, interviewJobData: null },
+        });
+      }
+    }
+  }, [state, selectedChat, navigate]);
 
   return (
     <div className="flex flex-col h-screen">
       {notification && (
-                <Notification
-                    type={notification.type}
-                    message={notification.message}
-                    onClose={() => setNotification(null)}
-                />
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
       )}
       <Botpress />
-      {/* Navigation Bar */}
       <div>
-      <NavigationBar userType={state?.user?.role} notifications={state?.user?.notifications || []}/>
+        <NavigationBar
+          userType={state?.user?.role}
+          notifications={state?.user?.notifications || []}
+        />
       </div>
-  
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Pane */}
         <div className="w-1/3 p-4 border-r border-gray-300 bg-white overflow-y-auto">
           {/* Career Advisor Chats */}
           <div className="mb-6">
@@ -276,8 +293,8 @@ const ChatsPage = () => {
                   key={chat._id}
                   className={`p-3 border-b flex justify-between items-center cursor-pointer rounded-lg ${
                     selectedChat && selectedChat._id === chat._id
-                      ? "bg-gray-200 text-gray-900 font-semibold" // Active chat styling
-                      : "hover:bg-gray-100 text-gray-700" // Inactive chat styling
+                      ? "bg-gray-200 text-gray-900 font-semibold"
+                      : "hover:bg-gray-100 text-gray-700"
                   }`}
                 >
                   {editingChatId === chat._id ? (
@@ -285,32 +302,37 @@ const ChatsPage = () => {
                       type="text"
                       className="w-full border px-2 py-1 rounded"
                       value={editingTitle}
-                      onChange={(e) => handleTitleChange(e, chat._id, 'careerAdvisor')}
+                      onChange={(e) =>
+                        handleTitleChange(e, chat._id, "careerAdvisor")
+                      }
                       onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
                       onKeyDown={(e) =>
-                        e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
+                        e.key === "Enter" &&
+                        saveEditedTitle(chat._id, "careerAdvisor")
                       }
                     />
                   ) : (
-                    <div 
+                    <div
                       className="flex-1"
                       onClick={() => handleChatSelection(chat, "careerAdvisor")}
-                      >
-                      <p
-                        className="font-medium cursor-pointer"
-                      >
+                    >
+                      <p className="font-medium cursor-pointer">
                         {chat.conversationTitle}
                       </p>
-                      <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
+                      <p className="text-sm text-gray-500">
+                        {prettyDate(chat.createdAt)}
+                      </p>
                     </div>
                   )}
                   <FiEdit
                     onClick={() =>
-                    startEditingTitle(chat._id, chat.conversationTitle)
-                  }
+                      startEditingTitle(chat._id, chat.conversationTitle)
+                    }
                   />
                   <button
-                    onClick={() => removeConversation(chat._id, "careerAdvisor")}
+                    onClick={() =>
+                      removeConversation(chat._id, "careerAdvisor")
+                    }
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
@@ -320,7 +342,6 @@ const ChatsPage = () => {
               ))}
             </div>
           </div>
-  
           {/* Interviewer Chats */}
           <div>
             <div className="flex justify-between items-center mb-2">
@@ -339,8 +360,8 @@ const ChatsPage = () => {
                   key={chat._id}
                   className={`p-3 border-b flex justify-between items-center cursor-pointer rounded-lg ${
                     selectedChat && selectedChat._id === chat._id
-                      ? "bg-gray-200 text-gray-900 font-semibold" // Active chat styling
-                      : "hover:bg-gray-100 text-gray-700" // Inactive chat styling
+                      ? "bg-gray-200 text-gray-900 font-semibold"
+                      : "hover:bg-gray-100 text-gray-700"
                   }`}
                 >
                   {editingChatId === chat._id ? (
@@ -348,10 +369,13 @@ const ChatsPage = () => {
                       type="text"
                       className="w-full border px-2 py-1 rounded"
                       value={editingTitle}
-                      onChange={(e) => handleTitleChange(e, chat._id, 'interviewer')}
+                      onChange={(e) =>
+                        handleTitleChange(e, chat._id, "interviewer")
+                      }
                       onBlur={() => saveEditedTitle(chat._id, "interviewer")}
                       onKeyDown={(e) =>
-                        e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")
+                        e.key === "Enter" &&
+                        saveEditedTitle(chat._id, "interviewer")
                       }
                     />
                   ) : (
@@ -359,21 +383,23 @@ const ChatsPage = () => {
                       className="flex-1"
                       onClick={() => handleChatSelection(chat, "interviewer")}
                     >
-                      <p
-                        className="font-medium cursor-pointer"
-                      >
+                      <p className="font-medium cursor-pointer">
                         {chat.conversationTitle}
                       </p>
-                      <p className="text-sm text-gray-500">{prettyDate(chat.createdAt)}</p>
+                      <p className="text-sm text-gray-500">
+                        {prettyDate(chat.createdAt)}
+                      </p>
                     </div>
                   )}
                   <FiEdit
                     onClick={() =>
                       startEditingTitle(chat._id, chat.conversationTitle)
-                  }
+                    }
                   />
                   <button
-                    onClick={() => removeConversation(chat._id, "interviewer")}
+                    onClick={() =>
+                      removeConversation(chat._id, "interviewer")
+                    }
                     className="text-red-500 hover:text-red-700 ml-2"
                     title="Remove chat"
                   >
@@ -384,19 +410,18 @@ const ChatsPage = () => {
             </div>
           </div>
         </div>
-  
-        {/* Right Pane */}
         <div className="flex-1 flex items-center justify-center p-4">
           {selectedChat ? (
             <ChatBot
-              key={selectedChat._id} // Force re-render
+              key={selectedChat._id}
               chatId={selectedChat._id}
               conversationId={selectedChat.conversationId}
               conversationTitle={selectedChat.conversationTitle}
               isProfileSynced={selectedChat.isProfileSynced}
               type={chatType}
-              initialMessages={selectedChat.messages} // Pass messages to ChatBot
-              prettyDate={prettyDate} // Pass prettyDate to format message timestamps
+              initialMessages={selectedChat.messages}
+              prettyDate={prettyDate}
+              jobData={selectedChat.jobData}
             />
           ) : (
             <div className="text-gray-500">
@@ -407,10 +432,6 @@ const ChatsPage = () => {
       </div>
     </div>
   );
-  
-  
 };
 
 export default ChatsPage;
-
-

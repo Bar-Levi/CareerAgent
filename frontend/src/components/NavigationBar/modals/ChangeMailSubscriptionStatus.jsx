@@ -58,8 +58,8 @@ const changeMailSubscriptionStatus = async (user, navigate, location) => {
       Swal.fire("Success", result.value.message, "success");
       // Update the user subscription status locally
       user.isSubscribed = !isSubscribed;
-      // Navigate back to the dashboard with the updated user object
-      navigate("/dashboard", { state: { ...location.state, user } });
+      // Navigate to current location with the updated user object
+      navigate(location.pathname, { state: { ...location.state, user } });
     }
   } catch (error) {
     Swal.fire("Error", error.message || "An error occurred", "error");

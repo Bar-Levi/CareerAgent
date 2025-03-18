@@ -40,7 +40,7 @@ const getMessagesByConvId = async (req, res) => {
 
 // Create a new conversation
 const createNewConversation = async (req, res) => {
-  const { email, type } = req.body;
+  const { email, type, jobData } = req.body;
   try {
     // Generate a conversationId based on type and current time
     const conversationId = `${type}-${Date.now()}`;
@@ -48,28 +48,44 @@ const createNewConversation = async (req, res) => {
     const conversations = await BotConversation.find({ email, type });
 
     if (conversations.length < 10) {
-    // Initialize an empty messages array
-    const newConversation = await BotConversation.create({
-      email,
-      type,
-      conversationId,
-      messages: [],
-      startDate: new Date(),
-    });
+      // Build the new conversation data object.
+      const newConversationData = {
+        email,
+        type,
+        conversationId,
+        messages: [],
+        startDate: new Date(),
+        jobData: jobData || null,
+      };
 
-    newConversation.save();
+    // If jobData is provided, include a conversationTitle based on it.
+    if (jobData && Object.keys(jobData).length > 0) {
+      if (jobData.jobRole) {
+        newConversationData.conversationTitle = jobData.recruiterName
+          ? `Interview for ${jobData.jobRole}. Recruiter: ${jobData.recruiterName}`
+          : `Interview for ${jobData.jobRole}`;
+      } else {
+        newConversationData.conversationTitle = "Interview Conversation";
+      }
+    }
 
-    res.status(201).json(newConversation);
+      
+      const newConversation = await BotConversation.create(newConversationData);
 
-  }
-  else {
-    const name = type === 'interviewer' ? type : 'career advisor';
-    return res.status(400).json({ message: `You have reached the maximum number of ${name} conversations. Remove some and try again.` });
-  } 
-} catch (error) {
+      // No need to call save() explicitly as create() already persists the document.
+      res.status(201).json(newConversation);
+    } else {
+      const name = type === "interviewer" ? type : "career advisor";
+      return res.status(400).json({
+        message: `You have reached the maximum number of ${name} conversations. Remove some and try again.`,
+      });
+    }
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+
 
 // Remove a conversation
 const removeConversation = async (req, res) => {

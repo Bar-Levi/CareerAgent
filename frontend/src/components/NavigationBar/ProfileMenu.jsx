@@ -27,14 +27,14 @@ const ProfileMenu = ({ userType, user }) => {
   };
 
   const handleChangeProfilePic = () => {
-    showChangeProfilePicModal(user);
+    showChangeProfilePicModal(user, navigate, location);
   };
 
   const handleChangePersonalDetails = () => {
     if (userType === "JobSeeker") {
       showJobSeekerPersonalDetailsModal(user, navigate, location);
     } else if (userType === "Recruiter") {
-      showRecruiterDetailsModal(user);
+      showRecruiterDetailsModal(user, navigate, location);
     }
   };
 
@@ -58,6 +58,7 @@ const ProfileMenu = ({ userType, user }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       localStorage.clear();
+      sessionStorage.clear();
       navigate("/authentication", { replace: true });
     } catch (error) {
       console.error("Error during logout:", error);

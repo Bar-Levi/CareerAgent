@@ -1,31 +1,11 @@
-// ChangeProfilePicModal.jsx
+
 import Swal from "sweetalert2";
 
-const getCurrentProfilePic = async (user) => {
-  const token = localStorage.getItem("token");
-  try {
-    const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/personal/name-and-profile-pic?email=${encodeURIComponent(
-        user.email
-      )}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (!response.ok)
-      throw new Error("Failed to fetch current profile picture");
-    const data = await response.json();
-    return data.profilePic;
-  } catch (error) {
-    console.error("Error fetching current profile picture:", error);
-    return "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
-  }
+const getCurrentProfilePic = (user) => {
+  return user.profilePic || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 };
 
-const showChangeProfilePicModal = async (user) => {
+const showChangeProfilePicModal = async (user, navigate, location) => {
   const currentPic = await getCurrentProfilePic(user);
   const { value: result } = await Swal.fire({
     title: "Change Profile Picture",
@@ -55,9 +35,7 @@ const showChangeProfilePicModal = async (user) => {
 
       if (deleteClicked) {
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(
-            user.email
-          )}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/personal/profile-pic?email=${encodeURIComponent(user.email)}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
@@ -86,7 +64,8 @@ const showChangeProfilePicModal = async (user) => {
           const data = await response.json();
           if (!response.ok)
             throw new Error(data.message || "Failed to update profile picture");
-          return { action: "change", message: data.message };
+          // Return the new profilePic from the response
+          return { action: "change", message: data.message, profilePic: data.profilePic };
         }
       }
       return null;
@@ -109,8 +88,7 @@ const showChangeProfilePicModal = async (user) => {
           deleteBtn.dataset.action = "delete";
           if (changeBtn) changeBtn.dataset.action = "";
           if (previewImg)
-            previewImg.src =
-              "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+            previewImg.src = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
         });
       }
       if (fileInput && previewImg) {
@@ -170,10 +148,20 @@ const showChangeProfilePicModal = async (user) => {
   });
 
   if (result) {
+    let swalPromise;
     if (result.action === "delete") {
-      Swal.fire("Deleted!", result.message, "success");
+      user.profilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+      swalPromise = Swal.fire("Deleted!", result.message, "success");
     } else if (result.action === "change") {
-      Swal.fire("Updated!", result.message, "success");
+      // Directly update user.profilePic using the profilePic returned from the fetch
+      user.profilePic = result.profilePic;
+      swalPromise = Swal.fire("Updated!", result.message, "success");
+    }
+    if (swalPromise) {
+      swalPromise.then(() => {
+        // Navigate to the current location with the updated user state variable
+        navigate(location.pathname, { state: { user } });
+      });
     }
   }
 };
