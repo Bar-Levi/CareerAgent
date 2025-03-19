@@ -209,7 +209,7 @@ const ChatBot = ({
               } mb-4`}
             >
               <ReactMarkdown
-                className={`max-w-[70%] p-3 rounded-lg ${
+                className={`max-w-[70%] overflow-x-auto p-3 rounded-lg ${
                   msg.sender === "user"
                     ? "bg-brand-primary text-white"
                     : "bg-gray-300 text-gray-900"

@@ -274,7 +274,7 @@ const ChatsPage = () => {
         />
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-1/3 p-4 border-r border-gray-300 bg-white overflow-y-auto">
+        <div className="max-w-[30%] w-1/3 p-4 border-r border-gray-300 bg-white overflow-y-auto">
           {/* Career Advisor Chats */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
@@ -410,7 +410,7 @@ const ChatsPage = () => {
             </div>
           </div>
         </div>
-        <div className="flex-1 flex items-center justify-center p-4">
+        <div className="max-w-[70%] flex-1 flex items-center justify-center p-4">
           {selectedChat ? (
             <ChatBot
               key={selectedChat._id}
