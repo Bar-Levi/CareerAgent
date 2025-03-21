@@ -118,7 +118,7 @@ const JobListingPage = () => {
   if (!token) {
     return (
       <div className="flex flex-col space-y-6 w-full bg-gradient-to-br from-indigo-50 to-blue-50 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md mx-auto mt-16 animate-slide-in border border-indigo-100">
-        <h2 className="text-3xl font-bold text-indigo-900 text-center">Login to view this opportunity</h2>
+        <h2 className="text-3xl font-bold text-indigo-900 text-center">Enter Details to view this opportunity</h2>
         <form onSubmit={login} className="space-y-4">
           <input
             type="email"
