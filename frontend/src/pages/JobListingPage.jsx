@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import JobListingCard from '../jobCandidate/SearchJobs/components/JobListingCard';
 import CryptoJS from 'crypto-js';
+import { isAuthenticated } from '../utils/auth';
 
 const JobListingPage = () => {
   const { id } = useParams();
@@ -55,7 +55,13 @@ const JobListingPage = () => {
   };
 
   useEffect(() => {
-    if (!token) return;
+    // If there's no token or token is invalid/expired, do NOT fetch the job
+    if (!token || !isAuthenticated(token)) {
+      setToken(null); // Clear any invalid token
+      localStorage.removeItem('token');
+      return;
+    }
+
     setLoadingData(true);
 
     (async () => {
@@ -103,6 +109,7 @@ const JobListingPage = () => {
     })();
   }, [token, id, email]);
 
+  // If token is null or invalid, show the login form
   if (!token) {
     return (
       <div className="flex flex-col space-y-6 w-full bg-gradient-to-br from-indigo-50 to-blue-50 backdrop-blur-xl shadow-2xl rounded-3xl p-8 max-w-md mx-auto mt-16 animate-slide-in border border-indigo-100">
@@ -738,6 +745,8 @@ const JobListingPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Footer CTA removed */}
 
       {/* Modal if CV is missing */}
       {showModal && (
