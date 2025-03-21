@@ -56,6 +56,11 @@ const recruiterSchema = new mongoose.Schema({
         required: false,
         default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
     },
+    companyLogo: {
+        type: String,
+        required: false,
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
+    },
     companyName: {
         type: String,
         trim: true,
