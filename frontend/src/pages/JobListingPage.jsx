@@ -3,6 +3,8 @@ import { useParams, useLocation } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 import { isAuthenticated } from '../utils/auth';
 import { parseJobDescription } from '../utils/parseJobDescription';
+import Notification from '../components/Notification';
+
 
 const JobListingPage = () => {
   const { id } = useParams();
@@ -18,6 +20,8 @@ const JobListingPage = () => {
   const [user, setUser] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const [dataError, setDataError] = useState('');
+  const [notification, setNotification] = useState({ message: '', type: '' });
+
 
   // For handling the apply flow
   const [showModal, setShowModal] = useState(false);
@@ -233,7 +237,7 @@ const JobListingPage = () => {
 
     // If user has already applied, we can block or show a message.
     if (hasApplied) {
-      alert('You have already applied for this job.');
+      setNotification({ message: 'You have already applied for this job.', type: 'error' });
       return;
     }
 
@@ -289,27 +293,34 @@ const JobListingPage = () => {
         if (updateJobResponse.ok) {
           console.log('Job listing updated with new applicant.');
           setHasApplied(true); // Mark user as applied
-          alert('Application successful!');
+          setNotification({ message: 'Application successful!', type: 'success' });
         } else {
-          alert('There was a problem updating the job listing with your application.');
+          setNotification({ message: 'There was a problem updating the job listing.', type: 'error' });
         }
       } else {
         // Possibly handle "already applied" scenario from the backend
         if (applicantData.message && applicantData.message.includes('already applied')) {
           setHasApplied(true);
-          alert("You've already applied for this job!");
+          setNotification({ message: "You've already applied for this job!", type: 'error' });
         } else {
-          alert('There was a problem creating the applicant record. Please try again.');
+          setNotification({ message: 'There was a problem submitting your application.', type: 'error' });
         }
       }
     } catch (err) {
       console.log('Error applying:', err);
-      alert('An error occurred while applying. Please try again later.');
+      setNotification({ message: 'An error occurred while applying. Please try again later.', type: 'error' });
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+          {notification.message && (
+        <Notification 
+            message={notification.message} 
+            type={notification.type} 
+            onClose={() => setNotification({ message: '', type: '' })} 
+        />
+    )}
       {/* Job Header Section */}
       <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex flex-col md:flex-row">
