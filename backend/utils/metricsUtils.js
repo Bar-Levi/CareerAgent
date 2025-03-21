@@ -1,5 +1,5 @@
-// metricsUtils.js
-const JobListing = require("../models/jobListingModel"); // Adjust the path to your model
+
+const JobListing = require("../models/jobListingModel"); 
 
 /**
  * Calculates metrics for a recruiter based on their job listings.
@@ -10,6 +10,7 @@ const JobListing = require("../models/jobListingModel"); // Adjust the path to y
  *    totalApplications: Total number of applications across all listings,
  *    avgTimeToHire: Average number of days between job posting and closing for closed listings.
  */
+
 const getMetricsByRecruiterId = async (recruiterId) => {
   try {
     // Fetch all job listings for the given recruiter
