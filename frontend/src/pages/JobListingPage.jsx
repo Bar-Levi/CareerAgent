@@ -204,29 +204,25 @@ const JobListingPage = () => {
     }).format(date);
   };
 
-  // Helper to display multiline description
-  const renderDescription = (description) => {
-    if (!description) return null;
-    return description.split('\n').map((paragraph, index) => (
-      <p key={index} className="mb-4">
-        {paragraph}
-      </p>
-    ));
+  // Decide how to color the status pill
+  const getStatusClasses = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'paused':
+        return 'bg-yellow-100 text-yellow-700 border border-yellow-400';
+      case 'closed':
+        return 'bg-red-100 text-red-700 border border-red-400';
+      default:
+        return 'bg-green-100 text-green-700 border border-green-400';
+    }
   };
-
-  const renderSkillBadge = (skill) => (
-    <span
-      key={skill}
-      className="inline-block px-3 py-1 mr-2 mb-2 text-sm font-medium bg-indigo-100 text-indigo-800 rounded-full"
-    >
-      {skill}
-    </span>
-  );
-
-  // We'll extract needed values for apply logic
+  
+  // extract needed values for apply logic
   const jobId = jobListing._id;
   const jobRole = jobListing.jobRole;
   const recruiterId = jobListing.recruiterId;
+
+  // A job can be applied to only if it's "active"
+  const canApply = jobListing.status?.toLowerCase() === 'active';
 
   const handleApplyNow = async () => {
     // If the user has no CV, show a modal or handle as you like
@@ -333,10 +329,14 @@ const JobListingPage = () => {
             <div className="flex flex-col-reverse md:flex-row md:items-center justify-between mb-2">
               <h1 className="text-3xl font-bold text-gray-900">{jobListing.jobRole}</h1>
               <div className="mb-2 md:mb-0">
-                <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-green-100 text-green-800 rounded-full">
-                  <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
-                  {jobListing.status || 'Active'}
-                </span>
+              <span
+                className={`inline-flex items-center px-3 py-1 text-sm font-medium ${getStatusClasses(
+                  jobListing.status
+                )} rounded-full`}
+              >
+                <span className={`w-2 h-2 rounded-full mr-2 bg-current`} />
+                {jobListing.status || 'Active'}
+              </span>
               </div>
             </div>
 
@@ -532,10 +532,24 @@ const JobListingPage = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Skills</h3>
                   <div className="flex flex-wrap">
                     {Array.isArray(jobListing.skills)
-                      ? jobListing.skills.map((skill) => renderSkillBadge(skill))
+                      ? jobListing.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            className="inline-block px-3 py-1 mr-2 mb-2 text-sm font-medium bg-indigo-100 text-indigo-800 rounded-full"
+                          >
+                            {skill}
+                          </span>
+                        ))
                       : jobListing.skills
                           .split(',')
-                          .map((skill) => renderSkillBadge(skill.trim()))}
+                          .map((skill) => (
+                            <span
+                              key={skill}
+                              className="inline-block px-3 py-1 mr-2 mb-2 text-sm font-medium bg-indigo-100 text-indigo-800 rounded-full"
+                            >
+                              {skill.trim()}
+                            </span>
+                          ))}
                   </div>
                 </div>
               )}
@@ -551,7 +565,12 @@ const JobListingPage = () => {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Apply for this position</h2>
 
               <div className="flex flex-col space-y-4">
-                {hasApplied ? (
+                {/* If the job isn't active, show a message instead of the apply button */}
+                {!canApply ? (
+                  <div className="text-red-700 font-medium">
+                    This job is not accepting new applications (Status: {jobListing.status}).
+                  </div>
+                ) : hasApplied ? (
                   <div className="text-green-700 font-medium">
                     You have already applied to this job.
                   </div>
