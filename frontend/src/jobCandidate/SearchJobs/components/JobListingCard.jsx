@@ -224,7 +224,7 @@ const JobListingCard = ({
           <img
             src={companyLogo || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
             alt="Company Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         </div>
         <div className="flex-grow">
