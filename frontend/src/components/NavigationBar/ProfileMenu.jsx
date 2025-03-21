@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaCogs } from "react-icons/fa";
 import showChangePasswordModal from "./modals/ChangePasswordModal";
-import showChangeProfilePicModal from "./modals/ChangeProfilePicModal";
+import showChangePicModal from "./modals/ChangePicModal";
 import { showJobSeekerPersonalDetailsModal } from "./modals/PersonalDetailsModal";
 import showRecruiterDetailsModal from "./modals/RecruiterDetailsModal";
 import showUpdateCVModal from "./modals/UpdateCVModal";
@@ -26,8 +26,12 @@ const ProfileMenu = ({ userType, user }) => {
     showChangePasswordModal(user);
   };
 
-  const handleChangeProfilePic = () => {
-    showChangeProfilePicModal(user, navigate, location);
+  /**
+   * Single function for changing pictures.
+   * @param {string} picType - "profile" or "company"
+   */
+  const handleChangePic = (picType = "profile") => {
+    showChangePicModal(user, navigate, location, picType);
   };
 
   const handleChangePersonalDetails = () => {
@@ -76,6 +80,7 @@ const ProfileMenu = ({ userType, user }) => {
       </button>
       {dropdownOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-brand-secondary shadow-lg rounded-md py-2 z-50">
+          {/* Change Password */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
             onClick={() => {
@@ -85,15 +90,32 @@ const ProfileMenu = ({ userType, user }) => {
           >
             Change Password
           </button>
+
+          {/* Change Profile Picture (always shown) */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
             onClick={() => {
               setDropdownOpen(false);
-              handleChangeProfilePic();
+              handleChangePic("profile"); // <== pass "profile" as the picType
             }}
           >
             Change Profile Picture
           </button>
+
+          {/* Recruiter-specific: Change Company Logo */}
+          {userType === "Recruiter" && (
+            <button
+              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleChangePic("company"); // <== pass "company" as the picType
+              }}
+            >
+              Change Company Logo
+            </button>
+          )}
+
+          {/* Change Personal Details */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
             onClick={() => {
@@ -103,6 +125,8 @@ const ProfileMenu = ({ userType, user }) => {
           >
             Change Personal Details
           </button>
+
+          {/* JobSeeker-specific items */}
           {userType === "JobSeeker" && (
             <>
               <button
@@ -114,6 +138,7 @@ const ProfileMenu = ({ userType, user }) => {
               >
                 Update CV
               </button>
+
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
                 onClick={() => {
@@ -125,12 +150,16 @@ const ProfileMenu = ({ userType, user }) => {
               </button>
             </>
           )}
+
+          {/* Change Mail Subscription */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
             onClick={handleChangeMailSubscription}
           >
             Change Mail Subscription
           </button>
+
+          {/* Log Out */}
           <button
             className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
             onClick={() => {

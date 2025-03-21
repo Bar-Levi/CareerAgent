@@ -106,7 +106,7 @@ const registerJobSeeker = async (req, res) => {
 
 // Register Recruiter
 const registerRecruiter = async (req, res) => {
-    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth, pin } = req.body;
+    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth, pin, companyLogo, profilePic } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -144,7 +144,9 @@ const registerRecruiter = async (req, res) => {
             companySize,
             companyWebsite,
             dateOfBirth,
-            pin: hashedPin
+            pin: hashedPin,
+            companyLogo, 
+            profilePic
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);

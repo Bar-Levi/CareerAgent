@@ -3,8 +3,7 @@ const router = express.Router();
 const {
     deleteCV,
     changePassword,
-    changeProfilePic,
-    deleteProfilePic,
+    changePic,
     getNameAndProfilePic, updateJobSeekerPersonalDetails, resetJobSeekerPersonalDetails,
     uploadCVMiddleware,
     updateCV,
@@ -25,11 +24,8 @@ router.delete("/jobseeker/cv/delete", protect, deleteCV);
 // Route to change password
 router.post('/change-password', protect, changePassword);
 
-// Route for changing profile picture (expects a file in req.file)
-router.post('/change-profile-pic', protect, upload.single('file'), changeProfilePic);
-
-// Route to delete (revert) profile picture to default
-router.delete('/profile-pic', protect, deleteProfilePic);
+router.post('/change-pic', upload.single('file'), changePic);
+router.delete('/change-pic', changePic);
 
 // Route to Get current profile picture
 router.get('/name-and-profile-pic', protect, getNameAndProfilePic);
