@@ -379,7 +379,7 @@ const resetPassword = async (req, res) => {
 const getUserDetails = async (req, res) => {
     try {
       const { email, id } = req.query;
-  
+
       if (!email && !id) {
         return res.status(400).json({ message: "Email or ID is required." });
       }
