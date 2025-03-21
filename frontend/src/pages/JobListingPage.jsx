@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 import { isAuthenticated } from '../utils/auth';
+import { parseJobDescription } from '../utils/parseJobDescription';
 
 const JobListingPage = () => {
   const { id } = useParams();
@@ -478,7 +479,7 @@ const JobListingPage = () => {
               <h2 className="text-xl font-bold text-gray-900">Job Description</h2>
             </div>
             <div className="p-6 prose max-w-none">
-              {renderDescription(jobListing.description)}
+              {parseJobDescription(jobListing.description)}
             </div>
           </div>
 
