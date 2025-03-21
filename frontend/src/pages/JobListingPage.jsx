@@ -321,19 +321,21 @@ const JobListingPage = () => {
             onClose={() => setNotification({ message: '', type: '' })} 
         />
     )}
-      {/* Job Header Section */}
-      <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="flex flex-col md:flex-row">
-          {/* Company Logo/Image Section */}
-          <div className="w-full md:w-1/4 bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center p-6">
-            {jobListing.company && (
-              <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                <span className="text-3xl font-bold text-indigo-600">
-                  {jobListing.company.charAt(0)}
-                </span>
-              </div>
-            )}
-          </div>
+        {/* Job Header Section */}
+        <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex flex-col md:flex-row">
+            {/* Company Logo/Image Section */}
+            
+              {jobListing.company && (
+                <div className="mt-6 w-26 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                  <img
+                    src={jobListing.companyLogo || "https://via.placeholder.com/80"} // Fallback if needed
+                    alt="Company Logo"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            
 
           {/* Job Title and Meta Section */}
           <div className="w-full md:w-3/4 p-6 space-y-2">
