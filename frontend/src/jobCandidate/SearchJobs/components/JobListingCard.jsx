@@ -222,7 +222,7 @@ const JobListingCard = ({
       <div className="flex items-start space-x-4">
         <div className="w-16 h-16 flex-shrink-0 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-md flex items-center justify-center">
           <img
-            src={companyLogo}
+            src={companyLogo || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
             alt="Company Logo"
             className="w-full h-full object-contain"
           />
