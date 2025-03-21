@@ -1,4 +1,5 @@
 import React from "react";
+import { parseJobDescription } from '../../../utils/parseJobDescription';
 
 /**
  * Displays job listing information to a candidate.
@@ -19,7 +20,6 @@ const JobListingDescription = ({ jobListing }) => {
     jobRole,
     location,
     company,
-    companySize,
     companyWebsite,
     experienceLevel,
     jobType,
@@ -34,7 +34,6 @@ const JobListingDescription = ({ jobListing }) => {
     recruiterProfileImage,
     status,
     closingTime,
-    views,
     isFeatured,
     isArchived,
   } = jobListing;
@@ -87,11 +86,6 @@ const JobListingDescription = ({ jobListing }) => {
       <div className="mb-2">
         <span className="font-semibold">Work Setup (Remote/On-Site):</span> {remote}
       </div>
-      {companySize && (
-        <div className="mb-2">
-          <span className="font-semibold">Company Size:</span> {companySize}
-        </div>
-      )}
       {companyWebsite && (
         <div className="mb-2">
           <span className="font-semibold">Company Website:</span>{" "}
@@ -109,7 +103,7 @@ const JobListingDescription = ({ jobListing }) => {
       {/* Description */}
       <div className="mb-4">
         <h3 className="font-semibold">Job Description:</h3>
-        <p className="mt-1 whitespace-pre-line">{description}</p>
+        <p className="mt-1 whitespace-pre-line">{parseJobDescription(description)}</p>
       </div>
 
       {/* Additional Requirements */}

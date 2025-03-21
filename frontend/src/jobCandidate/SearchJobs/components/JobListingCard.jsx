@@ -3,12 +3,14 @@ import { FaCheck } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const JobListingCard = ({ 
+  user: userProp,
   onJobSelect,
   jobListing,
   setShowModal,
   showNotification,
   setRenderingConversationKey,
-  setRenderingConversationData
+  setRenderingConversationData,
+  showOnlyApply = false,
 }) => {
   const {
     jobRole,
@@ -32,7 +34,7 @@ const JobListingCard = ({
   } = jobListing;
 
   const { state } = useLocation();
-  const user = state?.user;
+  const user = state?.user ?? userProp;
   const navigate = useNavigate();
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
@@ -201,6 +203,7 @@ const JobListingCard = ({
             </span>
           </p>
         </div>
+        {!showOnlyApply && (
         <div>
           <button
             className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300"
@@ -209,6 +212,7 @@ const JobListingCard = ({
             Chat with Recruiter
           </button>
         </div>
+        )}
       </div>
 
       <hr className="border-gray-300 my-4" />
@@ -258,12 +262,14 @@ const JobListingCard = ({
         </button>
 
         {/* Talk with Chatbot button */}
+        {!showOnlyApply && (
         <button
           className="px-4 py-2 font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg"
           onClick={handleInterviewChatClick}
         >
           Talk with Chatbot
         </button>
+        )}
 
         <span className="py-2 text-gray-800 font-semibold rounded cursor-default">
           Applied: {appliedCounter || 0}

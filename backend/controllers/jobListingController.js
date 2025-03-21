@@ -625,6 +625,7 @@ const getRecruiterListings = async (req, res) => {
     }
 };
 
+
 module.exports = {
     saveJobListing,
     getAllJobListings,
