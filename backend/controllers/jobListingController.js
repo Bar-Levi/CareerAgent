@@ -255,6 +255,7 @@ const saveJobListing = async (req, res) => {
             recruiterId,
             recruiterName,
             recruiterProfileImage,
+            companyLogo,
         } = normalizedBody;
         console.log("normalizedBody: ", normalizedBody);
         console.log("!experienceLevel: ", !experienceLevel);
@@ -291,6 +292,7 @@ const saveJobListing = async (req, res) => {
             recruiterId,
             recruiterName,
             recruiterProfileImage,
+            companyLogo,
         });
 
         // Save the job listing to the database

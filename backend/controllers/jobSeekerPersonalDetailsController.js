@@ -1,4 +1,4 @@
-// backend/controllers/userController.js
+
 const bcrypt = require('bcryptjs');
 const CryptoJS = require('crypto-js');
 const cloudinary = require('../config/cloudinary');
@@ -9,7 +9,6 @@ const jobListingModel = require('../models/jobListingModel');
 const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
-
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
@@ -135,7 +134,7 @@ const changePic = async (req, res) => {
       let currentUrl;
       if (picType === "company") {
         currentUrl = user.companyLogo;
-        user.companyLogo = defaultCompanyLogo; // or same default if desired
+        user.companyLogo = defaultCompanyLogo; 
       } else {
         // "profile"
         currentUrl = user.profilePic;
