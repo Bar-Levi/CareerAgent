@@ -322,7 +322,7 @@ const JobListingPage = () => {
         />
     )}
         {/* Job Header Section */}
-        <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="pl-4 mb-8 bg-white rounded-2xl shadow-sm border-2 border-gray-100 overflow-hidden">
           <div className="flex flex-col md:flex-row">
             {/* Company Logo/Image Section */}
             
@@ -339,17 +339,17 @@ const JobListingPage = () => {
 
           {/* Job Title and Meta Section */}
           <div className="w-full md:w-3/4 p-6 space-y-2">
-            <div className="flex flex-col-reverse md:flex-row md:items-center justify-between mb-2">
+            <div className="flex flex-col items-start mb-2">
               <h1 className="text-3xl font-bold text-gray-900">{jobListing.jobRole}</h1>
-              <div className="mb-2 md:mb-0">
-              <span
-                className={`inline-flex items-center px-3 py-1 text-sm font-medium ${getStatusClasses(
-                  jobListing.status
-                )} rounded-full`}
-              >
-                <span className={`w-2 h-2 rounded-full mr-2 bg-current`} />
-                {jobListing.status || 'Active'}
-              </span>
+              <div className="mt-2">
+                <span
+                  className={`inline-flex items-center px-3 py-1 text-sm font-medium ${getStatusClasses(
+                    jobListing.status
+                  )} rounded-full`}
+                >
+                  <span className="w-2 h-2 rounded-full mr-2 bg-current" />
+                  {jobListing.status || 'Active'}
+                </span>
               </div>
             </div>
 
@@ -487,7 +487,7 @@ const JobListingPage = () => {
         {/* Left Column - Job Details */}
         <div className="lg:col-span-8 space-y-6">
           {/* Job Description Section */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 overflow-hidden">
             <div className="border-b border-gray-100 p-6">
               <h2 className="text-xl font-bold text-gray-900">Job Description</h2>
             </div>
@@ -497,7 +497,7 @@ const JobListingPage = () => {
           </div>
 
           {/* Requirements Section */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 overflow-hidden">
             <div className="border-b border-gray-100 p-6">
               <h2 className="text-xl font-bold text-gray-900">Requirements</h2>
             </div>
@@ -725,7 +725,7 @@ const JobListingPage = () => {
           </div>
 
           {/* Recruiter Info */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 overflow-hidden">
             <div className="p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Posted by</h2>
 
