@@ -11,6 +11,7 @@ const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 
 /**
  * Helper function to extract Cloudinary public_id from the secure_url.
@@ -98,68 +99,29 @@ const changePassword = async (req, res) => {
 
 
 /**
- * Controller to change a user's profile picture.
+ * Single endpoint to handle both:
+ * 1. POST /api/personal/change-pic  (for uploading new profile/company pic)
+ *    - expects FormData: { file, email, picType } 
+ * 2. DELETE /api/personal/change-pic (for deleting a current pic)
+ *    - expects query params: ?email=<userEmail>&picType=<profile|company>
  */
-const changeProfilePic = async (req, res) => {
+const changePic = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded." });
-    }
-    let user = await jobSeekerModel.findOne({ email });
-    if (!user) {
-      user = await recruiterModel.findOne({ email });
-    }
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-    if (user.profilePic && user.profilePic !== defaultProfilePic) {
-      const publicId = extractPublicId(user.profilePic);
-      if (publicId) {
-        try {
-          await deleteFromCloudinary(publicId);
-        } catch (error) {
-          console.error("Failed to delete old image from Cloudinary:", error);
-        }
-      }
-    }
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: "profile_pictures" },
-      async (error, result) => {
-        if (error) {
-          console.error("Cloudinary upload error:", error);
-          return res.status(500).json({ message: "Failed to upload file." });
-        }
-        user.profilePic = result.secure_url;
-        await user.save();
-        if (user.role === "Recruiter") {
-          await jobListingModel.updateMany(
-            { recruiterId: user._id },
-            { recruiterProfileImage: result.secure_url }
-          );
-        }
-        return res.status(200).json({ message: "Profile picture updated successfully.", profilePic: result.secure_url });
-      }
-    );
-    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
-  } catch (error) {
-    console.error("Error updating profile picture:", error);
-    return res.status(500).json({ message: "Server error." });
-  }
-};
+    // For both POST + DELETE, we need email + picType
+    const method = req.method; // POST or DELETE
+    const email = method === "POST" ? req.body.email : req.query.email;
+    const picType = method === "POST" ? req.body.picType : req.query.picType;
 
-/**
- * Controller to delete a user's profile picture.
- */
-const deleteProfilePic = async (req, res) => {
-  try {
-    const { email } = req.query;
     if (!email) {
       return res.status(400).json({ message: "Email is required." });
     }
+    if (!picType) {
+      return res
+        .status(400)
+        .json({ message: "picType (profile or company) is required." });
+    }
+
+    // Find user in either jobSeeker or recruiter
     let user = await jobSeekerModel.findOne({ email });
     if (!user) {
       user = await recruiterModel.findOne({ email });
@@ -167,27 +129,107 @@ const deleteProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    if (user.profilePic && user.profilePic !== defaultProfilePic) {
-      const publicId = extractPublicId(user.profilePic);
-      if (publicId) {
-        try {
-          await deleteFromCloudinary(publicId);
-        } catch (error) {
-          console.error("Failed to delete old image from Cloudinary:", error);
+
+    // If method === "DELETE", remove the image
+    if (method === "DELETE") {
+      let currentUrl;
+      if (picType === "company") {
+        currentUrl = user.companyLogo;
+        user.companyLogo = defaultCompanyLogo; // or same default if desired
+      } else {
+        // "profile"
+        currentUrl = user.profilePic;
+        user.profilePic = defaultProfilePic;
+      }
+
+      // If there's an existing image that isn't default, remove from Cloudinary
+      const isDefault =
+        !currentUrl ||
+        currentUrl === defaultCompanyLogo ||
+        currentUrl === defaultProfilePic;
+      if (!isDefault) {
+        const publicId = extractPublicId(currentUrl);
+        if (publicId) {
+          try {
+            await deleteFromCloudinary(publicId);
+          } catch (err) {
+            console.error("Failed to delete old image from Cloudinary:", err);
+          }
         }
       }
+      await user.save();
+      return res
+        .status(200)
+        .json({ message: `${picType} picture deleted successfully.` });
     }
-    user.profilePic = defaultProfilePic;
-    await user.save();
-    if (user.role === "Recruiter") {
-      await jobListingModel.updateMany(
-        { recruiterId: user._id },
-        { recruiterProfileImage: defaultProfilePic }
+
+    // If method === "POST", handle upload
+    if (method === "POST") {
+      // Confirm we actually have a file
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded." });
+      }
+
+      // Remove old image from Cloudinary if not default
+      let oldImage;
+      if (picType === "company") {
+        oldImage = user.companyLogo;
+      } else {
+        oldImage = user.profilePic;
+      }
+      const isDefault =
+        !oldImage ||
+        oldImage === defaultCompanyLogo ||
+        oldImage === defaultProfilePic;
+      if (!isDefault) {
+        const publicId = extractPublicId(oldImage);
+        if (publicId) {
+          try {
+            await deleteFromCloudinary(publicId);
+          } catch (err) {
+            console.error("Failed to delete old image from Cloudinary:", err);
+          }
+        }
+      }
+
+      // Upload the new file to Cloudinary
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: picType === "company" ? "companyLogos" : "profile_pictures" },
+        async (error, result) => {
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            return res.status(500).json({ message: "Failed to upload file." });
+          }
+
+          // Update the correct field
+          if (picType === "company") {
+            user.companyLogo = result.secure_url;
+          } else {
+            user.profilePic = result.secure_url;
+
+            // If user is Recruiter, update job listings to reflect the new pic
+            if (user.role === "Recruiter") {
+              await jobListingModel.updateMany(
+                { recruiterId: user._id },
+                { recruiterProfileImage: result.secure_url }
+              );
+            }
+          }
+          await user.save();
+
+          // Return the updated URLs so front-end can update state
+          return res.status(200).json({
+            message: `${picType} picture updated successfully.`,
+            profilePic: user.profilePic,
+            companyLogo: user.companyLogo,
+          });
+        }
       );
+      // Pipe the file data from memory to Cloudinary
+      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
     }
-    return res.status(200).json({ message: "Profile picture deleted successfully.", profilePic: defaultProfilePic });
   } catch (error) {
-    console.error("Error deleting profile picture:", error);
+    console.error("Error in changePic:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
@@ -508,8 +550,7 @@ const subscribeOrUnsubscribe = async (req, res) => {
 
 module.exports = {
   changePassword,
-  changeProfilePic,
-  deleteProfilePic,
+  changePic,
   getNameAndProfilePic,
   getRelevancePoints,
   setRelevancePoints,
