@@ -134,7 +134,7 @@ const changePic = async (req, res) => {
       let currentUrl;
       if (picType === "company") {
         currentUrl = user.companyLogo;
-        user.companyLogo = defaultCompanyLogo; // or same default if desired
+        user.companyLogo = defaultCompanyLogo; 
       } else {
         // "profile"
         currentUrl = user.profilePic;

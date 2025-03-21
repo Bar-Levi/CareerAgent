@@ -23,6 +23,7 @@ const JobListingCard = ({
     companyWebsite,
     recruiterName,
     recruiterProfileImage,
+    companyLogo,
     applicants,
     education,
     skills,
@@ -220,12 +221,18 @@ const JobListingCard = ({
       {/* Middle Section: Job Details */}
       <div className="flex items-start space-x-4">
         <div className="w-16 h-16 flex-shrink-0 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-md flex items-center justify-center">
-          <span className="text-xl font-bold text-gray-600">Logo</span>
+          <img
+            src={companyLogo}
+            alt="Company Logo"
+            className="w-full h-full object-contain"
+          />
         </div>
         <div className="flex-grow">
           <h3 className="text-xl font-bold text-gray-800">{jobRole || "Unknown Role"}</h3>
           <p className="text-sm text-gray-600 mt-1">
-            {company && location ? `${company} - ${location}` : company || location || "Unknown Company/Location"}
+            {company && location
+              ? `${company} - ${location}`
+              : company || location || "Unknown Company/Location"}
           </p>
           <p className="text-sm text-gray-500 mt-2">
             {experienceLevel && `Experience: ${experienceLevel}`}
@@ -237,6 +244,7 @@ const JobListingCard = ({
           )}
         </div>
       </div>
+
 
       <hr className="border-gray-300 my-4" />
 
