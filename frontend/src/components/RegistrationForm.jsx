@@ -4,6 +4,8 @@ import Notification from './Notification';
 import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
 import OptionalDetailsRecruiterForm from './OptionalDetailsRecruiterForm';
 import Swal from 'sweetalert2';
+import { debounce } from 'lodash';
+import { isValidEmail } from '../utils/validateEmail';
 import CryptoJS from 'crypto-js';
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
@@ -34,6 +36,23 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 4000);
     };
+
+    const checkEmailExists = debounce(async (email) => {
+        try {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+          });
+          const data = await response.json();
+          if (data.exists) {
+            showNotification('error', 'Email is already registered.');
+          }
+        } catch (err) {
+          console.error('Error checking email:', err);
+        }
+      }, 500); // 500ms debounce delay
+      
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -340,16 +359,20 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             required
                         />
                         <input
-                            data-cy="registration-email"
-                            type="email"
-                            name="email"
-                            placeholder="Email *"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                            required
+                        data-cy="registration-email"
+                        type="email"
+                        name="email"
+                        placeholder="Email *"
+                        value={formData.email}
+                        onChange={(e) => {
+                            handleChange(e);
+                            if (isValidEmail(e.target.value)) {
+                                checkEmailExists(e.target.value);
+                            }
+                        }}
+                        className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                        required
                         />
-
                         {formData.role === 'Recruiter' && (
                             <>
                                 <input
