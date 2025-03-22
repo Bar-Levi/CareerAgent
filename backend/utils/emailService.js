@@ -171,7 +171,7 @@ const sendJobNotificationEmail = async (
                 <a href="${process.env.FRONTEND_URL}/unsubscribe" style="color: #2c2c54; text-decoration: none;">click here</a>.
               </p>
               <p style="font-size: 12px; color: #777;">
-                <a href="${process.env.FRONTEND_URL}/joblisting/${jobListing._id}?email=${encodeURIComponent(email)}" target="_blank">View Job Listing</a>
+                <a href="${process.env.FRONTEND_URL}/joblisting/${jobListing._id}?email=${encodeURIComponent(email)}" target="_blank">View Job Listing for Easy Apply</a>
               </p>
             </div>
             <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px;">
