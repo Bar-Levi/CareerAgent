@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Notification from './Notification';
 import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
@@ -37,21 +37,32 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         setTimeout(() => setNotification(null), 4000);
     };
 
-    const checkEmailExists = debounce(async (email) => {
+    const checkEmailExists = useCallback(
+    debounce(async (email) => {
         try {
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`, {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
-          });
-          const data = await response.json();
-          if (data.exists) {
+        });
+        const data = await response.json();
+        if (data.exists) {
             showNotification('error', 'Email is already registered.');
-          }
-        } catch (err) {
-          console.error('Error checking email:', err);
         }
-      }, 500); // 500ms debounce delay
+        } catch (err) {
+        console.error('Error checking email:', err);
+        }
+    }, 500),
+    [] // empty deps to memoize once
+    );
+
+    // Cleanup debounce on unmount
+    useEffect(() => {
+        return () => {
+        checkEmailExists.cancel(); // prevents calling on unmounted component
+        };
+    }, [checkEmailExists]);
+
       
 
     const handleChange = (e) => {
