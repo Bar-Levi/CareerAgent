@@ -322,11 +322,9 @@ const requestPasswordReset = async (req, res) => {
     }
     
     await user.save();
-    console.log('here6');
+
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    console.log('here7');
     await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
-    console.log('here8');
 
     res.status(200).json({ 
       message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox."
@@ -425,8 +423,6 @@ const uploadCV = async (req, res) => {
       const cvPath = req.body.cv;
       const analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
   
-      console.log("analyzed_cv_content: " + analyzed_cv_content);
-      console.dir(analyzed_cv_content, {depth: null});
       const user = await JobSeeker.findById(id);
       if (!user) {
         return res.status(404).json({ message: "User not found." });
@@ -516,9 +512,8 @@ const deleteNotification = async (req, res) => {
 
 const markAsReadNotification = async (req, res) => {
   try {
-    console.log("Marking notification as read");
     const { userId, notificationId } = req.params;
-    console.log("Data: ", userId, notificationId);
+    
     let user = await JobSeeker.findById(userId);
     if (!user) {
       user = await Recruiter.findById(userId);
@@ -577,16 +572,16 @@ const deleteAllNotifications = async (req, res) => {
 const checkEmail = async (req, res) => {
   const { email } = req.body;
   try {
-    const jobSeeker = await JobSeeker.findOne({ email });
-    const recruiter = await Recruiter.findOne({ email });
-    if (jobSeeker || recruiter) {
-      return res.status(200).json({ exists: true });
-    }
-    return res.status(200).json({ exists: false });
+    const [jobSeeker, recruiter] = await Promise.all([
+      JobSeeker.findOne({ email }),
+      Recruiter.findOne({ email })
+    ]);
+    res.status(200).json({ exists: Boolean(jobSeeker || recruiter) });
   } catch (error) {
-    return res.status(500).json({ message: 'Server error while checking email.' });
+    res.status(500).json({ message: 'Server error while checking email.' });
   }
 };
+
 
 module.exports = {
     registerRecruiter,
