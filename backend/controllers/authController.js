@@ -574,6 +574,20 @@ const deleteAllNotifications = async (req, res) => {
   }
 };
 
+const checkEmail = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const jobSeeker = await JobSeeker.findOne({ email });
+    const recruiter = await Recruiter.findOne({ email });
+    if (jobSeeker || recruiter) {
+      return res.status(200).json({ exists: true });
+    }
+    return res.status(200).json({ exists: false });
+  } catch (error) {
+    return res.status(500).json({ message: 'Server error while checking email.' });
+  }
+};
+
 module.exports = {
     registerRecruiter,
     registerJobSeeker,
@@ -589,5 +603,6 @@ module.exports = {
     checkBlacklist,
     deleteNotification,
     deleteAllNotifications,
-    markAsReadNotification
+    markAsReadNotification,
+    checkEmail,
 };
