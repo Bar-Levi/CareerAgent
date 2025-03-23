@@ -209,15 +209,21 @@ e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience 
                 <SpeechToText onTextChange={handleSpeechToText} showNotification={showNotification} />
             </div>
             
-            <div className="flex space-x-4">
+            <div className="flex justify-center">
                 <button
                     onClick={handlePost}
                     disabled={isPosting}
-                    className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${
-                        isPosting
-                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                            : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md hover:shadow-lg"
-                    }`}
+                    className={`
+                        relative w-full max-w-md py-3.5 px-6 rounded-xl 
+                        font-sans text-sm font-semibold tracking-wide
+                        transform transition-all duration-300
+                        ${isPosting 
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
+                            : "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"}
+                        after:content-[''] after:absolute after:inset-0 after:bg-white after:rounded-xl after:opacity-0 after:transition-opacity 
+                        after:duration-300 hover:after:opacity-10 active:after:opacity-20
+                        border border-transparent hover:border-indigo-400 
+                        shadow-md`}
                 >
                     {isPosting ? (
                         <div className="flex items-center justify-center">
