@@ -10,7 +10,7 @@ const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
-const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1742729281/defaultCompanyLogo_thrzbt.png";
 
 /**
  * Helper function to extract Cloudinary public_id from the secure_url.
@@ -120,7 +120,7 @@ const changePic = async (req, res) => {
         .json({ message: "picType (profile or company) is required." });
     }
 
-    // Find user in either jobSeeker or recruiter
+    // Find user in either jobSeeker or recruiter collections
     let user = await jobSeekerModel.findOne({ email });
     if (!user) {
       user = await recruiterModel.findOne({ email });
@@ -129,12 +129,12 @@ const changePic = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // If method === "DELETE", remove the image
+    // DELETE method: Remove the image and update job listings accordingly
     if (method === "DELETE") {
       let currentUrl;
       if (picType === "company") {
         currentUrl = user.companyLogo;
-        user.companyLogo = defaultCompanyLogo; 
+        user.companyLogo = defaultCompanyLogo;
       } else {
         // "profile"
         currentUrl = user.profilePic;
@@ -156,20 +156,38 @@ const changePic = async (req, res) => {
           }
         }
       }
+
+      // Update job listings if the user is a Recruiter
+      if (user.role === "Recruiter") {
+        if (picType === "company") {
+          await jobListingModel.updateMany(
+            { recruiterId: user._id },
+            { companyLogo: defaultCompanyLogo }
+          );
+        } else {
+          await jobListingModel.updateMany(
+            { recruiterId: user._id },
+            { recruiterProfileImage: defaultProfilePic }
+          );
+        }
+      }
+
       await user.save();
-      return res
-        .status(200)
-        .json({ message: `${picType} picture deleted successfully.` });
+      return res.status(200).json({
+        message: `${picType} picture deleted successfully.`,
+        profilePic: user.profilePic,
+        companyLogo: user.companyLogo,
+      });
     }
 
-    // If method === "POST", handle upload
+    // POST method: Handle file upload
     if (method === "POST") {
-      // Confirm we actually have a file
+      // Confirm a file is uploaded
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded." });
       }
 
-      // Remove old image from Cloudinary if not default
+      // Remove old image from Cloudinary if it's not default
       let oldImage;
       if (picType === "company") {
         oldImage = user.companyLogo;
@@ -200,13 +218,17 @@ const changePic = async (req, res) => {
             return res.status(500).json({ message: "Failed to upload file." });
           }
 
-          // Update the correct field
+          // Update the correct field and update job listings if needed
           if (picType === "company") {
             user.companyLogo = result.secure_url;
+            if (user.role === "Recruiter") {
+              await jobListingModel.updateMany(
+                { recruiterId: user._id },
+                { companyLogo: result.secure_url }
+              );
+            }
           } else {
             user.profilePic = result.secure_url;
-
-            // If user is Recruiter, update job listings to reflect the new pic
             if (user.role === "Recruiter") {
               await jobListingModel.updateMany(
                 { recruiterId: user._id },
@@ -216,7 +238,7 @@ const changePic = async (req, res) => {
           }
           await user.save();
 
-          // Return the updated URLs so front-end can update state
+          // Return the updated URLs so the front-end can update state
           return res.status(200).json({
             message: `${picType} picture updated successfully.`,
             profilePic: user.profilePic,
@@ -232,6 +254,7 @@ const changePic = async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 };
+
 
 /**
  * Controller to get the current profile picture URL and name for the user.
