@@ -59,7 +59,7 @@ const recruiterSchema = new mongoose.Schema({
     companyLogo: {
         type: String,
         required: false,
-        default: 'https://res.cloudinary.com/careeragent/image/upload/v1742729281/defaultCompanyLogo_thrzbt.png',
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png',
     },
     companyName: {
         type: String,

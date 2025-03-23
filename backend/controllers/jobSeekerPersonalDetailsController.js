@@ -10,7 +10,7 @@ const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
-const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1742729281/defaultCompanyLogo_thrzbt.png";
+const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png";
 
 /**
  * Helper function to extract Cloudinary public_id from the secure_url.

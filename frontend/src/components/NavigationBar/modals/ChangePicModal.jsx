@@ -34,6 +34,8 @@ const getCurrentImage = (user, picType) => {
 const showChangePicModal = async (user, navigate, location, picType = "profile") => {
   // Decide which property we are modifying
   const isCompanyLogo = picType === "company";
+  const DEFAULT_IMAGE = isCompanyLogo ? "https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png" : "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+  
   const modalTitle = isCompanyLogo ? "Change Company Logo" : "Change Profile Picture";
 
   // Single Endpoint: /api/personal/change-pic
