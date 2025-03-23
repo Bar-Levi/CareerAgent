@@ -74,6 +74,7 @@ const ChatWindow = ({ user, title, currentOpenConversationId}) => {
       console.log("data: ", data);
       // Handle response: update the state with the messages received
       setMessages(data.conversation.messages || []);
+      setProfilePics(data.pics);
     } catch (error) {
       // Handle error: log it and update an error state
       console.error('Error loading messages:', error);
