@@ -227,7 +227,7 @@ const MyJobListings = ({
             {jobListings.length > 0 && (
               <button
                 onClick={() => setShowConfirmDialog(true)}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 text-sm font-medium"
+                className="px-4 py-2 bg-red-600 text-red rounded-lg hover:bg-red-700 transition duration-150 text-sm font-medium"
               >
                 Remove All
               </button>
@@ -325,7 +325,7 @@ const MyJobListings = ({
                 <div className="p-4 md:p-5">
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      <h3 className="text-lg font-semibold text-black mb-2">
                         {listing.jobRole}
                       </h3>
                       <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
