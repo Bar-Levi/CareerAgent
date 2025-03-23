@@ -47,14 +47,19 @@ const recruiterSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['recruiter'],
+        enum: ['Recruiter'],
         required: [true, 'Role is required'],
-        default: 'recruiter',
+        default: 'Recruiter',
     },
     profilePic: {
         type: String,
         required: false,
         default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
+    },
+    companyLogo: {
+        type: String,
+        required: false,
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png',
     },
     companyName: {
         type: String,
@@ -104,6 +109,10 @@ const recruiterSchema = new mongoose.Schema({
     },
     pin: {
         type: String,
+    },
+    isSubscribed: {
+        type: Boolean,
+        default: true,
     },
     notifications: [notificationSchema],
 });

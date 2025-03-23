@@ -9,7 +9,7 @@ import Botpress from "../../../botpress/Botpress";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
 import { useLocation } from "react-router-dom";
 
-const JobCandidateDashboard = () => {
+const JobCandidateDashboard = ({onlineUsers}) => {
   const [notification, setNotification] = useState(null);
   const { state } = useLocation();
   

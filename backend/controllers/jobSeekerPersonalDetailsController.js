@@ -1,4 +1,4 @@
-// backend/controllers/userController.js
+
 const bcrypt = require('bcryptjs');
 const CryptoJS = require('crypto-js');
 const cloudinary = require('../config/cloudinary');
@@ -9,8 +9,8 @@ const jobListingModel = require('../models/jobListingModel');
 const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
-
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
+const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png";
 
 /**
  * Helper function to extract Cloudinary public_id from the secure_url.
@@ -98,17 +98,29 @@ const changePassword = async (req, res) => {
 
 
 /**
- * Controller to change a user's profile picture.
+ * Single endpoint to handle both:
+ * 1. POST /api/personal/change-pic  (for uploading new profile/company pic)
+ *    - expects FormData: { file, email, picType } 
+ * 2. DELETE /api/personal/change-pic (for deleting a current pic)
+ *    - expects query params: ?email=<userEmail>&picType=<profile|company>
  */
-const changeProfilePic = async (req, res) => {
+const changePic = async (req, res) => {
   try {
-    const { email } = req.body;
+    // For both POST + DELETE, we need email + picType
+    const method = req.method; // POST or DELETE
+    const email = method === "POST" ? req.body.email : req.query.email;
+    const picType = method === "POST" ? req.body.picType : req.query.picType;
+
     if (!email) {
       return res.status(400).json({ message: "Email is required." });
     }
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded." });
+    if (!picType) {
+      return res
+        .status(400)
+        .json({ message: "picType (profile or company) is required." });
     }
+
+    // Find user in either jobSeeker or recruiter collections
     let user = await jobSeekerModel.findOne({ email });
     if (!user) {
       user = await recruiterModel.findOne({ email });
@@ -116,81 +128,133 @@ const changeProfilePic = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    if (user.profilePic && user.profilePic !== defaultProfilePic) {
-      const publicId = extractPublicId(user.profilePic);
-      if (publicId) {
-        try {
-          await deleteFromCloudinary(publicId);
-        } catch (error) {
-          console.error("Failed to delete old image from Cloudinary:", error);
+
+    // DELETE method: Remove the image and update job listings accordingly
+    if (method === "DELETE") {
+      let currentUrl;
+      if (picType === "company") {
+        currentUrl = user.companyLogo;
+        user.companyLogo = defaultCompanyLogo;
+      } else {
+        // "profile"
+        currentUrl = user.profilePic;
+        user.profilePic = defaultProfilePic;
+      }
+
+      // If there's an existing image that isn't default, remove from Cloudinary
+      const isDefault =
+        !currentUrl ||
+        currentUrl === defaultCompanyLogo ||
+        currentUrl === defaultProfilePic;
+      if (!isDefault) {
+        const publicId = extractPublicId(currentUrl);
+        if (publicId) {
+          try {
+            await deleteFromCloudinary(publicId);
+          } catch (err) {
+            console.error("Failed to delete old image from Cloudinary:", err);
+          }
         }
       }
-    }
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: "profile_pictures" },
-      async (error, result) => {
-        if (error) {
-          console.error("Cloudinary upload error:", error);
-          return res.status(500).json({ message: "Failed to upload file." });
-        }
-        user.profilePic = result.secure_url;
-        await user.save();
-        if (user.role === "recruiter") {
+
+      // Update job listings if the user is a Recruiter
+      if (user.role === "Recruiter") {
+        if (picType === "company") {
           await jobListingModel.updateMany(
             { recruiterId: user._id },
-            { recruiterProfileImage: result.secure_url }
+            { companyLogo: defaultCompanyLogo }
+          );
+        } else {
+          await jobListingModel.updateMany(
+            { recruiterId: user._id },
+            { recruiterProfileImage: defaultProfilePic }
           );
         }
-        return res.status(200).json({ message: "Profile picture updated successfully.", profilePic: result.secure_url });
       }
-    );
-    streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+
+      await user.save();
+      return res.status(200).json({
+        message: `${picType} picture deleted successfully.`,
+        profilePic: user.profilePic,
+        companyLogo: user.companyLogo,
+      });
+    }
+
+    // POST method: Handle file upload
+    if (method === "POST") {
+      // Confirm a file is uploaded
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded." });
+      }
+
+      // Remove old image from Cloudinary if it's not default
+      let oldImage;
+      if (picType === "company") {
+        oldImage = user.companyLogo;
+      } else {
+        oldImage = user.profilePic;
+      }
+      const isDefault =
+        !oldImage ||
+        oldImage === defaultCompanyLogo ||
+        oldImage === defaultProfilePic;
+      if (!isDefault) {
+        const publicId = extractPublicId(oldImage);
+        if (publicId) {
+          try {
+            await deleteFromCloudinary(publicId);
+          } catch (err) {
+            console.error("Failed to delete old image from Cloudinary:", err);
+          }
+        }
+      }
+
+      // Upload the new file to Cloudinary
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: picType === "company" ? "companyLogos" : "profile_pictures" },
+        async (error, result) => {
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            return res.status(500).json({ message: "Failed to upload file." });
+          }
+
+          // Update the correct field and update job listings if needed
+          if (picType === "company") {
+            user.companyLogo = result.secure_url;
+            if (user.role === "Recruiter") {
+              await jobListingModel.updateMany(
+                { recruiterId: user._id },
+                { companyLogo: result.secure_url }
+              );
+            }
+          } else {
+            user.profilePic = result.secure_url;
+            if (user.role === "Recruiter") {
+              await jobListingModel.updateMany(
+                { recruiterId: user._id },
+                { recruiterProfileImage: result.secure_url }
+              );
+            }
+          }
+          await user.save();
+
+          // Return the updated URLs so the front-end can update state
+          return res.status(200).json({
+            message: `${picType} picture updated successfully.`,
+            profilePic: user.profilePic,
+            companyLogo: user.companyLogo,
+          });
+        }
+      );
+      // Pipe the file data from memory to Cloudinary
+      streamifier.createReadStream(req.file.buffer).pipe(uploadStream);
+    }
   } catch (error) {
-    console.error("Error updating profile picture:", error);
+    console.error("Error in changePic:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
 
-/**
- * Controller to delete a user's profile picture.
- */
-const deleteProfilePic = async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-    let user = await jobSeekerModel.findOne({ email });
-    if (!user) {
-      user = await recruiterModel.findOne({ email });
-    }
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-    if (user.profilePic && user.profilePic !== defaultProfilePic) {
-      const publicId = extractPublicId(user.profilePic);
-      if (publicId) {
-        try {
-          await deleteFromCloudinary(publicId);
-        } catch (error) {
-          console.error("Failed to delete old image from Cloudinary:", error);
-        }
-      }
-    }
-    user.profilePic = defaultProfilePic;
-    await user.save();
-    if (user.role === "recruiter") {
-      await jobListingModel.updateMany(
-        { recruiterId: user._id },
-        { recruiterProfileImage: defaultProfilePic }
-      );
-    }
-    return res.status(200).json({ message: "Profile picture deleted successfully.", profilePic: defaultProfilePic });
-  } catch (error) {
-    console.error("Error deleting profile picture:", error);
-    return res.status(500).json({ message: "Server error." });
-  }
-};
 
 /**
  * Controller to get the current profile picture URL and name for the user.
@@ -218,52 +282,6 @@ const getNameAndProfilePic = async (req, res) => {
     return res.status(200).json({ profilePic: user.profilePic, name: user.fullName });
   } catch (error) {
     console.error("Error fetching profile picture:", error);
-    return res.status(500).json({ message: "Server error." });
-  }
-};
-
-/**
- * Controller to get personal details for a jobseeker.
- */
-const getJobSeekerPersonalDetails = async (req, res) => {
-  try {
-    const { email, type } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-    const user = await jobSeekerModel.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "Jobseeker not found." });
-    }
-    if (type) {
-      let detail;
-      switch (type.toLowerCase()) {
-        case "github":
-          detail = user.githubUrl;
-          break;
-        case "linkedin":
-          detail = user.linkedinUrl;
-          break;
-        case "phone":
-          detail = user.phone;
-          break;
-        case "dob":
-          detail = user.dateOfBirth;
-          break;
-        default:
-          return res.status(400).json({ message: "Invalid detail type. Valid types: github, linkedin, phone, dob." });
-      }
-      return res.status(200).json({ [type]: detail });
-    } else {
-      return res.status(200).json({
-        github: user.githubUrl,
-        linkedin: user.linkedinUrl,
-        phone: user.phone,
-        dob: user.dateOfBirth
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching personal details:", error);
     return res.status(500).json({ message: "Server error." });
   }
 };
@@ -371,7 +389,7 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
 };
 
 /* -----------------------------------------------------------------------------------------------
-  CV Endpoints (get and update CV with analyzed_cv_content, delete CV with analyzed_cv_content)
+  CV Endpoints (update CV with analyzed_cv_content, delete CV with analyzed_cv_content)
 ------------------------------------------------------------------------------------------------ */
 
 // Set up multer for CV upload using memory storage so we can stream the file
@@ -384,21 +402,6 @@ const cvFileFilter = (req, file, cb) => {
   }
 };
 const uploadCV = multer({ storage: cvStorage, fileFilter: cvFileFilter });
-
-// Retrieves the current CV link for the jobseeker.
-const getCV = async (req, res) => {
-  const { email } = req.query;
-  try {
-    const jobSeeker = await jobSeekerModel.findOne({ email });
-    if (!jobSeeker) {
-      return res.status(404).json({ message: "Job seeker not found" });
-    }
-    res.status(200).json({ cv: jobSeeker.cv || "" });
-  } catch (error) {
-    console.error("Error fetching CV:", error);
-    res.status(500).json({ message: "Failed to get CV" });
-  }
-};
 
 const getRelevancePoints = async (req, res) => {
   const { email } = req.query;
@@ -497,15 +500,13 @@ const updateCV = async (req, res) => {
           try {
             jobSeeker.analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
             jobSeeker.analyzed_cv_content.education.forEach((edu) => {
-              edu.degree = checkAndInsertIn(edu.degree);
+            if(edu.degree) edu.degree = checkAndInsertIn(edu.degree);
             });
           } catch (err) {
             console.error("Error parsing analyzed_cv_content:", err);
-            jobSeeker.analyzed_cv_content = "Analysis not available";
           }
-        } else {
-          jobSeeker.analyzed_cv_content = "Analysis not provided";
         }
+        
         await jobSeeker.save();
         return res.status(200).json({ message: "CV updated successfully", cv: jobSeeker.cv });
       }
@@ -537,20 +538,51 @@ const deleteCV = async (req, res) => {
   }
 };
 
+const subscribeOrUnsubscribe = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // Find the user in JobSeeker or Recruiter model
+    let user = await jobSeekerModel.findOne({ email });
+    if (!user) {
+      user = await recruiterModel.findOne({ email });
+    }
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Toggle the isSubscribed field
+    user.isSubscribed = !user.isSubscribed;
+    await user.save();
+
+    // Prepare an appropriate message based on new subscription status
+    const statusMessage = user.isSubscribed
+      ? "Successfully subscribed to notifications."
+      : "Successfully unsubscribed from notifications.";
+
+    res.status(200).json({ message: statusMessage });
+  } catch (error) {
+    console.error("Error in subscribeOrUnsubscribe controller:", error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
+
 module.exports = {
   changePassword,
-  changeProfilePic,
-  deleteProfilePic,
+  changePic,
   getNameAndProfilePic,
   getRelevancePoints,
   setRelevancePoints,
   getMinPointsForUpdate,
   setMinPointsForUpdate,
-  getJobSeekerPersonalDetails,
   updateJobSeekerPersonalDetails,
   resetJobSeekerPersonalDetails,
-  getCV,
   updateCV,
   deleteCV,
   uploadCVMiddleware: uploadCV.single("cv"),
+  subscribeOrUnsubscribe,
+
 };

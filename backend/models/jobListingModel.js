@@ -85,6 +85,11 @@ const jobListingSchema = new mongoose.Schema({
         required: true,
         ref: 'Recruiter'
     },
+    companyLogo: {
+        type: String,
+        required: true,
+        ref: 'Recruiter'
+    },
     applicants: [
         {
             applicantId: {

@@ -1,33 +1,5 @@
 const Recruiter = require('../models/recruiterModel');
 
-// GET function: Retrieve recruiter personal details
-const getRecruiterPersonalDetails = async (req, res) => {
-  try {
-    const { email, type } = req.query;
-    if (!email) {
-      return res.status(400).json({ message: "Email is required." });
-    }
-    if (!type) {
-      return res.status(400).json({ message: "Type parameter is required." });
-    }
-    const recruiter = await Recruiter.findOne({ email });
-    if (!recruiter) {
-      return res.status(404).json({ message: "Recruiter not found." });
-    }
-    switch (type.toLowerCase()) {
-      case "dob":
-        return res.status(200).json({ dob: recruiter.dateOfBirth });
-      case "companywebsite":
-        return res.status(200).json({ companyWebsite: recruiter.companyWebsite });
-      default:
-        return res.status(400).json({ message: "Invalid detail type. Valid types: dob, companyWebsite." });
-    }
-  } catch (error) {
-    console.error("Error fetching recruiter personal details:", error);
-    return res.status(500).json({ message: "Server error." });
-  }
-};
-
 // POST function: Update recruiter personal details (dob and companyWebsite)
 const updateRecruiterPersonalDetails = async (req, res) => {
   try {
@@ -35,10 +7,12 @@ const updateRecruiterPersonalDetails = async (req, res) => {
     if (!email || !type || value === undefined) {
       return res.status(400).json({ message: "Email, type, and value are required." });
     }
+
     const recruiter = await Recruiter.findOne({ email });
     if (!recruiter) {
       return res.status(404).json({ message: "Recruiter not found." });
     }
+
     switch (type.toLowerCase()) {
       case "dob":
         // Validate that the provided value is a valid date and not in the future.
@@ -50,9 +24,10 @@ const updateRecruiterPersonalDetails = async (req, res) => {
         if (dobDate > new Date()) {
           return res.status(400).json({ message: "Date of birth cannot be in the future." });
         }
-        // Save the Date object directly.
+        // Save the Date object directly into the recruiter document.
         recruiter.set("dateOfBirth", dobDate, { strict: false });
         break;
+
       case "companywebsite":
         // Validate that the company website is a valid URL (must start with https://)
         const urlRegex = /^https:\/\/[^\s$.?#].[^\s]*$/;
@@ -61,17 +36,24 @@ const updateRecruiterPersonalDetails = async (req, res) => {
         }
         recruiter.companyWebsite = value.trim();
         break;
+
       default:
         return res.status(400).json({ message: "Invalid detail type. Valid types: dob, companyWebsite." });
     }
+
+    // Save changes to the database.
     await recruiter.save();
+
+    // Prepare a success message.
     let message = "";
     if (type.toLowerCase() === "dob") {
       message = "Date of birth updated successfully.";
     } else if (type.toLowerCase() === "companywebsite") {
       message = "Company website updated successfully.";
     }
-    return res.status(200).json({ message });
+
+    // Return the success message along with the updated recruiter details.
+    return res.status(200).json({ message, updatedUser: recruiter });
   } catch (error) {
     console.error("Error updating recruiter personal details:", error);
     return res.status(500).json({ message: "Server error." });
@@ -107,7 +89,8 @@ const resetRecruiterPersonalDetails = async (req, res) => {
     } else if (type.toLowerCase() === "companywebsite") {
       message = "Company website reset successfully.";
     }
-    return res.status(200).json({ message });
+    // Return the success message along with the updated recruiter document.
+    return res.status(200).json({ message, updatedUser: recruiter });
   } catch (error) {
     console.error("Error resetting recruiter personal details:", error);
     return res.status(500).json({ message: "Server error." });
@@ -115,7 +98,6 @@ const resetRecruiterPersonalDetails = async (req, res) => {
 };
 
 module.exports = {
-  getRecruiterPersonalDetails,
   updateRecruiterPersonalDetails,
   resetRecruiterPersonalDetails,
 };

@@ -4,11 +4,10 @@ import { FaCheckDouble, FaEye } from "react-icons/fa";
 const MessageBubble = ({ message, currentUser, profilePics }) => {
   const isSender = message.senderId === currentUser._id;
 
-  console.log("ProfilePics:" ,  profilePics);
   // Look up the profile picture for this message sender from the profilePics array.
   const profilePic =
     profilePics?.find((item) => item.id === message.senderId)?.profilePic ||
-    "https://via.placeholder.com/40";
+    'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
 
   // Format the timestamp
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
@@ -57,7 +56,7 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
 
   return (
     <div
-      className={`flex items-start mb-4 ${
+      className={`flex items-start mb-4 w-full ${
         isSender ? "justify-end" : "justify-start"
       }`}
     >
@@ -68,7 +67,21 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
             <div className="text-sm font-semibold text-gray-900 dark:text-gray-200">
               {message.senderName}
             </div>
-            <p className="text-gray-700 dark:text-gray-300">{message.text}</p>
+            {
+              message.text.startsWith("http") ? 
+              <a 
+                className="text-blue-700 dark:text-blue-300"
+                href={message.text}
+                target="_blank" 
+                >
+                  {message.text}
+              </a>
+              :
+              <p className="text-gray-700 dark:text-gray-300">{message.text}</p>
+
+              
+            }
+            
             {renderAttachments()}
             <div className="flex items-center space-x-1 mt-1">
               <span className="text-xs text-gray-500 dark:text-gray-400">

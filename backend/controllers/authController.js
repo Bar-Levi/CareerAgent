@@ -11,8 +11,8 @@ require('dotenv').config();
 
 // Helper Function: Get Schema Based on Role
 const getSchemaByRole = (role) => {
-    if (role === 'jobseeker') return JobSeeker;
-    if (role === 'recruiter') return Recruiter;
+    if (role === 'JobSeeker') return JobSeeker;
+    if (role === 'Recruiter') return Recruiter;
     throw new Error('Invalid role specified.');
 };
 
@@ -70,7 +70,7 @@ const registerJobSeeker = async (req, res) => {
             fullName,
             email,
             password: hashedPassword,
-            role: 'jobseeker',
+            role: 'JobSeeker',
             isVerified: false,
             verificationCode,
             verificationCodeSentAt: new Date(),
@@ -83,10 +83,12 @@ const registerJobSeeker = async (req, res) => {
         
         if (cv) {
             userData.cv = cv;
-            userData.analyzed_cv_content.education.forEach((edu) => {
+            if (userData?.analyzed_cv_content?.education) {
+            userData?.analyzed_cv_content?.education.forEach((edu) => {
               edu.degree = checkAndInsertIn(edu.degree);
             });
             userData.analyzed_cv_content = analyzed_cv_content;
+          }
         }
 
         if (profilePic)
@@ -104,7 +106,7 @@ const registerJobSeeker = async (req, res) => {
 
 // Register Recruiter
 const registerRecruiter = async (req, res) => {
-    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth, pin } = req.body;
+    const { fullName, email, password, companyName, companySize, companyWebsite, dateOfBirth, pin, companyLogo, profilePic } = req.body;
 
     try {
         const existingJobSeeker = await JobSeeker.findOne({ email });
@@ -134,7 +136,7 @@ const registerRecruiter = async (req, res) => {
             fullName,
             email,
             password: hashedPassword,
-            role: 'recruiter',
+            role: 'Recruiter',
             isVerified: false,
             verificationCode,
             verificationCodeSentAt: new Date(),
@@ -142,7 +144,9 @@ const registerRecruiter = async (req, res) => {
             companySize,
             companyWebsite,
             dateOfBirth,
-            pin: hashedPin
+            pin: hashedPin,
+            companyLogo, 
+            profilePic
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
@@ -290,40 +294,48 @@ const resendVerificationCode = async (req, res) => {
 
 // Request Password Reset
 const requestPasswordReset = async (req, res) => {
-    const { forgot_password_email, forgot_password_PIN } = req.body;
+  const { forgot_password_email, forgot_password_PIN } = req.body;
 
-    try {
-        const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
-        const recruiter = await Recruiter.findOne({ email: forgot_password_email });
-        const user = jobSeeker || recruiter;
-        if (!user) {
-            return res.status(404).json({ message: 'No user found with that email.' });
-        }
-
-        const decryptedPin = CryptoJS.AES.decrypt(forgot_password_PIN, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
-        const isPinMatch = await bcrypt.compare(decryptedPin, user.pin);
-        if (!isPinMatch) {
-            return res.status(401).json({ message: 'Incorrect PIN.' });
-        }
-
-        const resetToken = generateResetToken();
-        const tokenExpiry = Date.now() + 3600000;
-
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = tokenExpiry;
-        await user.save();
-
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-        await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
-
-        res.status(200).json({ 
-            message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox."
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Failed to process password reset request.' });
+  try {
+    const jobSeeker = await JobSeeker.findOne({ email: forgot_password_email });
+    const recruiter = await Recruiter.findOne({ email: forgot_password_email });
+    const user = jobSeeker || recruiter;
+    if (!user) {
+      return res.status(404).json({ message: 'No user found with that email.' });
     }
+
+    const decryptedPin = CryptoJS.AES.decrypt(forgot_password_PIN, process.env.SECRET_KEY).toString(CryptoJS.enc.Utf8);
+    const isPinMatch = await bcrypt.compare(decryptedPin, user.pin);
+    if (!isPinMatch) {
+      return res.status(401).json({ message: 'Incorrect PIN.' });
+    }
+    const resetToken = generateResetToken();
+    const tokenExpiry = Date.now() + 3600000;
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = tokenExpiry;
+    
+    // Fix for role validation: correct for both Recruiter and JobSeeker
+    if (user.role === "Recruiter") {
+      user.role = "Recruiter";
+    } else if (user.role === "JobSeeker") {
+      user.role = "JobSeeker";
+    }
+    
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    await sendResetPasswordEmail(user.email, user.fullName, resetUrl, resetToken);
+
+    res.status(200).json({ 
+      message: "Password reset instructions sent to email. Please check your spam folder if the mail didn't arrive in your inbox."
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to process password reset request.' });
+  }
 };
+
+module.exports = requestPasswordReset;
 
 // Reset Password
 const resetPassword = async (req, res) => {
@@ -367,7 +379,7 @@ const resetPassword = async (req, res) => {
 const getUserDetails = async (req, res) => {
     try {
       const { email, id } = req.query;
-  
+
       if (!email && !id) {
         return res.status(400).json({ message: "Email or ID is required." });
       }
@@ -411,8 +423,6 @@ const uploadCV = async (req, res) => {
       const cvPath = req.body.cv;
       const analyzed_cv_content = JSON.parse(req.body.analyzed_cv_content);
   
-      console.log("analyzed_cv_content: " + analyzed_cv_content);
-      console.dir(analyzed_cv_content, {depth: null});
       const user = await JobSeeker.findById(id);
       if (!user) {
         return res.status(404).json({ message: "User not found." });
@@ -500,6 +510,43 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+const markAsReadNotification = async (req, res) => {
+  try {
+    const { userId, notificationId } = req.params;
+    
+    let user = await JobSeeker.findById(userId);
+    if (!user) {
+      user = await Recruiter.findById(userId);
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const notification = user.notifications.find(
+      (notification) => notification._id.toString() === notificationId
+    );
+
+    if (!notification) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    notification.read = true;
+    await user.save();
+    res.status(200).json({
+      message: "Notification marked as read successfully",
+      notifications: user.notifications,
+    });
+  } catch (err) {
+    console.error("Error marking notification as read:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+    
+
+
+
+};
+
 const deleteAllNotifications = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -522,6 +569,20 @@ const deleteAllNotifications = async (req, res) => {
   }
 };
 
+const checkEmail = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const [jobSeeker, recruiter] = await Promise.all([
+      JobSeeker.findOne({ email }),
+      Recruiter.findOne({ email })
+    ]);
+    res.status(200).json({ exists: Boolean(jobSeeker || recruiter) });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while checking email.' });
+  }
+};
+
+
 module.exports = {
     registerRecruiter,
     registerJobSeeker,
@@ -536,5 +597,7 @@ module.exports = {
     logout,
     checkBlacklist,
     deleteNotification,
-    deleteAllNotifications
+    deleteAllNotifications,
+    markAsReadNotification,
+    checkEmail,
 };

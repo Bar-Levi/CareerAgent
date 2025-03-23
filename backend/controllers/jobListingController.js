@@ -1,5 +1,6 @@
 const JobListing = require("../models/jobListingModel");
 const JobSeeker = require("../models/jobSeekerModel");
+const Applicant = require("../models/applicantModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 const { sendJobNotificationEmail } = require("../utils/emailService");
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
@@ -58,8 +59,8 @@ const calculateWorkExperienceMatch = (userData, jobListing, matchedWorkExperienc
   }
 }
 
-// Calculate relevance score function
 async function calculateRelevanceScore(jobListing, user, relevancePoints) {
+  try {
     let score = 0;
     console.log("User: ", user);
     let matchedData = {
@@ -70,9 +71,9 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       workExperience: [],
       skills: []
     };
-  
+
     const userData = user.analyzed_cv_content;
-  
+
     // Destructure relevance point values
     const {
       matchedJobRolePoints,
@@ -81,7 +82,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       matchedSkillPoints,
       matchedWorkExperiencePoints
     } = relevancePoints;
-  
+
     // Job Roles match
     if (userData.job_role) {
       for (const job of userData.job_role) {
@@ -91,7 +92,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         }
       }
     }
-  
+
     // Job Types match
     if (userData.job_role) {
       if (userData.job_role.includes('Student')) {
@@ -107,7 +108,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         matchedData.jobType.push(`Full Time (20)`);
       }
     }
-  
+
     // Security clearance match
     if (userData.security_clearance && jobListing.securityClearance) {
       if (userData.security_clearance <= jobListing.securityClearance) {
@@ -115,7 +116,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         matchedData.securityClearance = `${userData.security_clearance} (${matchedSecurityClearancePoints})`;
       }
     }
-  
+
     // Education match
     if (userData.education.length > 0 && jobListing.education.length > 0) {
       userData.education.forEach(edu => {
@@ -125,7 +126,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
         }
       });
     }
-  
+
     // Previous work experience match
     const { matchedJobs = [], experienceScore = 0 } =
       jobListing.workExperience
@@ -135,7 +136,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       matchedData.workExperience.push(...matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
     }
     score += experienceScore;
-  
+
     // Skills match
     if (userData.skills) {
       const matchedSkills = jobListing.skills.filter(skill =>
@@ -145,9 +146,15 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       score += skillsScore;
       matchedData.skills = matchedSkills.map(skill => `${skill} (${matchedSkillPoints})`);
     }
-  
+
     return { score, matchedData };
+  } catch (error) {
+    console.error("Error in calculateRelevanceScore:", error);
+    return { score: 0, matchedData: {} };
+
   }
+}
+
 
 async function getCandidatesToNotify(newJobListing, jobSeekers) {
     const candidatesToNotify = [];
@@ -175,26 +182,42 @@ async function getCandidatesToNotify(newJobListing, jobSeekers) {
   }
   
 async function notifyRelevantJobSeekers(newJobListing) {
-    try {
-        const jobSeekers = await JobSeeker.find(
-            { analyzed_cv_content: { $exists: true, $ne: null } },
-            'email analyzed_cv_content relevancePoints minPointsForUpdate'
-            );
-        const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
+  try {
+    // Find job seekers who have analyzed_cv_content and are subscribed
+    const jobSeekers = await JobSeeker.find(
+      { 
+        analyzed_cv_content: { $exists: true, $ne: null },
+        isSubscribed: true
+      },
+      'email analyzed_cv_content relevancePoints minPointsForUpdate'
+    );
 
-        // Optionally, log the number of notifications
-        console.log(`Sending notifications to ${candidates.length} job seekers.`);
-        
-        // Send emails (you might process this in parallel with Promise.all)
-        await Promise.all(
-            candidates.map(candidate =>
-                sendJobNotificationEmail(candidate.email, newJobListing)
-            )
-        );
-    } catch (error) {
+    const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
+
+    // Optionally, log the number of notifications
+    console.log(`Sending notifications to ${candidates.length} job seekers.`);
+    
+    // Send emails using Promise.allSettled to avoid one failure stopping the process
+    const results = await Promise.allSettled(
+      candidates.map(candidate =>
+        sendJobNotificationEmail(candidate.email, newJobListing)
+      )
+    );
+
+    // Log results for each candidate
+    results.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        console.log(`Email sent to ${candidates[index].email}`);
+      } else {
+        console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
+      }
+    });
+    
+  } catch (error) {
     console.error("Error in notifying job seekers:", error);
-    }
   }
+}
+  
 
 // Helper function to convert a value to Title Case
 function toTitleCase(value) {
@@ -232,6 +255,7 @@ const saveJobListing = async (req, res) => {
             recruiterId,
             recruiterName,
             recruiterProfileImage,
+            companyLogo,
         } = normalizedBody;
         console.log("normalizedBody: ", normalizedBody);
         console.log("!experienceLevel: ", !experienceLevel);
@@ -268,6 +292,7 @@ const saveJobListing = async (req, res) => {
             recruiterId,
             recruiterName,
             recruiterProfileImage,
+            companyLogo,
         });
 
         // Save the job listing to the database
@@ -394,24 +419,64 @@ const updateJobListing = async (req, res) => {
 
 // Delete a job listing by ID
 const deleteJobListing = async (req, res) => {
-    try {
-        const { id } = req.params;
-        
-        const deletedJobListing = await JobListing.findByIdAndDelete(id);
+  try {
+      console.log("Received request to delete job listing:", req.params);
 
-        if (!deletedJobListing) {
-            return res.status(404).json({ message: "Job listing not found." });
-        }
+      const { id } = req.params;
 
-        res.status(200).json({
-            message: "Job listing deleted successfully.",
-            jobListing: deletedJobListing,
-        });
-    } catch (error) {
-        console.error("Error deleting job listing:", error.message);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
+      // Find the job listing before deleting
+      const jobListing = await JobListing.findById(id);
+      if (!jobListing) {
+          console.log("Job listing not found with ID:", id);
+          return res.status(404).json({ message: "Job listing not found." });
+      }
+
+      console.log("Deleting job listing with ID:", id);
+      const deletedJobListing = await JobListing.findByIdAndDelete(id);
+      
+      // Fetch applicants before deleting them
+      const applicants = await Applicant.find({ jobId: id });
+      console.log(`Found ${applicants.length} applicants for job ID: ${id}`);
+
+      // Delete all applicants for this job listing
+      const deleteResult = await Applicant.deleteMany({ jobId: id });
+      console.log(`Deleted ${deleteResult.deletedCount} applicants.`);
+
+      const applicantToNotify = applicants.filter((applicant) => applicant.isSubscribed);
+
+      // Send emails using Promise.allSettled to avoid one failure stopping the process
+      if (applicantToNotify.length > 0) {
+          console.log("Preparing to send notification emails...");
+          const results = await Promise.allSettled(
+              applicantToNotify.map(applicant =>
+                  sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
+              )
+          );
+
+          // Log results for each candidate
+          results.forEach((result, index) => {
+              if (result.status === 'fulfilled') {
+                  console.log(`✅ Email sent successfully to ${applicantToNotify[index].email}`);
+              } else {
+                  console.error(`❌ Failed to send email to ${applicantToNotify[index].email}:`, result.reason);
+              }
+          });
+      } else {
+          console.log("No applicants found. Skipping email notifications.");
+      }
+
+      res.status(200).json({
+          message: "Job listing deleted successfully.",
+          jobListing: deletedJobListing,
+      });
+
+  } catch (error) {
+      console.error("❌ Error deleting job listing:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
 };
+
+
 
 // Filter from the ACTIVE job listings
 const filterActiveJobListings = async (req, res) => {
@@ -541,8 +606,6 @@ const getMetrics = async (req, res) => {
   }
 };
 
-
-
 // Get specific recruiter job listings.
 const getRecruiterListings = async (req, res) => {
     try {
@@ -563,6 +626,7 @@ const getRecruiterListings = async (req, res) => {
         });
     }
 };
+
 
 module.exports = {
     saveJobListing,

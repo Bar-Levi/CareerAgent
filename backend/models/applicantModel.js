@@ -22,6 +22,10 @@ const applicantSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    profilePic: {
+        type: String,
+        required: true,
+    },
     applicationDate: {
         type: Date,
         default: Date.now,
@@ -33,6 +37,10 @@ const applicantSchema = new mongoose.Schema({
     },
     notes: {
         type: String,
+    },
+    isSubscribed: {
+        type: Boolean,
+        default: true,
     },
     jobId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -57,7 +65,4 @@ const applicantSchema = new mongoose.Schema({
 applicantSchema.index({ jobSeekerId: 1 });
 applicantSchema.index({ recruiterId: 1 });
 
-const Applicant = mongoose.model('Applicant', applicantSchema);
-
-
-module.exports = Applicant;
+module.exports = mongoose.model('Applicant', applicantSchema);

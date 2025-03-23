@@ -1,20 +1,29 @@
-
+// Import SweetAlert2 and its React wrapper
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
+// Import our PDF text extraction utility
 import { extractTextFromPDF } from "../../../utils/pdfUtils";
 
+// Wrap Swal for React usage
 const MySwal = withReactContent(Swal);
 
+// Function to process the CV file by extracting text and sending it to the AI endpoint
 const processCV = async (cvFile) => {
   try {
     // Extract text content from the PDF file
     const cvContent = await extractTextFromPDF(cvFile);
-    // Send the extracted text to the AI endpoint for JSON generation
-    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
-      method: "POST",
-      body: JSON.stringify({ prompt: cvContent }),
-      headers: { "Content-Type": "application/json" },
-    });
+    // Send the extracted text to our AI endpoint to generate JSON from the CV
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`,
+      {
+        method: "POST",
+        body: JSON.stringify({ prompt: cvContent }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
     if (!response.ok) {
       throw new Error("Failed to generate AI CV.");
     }
@@ -37,19 +46,14 @@ const processCV = async (cvFile) => {
 const showUpdateCVModal = async (user, navigate, location) => {
   const token = localStorage.getItem("token");
   try {
-    // Fetch current CV link from the updated route
-    const response = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/personal/jobseeker/cv?email=${encodeURIComponent(user.email)}`,
-      { method: "GET", headers: { Authorization: `Bearer ${token}` } }
-    );
-    const data = await response.json();
-    const currentCV = data.cv || "No CV uploaded";
+    // use user.cv from the state
+    const currentCV = user.cv || "No CV uploaded";
     const currentCVDisplay =
       currentCV !== "No CV uploaded"
         ? `<a href="${currentCV}" target="_blank" class="underline break-words">${currentCV}</a>`
         : `<span class="text-gray-500">${currentCV}</span>`;
 
-    // Show modal with a modern styled file uploader
+    // Show modal with a styled file uploader to update the CV
     const result = await MySwal.fire({
       title: "Update CV",
       html: `
@@ -63,6 +67,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
         </div>
       `,
       didOpen: () => {
+        // When the modal opens, add a listener to update the label with the file name
         const fileInput = document.getElementById("swal-input-cv");
         const label = document.getElementById("swal-input-cv-label");
         fileInput.addEventListener("change", () => {
@@ -79,6 +84,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
       confirmButtonText: "Upload",
       denyButtonText: "Delete CV",
       preConfirm: () => {
+        // Get the selected file from the file input
         const cvFile = document.getElementById("swal-input-cv").files[0];
         if (!cvFile) {
           Swal.showValidationMessage("Please select a PDF file");
@@ -100,6 +106,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
         cancelButtonText: "Cancel",
       });
       if (confirmDeletion.isConfirmed) {
+        // Show loading modal while deletion is in progress
         Swal.fire({
           title: "Deleting CV...",
           allowOutsideClick: false,
@@ -107,6 +114,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
             Swal.showLoading();
           },
         });
+        // Call the delete endpoint using user's email
         const deleteResponse = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/personal/jobseeker/cv/delete?email=${encodeURIComponent(user.email)}`,
           { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
@@ -114,23 +122,23 @@ const showUpdateCVModal = async (user, navigate, location) => {
         const deleteData = await deleteResponse.json();
         Swal.close();
         if (deleteResponse.ok) {
+          // On successful deletion, show success message
           Swal.fire("Deleted", deleteData.message, "success").then(() => {
+            // Update the user state by removing the CV and its analyzed content
             const updatedUser = { ...user };
             delete updatedUser.cv;
             delete updatedUser.analyzed_cv_content;
+            // Create a new state object with updated user info
             const newState = {
-              email: user.email,
-              role: user.role,
-              token: token,
               user: updatedUser,
-              refreshToken: 0,
-              isVerified: user.isVerified,
+              isVerified: user.isVerified
             };
 
-            // Remove local storage stored jobListings relevance scores since CV was deleted.
+            // Remove any stored relevance scores from local storage since the CV was deleted
             const localStorageKey = `relevance_data_${user.id || user._id}`;
             localStorage.removeItem(localStorageKey);
-      
+
+            // Navigate to the current location with the updated user state
             navigate(location.pathname, { state: newState });
           });
         } else {
@@ -140,19 +148,21 @@ const showUpdateCVModal = async (user, navigate, location) => {
     } else if (result.isConfirmed) {
       // User clicked "Upload" and provided a file
       const file = result.value;
-      // Immediately show loading modal
+      // Immediately show a loading modal while uploading
       Swal.fire({
         title: "Uploading CV...",
         allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); },
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
-      // Process the CV file to obtain the analyzed content
+      // Process the CV file to extract and analyze its content using AI
       const analyzedContent = await processCV(file);
-      // Prepare form data for file upload, including the analyzed content
+      // Prepare form data with the file and its analyzed content
       const formData = new FormData();
       formData.append("cv", file);
       formData.append("analyzed_cv_content", JSON.stringify(analyzedContent));
-      // Make POST request to update the CV (updated route)
+      // Call the update CV endpoint using user's email
       const uploadResponse = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/personal/jobseeker/cv/update?email=${encodeURIComponent(user.email)}`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
@@ -160,25 +170,25 @@ const showUpdateCVModal = async (user, navigate, location) => {
       const uploadData = await uploadResponse.json();
       Swal.close();
       if (uploadResponse.ok) {
+        // On successful upload, show success message
         Swal.fire("Success", uploadData.message, "success").then(() => {
+          // Update user state with new CV URL and analyzed content
           const updatedUser = {
             ...user,
             cv: uploadData.cv,
             analyzed_cv_content: analyzedContent,
           };
+          // Build the new state object
           const newState = {
-            email: user.email,
-            role: user.role,
-            token: token,
             user: updatedUser,
-            refreshToken: 0,
-            isVerified: user.isVerified,
+            isVerified: user.isVerified
           };
 
-          // Remove local storage stored jobListings relevance scores since CV was changed.
+          // Remove any stored job listings relevance scores from local storage as CV changed
           const localStorageKey = `relevance_data_${user.id || user._id}`;
           localStorage.removeItem(localStorageKey);
 
+          // Navigate to the current location with updated user state
           navigate(location.pathname, { state: newState });
         });
       } else {
@@ -186,6 +196,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
       }
     }
   } catch (error) {
+    // Show an error alert if something goes wrong
     Swal.fire("Error", error.message || "An error occurred", "error");
   }
 };

@@ -21,46 +21,52 @@ const getConversationById = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 50;
     const skip = parseInt(req.query.skip, 10) || 0;
 
+    // Fetch the conversation and populate the referenced fields.
     const conversation = await Conversation.findById(req.params.conversationId)
       .populate("jobListingId")
-      .populate("messages"); // Populating messages
+      .populate("messages");
 
     if (!conversation) {
-      
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-  
-  // If there are messages, sort them so the newest come first.
+    // Sort messages so that the newest come first.
     let messages = conversation.messages || [];
-    messages = messages.sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-    );
+    messages = messages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    // Slice the sorted array based on skip and limit values.
+    // Slice the sorted array based on skip and limit values (for pagination).
     const paginatedMessages = messages.slice(skip, skip + limit);
 
-    // Convert the conversation document to a plain object and replace messages.
+    // Convert the conversation document to a plain object and replace messages with the paginated subset.
     const conversationObj = conversation.toObject();
     conversationObj.messages = paginatedMessages;
-    
-    const recruiterId = conversation.participants[0];
+
+    const recruiterId = conversation.participants[1]?.userId;
+    const jobSeekerId = conversation.participants[0]?.userId;
+
+    // Look up the recruiter and jobseeker documents.
     const recruiter = await Recruiter.findById(recruiterId);
-    const jobSeekerId = conversation.participants[1];
     const jobSeeker = await JobSeeker.findById(jobSeekerId);
 
+    console.log("Recruiter:", recruiter);
+    console.log("JobSeeker:", jobSeeker);
+
+    // Build an array of profilePics.
+    // (If recruiter or jobSeeker is null, use optional chaining or defaults.)
     const profilePics = [
       {
         role: "Recruiter",
         id: recruiterId,
-        profilePic: recruiter.profilePic
+        profilePic: recruiter?.profilePic || "",
       },
       {
         role: "JobSeeker",
         id: jobSeekerId,
-        profilePic: jobSeeker.profilePic
-      }
-    ] || [];
+        profilePic: jobSeeker?.profilePic || "",
+      },
+    ];
+
+    console.log("profilePics:", profilePics);
 
     res.json({ conversation: conversationObj, pics: profilePics });
   } catch (err) {
@@ -70,9 +76,10 @@ const getConversationById = async (req, res) => {
 };
 
 
+
 const createConversation = async (req, res) => {
   const { participants, jobListingId, isGroupChat, groupChatName } = req.body;
-
+  console.log("participants:", participants);
   if (!jobListingId) {
     return res.status(400).json({ message: "jobListingId is required" });
   }
@@ -85,17 +92,28 @@ const createConversation = async (req, res) => {
     }
     console.log("jobListing object: ", jobListingObject);
     // Check if a conversation with the same participants and jobListingId already exists
+    const participantIds = participants.map((p) => p.userId);
+
     const existingConversation = await Conversation.findOne({
-      participants: { $all: participants, $size: participants.length },
       jobListingId,
+      // 1) Ensure the array is exactly participantIds.length long:
+      $expr: { $eq: [{ $size: "$participants" }, participantIds.length] },
+      // 2) Ensure each participant subdoc in the DB matches one of the userIds:
+      participants: {
+        $all: participantIds.map((id) => ({
+          $elemMatch: { userId: id },
+        })),
+      },
     });
 
     if (existingConversation) {
       return res.status(200).json({ conversation: existingConversation, jobListingObject });
     }
 
+    const newConversationObject = req.body;
+    newConversationObject.jobListingRole = jobListingObject.jobRole;
     // If no existing conversation is found, create a new one
-    const conversation = new Conversation(req.body);
+    const conversation = new Conversation(newConversationObject);
     const newConversation = await conversation.save();
 
     console.log("New conversation: ", newConversation);
@@ -166,13 +184,13 @@ const addMessageToConversation = async (req, res) => {
     await conversation.save();
 
     // Assuming the recruiter is at index 0 in the participants array and job seeker at index 1.
-    const recruiterParticipantId = conversation.participants[0];
-    const jobSeekerParticipantId = conversation.participants[1];
+    const recruiterParticipantId = conversation.participants[1].userId.toString();
+    const jobSeekerParticipantId = conversation.participants[0].userId.toString();
 
     // Determine the receiver based on the sender's role
-    const recieverId = senderRole === "recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
+    const recieverId = senderRole === "Recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
 
-    const reciever = senderRole === "recruiter" ?
+    const reciever = senderRole === "Recruiter" ?
       await JobSeeker.findById(recieverId) :
       await Recruiter.findById(recieverId);
 
@@ -188,9 +206,11 @@ const addMessageToConversation = async (req, res) => {
       message: `${senderName}: ${text}`,
       conversationId: conversation._id,
       extraData: {
-        goToRoute: senderRole === "recruiter" ? '/searchjobs' : '/dashboard',
+        goToRoute: senderRole === "Recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
+          title: senderName,
           conversationId: conversation._id,
+          secondParticipantProfilePic: senderRole === "Recruiter" ? conversation.participants[1].profilePic : conversation.participants[0].profilePic,
           jobListing,
         },
       },
@@ -279,6 +299,26 @@ const getJobListingConversations = async (req, res) => {
   }
 };
 
+const getConversationByJobCandidateId = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    console.log("UserId:", userId);
+
+    // Find conversations where participants[0].userId matches the userId
+    const conversations = await Conversation.find({
+      "participants.0.userId": userId,
+    });
+
+    console.log("Conversations:", conversations);
+    res.status(200).json({ conversations });
+  } catch (err) {
+    console.error("Error fetching conversations:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
 const markMessagesAsReadInternal = async (conversationId, readerId) => {
   // Update all messages (where the sender is not the reader) to read: true
   const conversation = await Conversation.findByIdAndUpdate(
@@ -296,9 +336,8 @@ const markMessagesAsReadInternal = async (conversationId, readerId) => {
     throw new Error("Conversation not found.");
   }
 
-  // Assume participants[0] is the recruiter and participants[1] is the jobseeker.
-  const recruiterParticipantId = conversation.participants[0].toString();
-  const jobSeekerParticipantId = conversation.participants[1].toString();
+  const recruiterParticipantId = conversation.participants[1].userId.toString();
+  const jobSeekerParticipantId = conversation.participants[0].userId.toString();
 
   // Determine the "other" party (i.e. the one who did not read)
   const participantToUpdateId =
@@ -337,5 +376,6 @@ module.exports = {
   getJobListingConversations,
   markMessagesAsRead,
   markMessagesAsReadInternal,
-  markMessagesAsRead
+  markMessagesAsRead,
+  getConversationByJobCandidateId
 };

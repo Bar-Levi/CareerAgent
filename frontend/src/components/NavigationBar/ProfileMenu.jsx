@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { FaCogs } from "react-icons/fa";
 import showChangePasswordModal from "./modals/ChangePasswordModal";
-import showChangeProfilePicModal from "./modals/ChangeProfilePicModal";
+import showChangePicModal from "./modals/ChangePicModal";
 import { showJobSeekerPersonalDetailsModal } from "./modals/PersonalDetailsModal";
 import showRecruiterDetailsModal from "./modals/RecruiterDetailsModal";
-import showUpdateCVModal from "./modals/UpdateCVModal"; // Import Update CV modal
-import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal"; // Import Edit Relevance Points modal
+import showUpdateCVModal from "./modals/UpdateCVModal";
+import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal";
+import changeMailSubscriptionStatus from "./modals/ChangeMailSubscriptionStatus";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const ProfileMenu = ({ userType, user }) => {
@@ -25,26 +26,33 @@ const ProfileMenu = ({ userType, user }) => {
     showChangePasswordModal(user);
   };
 
-  const handleChangeProfilePic = () => {
-    showChangeProfilePicModal(user);
+  /**
+   * Single function for changing pictures.
+   * @param {string} picType - "profile" or "company"
+   */
+  const handleChangePic = (picType = "profile") => {
+    showChangePicModal(user, navigate, location, picType);
   };
 
   const handleChangePersonalDetails = () => {
-    if (userType === "jobseeker") {
+    if (userType === "JobSeeker") {
       showJobSeekerPersonalDetailsModal(user, navigate, location);
-    } else if (userType === "recruiter") {
-      showRecruiterDetailsModal(user);
+    } else if (userType === "Recruiter") {
+      showRecruiterDetailsModal(user, navigate, location);
     }
   };
 
-  // Pass navigate and location to UpdateCVModal
   const handleUpdateCV = () => {
     showUpdateCVModal(user, navigate, location);
   };
 
-  // Handle Edit Relevance Points
   const handleEditRelevancePoints = () => {
     showEditRelevancePointsModal(user, navigate, location);
+  };
+
+  const handleChangeMailSubscription = () => {
+    setDropdownOpen(false);
+    changeMailSubscriptionStatus(user, navigate, location);
   };
 
   const handleLogout = async () => {
@@ -54,6 +62,7 @@ const ProfileMenu = ({ userType, user }) => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       localStorage.clear();
+      sessionStorage.clear();
       navigate("/authentication", { replace: true });
     } catch (error) {
       console.error("Error during logout:", error);
@@ -71,43 +80,92 @@ const ProfileMenu = ({ userType, user }) => {
       </button>
       {dropdownOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-brand-secondary shadow-lg rounded-md py-2 z-50">
+          {/* Change Password */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => { setDropdownOpen(false); handleChangePassword(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleChangePassword();
+            }}
           >
             Change Password
           </button>
+
+          {/* Change Profile Picture (always shown) */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => { setDropdownOpen(false); handleChangeProfilePic(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleChangePic("profile"); // <== pass "profile" as the picType
+            }}
           >
             Change Profile Picture
           </button>
+
+          {/* Recruiter-specific: Change Company Logo */}
+          {userType === "Recruiter" && (
+            <button
+              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleChangePic("company"); // <== pass "company" as the picType
+              }}
+            >
+              Change Company Logo
+            </button>
+          )}
+
+          {/* Change Personal Details */}
           <button
             className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => { setDropdownOpen(false); handleChangePersonalDetails(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleChangePersonalDetails();
+            }}
           >
             Change Personal Details
           </button>
-          {userType === "jobseeker" && (
+
+          {/* JobSeeker-specific items */}
+          {userType === "JobSeeker" && (
             <>
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-                onClick={() => { setDropdownOpen(false); handleUpdateCV(); }}
+                onClick={() => {
+                  setDropdownOpen(false);
+                  handleUpdateCV();
+                }}
               >
                 Update CV
               </button>
+
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-                onClick={() => { setDropdownOpen(false); handleEditRelevancePoints(); }}
+                onClick={() => {
+                  setDropdownOpen(false);
+                  handleEditRelevancePoints();
+                }}
               >
                 Edit Relevance Points
               </button>
             </>
           )}
+
+          {/* Change Mail Subscription */}
+          <button
+            className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+            onClick={handleChangeMailSubscription}
+          >
+            Change Mail Subscription
+          </button>
+
+          {/* Log Out */}
           <button
             className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
-            onClick={() => { setDropdownOpen(false); handleLogout(); }}
+            onClick={() => {
+              setDropdownOpen(false);
+              handleLogout();
+            }}
           >
             Log Out
           </button>

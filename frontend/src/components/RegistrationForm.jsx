@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Notification from './Notification';
 import OptionalDetailsJobSeekerForm from './OptionalDetailsJobSeekerForm';
 import OptionalDetailsRecruiterForm from './OptionalDetailsRecruiterForm';
 import Swal from 'sweetalert2';
+import { debounce } from 'lodash';
+import { isValidEmail } from '../utils/validateEmail';
 import CryptoJS from 'crypto-js';
 
 const RegistrationForm = ({ toggleForm, setUserType }) => {
@@ -12,11 +14,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         email: '',
         password: '',
         confirmPassword: '',
-        role: 'jobseeker', // Default role
-        companyName: '', // For recruiters
-        companySize: '', // For recruiters
+        role: 'JobSeeker', // Default role
+        companyName: '',   // For recruiters
+        companySize: '',   // For recruiters
         pin: Math.floor(Math.random() * 899999) + 100000
     });
+
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -25,14 +28,42 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
     const [isOptionalFormVisible, setIsOptionalFormVisible] = useState(false);
     const [isTermsAccepted, setIsTermsAccepted] = useState(false);
 
-    const passwordRules = "Password must include uppercase, lowercase, a number, a special character, and be at least 8 characters long.";
-
+    const passwordRules =
+        'Password must include uppercase, lowercase, a number, a special character, and be at least 8 characters long.';
     const navigate = useNavigate();
 
     const showNotification = (type, message) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 4000);
     };
+
+    const checkEmailExists = useCallback(
+    debounce(async (email) => {
+        try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/check-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (data.exists) {
+            showNotification('error', 'Email is already registered.');
+        }
+        } catch (err) {
+        console.error('Error checking email:', err);
+        }
+    }, 500),
+    [] // empty deps to memoize once
+    );
+
+    // Cleanup debounce on unmount
+    useEffect(() => {
+        return () => {
+        checkEmailExists.cancel(); // prevents calling on unmounted component
+        };
+    }, [checkEmailExists]);
+
+      
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -48,6 +79,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         }
 
         setFormData({ ...formData, [name]: value });
+
+        // Calculate password strength immediately if user is typing a new password
         if (name === 'password') {
             calculatePasswordStrength(value);
         }
@@ -65,18 +98,24 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
+        // Basic validations
         if (formData.password !== formData.confirmPassword) {
             showNotification('error', 'Passwords do not match.');
             return;
         }
+
         if (passwordStrength < 4 || formData.password.length < 8) {
             showNotification('error', passwordRules);
             return;
         }
-        if (formData.role === 'recruiter') {
+
+        if (formData.role === 'Recruiter') {
             if (!formData.companyName || !formData.companySize) {
-                showNotification('error', 'Company Name and Company Size are required for recruiters.');
+                showNotification(
+                    'error',
+                    'Company Name and Company Size are required for recruiters.'
+                );
                 return;
             }
             if (!Number.isInteger(formData.companySize) || formData.companySize <= 0) {
@@ -84,10 +123,10 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 return;
             }
         }
-    
+
         setIsLoading(true);
-    
-        try {    
+
+        try {
             showNotification('success', 'Please continue the registration process.');
             setIsOptionalFormVisible(true);
         } catch (err) {
@@ -102,36 +141,52 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             console.dir(optionalData, { depth: null });
             setIsLoading(true);
 
+            // Reusable file upload function
             const uploadFile = async (file, folder) => {
                 const fileData = new FormData();
                 fileData.append('file', file);
                 fileData.append('folder', folder);
 
-                const uploadResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`, {
-                    method: 'POST',
-                    body: fileData,
-                });
+                const uploadResponse = await fetch(
+                    `${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`,
+                    {
+                        method: 'POST',
+                        body: fileData,
+                    }
+                );
                 if (!uploadResponse.ok) {
                     throw new Error('Failed to upload file to Cloudinary.');
                 }
-
                 const data = await uploadResponse.json();
                 return data.url;
             };
 
+            // Upload CV if present (JobSeeker use-case)
             if (optionalData.cv) {
                 optionalData.cv = await uploadFile(optionalData.cv, 'cvs');
             }
 
+            // Upload profile pic if present
             if (optionalData.profilePic) {
                 optionalData.profilePic = await uploadFile(optionalData.profilePic, 'profile_pictures');
             }
 
-            // Prepare final payload by merging formData with optionalData.
-            // Remove confirmPassword from the payload.
+            // Default profile pic if not uploaded
+            if (!optionalData.profilePic) {
+                optionalData.profilePic =
+                    'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+            }
+
+            // Upload company logo if present (Recruiter use-case)
+            if (optionalData.companyLogo) {
+                optionalData.companyLogo = await uploadFile(optionalData.companyLogo, 'companyLogos');
+            }
+
+            // Merge all form data
             const finalFormData = { ...formData };
             delete finalFormData.confirmPassword;
-            // Encrypt the password and PIN before sending
+
+            // Encrypt password & PIN before sending
             finalFormData.password = CryptoJS.AES.encrypt(
                 finalFormData.password,
                 process.env.REACT_APP_SECRET_KEY
@@ -141,11 +196,13 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                 process.env.REACT_APP_SECRET_KEY
             ).toString();
 
+            // Determine the correct endpoint
             const apiUrl =
-                formData.role === 'jobseeker'
+                formData.role === 'JobSeeker'
                     ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
                     : `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerRecruiter`;
 
+            // Send data to our backend
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -153,6 +210,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
             });
 
             const data = await response.json();
+
             if (response.ok) {
                 localStorage.setItem('countdown', 60);
                 navigate('/verify', {
@@ -160,12 +218,14 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         email: formData.email,
                         role: formData.role,
                         notificationType: 'success',
-                        notificationMessage: 'Registration process was successful! Please verify your email :)',
+                        notificationMessage:
+                            'Registration process was successful! Please verify your email :)',
                         notificationSource: 'Successful Registration',
                     },
                 });
                 showNotification('success', 'Verification email sent!');
-                // Show PIN alert with copy functionality
+
+                // Alert with copy-PIN functionality
                 await Swal.fire({
                     title: 'Important: Save Your PIN',
                     html: `
@@ -177,9 +237,16 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         >
                             Copy PIN
                         </button>
-                        <p style="margin-top: 10px;">You will need this PIN in the future. This PIN and message will appear only once.</p>
-                        <p>For your convenience, we have saved your PIN in a file named <b>pin.txt</b> for you to download.</p>
-                        <p>If you lose the PIN or accidentally close this window, refer to the <a href="/terms-and-conditions" target="_blank">Terms and Conditions</a> on how to regain your PIN.</p>
+                        <p style="margin-top: 10px;">
+                            You will need this PIN in the future. This PIN and message will appear only once.
+                        </p>
+                        <p>
+                            For your convenience, we have saved your PIN in a file named <b>pin.txt</b> for you to download.
+                        </p>
+                        <p>
+                            If you lose the PIN or accidentally close this window, refer to the
+                            <a href="/terms-and-conditions" target="_blank">Terms and Conditions</a> on how to regain your PIN.
+                        </p>
                     `,
                     icon: 'info',
                     confirmButtonText: 'I Understand',
@@ -189,21 +256,30 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                         const pinText = document.getElementById('pin-text').textContent;
                         copyButton.addEventListener('click', () => {
                             navigator.clipboard.writeText(pinText).then(() => {
-                                Swal.fire('Copied!', 'The PIN has been copied to your clipboard.', 'success');
-                            }).catch(err => {
+                                Swal.fire(
+                                    'Copied!',
+                                    'The PIN has been copied to your clipboard.',
+                                    'success'
+                                );
+                            }).catch((err) => {
                                 console.error('Failed to copy PIN:', err);
-                                Swal.fire('Error', 'Unable to copy the PIN. Please try again.', 'error');
+                                Swal.fire(
+                                    'Error',
+                                    'Unable to copy the PIN. Please try again.',
+                                    'error'
+                                );
                             });
                         });
                     },
                 });
 
-                // Download the PIN code to a .txt file.
+                // Download PIN code to a text file
                 const downloadLink = document.createElement('a');
-                downloadLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(formData.pin)}`;
+                downloadLink.href = `data:text/plain;charset=utf-8,${encodeURIComponent(
+                    formData.pin
+                )}`;
                 downloadLink.download = 'pin.txt';
                 downloadLink.click();
-                
             } else {
                 showNotification('error', data.message);
                 setIsOptionalFormVisible(false);
@@ -259,22 +335,27 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     onClose={() => setNotification(null)}
                 />
             )}
+
+            {/* Flip-card style container: Front (main form) and Back (optional form) */}
             <div
                 className={`transform-style-preserve transition-transform duration-1000 ${
                     isOptionalFormVisible ? 'rotateY-180' : ''
                 }`}
             >
+                {/* Main Registration Form (Front) */}
                 <div className={`backface-hidden ${isOptionalFormVisible ? 'hidden' : ''}`}>
                     <h2 className="text-3xl font-bold text-gray-800 text-center">
                         Welcome,
                         <p
                             className="text-gray-600"
                             style={{
-                                marginTop: formData.role === 'recruiter' ? '-5px' : '0px',
+                                marginTop: formData.role === 'Recruiter' ? '-5px' : '0px',
                                 paddingBottom: '10px',
                             }}
                         >
-                            {formData.role === 'jobseeker' ? 'Land Your Dream Job!' : 'Find Top Talents!'}
+                            {formData.role === 'JobSeeker'
+                                ? 'Land Your Dream Job!'
+                                : 'Find Top Talents!'}
                         </p>
                     </h2>
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -289,16 +370,21 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             required
                         />
                         <input
-                            data-cy="registration-email"
-                            type="email"
-                            name="email"
-                            placeholder="Email *"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
-                            required
+                        data-cy="registration-email"
+                        type="email"
+                        name="email"
+                        placeholder="Email *"
+                        value={formData.email}
+                        onChange={(e) => {
+                            handleChange(e);
+                            if (isValidEmail(e.target.value)) {
+                                checkEmailExists(e.target.value);
+                            }
+                        }}
+                        className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
+                        required
                         />
-                        {formData.role === 'recruiter' && (
+                        {formData.role === 'Recruiter' && (
                             <>
                                 <input
                                     type="text"
@@ -323,6 +409,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             </>
                         )}
 
+                        {/* Password Field */}
                         <div className="relative group">
                             <input
                                 type={isPasswordVisible ? 'text' : 'password'}
@@ -340,11 +427,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             >
                                 <i className={`fa ${isPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
                             </span>
-                            <span
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-lg group-hover:text-gray-700"
-                            >
+                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-500 text-lg group-hover:text-gray-700">
                                 <i className="fa fa-info-circle" />
                             </span>
+
+                            {/* Hover tooltip with password requirements */}
                             <div className="z-10 absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-3 w-64">
                                 <p>
                                     Password must:
@@ -358,9 +445,12 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             </div>
                         </div>
 
+                        {/* Password Strength Bar */}
                         <div className="mt-2">
                             <div className="flex items-center justify-between mb-1">
-                                <span className="text-sm font-medium text-gray-700">{getStrengthText()}</span>
+                                <span className="text-sm font-medium text-gray-700">
+                                    {getStrengthText()}
+                                </span>
                             </div>
                             <div className="w-full h-2 bg-gray-200 rounded">
                                 <div
@@ -370,6 +460,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             </div>
                         </div>
 
+                        {/* Confirm Password Field */}
                         <div className="relative">
                             <input
                                 type={isConfirmPasswordVisible ? 'text' : 'password'}
@@ -388,6 +479,8 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                 <i className={`fa ${isConfirmPasswordVisible ? 'fa-eye' : 'fa-eye-slash'}`} />
                             </span>
                         </div>
+
+                        {/* Role Selector */}
                         <select
                             name="role"
                             data-cy="registration-role"
@@ -398,9 +491,11 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             }}
                             className="w-full px-4 py-2.5 cursor-pointer bg-gray-50 text-gray-800 rounded-lg border border-gray-400 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                         >
-                            <option value="jobseeker">Job Candidate</option>
-                            <option value="recruiter">Recruiter</option>
+                            <option value="JobSeeker">Job Candidate</option>
+                            <option value="Recruiter">Recruiter</option>
                         </select>
+
+                        {/* Terms & Conditions */}
                         <div className="flex items-center space-x-2">
                             <input
                                 type="checkbox"
@@ -412,12 +507,18 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                             />
                             <label htmlFor="terms" className="text-sm text-gray-700">
                                 I agree to the{' '}
-                                <a href="/terms-and-conditions" target="_blank" className="text-blue-500 hover:underline">
+                                <a
+                                    href="/terms-and-conditions"
+                                    target="_blank"
+                                    className="text-blue-500 hover:underline"
+                                >
                                     Terms and Conditions
                                 </a>
                                 <span className="text-red-500 font-bold"> *</span>
                             </label>
                         </div>
+
+                        {/* Continue Button */}
                         <button
                             type="submit"
                             data-cy="registration-submit"
@@ -433,14 +534,17 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     </form>
                 </div>
 
+                {/* Optional Details Form (Back) */}
                 <div className={`backface-hidden rotateY-180 ${isOptionalFormVisible ? '' : 'hidden'}`}>
-                    {formData.role === 'jobseeker' ? (
+                    {formData.role === 'JobSeeker' ? (
                         <OptionalDetailsJobSeekerForm onSubmit={handleOptionalSubmit} />
                     ) : (
                         <OptionalDetailsRecruiterForm onSubmit={handleOptionalSubmit} />
                     )}
                 </div>
             </div>
+
+            {/* Toggle to Login */}
             <button
                 onClick={toggleForm}
                 data-cy="registration-toggle-login"

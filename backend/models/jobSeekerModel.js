@@ -46,9 +46,9 @@ const jobSeekerSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['jobseeker'],
+        enum: ['JobSeeker'],
         required: [true, 'Role is required'],
-        default: 'jobseeker',
+        default: 'JobSeeker',
     },
     phone: {
         type: String,
@@ -124,6 +124,10 @@ const jobSeekerSchema = new mongoose.Schema({
     minPointsForUpdate: {
         type: Number,
         default: 50,
+    },
+    isSubscribed: {
+        type: Boolean,
+        default: true,
     },
     notifications: [notificationSchema],
 });

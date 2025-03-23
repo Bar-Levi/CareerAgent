@@ -1,9 +1,11 @@
 // PersonalDetailsModal.jsx
 import Swal from "sweetalert2";
 
+// Function to reset a personal detail (e.g., phone, DOB, etc.)
 const handleResetPersonalDetail = async (user, type, label, navigate, location) => {
   try {
     const token = localStorage.getItem("token");
+    // Send a POST request to reset the specific detail
     const response = await fetch(
       `${process.env.REACT_APP_BACKEND_URL}/api/personal/reset-job-seeker-details`,
       {
@@ -19,8 +21,9 @@ const handleResetPersonalDetail = async (user, type, label, navigate, location) 
     if (!response.ok) {
       throw new Error(data.message || `Failed to reset ${label}`);
     }
-    // Update user in location state.
+    // Update user in the location state with the updated user object from backend
     location.state.user = data.updatedUser;
+    // Navigate to the current path with the updated state
     navigate(location.pathname, { state: location.state });
     Swal.fire("Reset!", data.message, "success");
   } catch (error) {
@@ -28,37 +31,36 @@ const handleResetPersonalDetail = async (user, type, label, navigate, location) 
   }
 };
 
+// Function to edit a personal detail using the user state variable
 const handleEditPersonalDetail = async (user, type, label, navigate, location) => {
   try {
     const token = localStorage.getItem("token");
-    const getResponse = await fetch(
-      `${process.env.REACT_APP_BACKEND_URL}/api/personal/job-seeker-details?email=${encodeURIComponent(
-        user.email
-      )}&type=${type}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (!getResponse.ok) {
-      throw new Error("Failed to fetch current detail");
+    
+    // Instead of fetching from the backend, use the user state directly
+    let currentValue = "Not set";
+    if (type === "dob") {
+      currentValue = user.dateOfBirth
+        ? new Date(user.dateOfBirth).toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+          })
+        : "Not set";
+    } else if (type === "phone") {
+      currentValue = user.phone || "Not set";
+    } else if (type === "github") {
+      currentValue = user.githubUrl || "Not set";
+    } else if (type === "linkedin") {
+      currentValue = user.linkedinUrl || "Not set";
     }
-    const getData = await getResponse.json();
-    let currentValue = getData[type] || "Not set";
-    if (type === "dob" && currentValue !== "Not set") {
-      currentValue = new Date(currentValue).toLocaleDateString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-        year: "numeric",
-      });
-    }
+    
+    // Choose input type based on the detail type (date for DOB, text for others)
     const inputField =
       type === "dob"
         ? `<input type="date" id="swal-input-new" class="swal2-input" />`
         : `<input id="swal-input-new" class="swal2-input" placeholder="Enter new ${label}" />`;
+    
+    // Show a SweetAlert modal with the current value and an input field to update it
     const { isConfirmed, isDenied, value: newValue } = await Swal.fire({
       title: `Change ${label}`,
       html: `
@@ -80,7 +82,9 @@ const handleEditPersonalDetail = async (user, type, label, navigate, location) =
         return inputValue;
       },
     });
+    
     if (isConfirmed) {
+      // If the user confirmed the update, send a POST request with the new detail value
       const updateResponse = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/personal/update-job-seeker-details`,
         {
@@ -100,10 +104,12 @@ const handleEditPersonalDetail = async (user, type, label, navigate, location) =
       if (!updateResponse.ok) {
         throw new Error(updateData.message || "Failed to update detail");
       }
+      // Update the user state with the updated user object returned from the backend
       location.state.user = updateData.updatedUser;
       navigate(location.pathname, { state: location.state });
       Swal.fire("Updated!", `Your ${label} has been updated.`, "success");
     } else if (isDenied) {
+      // If the user chose to reset the detail, call the reset handler
       await handleResetPersonalDetail(user, type, label, navigate, location);
     }
   } catch (error) {
@@ -112,6 +118,7 @@ const handleEditPersonalDetail = async (user, type, label, navigate, location) =
   }
 };
 
+// Main function to show the personal details modal for job seekers
 export const showJobSeekerPersonalDetailsModal = (user, navigate, location) => {
   Swal.fire({
     title: "Change Personal Details",
@@ -135,6 +142,7 @@ export const showJobSeekerPersonalDetailsModal = (user, navigate, location) => {
     confirmButtonText: "Close",
     focusConfirm: false,
     didOpen: () => {
+      // Use a short timeout to ensure the elements have rendered before attaching event listeners
       setTimeout(() => {
         const changeDob = document.getElementById("change-dob");
         if (changeDob) {

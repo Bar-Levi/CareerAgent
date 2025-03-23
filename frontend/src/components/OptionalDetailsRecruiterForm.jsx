@@ -5,6 +5,8 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
     const [formData, setFormData] = useState({
         dateOfBirth: '',
         companyWebsite: '',
+        profilePic: null,
+        companyLogo: null,
     });
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +18,9 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
             const selectedDate = new Date(value);
             const today = new Date();
             const age = today.getFullYear() - selectedDate.getFullYear();
-            const isUnder18 = age < 18 || (age === 18 && today < new Date(selectedDate.setFullYear(today.getFullYear())));
+            const isUnder18 =
+                age < 18 ||
+                (age === 18 && today < new Date(selectedDate.setFullYear(today.getFullYear())));
 
             if (isUnder18) {
                 setError('You must be at least 18 years old to register.');
@@ -28,35 +32,35 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleFileChange = (e) => {
+        const { name, files } = e.target;
+        setFormData((prev) => ({ ...prev, [name]: files[0] }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (error) return;
         setIsLoading(true);
         try {
-            await onSubmit(formData); // Pass formData to the parent
+            await onSubmit(formData); // Pass formData (including files) to parent
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const handleFileChange = (e) => {
-        const { name, files } = e.target;
-        setFormData({ ...formData, [name]: files[0] });
     };
 
     return (
         <div className="flex flex-col space-y-6 w-full max-w-md">
             <h2 className="text-3xl font-bold text-gray-800 text-center font-orbitron">
                 Add Optional Details
-                <p className="text-gray-600 text-sm mt-1">Provide additional information to enhance your profile.</p>
+                <p className="text-gray-600 text-sm mt-1">
+                    Provide additional information to enhance your profile.
+                </p>
             </h2>
-            
 
             <form onSubmit={handleSubmit} className="space-y-6">
-                
+
                 {/* Profile Picture Upload */}
                 <div className="flex flex-col items-center space-y-4">
-                    {/* Upload Button */}
                     <div className="relative flex justify-center items-center">
                         <label
                             htmlFor="profilePic"
@@ -67,7 +71,9 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                                     {formData.profilePic.name}
                                 </span>
                             ) : (
-                                <span className="text-sm text-gray-500 text-center">Profile Picture</span>
+                                <span className="text-sm text-gray-500 text-center">
+                                    Profile Picture
+                                </span>
                             )}
                         </label>
                         <input
@@ -81,13 +87,41 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                     </div>
                 </div>
 
+                {/* Company Logo Upload */}
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="relative flex justify-center items-center">
+                        <label
+                            htmlFor="companyLogo"
+                            className="cursor-pointer flex justify-center items-center w-24 h-24 px-1 rounded-full bg-gray-100 border border-gray-400 text-gray-800 font-medium hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                        >
+                            {formData.companyLogo ? (
+                                <span className="text-sm text-gray-600 text-center px-2">
+                                    {formData.companyLogo.name}
+                                </span>
+                            ) : (
+                                <span className="text-sm text-gray-500 text-center">
+                                    Company Logo
+                                </span>
+                            )}
+                        </label>
+                        <input
+                            id="companyLogo"
+                            type="file"
+                            name="companyLogo"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
+                    </div>
+                </div>
+
                 {/* Date of Birth Field */}
                 <div className="relative">
-                    <label className="block text-gray-700 font-medium mb-2">Date of Birth</label>
+                    <label className="block text-gray-700 font-medium mb-2">
+                        Date of Birth
+                    </label>
                     <div className="relative">
-                        {/* Custom Icon */}
                         <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                        {/* Date Input */}
                         <input
                             type="date"
                             name="dateOfBirth"
@@ -97,19 +131,19 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                                 error ? 'border-red-500' : 'border-gray-400'
                             } focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300`}
                             style={{
-                                appearance: 'none', // Remove browser's default date picker
-                                '-webkit-appearance': 'none', // For Safari
+                                appearance: 'none', // Remove default date picker arrow in some browsers
+                                WebkitAppearance: 'none', // For Safari
                             }}
                         />
                     </div>
-
                     {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 </div>
 
-
                 {/* Company Website Field */}
                 <div className="relative">
-                    <label className="block text-gray-700 font-medium mb-2">Company Website</label>
+                    <label className="block text-gray-700 font-medium mb-2">
+                        Company Website
+                    </label>
                     <div className="relative">
                         <FaLink className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                         <input

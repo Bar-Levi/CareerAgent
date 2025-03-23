@@ -4,6 +4,7 @@ import MessageBubble from "./MessageBubble";
 import InputBox from "./InputBox";
 import socket from "../socket";
 
+
 const MessageSkeleton = ({ isSender }) => {
   return (
     <div
@@ -26,17 +27,19 @@ const MessageSkeleton = ({ isSender }) => {
   );
 };
 
-const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
+const ChatWindow = ({ user, title, currentOpenConversationId}) => {
   // How many messages to load per request.
   const MESSAGE_BATCH_SIZE = 20;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(null);
   // Dummy spacer height to force scrollability when needed.
   const [dummySpacerHeight, setDummySpacerHeight] = useState(0);
   const chatEndRef = useRef(null);
   const [profilePics, setProfilePics] = useState(null);
+  const token = localStorage.getItem("token");
 
   // Refs for scrolling.
   const messagesContainerRef = useRef(null);
@@ -51,32 +54,36 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     }
   };
 
-  // Load the initial (latest) messages.
-  const loadInitialMessages = async () => {
+  const loadInitialMessages = async () => { // Error state
     if (!currentOpenConversationId) return;
     try {
       setLoading(true);
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}?limit=${MESSAGE_BATCH_SIZE}&skip=0`
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}?limit=${MESSAGE_BATCH_SIZE}&skip=0`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include bearer token in the request header
+            'Content-Type': 'application/json',
+          },
+        }
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const { conversation, pics } = await response.json();
-      const initialMessages = conversation.messages;
-      // Reverse the messages so that the oldest is first and the newest is last.
-      setMessages(initialMessages.reverse());
-      // If we received fewer than the batch size, assume no more older messages.
-      setHasMore(initialMessages.length >= MESSAGE_BATCH_SIZE);
-
-      setProfilePics(pics);
+      const data = await response.json();
+      console.log("data: ", data);
+      // Handle response: update the state with the messages received
+      setMessages(data.conversation.messages || []);
+      setProfilePics(data.pics);
     } catch (error) {
-      console.error("Error fetching chat messages", error);
+      // Handle error: log it and update an error state
+      console.error('Error loading messages:', error);
+      setError('Failed to load messages. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Load older messages when the user scrolls near the top.
   const loadMoreMessages = async () => {
@@ -85,7 +92,13 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       setIsLoadingMore(true);
       const skipCount = messages.length;
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}?limit=${MESSAGE_BATCH_SIZE}&skip=${skipCount}`
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}?limit=${MESSAGE_BATCH_SIZE}&skip=${skipCount}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Use the existing token variable
+            'Content-Type': 'application/json',
+          },
+        }
       );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -115,32 +128,40 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     }
   };
 
+
   // When a new notification arrives (e.g. a new message), fetch and append it.
-  const fetchLatestMessage = async () => {
-    if (!currentOpenConversationId) return;
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}?limit=1&skip=0`
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+const fetchLatestMessage = async () => {
+  if (!currentOpenConversationId) return;
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}?limit=1&skip=0`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`, // Use the existing token variable
+          'Content-Type': 'application/json',
+        },
       }
-      const conversation = await response.json();
-      if (conversation.messages && conversation.messages.length > 0) {
-        const latestMessageFromAPI = conversation.messages[0];
-        if (
-          messages.length === 0 ||
-          new Date(latestMessageFromAPI.timestamp) >
-            new Date(messages[messages.length - 1].timestamp)
-        ) {
-          setMessages((prev) => [...prev, latestMessageFromAPI]);
-          scrollToBottom();
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching latest message", error);
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  };
+    const conversation = await response.json();
+    if (conversation.messages && conversation.messages.length > 0) {
+      const latestMessageFromAPI = conversation.messages[0];
+      if (
+        messages.length === 0 ||
+        new Date(latestMessageFromAPI.timestamp) >
+          new Date(messages[messages.length - 1].timestamp)
+      ) {
+        setMessages((prev) => [...prev, latestMessageFromAPI]);
+        scrollToBottom();
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching latest message", error);
+  }
+};
+
 
   // Set up the socket connection and listen for new notifications.
   useEffect(() => {
@@ -153,8 +174,8 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
   
     const handleNewNotification = (notificationData) => {
       if (notificationData.type === "chat") {
-        setMessages((prev) => [...prev, notificationData.messageObject]);
         if (notificationData.conversationId === currentOpenConversationId) {
+          setMessages((prev) => [...prev, notificationData.messageObject]);
           socket.emit("messagesRead", {
             conversationId: currentOpenConversationId,
             readerId: user._id,
@@ -182,11 +203,11 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     };
   }, [user?._id, currentOpenConversationId]);
 
-  // Fetch messages when jobId or conversation ID changes.
+  // Fetch messages when conversation ID changes.
   useEffect(() => {
     initialLoadRef.current = true;
     loadInitialMessages();
-  }, [jobId, currentOpenConversationId]);
+  }, [currentOpenConversationId]);
 
   // Attach a scroll event listener to trigger lazy loading when scrolling near the top.
   useEffect(() => {
@@ -221,68 +242,75 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
       scrollToBottom();
       initialLoadRef.current = false;
     }
-  }, [loading, messages.length]);
+  }, [loading, messages?.length]);
 
-  // Send a new message.
-  const sendMessage = async ({ text, file }) => {
-    let attachmentData = null;
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("folder", currentOpenConversationId);
-        const uploadResponse = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        if (!uploadResponse.ok) {
-          throw new Error(`File upload failed: ${uploadResponse.statusText}`);
-        }
-        const uploadData = await uploadResponse.json();
-        attachmentData = {
-          url: uploadData.url,
-          type: file.type,
-          name: file.name,
-        };
-      } catch (error) {
-        console.error("Error uploading file", error);
-        return;
-      }
-    }
-
-    const newMessage = {
-      senderId: user._id,
-      senderRole: user.role,
-      senderProfilePic: user.profilePic,
-      senderName: user.fullName,
-      text: text.trim(),
-      timestamp: new Date().toISOString(),
-      attachments: attachmentData ? [attachmentData] : [],
-    };
-    // Optimistically update the UI.
-    setMessages((prev) => [...prev, newMessage]);
-    scrollToBottom();
-
+ // Send a new message.
+const sendMessage = async ({ text, file }) => {
+  let attachmentData = null;
+  if (file) {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`,
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", currentOpenConversationId);
+      const uploadResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/cloudinary/upload`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newMessage),
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${token}`, // Use the existing token variable
+          },
         }
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!uploadResponse.ok) {
+        throw new Error(`File upload failed: ${uploadResponse.statusText}`);
       }
-      await response.json();
+      const uploadData = await uploadResponse.json();
+      attachmentData = {
+        url: uploadData.url,
+        type: file.type,
+        name: file.name,
+      };
     } catch (error) {
-      console.error("Error sending message", error);
+      console.error("Error uploading file", error);
+      return;
     }
+  }
+
+  const newMessage = {
+    senderId: user._id,
+    senderRole: user.role,
+    senderProfilePic: user.profilePic,
+    senderName: user.fullName,
+    text: text.trim(),
+    timestamp: new Date().toISOString(),
+    attachments: attachmentData ? [attachmentData] : [],
   };
+  // Optimistically update the UI.
+  setMessages((prev) => [...prev, newMessage]);
+  scrollToBottom();
+
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${currentOpenConversationId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // Use the existing token variable
+        },
+        body: JSON.stringify(newMessage),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    await response.json();
+  } catch (error) {
+    console.error("Error sending message", error);
+  }
+};
+
 
   useEffect(() => {
     if (!currentOpenConversationId) return;
@@ -294,7 +322,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`, // Use the existing token variable
             },
             body: JSON.stringify({ readerId: user._id }),
           }
@@ -311,17 +339,21 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
     markMessagesAsRead();
   }, [currentOpenConversationId, user._id]);
 
+
   return (
     <div className="w-full h-full max-w-lg md:max-w-xl lg:max-w-2xl border border-gray-300 rounded-lg bg-white shadow-lg dark:bg-gray-800 flex flex-col">
+      
       <div className="m-2 flex justify-center bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t-lg">
         <span className="font-semibold text-gray-800 dark:text-gray-300">
-          Chat with {job.recruiterName}
+          {title}
         </span>
       </div>
+      
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-scroll p-4 space-y-3 h-64"
+        className="flex-1 overflow-y-auto p-4 space-y-3"
       >
+      
         {isLoadingMore && (
           <div className="flex justify-center items-center mb-4">
             <svg
@@ -351,7 +383,7 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
           ? [...Array(5)].map((_, index) => (
               <MessageSkeleton key={index} isSender={index % 2 === 0} />
             ))
-          : messages.length > 0 &&
+          : ( messages.length > 0 ?
             messages.map((msg, index) => (
               <MessageBubble
                 key={index}
@@ -359,7 +391,11 @@ const ChatWindow = ({ jobId, user, job, currentOpenConversationId }) => {
                 currentUser={user}
                 profilePics={profilePics}
               />
-            ))}
+            )) 
+          :
+            <div className="flex justify-center items-center text-gray-600 dark:text-gray-400">
+              Start a conversation by sending a message.
+            </div>)}
       </div>
       {/* Pass currentOpenConversationId and user._id to InputBox for draft saving */}
       <InputBox

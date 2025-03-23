@@ -18,7 +18,9 @@ const {
   logout,
   checkBlacklist,
   deleteNotification,
-  deleteAllNotifications
+  deleteAllNotifications,
+  markAsReadNotification,
+  checkEmail,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -39,7 +41,8 @@ router.post('/check-blacklist',strictLimiter, checkBlacklist);
 
 // Less critical routes with generalLimiter
 router.post("/request-password-reset", generalLimiter, requestPasswordReset);
-router.post("/reset-password", generalLimiter, resetPassword);
+router.post("/reset-password", protect, generalLimiter, resetPassword);
+router.post("/check-email", generalLimiter, checkEmail);
 
 // Protected route with generalLimiter
 router.get("/user-details", protect, generalLimiter, getUserDetails);
@@ -47,7 +50,8 @@ router.get("/user-details", protect, generalLimiter, getUserDetails);
 // Route for CV upload
 router.patch("/upload-cv/:id", protect, upload.single("cv"), uploadCV);
 
-// Route for notification delete
+// Route for notifications
+router.patch("/mark-as-read-notification/:userId/:notificationId", protect, generalLimiter, markAsReadNotification);
 router.delete("/delete-notification/:userId/:notificationId", protect, generalLimiter, deleteNotification);
 router.delete("/delete-all-notifications/:userId", protect, generalLimiter, deleteAllNotifications);
 
