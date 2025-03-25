@@ -6,7 +6,7 @@ import Botpress from "../../botpress/Botpress";
 import Notification from "../../components/Notification";
 import MetricsOverview from "../components/MetricsOverview";
 import MyJobListings from "../components/MyJobListings";
-import RecentApplications from "../components/RecentApplications";
+import Applications from "../components/Applications";
 import JobListingInput from "../components/JobListingInput";
 import CandidateMessages from "../components/CandidateMessages"; // Component for candidate messages & chat
 import convertMongoObject from "../../utils/convertMongoObject";
@@ -17,10 +17,14 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const user = state?.user;
 
   const [jobListings, setJobListings] = useState([]);
-  const [recentApplications, setRecentApplications] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [notification, setNotification] = useState(null);
   const [newConversationCandidate, setNewConversationCandidate] = useState(null);
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState("messages"); // "messages" | "applications"
+
+
 
   
 
@@ -41,10 +45,11 @@ const RecruiterDashboard = ({onlineUsers}) => {
       try {
         const parsedAddition = JSON.parse(stateAddition);
         console.log("Parsed addition: ", parsedAddition);
+        setViewMode("messages");
         setSelectedConversationId(parsedAddition.conversationId);
         setSelectedJobListing(convertMongoObject(parsedAddition.jobListing));
         setTitle(parsedAddition.title);
-
+        setViewMode(parsedAddition.viewMode);
         // Only remove after you are sure the state is updated (or use a flag)
       } catch (error) {
         console.error("Error parsing stateAddition:", error);
@@ -87,7 +92,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
     }
   };
 
-  const fetchRecentApplications = async () => {
+  const fetchApplications = async () => {
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/applicants/getRecruiterApplicants/${user._id}`,
@@ -107,7 +112,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
         }
         throw new Error("Failed to fetch recruiter's job listings.");
       }
-      setRecentApplications(data.applications);
+      setApplications(data.applications);
     } catch (error) {
       console.error("Error fetching recent applications:", error.message);
     }
@@ -143,7 +148,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
   useEffect(() => {
     fetchJobListings();
-    fetchRecentApplications();
+    fetchApplications();
     fetchMetrics();
   }, []);
 
@@ -159,7 +164,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
   
 
   return (
-    <div key={state.refreshToken} className="h-screen flex flex-col bg-gray-100 animate-fade-in">
+    <div key={state.refreshToken} className="h-screen flex flex-col bg-gray-100 animate-fade-in overflow-hidden">
       <Botpress />
       <NavigationBar userType={state?.user?.role || state?.role}/>
 
@@ -171,10 +176,16 @@ const RecruiterDashboard = ({onlineUsers}) => {
         />
       )}
 
-      {/* Metrics Overview */}
-      <div className="flex flex-col items-center p-6 space-y-8">
+      <div className="flex items-center justify-between p-6 space-x-8 bg-gray-50 rounded-lg shadow">
+        <button
+          onClick={() => setIsJobModalOpen(true)}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          Post New Job
+        </button>
         <MetricsOverview metrics={metrics} />
       </div>
+
       
       {/* Main Dashboard – Two-Pane Layout */}
       <div className="flex flex-col md:flex-row flex-1 p-6 space-y-8 md:space-y-0 md:space-x-4">
@@ -192,6 +203,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
             setMetrics={setMetrics}
             setSelectedConversationId={setSelectedConversationId}
             setSelectedCandidate={setSelectedCandidate}
+            setViewMode={setViewMode}
           />
         </div>
         {/* Right Pane: Candidate Messages & Chat (55% width) */}
@@ -199,38 +211,60 @@ const RecruiterDashboard = ({onlineUsers}) => {
           className="md:w-3/5 w-full bg-white shadow rounded-lg overflow-y-auto border-gray-200 border-2 border-t-0"
           style={{ height: "calc(65vh)" }}
         >
-          <CandidateMessages
-            key={selectedJobListing ? selectedJobListing._id : "none"}
-            user={user}
-            recruiterId={user._id}
-            jobListing={selectedJobListing}
-            selectedConversationId={selectedConversationId}
-            setSelectedConversationId={setSelectedConversationId}
-            selectedCandidate={selectedCandidate}
-            title={title}
-            setTitle={setTitle}
-            setSelectedCandidate={setSelectedCandidate}
-            onlineUsers={onlineUsers}
-          />
+          {viewMode === "messages" ? (
+            <CandidateMessages
+              key={selectedJobListing?._id ?? "none"}
+              user={user}
+              recruiterId={user._id}
+              jobListing={selectedJobListing}
+              selectedConversationId={selectedConversationId}
+              setSelectedConversationId={setSelectedConversationId}
+              selectedCandidate={selectedCandidate}
+              title={title}
+              setTitle={setTitle}
+              setSelectedCandidate={setSelectedCandidate}
+              onlineUsers={onlineUsers}
+            />
+          ) : (
+            <Applications
+              applications={applications.filter(app => app.jobId === selectedJobListing?._id)}
+              setSelectedConversationId={setSelectedConversationId}
+              setSelectedJobListing={setSelectedJobListing}
+              setSelectedCandidate={setSelectedCandidate}
+              setTitle={setTitle}
+              setViewMode={setViewMode}
+            />
+          )}
+
         </div>
       </div>
 
-      {/* Other Sections */}
-      <div className="flex flex-col items-center p-6 space-y-8">
-        <RecentApplications
-          applications={recentApplications}
-          setSelectedConversationId={setSelectedConversationId}
-          setSelectedJobListing={setSelectedJobListing}
-          setSelectedCandidate={setSelectedCandidate}
-          setTitle={setTitle}
-        />
-        <JobListingInput
-          user={user}
-          onPostSuccess={handlePostSuccess}
-          jobListings={jobListings}
-          setJobListings={setJobListings}
-        />
-      </div>
+      
+
+      {/* Job Listing Modal */}
+      {isJobModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-lg relative">
+            <button
+              onClick={() => setIsJobModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+            <JobListingInput
+              user={user}
+              onPostSuccess={() => {
+                handlePostSuccess();
+                setIsJobModalOpen(false);
+              }}
+              jobListings={jobListings}
+              setJobListings={setJobListings}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

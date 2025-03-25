@@ -41,6 +41,8 @@ const createApplicant = async (req, res) => {
             extraData: {
             goToRoute: '/dashboard',
             stateAddition: {
+                viewMode: 'applications',
+                jobListing,
             },
             },
         };

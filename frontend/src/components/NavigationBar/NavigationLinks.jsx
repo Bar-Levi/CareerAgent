@@ -69,6 +69,17 @@ const NavigationLinks = ({
       </>
       )}
 
+      {userType === "Recruiter" && (
+        <button
+          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+            "/recruiter/applications"
+          )}`}
+          onClick={() => handleNavClick("/applications")}
+        >
+          <FaBriefcase className="mr-2" /> Applications
+        </button>
+      )}
+
       <button
         className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
           "/faq"
