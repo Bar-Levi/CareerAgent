@@ -62,7 +62,7 @@ const calculateWorkExperienceMatch = (userData, jobListing, matchedWorkExperienc
 async function calculateRelevanceScore(jobListing, user, relevancePoints) {
   try {
     let score = 0;
-    console.log("User: ", user);
+    
     let matchedData = {
       jobRole: [],
       jobType: [],
@@ -195,7 +195,7 @@ async function notifyRelevantJobSeekers(newJobListing) {
     const candidates = await getCandidatesToNotify(newJobListing, jobSeekers);
 
     // Optionally, log the number of notifications
-    console.log(`Sending notifications to ${candidates.length} job seekers.`);
+    
     
     // Send emails using Promise.allSettled to avoid one failure stopping the process
     const results = await Promise.allSettled(
@@ -207,7 +207,7 @@ async function notifyRelevantJobSeekers(newJobListing) {
     // Log results for each candidate
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
-        console.log(`Email sent to ${candidates[index].email}`);
+        
       } else {
         console.error(`Failed to send email to ${candidates[index].email}:`, result.reason);
       }
@@ -233,7 +233,7 @@ function toTitleCase(value) {
   
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
-    console.log("req.body:" , req.body);
+    
     const normalizedBody = normalizeNullValues(req.body);
     try {
         // Extract job listing data from the request body
@@ -257,12 +257,12 @@ const saveJobListing = async (req, res) => {
             recruiterProfileImage,
             companyLogo,
         } = normalizedBody;
-        console.log("normalizedBody: ", normalizedBody);
-        console.log("!experienceLevel: ", !experienceLevel);
-        console.log("experienceLevel:"+ experienceLevel + '.');
+        
+        
+        
         // Validate required fields
         if (!jobRole || !location || !company || !experienceLevel || !jobType || !remote || !description) {
-            console.log("Missing required fields.");
+            
             return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
 
@@ -319,7 +319,7 @@ const getAllJobListings = async (req, res) => {
             jobListings,
         });
     } catch (error) {
-        console.error("Error fetching job listings:", error.message);
+        console.error("Errorr fetching job listings:", error.message);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
@@ -331,7 +331,7 @@ const getJobListingById = async (req, res) => {
         const jobListing = await JobListing.findById(id);
 
         if (!jobListing) {
-            return res.status(404).json({ message: "Job listing not found." });
+            return res.status(404).json({ message: "Job listing not found / removed by the recruiter." });
         }
 
         res.status(200).json({
@@ -339,7 +339,7 @@ const getJobListingById = async (req, res) => {
             jobListing,
         });
     } catch (error) {
-        console.error("Error fetching job listing:", error.message);
+        console.error("Errorrr fetching job listing:", error.message);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
 };
@@ -390,7 +390,7 @@ const updateJobListing = async (req, res) => {
             updatedData.closingTime = null; // Remove closingTime
         }
 
-        console.log("updateJobListing", updatedData);
+        
 
         const updatedJobListing = await JobListing.findByIdAndUpdate(id, updatedData, {
             new: true, // Return the updated document
@@ -420,33 +420,33 @@ const updateJobListing = async (req, res) => {
 // Delete a job listing by ID
 const deleteJobListing = async (req, res) => {
   try {
-      console.log("Received request to delete job listing:", req.params);
+      
 
       const { id } = req.params;
 
       // Find the job listing before deleting
       const jobListing = await JobListing.findById(id);
       if (!jobListing) {
-          console.log("Job listing not found with ID:", id);
+          
           return res.status(404).json({ message: "Job listing not found." });
       }
 
-      console.log("Deleting job listing with ID:", id);
+      
       const deletedJobListing = await JobListing.findByIdAndDelete(id);
       
       // Fetch applicants before deleting them
       const applicants = await Applicant.find({ jobId: id });
-      console.log(`Found ${applicants.length} applicants for job ID: ${id}`);
+      
 
       // Delete all applicants for this job listing
       const deleteResult = await Applicant.deleteMany({ jobId: id });
-      console.log(`Deleted ${deleteResult.deletedCount} applicants.`);
+      
 
       const applicantToNotify = applicants.filter((applicant) => applicant.isSubscribed);
 
       // Send emails using Promise.allSettled to avoid one failure stopping the process
       if (applicantToNotify.length > 0) {
-          console.log("Preparing to send notification emails...");
+          
           const results = await Promise.allSettled(
               applicantToNotify.map(applicant =>
                   sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
@@ -456,13 +456,13 @@ const deleteJobListing = async (req, res) => {
           // Log results for each candidate
           results.forEach((result, index) => {
               if (result.status === 'fulfilled') {
-                  console.log(`✅ Email sent successfully to ${applicantToNotify[index].email}`);
+                  
               } else {
                   console.error(`❌ Failed to send email to ${applicantToNotify[index].email}:`, result.reason);
               }
           });
       } else {
-          console.log("No applicants found. Skipping email notifications.");
+          
       }
 
       res.status(200).json({

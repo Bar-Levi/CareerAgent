@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FaImage } from "react-icons/fa";
 
-const InputBox = ({ onSend, conversationId, senderId }) => {
+const InputBox = ({ onSend, conversationId, senderId, selectedJobListingId }) => {
   // Create a unique key for the draft based on conversationId and senderId.
   const draftKey = `chatDraft-${conversationId}-${senderId}`;
   const fileInputRef = useRef(null);
@@ -38,6 +38,11 @@ const InputBox = ({ onSend, conversationId, senderId }) => {
   };
 
   const handleSend = () => {
+    if (!selectedJobListingId) {
+      alert("Job listing not found / might be removed by the recruiter.");
+      return;
+    }
+
     if (text.trim() || file) {
       onSend({ text, file });
       setText("");

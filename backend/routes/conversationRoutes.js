@@ -11,7 +11,8 @@ const {
     deleteMessageFromConversation,
     getJobListingConversations,
     markMessagesAsRead,
-    getConversationByJobCandidateId
+    getConversationByJobCandidateId,
+    getJobListingIdByConversationId
 } = require("../controllers/conversationController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -28,6 +29,9 @@ router.patch("/:conversationId/markAsRead", protect, markMessagesAsRead);
 
 // Get conversations of a specific jobListing
 router.get("/jobListing/:jobListingId", protect, getJobListingConversations);
+
+// Get jobListingId by conversationId
+router.get("/jobListingId/:conversationId", protect, getJobListingIdByConversationId);
 
 // Get conversation of a specific user
 router.get("/getJobCandidateConversations/:userId", getConversationByJobCandidateId);

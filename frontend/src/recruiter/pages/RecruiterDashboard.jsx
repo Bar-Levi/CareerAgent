@@ -83,7 +83,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
       }
       setJobListings(data.jobListings);
     } catch (error) {
-      console.error("Error fetching job listings:", error.message);
+      console.error("Error2 fetching job listings:", error.message);
     }
   };
 
