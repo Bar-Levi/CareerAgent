@@ -4,6 +4,7 @@ const Applicant = require("../models/applicantModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 const { sendJobNotificationEmail } = require("../utils/emailService");
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
+const Conversation = require("../models/conversationModel");
 
 const normalizeNullValues = (data) => {
     return Object.fromEntries(
@@ -420,61 +421,56 @@ const updateJobListing = async (req, res) => {
 // Delete a job listing by ID
 const deleteJobListing = async (req, res) => {
   try {
-      
+    const { id } = req.params;
 
-      const { id } = req.params;
+    // Find the job listing before deleting
+    const jobListing = await JobListing.findById(id);
+    if (!jobListing) {
+      return res.status(404).json({ message: "Job listing not found." });
+    }
 
-      // Find the job listing before deleting
-      const jobListing = await JobListing.findById(id);
-      if (!jobListing) {
-          
-          return res.status(404).json({ message: "Job listing not found." });
-      }
+    // Delete the job listing
+    const deletedJobListing = await JobListing.findByIdAndDelete(id);
 
-      
-      const deletedJobListing = await JobListing.findByIdAndDelete(id);
-      
-      // Fetch applicants before deleting them
-      const applicants = await Applicant.find({ jobId: id });
-      
+    // Fetch applicants before deleting them
+    const applicants = await Applicant.find({ jobId: id });
 
-      // Delete all applicants for this job listing
-      const deleteResult = await Applicant.deleteMany({ jobId: id });
-      
+    // Delete all applicants for this job listing
+    await Applicant.deleteMany({ jobId: id });
 
-      const applicantToNotify = applicants.filter((applicant) => applicant.isSubscribed);
+    // Update all Conversations that reference this jobListing
+    // Set jobListingId to null for conversations with the deleted job listing
+    await Conversation.updateMany({ jobListingId: id }, { jobListingId: null });
 
-      // Send emails using Promise.allSettled to avoid one failure stopping the process
-      if (applicantToNotify.length > 0) {
-          
-          const results = await Promise.allSettled(
-              applicantToNotify.map(applicant =>
-                  sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
-              )
-          );
+    // Filter applicants who are subscribed to notifications
+    const applicantsToNotify = applicants.filter(applicant => applicant.isSubscribed);
 
-          // Log results for each candidate
-          results.forEach((result, index) => {
-              if (result.status === 'fulfilled') {
-                  
-              } else {
-                  console.error(`❌ Failed to send email to ${applicantToNotify[index].email}:`, result.reason);
-              }
-          });
-      } else {
-          
-      }
+    // Send emails using Promise.allSettled to avoid one failure stopping the process
+    if (applicantsToNotify.length > 0) {
+      const results = await Promise.allSettled(
+        applicantsToNotify.map(applicant =>
+          sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
+        )
+      );
 
-      res.status(200).json({
-          message: "Job listing deleted successfully.",
-          jobListing: deletedJobListing,
+      // Log results for each candidate
+      results.forEach((result, index) => {
+        if (result.status !== 'fulfilled') {
+          console.error(`❌ Failed to send email to ${applicantsToNotify[index].email}:`, result.reason);
+        }
       });
+    }
 
+    res.status(200).json({
+      message: "Job listing deleted successfully.",
+      jobListing: deletedJobListing,
+    });
   } catch (error) {
-      console.error("❌ Error deleting job listing:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("❌ Error deleting job listing:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
 
 
 
