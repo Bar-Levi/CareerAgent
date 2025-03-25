@@ -18,7 +18,6 @@ import socket from "./socket";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import ApplicationsPage from './recruiter/pages/ApplicationsPage';
 
 function App() {
     const [onlineUsers, setOnlineUsers] = useState([]);
@@ -73,11 +72,6 @@ function App() {
                 <Route path="/searchjobs" element={
                     <ProtectedRoute>
                         <SearchJobs onlineUsers={onlineUsers}/>
-                    </ProtectedRoute>
-                } />
-                <Route path="/applications" element={
-                    <ProtectedRoute>
-                        <ApplicationsPage onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
                 } />
 

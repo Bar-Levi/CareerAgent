@@ -106,9 +106,9 @@ const Applications = ({ applications = [], setSelectedConversationId, setSelecte
   return (
     <div className="mx-auto">
       <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg">
-        <div className="bg-gradient-to-r bg-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-wide text-center">
-            Recent Applications
+        <div className="shadow-lg bg-gradient-to-r bg-gray-200 p-6">
+          <h2 className="text-2xl font-bold text-gray-800 text-center">
+            Applications
          </h2>
         </div>
 
