@@ -5,18 +5,19 @@ const Interview = require("../models/interviewModel");
 // Private
 const scheduleInterview = async (req, res, next) => {
   try {
-    const { recruiter, jobSeeker, jobListing, scheduledTime, meetingLink } = req.body;
+    const { participants, jobListing, scheduledTime, meetingLink } = req.body;
 
-    if (!recruiter || !jobSeeker || !scheduledTime) {
+    if (!participants || !Array.isArray(participants) || participants.length < 2 || !scheduledTime) {
       res.status(400);
-      return next(new Error("Recruiter, jobSeeker, and scheduledTime are required"));
+      return next(
+        new Error("At least two participants and scheduledTime are required")
+      );
     }
 
     // Optionally, add validation to ensure the time slot is available
 
     const interview = await Interview.create({
-      recruiter,
-      jobSeeker,
+      participants,
       jobListing,
       scheduledTime,
       meetingLink,

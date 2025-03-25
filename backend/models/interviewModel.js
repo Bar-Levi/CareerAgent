@@ -29,7 +29,7 @@ const interviewSchema = new mongoose.Schema(
     jobListing: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "JobListing",
-      required: false,
+      required: true,
     },
     scheduledTime: {
       type: Date,
@@ -37,7 +37,7 @@ const interviewSchema = new mongoose.Schema(
     },
     meetingLink: {
       type: String,
-      required: false,
+      required: true,
     },
     status: {
       type: String,
