@@ -61,6 +61,11 @@ const participantSchema = new mongoose.Schema({
     enum: ["JobSeeker", "Recruiter"], 
     required: true,
   },
+  isVisible: {
+    type: Boolean,
+    default: true,
+    required: true,
+  },
 });
 
 

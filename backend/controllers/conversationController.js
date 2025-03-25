@@ -73,7 +73,7 @@ const getConversationById = async (req, res) => {
 
 
 const createConversation = async (req, res) => {
-  const { participants, jobListingId, isGroupChat, groupChatName } = req.body;
+  const { isJobSeeker, participants, jobListingId, isGroupChat, groupChatName } = req.body;
   
   if (!jobListingId) {
     return res.status(400).json({ message: "jobListingId is required" });
@@ -102,6 +102,9 @@ const createConversation = async (req, res) => {
     });
 
     if (existingConversation) {
+      isJobSeeker ? existingConversation.participants[0].isVisible = true : existingConversation.participants[1].isVisible = true;
+      await existingConversation.save();
+
       return res.status(200).json({ conversation: existingConversation, jobListingObject });
     }
 
@@ -317,8 +320,6 @@ const getConversationByJobCandidateId = async (req, res) => {
   }
 };
 
-
-
 const markMessagesAsReadInternal = async (conversationId, readerId) => {
   // Update all messages (where the sender is not the reader) to read: true
   const conversation = await Conversation.findByIdAndUpdate(
@@ -388,6 +389,31 @@ const getJobListingIdByConversationId = async (req, res) => {
   }
 };
 
+const hideConversation = async (req, res) => {
+  try {
+    const { convId } = req.params;
+    const userId = req.user._id;
+
+    console.log("convid", convId);
+    console.log("userId", userId);
+
+    const result = await Conversation.updateOne(
+      { _id: convId, "participants.0.userId": userId },
+      { $set: { "participants.$.isVisible": false } }
+    );
+
+    if (!result.matchedCount) {
+      res.status(404);
+      throw new Error("Conversation not found or you are not a participant");
+    }
+
+    res.status(200).json({ message: "Conversation hidden successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
 module.exports = {
   getAllConversations,
   getConversationById,
@@ -402,5 +428,6 @@ module.exports = {
   markMessagesAsReadInternal,
   markMessagesAsRead,
   getConversationByJobCandidateId,
-  getJobListingIdByConversationId
+  getJobListingIdByConversationId,
+  hideConversation
 };

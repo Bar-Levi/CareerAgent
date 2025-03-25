@@ -65,6 +65,7 @@ const JobListingCard = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ 
+          isJobSeeker: true,
           participants,
           jobListingId: jobId,
         }),
