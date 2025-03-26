@@ -72,11 +72,11 @@ const NavigationLinks = ({
       {userType === "Recruiter" && (
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-            "/recruiter/applications"
+            "/recruiter/recruiter-candidate-tracker"
           )}`}
-          onClick={() => handleNavClick("/applications")}
+          onClick={() => handleNavClick("/recruiter-candidate-tracker")}
         >
-          <FaBriefcase className="mr-2" /> Applications
+          <FaBriefcase className="mr-2" /> Track Applications
         </button>
       )}
 

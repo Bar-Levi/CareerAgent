@@ -6,8 +6,7 @@ const ScheduleInterviewModal = ({
   applicant,
   jobListingId,
   recruiter,
-  onInterviewScheduled,
-  socket, // NEW: socket passed as prop
+  refetchApplicants
 }) => {
   const [scheduledTime, setScheduledTime] = useState("");
   const [meetingLink, setMeetingLink] = useState("");
@@ -68,11 +67,8 @@ const ScheduleInterviewModal = ({
           errorData.message || "Failed to schedule the interview."
         );
       }
-
-      const newInterview = await response.json();
-      onInterviewScheduled(newInterview);
-
-      // ✅ Create Google Calendar Link
+      
+      // Create Google Calendar Link
       const startTime = new Date(scheduledTime);
       const endTime = new Date(startTime.getTime() + 60 * 30 * 1000); // 1/2 hour
 
@@ -80,7 +76,7 @@ const ScheduleInterviewModal = ({
       console.log(googleUrl);
       setCalendarUrl(googleUrl);
       setShowCalendarBtn(true);
-
+      refetchApplicants();
     } catch (err) {
       setError(err.message);
     } finally {

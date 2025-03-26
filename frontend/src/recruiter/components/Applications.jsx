@@ -124,11 +124,6 @@ const Applications = ({
     }
   }, [applications]);
 
-  // Handler for when interview is scheduled (optional: update UI, notify, etc.)
-  const onInterviewScheduled = (newInterview) => {
-    alert("Interview scheduled successfully!");
-    // Optionally update state or refetch applications/interviews here.
-  };
 
   return (
     <div className="mx-auto">
@@ -296,7 +291,6 @@ const Applications = ({
           applicant={selectedApplicant}
           jobListingId={selectedApplicant.jobId} // pass jobListing id if available
           recruiter={user}
-          onInterviewScheduled={onInterviewScheduled}
         />
       )}
     </div>

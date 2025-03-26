@@ -18,6 +18,7 @@ import socket from "./socket";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import RecruiterApplicantsTracker from './recruiter/pages/RecruiterApplicantsTracker';
 
 function App() {
     const [onlineUsers, setOnlineUsers] = useState([]);
@@ -73,7 +74,12 @@ function App() {
                     <ProtectedRoute>
                         <SearchJobs onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
-                } />
+                }/>
+                <Route path="/recruiter-candidate-tracker" element={
+                    <ProtectedRoute>
+                        <RecruiterApplicantsTracker onlineUsers={onlineUsers}/>
+                    </ProtectedRoute>
+                }/>
 
             </Routes>
         </Router>
