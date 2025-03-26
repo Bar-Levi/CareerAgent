@@ -402,6 +402,14 @@ const updateJobListing = async (req, res) => {
             return res.status(404).json({ message: "Job listing not found." });
         }
 
+        // Remove closed listing from all JobSeekers’ saved lists
+        if (updatedData.status === "Closed") {
+          await JobSeeker.updateMany(
+              { savedJobListings: id },
+              { $pull: { savedJobListings: id } }
+          );
+      }
+
         const recruiterId = updatedJobListing.recruiterId;
 
         const metrics = await getMetricsByRecruiterId(recruiterId);
