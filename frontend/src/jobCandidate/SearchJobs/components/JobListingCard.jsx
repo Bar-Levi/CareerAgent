@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaBookmark, FaRegBookmark } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const JobListingCard = ({ 
@@ -40,7 +40,37 @@ const JobListingCard = ({
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
+  const [isSaved, setIsSaved] = useState(
+    user.savedJobListings?.map(id => id.toString()).includes(jobId.toString())
+  );  
   const token = localStorage.getItem('token');
+
+  const toggleSave = async () => {
+    const method = isSaved ? "DELETE" : "POST";
+    const url = `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/${user._id}/saved/${jobId}`;
+  
+    try {
+      await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+  
+      // Compute new saved list
+      const updatedSaved = isSaved
+        ? user.savedJobListings.filter(id => id.toString() !== jobId.toString())
+        : [...(user.savedJobListings || []), jobId];
+  
+      const updatedUser = { ...user, savedJobListings: updatedSaved };
+  
+      // Push new state into the same route
+      navigate(location.pathname, { state: { ...state, user: updatedUser } });
+  
+      setIsSaved(!isSaved);
+      showNotification("success", isSaved ? "Removed from Saved" : "Job Saved");
+    } catch {
+      showNotification("error", "Unable to update saved jobs");
+    }
+  };  
 
   const handleChatButtonClick = async () => {
     try {
@@ -268,6 +298,10 @@ const JobListingCard = ({
               Applied
             </span>
           )}
+        </button>
+      
+        <button onClick={toggleSave} className="p-2 rounded hover:bg-gray-200">
+        {isSaved ? <FaBookmark size={20}/> : <FaRegBookmark size={20}/>}
         </button>
 
         {/* Talk with Chatbot button */}

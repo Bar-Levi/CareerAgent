@@ -402,6 +402,14 @@ const updateJobListing = async (req, res) => {
             return res.status(404).json({ message: "Job listing not found." });
         }
 
+        // Remove closed listing from all JobSeekers’ saved lists
+        if (updatedData.status === "Closed") {
+          await JobSeeker.updateMany(
+              { savedJobListings: id },
+              { $pull: { savedJobListings: id } }
+          );
+      }
+
         const recruiterId = updatedJobListing.recruiterId;
 
         const metrics = await getMetricsByRecruiterId(recruiterId);
@@ -441,6 +449,12 @@ const deleteJobListing = async (req, res) => {
     // Update all Conversations that reference this jobListing
     // Set jobListingId to null for conversations with the deleted job listing
     await Conversation.updateMany({ jobListingId: id }, { jobListingId: null });
+
+    // **REMOVE THIS JOB ID FROM EVERY JOB SEEKER’S SAVED LISTINGS**
+    await JobSeeker.updateMany(
+      { savedJobListings: id },
+      { $pull: { savedJobListings: id } }
+    );
 
     // Filter applicants who are subscribed to notifications
     const applicantsToNotify = applicants.filter(applicant => applicant.isSubscribed);

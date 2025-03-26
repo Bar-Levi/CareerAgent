@@ -260,6 +260,7 @@ const SearchJobs = ({onlineUsers}) => {
                   <option disabled={!user.analyzed_cv_content} value="relevance">
                     Most Relevant First
                   </option>
+                  <option value="saved">Saved</option>
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>
                 </select>
