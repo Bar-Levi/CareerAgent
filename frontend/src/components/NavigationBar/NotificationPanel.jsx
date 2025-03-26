@@ -1,7 +1,7 @@
 // NotificationPanel.jsx
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaComments, FaUser, FaCheckCircle } from 'react-icons/fa';
+import { FaComments, FaUser, FaCheckCircle, FaCalendarCheck } from 'react-icons/fa';
 
 
 const NotificationPanel = ({ notifications, setNotifications, closePanel, handleNotificationClick, setUnreadNotificationsCount }) => {
@@ -134,6 +134,10 @@ const NotificationPanel = ({ notifications, setNotifications, closePanel, handle
           ) : notification.type === "apply" ? (
             <div className="p-4 w-[10%] flex justify-center">
               <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
+            </div>
+          ) : notification.type === "interview" ? (
+            <div className="p-4 w-[10%] flex justify-center">
+              <FaCalendarCheck className="w-8 h-8 text-red-500 flex-shrink-0" />
             </div>
           ) : null}
         

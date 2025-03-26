@@ -1,4 +1,3 @@
-// /components/ScheduleInterviewModal.jsx
 import React, { useState } from "react";
 
 const ScheduleInterviewModal = ({
@@ -8,20 +7,26 @@ const ScheduleInterviewModal = ({
   jobListingId,
   recruiter,
   onInterviewScheduled,
+  socket, // NEW: socket passed as prop
 }) => {
   const [scheduledTime, setScheduledTime] = useState("");
   const [meetingLink, setMeetingLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [calendarUrl, setCalendarUrl] = useState("");
+  const [showCalendarBtn, setShowCalendarBtn] = useState(false);
 
   if (!isOpen) return null;
+
+  const formatToGoogleDate = (date) => {
+    return date.toISOString().replace(/[-:]|\.\d{3}/g, "");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Build the interview object.
     const interviewData = {
       participants: [
         {
@@ -65,11 +70,26 @@ const ScheduleInterviewModal = ({
 
       const newInterview = await response.json();
       onInterviewScheduled(newInterview);
-      onClose();
+
+      // ✅ Create Google Calendar Link
+      const startTime = new Date(scheduledTime);
+      const endTime = new Date(startTime.getTime() + 60 * 30 * 1000); // 1/2 hour
+
+      const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Interview with ${applicant.name}&dates=${formatToGoogleDate(startTime)}/${formatToGoogleDate(endTime)}&details=Meeting Link: ${meetingLink || "TBD"}&location=Online`;
+      console.log(googleUrl);
+      setCalendarUrl(googleUrl);
+      setShowCalendarBtn(true);
+
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenCalendar = () => {
+    if (calendarUrl) {
+      window.open(calendarUrl, "_blank");
     }
   };
 
@@ -84,11 +104,7 @@ const ScheduleInterviewModal = ({
           ✕
         </button>
         <h2 className="text-xl font-semibold mb-4">Schedule Interview</h2>
-        {error && (
-          <p className="mb-4 text-sm text-red-600">
-            {error}
-          </p>
-        )}
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -122,6 +138,15 @@ const ScheduleInterviewModal = ({
             {loading ? "Scheduling..." : "Schedule Interview"}
           </button>
         </form>
+
+        {showCalendarBtn && (
+          <button
+            onClick={handleOpenCalendar}
+            className="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+          >
+            Add to Google Calendar
+          </button>
+        )}
       </div>
     </div>
   );

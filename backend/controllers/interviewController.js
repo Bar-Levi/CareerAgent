@@ -1,4 +1,5 @@
 const Interview = require("../models/interviewModel");
+const JobSeeker = require("../models/jobSeekerModel");
 
 // Schedule a new interview
 // POST /api/interviews
@@ -9,12 +10,8 @@ const scheduleInterview = async (req, res, next) => {
 
     if (!participants || !Array.isArray(participants) || participants.length < 2 || !scheduledTime) {
       res.status(400);
-      return next(
-        new Error("At least two participants and scheduledTime are required")
-      );
+      return next(new Error("At least two participants and scheduledTime are required"));
     }
-
-    // Optionally, add validation to ensure the time slot is available
 
     const interview = await Interview.create({
       participants,
@@ -23,11 +20,47 @@ const scheduleInterview = async (req, res, next) => {
       meetingLink,
     });
 
+    // Identify the jobSeekerParticipant (JobSeeker role)
+    const jobSeekerParticipant = participants.find((p) => p.role === "JobSeeker");
+    const recruiterParticipant = participants.find((p) => p.role !== "JobSeeker");
+
+    if (jobSeekerParticipant && recruiterParticipant) {
+      const jobSeeker = await JobSeeker.findById(jobSeekerParticipant.userId);
+      if (!jobSeeker) {
+        console.warn("Applicant not found:", jobSeekerParticipant.userId);
+      } else {
+        // Create the notification
+        const newNotification = {
+          type: "interview",
+          message: `You have an interview scheduled with ${recruiterParticipant.name}`,
+          extraData: {
+            goToRoute: '/interviews',
+            stateAddition: {
+              interviewId: interview._id,
+            },
+          },
+        };
+
+        if (!jobSeeker.notifications) {
+          jobSeeker.notifications = [];
+        }
+        jobSeeker.notifications.push(newNotification);
+        await jobSeeker.save();
+        console.log("Notification added to jobSeekerParticipant:", jobSeeker.email);
+
+        // Emit the notification in real-time
+        const io = req.app.get("io");
+        io.to(jobSeekerParticipant.userId.toString()).emit("newNotification", newNotification);
+        console.log("Emitting interview notification to:", jobSeekerParticipant.userId);
+      }
+    }
+
     res.status(201).json(interview);
   } catch (error) {
     next(error);
   }
 };
+
 
 // Get an interview by ID
 // GET /api/interviews/:id
