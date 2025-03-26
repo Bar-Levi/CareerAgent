@@ -1,4 +1,4 @@
-const JobSeeker = require('../models/JobSeekerModel');
+const JobSeeker = require('../models/jobSeekerModel');
 
 const saveJobListing = async (req, res) => {
   try {
