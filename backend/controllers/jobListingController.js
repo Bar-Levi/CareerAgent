@@ -442,6 +442,12 @@ const deleteJobListing = async (req, res) => {
     // Set jobListingId to null for conversations with the deleted job listing
     await Conversation.updateMany({ jobListingId: id }, { jobListingId: null });
 
+    // **REMOVE THIS JOB ID FROM EVERY JOB SEEKER’S SAVED LISTINGS**
+    await JobSeeker.updateMany(
+      { savedJobListings: id },
+      { $pull: { savedJobListings: id } }
+    );
+
     // Filter applicants who are subscribed to notifications
     const applicantsToNotify = applicants.filter(applicant => applicant.isSubscribed);
 
