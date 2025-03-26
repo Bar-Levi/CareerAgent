@@ -288,11 +288,16 @@ const JobListingCardsList = ({
     return { score, matchedData };
   }
   
-
+  // Apply “Saved” filter if selected
+  const savedIds = new Set((user.savedJobListings || []).map(id => id.toString()));
+  const filteredListings =
+    sortingMethod === 'saved'
+      ? jobListings.filter(job => savedIds.has(job._id.toString()))
+      : jobListings;
 
   return (
     <div className="space-y-4 p-4">
-      {jobListings.map((jobListing) => (
+      {filteredListings.map((jobListing) => (
         <div
           key={jobListing._id}
           onClick={() => {
