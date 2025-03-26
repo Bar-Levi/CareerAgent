@@ -28,6 +28,7 @@ const ScheduleInterviewModal = ({
     setError("");
 
     const interviewData = {
+      applicantId: applicant._id,
       participants: [
         {
           userId: applicant.jobSeekerId,

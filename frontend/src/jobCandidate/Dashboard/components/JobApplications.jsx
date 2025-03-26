@@ -43,26 +43,45 @@ const JobApplications = ({ user }) => {
           ) : (
             <ul className="space-y-2">
               {applications.map((app) => (
-                <li key={app._id} className="flex justify-between">
-                  <span>{app.jobTitle || "N/A"}</span>
+                <li
+                  key={app._id}
+                  className="flex justify-between items-center p-3 bg-white rounded shadow-sm hover:shadow-md transition"
+                >
+                  <span className="font-medium text-gray-800 capitalize">
+                    {app.jobTitle || "N/A"}
+                  </span>
                   <span
-                    className={
-                      app.status === "Applied"
-                        ? "text-blue-600"
-                        : app.status === "In review"
-                        ? "text-yellow-600"
-                        : app.status === "Rejected"
-                        ? "text-red-600"
-                        : app.status === "Accepted"
-                        ? "text-green-600"
-                        : "text-gray-600"
-                    }
+                    className={`px-3 py-1 rounded-full text-sm font-semibold
+                      ${
+                        app.status === "Applied"
+                          ? "bg-blue-100 text-blue-700"
+                          : app.status === "In Review"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : app.status === "Rejected"
+                          ? "bg-red-100 text-red-700"
+                          : app.status === "Accepted"
+                          ? "bg-green-100 text-green-700"
+                          : app.status === "Interview 1 Scheduled"
+                          ? "bg-purple-100 text-purple-700"
+                          : app.status === "Interview 1 Done"
+                          ? "bg-purple-200 text-purple-800"
+                          : app.status === "Interview 2 Scheduled"
+                          ? "bg-indigo-100 text-indigo-700"
+                          : app.status === "Interview 2 Done"
+                          ? "bg-indigo-200 text-indigo-800"
+                          : app.status === "Offered"
+                          ? "bg-teal-100 text-teal-700"
+                          : app.status === "Hired"
+                          ? "bg-green-200 text-green-800"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
                   >
                     {app.status}
                   </span>
                 </li>
               ))}
             </ul>
+
           )}
           <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">
             View All Applications

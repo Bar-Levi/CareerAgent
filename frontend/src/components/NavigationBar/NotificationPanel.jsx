@@ -1,7 +1,7 @@
 // NotificationPanel.jsx
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaComments, FaUser, FaCheckCircle, FaCalendarCheck } from 'react-icons/fa';
+import { FaComments, FaUser, FaCalendarCheck } from 'react-icons/fa';
 
 
 const NotificationPanel = ({ notifications, setNotifications, closePanel, handleNotificationClick, setUnreadNotificationsCount }) => {

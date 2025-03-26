@@ -1,12 +1,13 @@
 const Interview = require("../models/interviewModel");
 const JobSeeker = require("../models/jobSeekerModel");
+const Applicant = require("../models/applicantModel");
 
 // Schedule a new interview
 // POST /api/interviews
 // Private
 const scheduleInterview = async (req, res, next) => {
   try {
-    const { participants, jobListing, scheduledTime, meetingLink } = req.body;
+    const { applicantId, participants, jobListing, scheduledTime, meetingLink } = req.body;
 
     if (!participants || !Array.isArray(participants) || participants.length < 2 || !scheduledTime) {
       res.status(400);
@@ -25,6 +26,8 @@ const scheduleInterview = async (req, res, next) => {
     const recruiterParticipant = participants.find((p) => p.role !== "JobSeeker");
 
     if (jobSeekerParticipant && recruiterParticipant) {
+
+      // Add a notification to the jobSeeker
       const jobSeeker = await JobSeeker.findById(jobSeekerParticipant.userId);
       if (!jobSeeker) {
         console.warn("Applicant not found:", jobSeekerParticipant.userId);
@@ -47,6 +50,15 @@ const scheduleInterview = async (req, res, next) => {
         jobSeeker.notifications.push(newNotification);
         await jobSeeker.save();
         console.log("Notification added to jobSeekerParticipant:", jobSeeker.email);
+
+        const applicant = await Applicant.findById(applicantId);
+        if (!applicant) {
+          console.warn("Applicant not found:", applicantId);
+        } else {
+          applicant.status = "Interview 1 Scheduled";
+          await applicant.save();
+          console.log("Applicant status updated:", applicant.email);
+        }
 
         // Emit the notification in real-time
         const io = req.app.get("io");
