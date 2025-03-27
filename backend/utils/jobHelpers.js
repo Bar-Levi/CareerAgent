@@ -1,6 +1,8 @@
 const JobListing = require('../models/jobListingModel');
 const Applicant = require('../models/applicantModel');
 const Conversation = require('../models/conversationModel');
+const JobSeeker = require('../models/jobSeekerModel');
+
 const { sendJobNotificationEmail } = require('./emailService');
 
 async function removeJobAndNotify(jobId, type) {
@@ -20,6 +22,12 @@ async function removeJobAndNotify(jobId, type) {
 
   // Unlink conversations
   await Conversation.updateMany({ jobListingId: jobId }, { jobListingId: null });
+
+  // **REMOVE THIS JOB ID FROM EVERY JOB SEEKER’S SAVED LISTINGS**
+    await JobSeeker.updateMany(
+    { savedJobListings: jobId },
+    { $pull: { savedJobListings: jobId } }
+    );
 
   // Notify subscribed applicants
   const toNotify = applicants.filter(a => a.isSubscribed);
