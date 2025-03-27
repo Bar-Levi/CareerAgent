@@ -4,6 +4,7 @@ const Applicant = require("../models/applicantModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 const { sendJobNotificationEmail } = require("../utils/emailService");
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
+const { removeJobAndNotify } = require('../utils/jobHelpers');
 const Conversation = require("../models/conversationModel");
 
 const normalizeNullValues = (data) => {
@@ -380,94 +381,52 @@ const getJobListingsByRecruiterId = async (req, res) => {
 };
 
 const updateJobListing = async (req, res) => {
-    try {
-        const { id } = req.params;
-        let updatedData = req.body;
-
-        // Handle status-specific logic
-        if (updatedData.status === "Closed") {
-            updatedData.closingTime = new Date(); // Set closingTime to the current date and time
-        } else if (updatedData.status === "Active" || updatedData.status === "Paused") {
-            updatedData.closingTime = null; // Remove closingTime
-        }
-
-        
-
-        const updatedJobListing = await JobListing.findByIdAndUpdate(id, updatedData, {
-            new: true, // Return the updated document
-            runValidators: true, // Run schema validators on the updated data
-        });
-
-        if (!updatedJobListing) {
-            return res.status(404).json({ message: "Job listing not found." });
-        }
-
-        const recruiterId = updatedJobListing.recruiterId;
-
-        const metrics = await getMetricsByRecruiterId(recruiterId);
-
-
-        res.status(200).json({
-            message: "Job listing updated successfully.",
-            jobListing: updatedJobListing,
-            metrics
-        });
-    } catch (error) {
-        console.error("Error updating job listing:", error.message);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
-    }
-};
-
-// Delete a job listing by ID
-const deleteJobListing = async (req, res) => {
   try {
     const { id } = req.params;
+    const updatedData = req.body;
+    console.log("updatedData: ", updatedData);
 
-    // Find the job listing before deleting
-    const jobListing = await JobListing.findById(id);
-    if (!jobListing) {
+
+    if (updatedData.status === "Closed") {
+      const closedJob = await removeJobAndNotify(id, 'closed');
+    }
+
+    if (["Active", "Paused"].includes(updatedData.status)) {
+      updatedData.closingTime = null;
+    } else {
+      updatedData.closingTime = new Date();
+    }
+    console.log("updatedData: ", updatedData);
+    const updatedJob = await JobListing.findByIdAndUpdate(id, updatedData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedJob) {
       return res.status(404).json({ message: "Job listing not found." });
     }
 
-    // Delete the job listing
-    const deletedJobListing = await JobListing.findByIdAndDelete(id);
-
-    // Fetch applicants before deleting them
-    const applicants = await Applicant.find({ jobId: id });
-
-    // Delete all applicants for this job listing
-    await Applicant.deleteMany({ jobId: id });
-
-    // Update all Conversations that reference this jobListing
-    // Set jobListingId to null for conversations with the deleted job listing
-    await Conversation.updateMany({ jobListingId: id }, { jobListingId: null });
-
-    // Filter applicants who are subscribed to notifications
-    const applicantsToNotify = applicants.filter(applicant => applicant.isSubscribed);
-
-    // Send emails using Promise.allSettled to avoid one failure stopping the process
-    if (applicantsToNotify.length > 0) {
-      const results = await Promise.allSettled(
-        applicantsToNotify.map(applicant =>
-          sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
-        )
-      );
-
-      // Log results for each candidate
-      results.forEach((result, index) => {
-        if (result.status !== 'fulfilled') {
-          console.error(`❌ Failed to send email to ${applicantsToNotify[index].email}:`, result.reason);
-        }
-      });
-    }
-
+    const metrics = await getMetricsByRecruiterId(updatedJob.recruiterId);
+    console.log("metrics: ", metrics);
     res.status(200).json({
-      message: "Job listing deleted successfully.",
-      jobListing: deletedJobListing,
+      message: "Job listing updated successfully.",
+      jobListing: updatedJob,
+      metrics,
     });
   } catch (error) {
-    console.error("❌ Error deleting job listing:", error);
+    console.error("Error updating job listing:", error);
     res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
+const deleteJobListing = async (req, res) => {
+  try {
+    const deletedJob = await removeJobAndNotify(req.params.id, 'remove');
+    res.status(200).json({ message: "Job listing deleted successfully.", jobListing: deletedJob });
+  } catch (error) {
+    console.error("Error deleting job listing:", error);
+    const status = error.message.includes('not found') ? 404 : 500;
+    res.status(status).json({ message: error.message, error: error.message });
   }
 };
 

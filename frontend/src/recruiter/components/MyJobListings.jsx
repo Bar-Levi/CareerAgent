@@ -394,6 +394,7 @@ const MyJobListings = ({
                     <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0">
                       <div className="relative">
                         <button
+                          disabled={listing.status === "Closed"}
                           onClick={() => handleStatusMenuToggle(listing._id)}
                           className={`px-3 py-1.5 text-xs font-medium rounded-full flex items-center ${
                             listing.status === 'Active'

@@ -130,7 +130,15 @@ const CandidateTable = ({
   };
 
 
-  
+  const handleHireClick = (app) => {
+    patchStatus(app._id, "Hired")
+    
+  };
+
+  const handleRejectClick = (app) => {
+    patchStatus(app._id, "Rejected");
+  };
+
   return (
     <div key={renderKey} className="bg-white shadow-md rounded-lg overflow-auto flex-1 flex flex-col">
       <div className="flex-1 overflow-auto" ref={tableBodyRef}>
@@ -249,7 +257,7 @@ const CandidateTable = ({
                           <button
                             className="text-red-600 hover:text-red-900 transition-colors flex items-center"
                             title="Reject Applicant"
-                            onClick={() => patchStatus(app._id, "Rejected")}
+                            onClick={() => handleRejectClick(app)}
                           >
                             <FaTimes className="mr-1" /> Reject
                           </button>
@@ -257,7 +265,7 @@ const CandidateTable = ({
                           <button
                             className="text-green-600 hover:text-green-900 transition-colors flex items-center"
                             title="Hire Applicant"
-                            onClick={() => patchStatus(app._id, "Hired")}
+                            onClick={() => handleHireClick(app)}
                           >
                             <FaCheck className="mr-1" /> Hire
                           </button>
