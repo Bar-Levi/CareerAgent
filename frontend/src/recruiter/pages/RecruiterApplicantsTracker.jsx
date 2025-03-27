@@ -4,7 +4,7 @@ import Botpress from "../../botpress/Botpress";
 import NavigationBar from "../../components/NavigationBar/NavigationBar";
 import FilterBar from "../components/FilterBar";
 import CandidateTable from "../components/CandidateTable";
-import RightSidebar from "../components/RightSidebar";
+import Sidebar from "../components/Sidebar";
 
 const fetchApplicants = async (user, setAllApplicants) => {
     try {
@@ -149,7 +149,7 @@ const RecruiterApplicantsTracker = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
+    <div className="max-h-screen bg-gray-50 flex flex-col">
       <Botpress />
 
       {/* Sticky NavBar at top */}
@@ -158,9 +158,9 @@ const RecruiterApplicantsTracker = () => {
       </div>
 
       {/* Main Layout */}
-      <div className="flex flex-col lg:flex-row flex-1 p-6 gap-6">
+      <div className="flex flex-col lg:flex-row flex-1 p-6 gap-6 height-full">
         {/* Left Side: Title, FilterBar, and Table */}
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col height-full">
             <h1 className="text-2xl font-bold mb-4">Applicants Tracker</h1>
 
             <FilterBar
@@ -177,22 +177,25 @@ const RecruiterApplicantsTracker = () => {
                 setDateRange={setDateRange}
             />
 
-            <CandidateTable
-                applicants={filteredApplicants}
-                sortConfig={sortConfig}
-                setSortConfig={setSortConfig}
-                recruiter={user}              // pass the current recruiter info
-                refetchApplicants={async () => {
-                    // Re-fetch or re-filter candidates to see updated status
-                    await fetchApplicants(user, setAllApplicants); 
-                }}
-            />
+            <div className="flex-1 overflow-auto height-full">
+
+              <CandidateTable
+                  applicants={filteredApplicants}
+                  sortConfig={sortConfig}
+                  setSortConfig={setSortConfig}
+                  recruiter={user}              // pass the current recruiter info
+                  refetchApplicants={async () => {
+                      // Re-fetch or re-filter candidates to see updated status
+                      await fetchApplicants(user, setAllApplicants); 
+                  }}
+              />
+            </div>
 
         </div>
 
         {/* Right Sidebar */}
         <div className="lg:w-1/3 w-full bg-white border-l p-4 rounded-md shadow-sm">
-          <RightSidebar
+          <Sidebar
             attentionItems={attentionItems}
             upcomingInterviews={upcomingInterviews}
           />

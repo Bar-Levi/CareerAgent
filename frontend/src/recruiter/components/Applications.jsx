@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
 import ScheduleInterviewModal from "../components/ScheduleInterviewModal";
@@ -15,8 +15,8 @@ const Applications = ({
   const { state } = useLocation();
   const user = state?.user;
   const [applicantsData, setApplicantsData] = useState({});
-  const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const navigate = useNavigate();
 
   // Existing methods...
   const getApplicantDataAsJobSeeker = async (application) => {
@@ -99,10 +99,14 @@ const Applications = ({
     }
   };
 
-  // New: Open modal for scheduling interview
-  const handleScheduleInterviewClick = (applicant) => {
-    setSelectedApplicant(applicant);
-    setIsInterviewModalOpen(true);
+  const trackApplicant = async (applicant) => {
+    try {
+      localStorage.setItem("stateAddition", JSON.stringify({ applicant }));
+      navigate(`/recruiter-candidate-tracker`, { state });
+    } catch (error) {
+      console.error("Error tracking applicant:", error);
+      alert("Failed to track applicant. Please try again later.");
+    }
   };
 
   useEffect(() => {
@@ -268,10 +272,10 @@ const Applications = ({
                           Chat with Applicant
                         </button>
                         <button
-                          className="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                          onClick={() => handleScheduleInterviewClick(app)}
+                          className="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                          onClick={() => trackApplicant(app)}
                         >
-                          Schedule Interview
+                          Track Applicant
                         </button>
                       </div>
                     </div>
@@ -282,17 +286,6 @@ const Applications = ({
           </div>
         )}
       </div>
-
-      {/* Schedule Interview Modal */}
-      {isInterviewModalOpen && selectedApplicant && (
-        <ScheduleInterviewModal
-          isOpen={isInterviewModalOpen}
-          onClose={() => setIsInterviewModalOpen(false)}
-          applicant={selectedApplicant}
-          jobListingId={selectedApplicant.jobId} // pass jobListing id if available
-          recruiter={user}
-        />
-      )}
     </div>
   );
 };

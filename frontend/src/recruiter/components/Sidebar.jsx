@@ -1,6 +1,6 @@
 import React from "react";
 
-const RightSidebar = ({
+const Sidebar = ({
   attentionItems = [],
   upcomingInterviews = [],
 }) => {
@@ -51,4 +51,4 @@ const RightSidebar = ({
   );
 };
 
-export default RightSidebar;
+export default Sidebar;

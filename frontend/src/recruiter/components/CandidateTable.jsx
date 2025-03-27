@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
+import { updateApplicantStatus } from "../../utils/applicantStatus";
 
 const CandidateTable = ({
   applicants,
   sortConfig,
   setSortConfig,
-  recruiter,       // pass the current recruiter object
-  refetchApplicants, // callback to refresh or handle success
+  recruiter,
+  refetchApplicants,
 }) => {
   // State to control the modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -15,8 +16,29 @@ const CandidateTable = ({
   const [jobListingId, setJobListingId] = useState(null);
   const [renderKey, setRenderKey] = useState(0);
 
+  // Ref for the table body and selected row
+  const tableBodyRef = useRef(null);
+  const selectedRowRef = useRef(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("stateAddition");
+    if (saved) {
+      const { applicant } = JSON.parse(saved);
+      setSelectedApplicant(applicant);
+      localStorage.removeItem("stateAddition");
+    }
+  }, []);
+  
+  useEffect(() => {
+    if (selectedApplicant && applicants.length && selectedRowRef.current) {
+      selectedRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedApplicant, applicants]);
+  
+
   // Handle column sorting
   const handleSort = (key) => {
+    setSelectedApplicant(null);
     if (sortConfig.key === key) {
       setSortConfig({
         key,
@@ -36,39 +58,10 @@ const CandidateTable = ({
       : <FaSortDown className="inline-block ml-2 text-blue-500 w-3 h-3" />;
   };
 
-  const updateApplicantStatus = async (applicantId, status) => {
-    try {
-        const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/applicants/${applicantId}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ status }),
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.message || "Failed to update applicant status"
-          );
-        }
-
-        // Optionally refetch or refresh the data to see the new status
-        if (refetchApplicants) refetchApplicants();
-
-      } catch (error) {
-        console.error("Error updating status:", error);
-        // Show a user-friendly error message if needed
-      }
-  };
-  // 1) Determine the appropriate action button label & logic per status
+  // Determine the appropriate action button label & logic per status
   const getStatusAction = (applicant) => {
     const patchStatus = async (id, status) => {
-      await updateApplicantStatus(id, status);
+      await updateApplicantStatus(id, status, refetchApplicants);
       refetchApplicants?.();
     };
   
@@ -136,18 +129,16 @@ const CandidateTable = ({
         return null;
     }
   };
-  
-  
 
   return (
-    <div key={renderKey} className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
+    <div key={renderKey} className="bg-white shadow-md rounded-lg overflow-auto flex-1 flex flex-col">
+      <div className="flex-1 overflow-auto" ref={tableBodyRef}>
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
               {[
                 { key: "name", label: "Candidate" },
-                { key: "jobTitle", label: "Role" },
+                { key: "jobTitle", label: "Job Title" },
                 { key: "status", label: "Status" },
                 { key: "interviewDate", label: "Interview" },
               ].map(({ key, label }) => (
@@ -177,11 +168,16 @@ const CandidateTable = ({
               return (
                 <tr
                   key={app._id}
-                  className="hover:bg-gray-50 transition-colors duration-200"
+                  ref={selectedApplicant?._id === app._id ? selectedRowRef : null}
+                  className={`
+                    hover:bg-gray-100 transition-colors duration-200
+                    ${selectedApplicant?._id === app._id 
+                       ? "bg-blue-50 font-semibold ring-2 ring-blue-300" 
+                       : ""}
+                  `}                  
                   onClick={() => {
                     setJobListingId(app.jobId);
                     setSelectedApplicant(app);
-
                   }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -226,7 +222,6 @@ const CandidateTable = ({
                       : "—"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {/* Action button determined by status */}
                     {statusAction && (
                         <button
                           className="text-green-600 hover:text-green-900 transition-colors flex items-center"
@@ -240,14 +235,12 @@ const CandidateTable = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-3">
-                      {/* View button */}
                       <button
                         className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
                         title="View Candidate"
                         onClick={() => {
                             window.open(app.cv, "_blank", "noopener,noreferrer");
-                        }
-                        }
+                        }}
                       >
                         <FaEye className="mr-1" /> View
                       </button>
@@ -262,7 +255,6 @@ const CandidateTable = ({
         {/* Empty state */}
         {applicants && applicants.length === 0 && (
           <div className="text-center py-8 px-4 sm:px-6 lg:px-8">
-            {/* ...same empty state content... */}
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               No applicants
             </h3>
@@ -282,7 +274,6 @@ const CandidateTable = ({
           jobListingId={jobListingId} 
           recruiter={recruiter}
           refetchApplicants={() => {
-            // Refresh data or handle next steps
             setShowScheduleModal(false);
             if (refetchApplicants) refetchApplicants();
           }}
