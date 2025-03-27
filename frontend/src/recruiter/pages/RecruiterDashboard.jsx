@@ -112,6 +112,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
         }
         throw new Error("Failed to fetch recruiter's job listings.");
       }
+      console.log("data.applications: ", data.applications);
       setApplications(data.applications);
     } catch (error) {
       console.error("Error fetching recent applications:", error.message);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AuthenticationPage from './pages/AuthenticationPage';
 import Dashboard from './pages/Dashboard';
@@ -80,8 +80,8 @@ function App() {
                         <RecruiterApplicantsTracker onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
                 }/>
-
-            </Routes>
+                <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
         </Router>
         </>
     );

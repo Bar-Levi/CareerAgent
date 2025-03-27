@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
+import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck } from "react-icons/fa";
 import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
 import { updateApplicantStatus } from "../../utils/applicantStatus";
 
@@ -58,13 +58,12 @@ const CandidateTable = ({
       : <FaSortDown className="inline-block ml-2 text-blue-500 w-3 h-3" />;
   };
 
+  const patchStatus = async (id, status) => {
+    await updateApplicantStatus(id, status, refetchApplicants);
+    refetchApplicants?.();
+  };
   // Determine the appropriate action button label & logic per status
   const getStatusAction = (applicant) => {
-    const patchStatus = async (id, status) => {
-      await updateApplicantStatus(id, status, refetchApplicants);
-      refetchApplicants?.();
-    };
-  
     switch (applicant.status) {
       case "Applied":
         return {
@@ -130,6 +129,8 @@ const CandidateTable = ({
     }
   };
 
+
+  
   return (
     <div key={renderKey} className="bg-white shadow-md rounded-lg overflow-auto flex-1 flex flex-col">
       <div className="flex-1 overflow-auto" ref={tableBodyRef}>
@@ -171,10 +172,8 @@ const CandidateTable = ({
                   ref={selectedApplicant?._id === app._id ? selectedRowRef : null}
                   className={`
                     hover:bg-gray-100 transition-colors duration-200
-                    ${selectedApplicant?._id === app._id 
-                       ? "bg-blue-50 font-semibold ring-2 ring-blue-300" 
-                       : ""}
-                  `}                  
+                    ${selectedApplicant?._id === app._id ? "bg-blue-50 font-semibold ring-2 ring-blue-300" : ""}
+                  `}
                   onClick={() => {
                     setJobListingId(app.jobId);
                     setSelectedApplicant(app);
@@ -183,18 +182,16 @@ const CandidateTable = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {app.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {app.email}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900">{app.name}</div>
+                        <div className="text-sm text-gray-500">{app.email}</div>
                       </div>
                     </div>
                   </td>
+              
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {app.jobTitle}
                   </td>
+              
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -216,38 +213,63 @@ const CandidateTable = ({
                       {app.status}
                     </span>
                   </td>
+              
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {app.interviewDate
-                      ? new Date(app.interviewDate).toLocaleString()
-                      : "—"}
+                    {app.interviewDate ? new Date(app.interviewDate).toLocaleString() : "—"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {statusAction && (
-                        <button
-                          className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                          title={statusAction.label}
-                          onClick={statusAction.onClick}
-                        >
-                          <FaCalendarPlus className="mr-1" />
-                          {statusAction.label}
-                        </button>
-                      ) || "—"} 
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-3">
-                      <button
-                        className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
-                        title="View Candidate"
-                        onClick={() => {
-                            window.open(app.cv, "_blank", "noopener,noreferrer");
-                        }}
-                      >
-                        <FaEye className="mr-1" /> View
-                      </button>
-                    </div>
-                  </td>
+              
+                  {(
+                    <>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {(statusAction && !["Hired", "Rejected"].includes(app.status)) ? (
+                          <button
+                            className="text-green-600 hover:text-green-900 transition-colors flex items-center"
+                            title={statusAction.label}
+                            onClick={statusAction.onClick}
+                          >
+                            <FaCalendarPlus className="mr-1" />
+                            {statusAction.label}
+                          </button>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+              
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        { !["Hired", "Rejected"].includes(app.status) ?
+                        <div className="flex flex-col justify-center space-y-3">
+                          <button
+                            className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
+                            title="View Candidate"
+                            onClick={() => window.open(app.cv, "_blank", "noopener,noreferrer")}
+                          >
+                            <FaEye className="mr-1" /> View
+                          </button>
+              
+                          <button
+                            className="text-red-600 hover:text-red-900 transition-colors flex items-center"
+                            title="Reject Applicant"
+                            onClick={() => patchStatus(app._id, "Rejected")}
+                          >
+                            <FaTimes className="mr-1" /> Reject
+                          </button>
+              
+                          <button
+                            className="text-green-600 hover:text-green-900 transition-colors flex items-center"
+                            title="Hire Applicant"
+                            onClick={() => patchStatus(app._id, "Hired")}
+                          >
+                            <FaCheck className="mr-1" /> Hire
+                          </button>
+                        </div>
+                        : "—"}
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
+              
+              
             })}
           </tbody>
         </table>
