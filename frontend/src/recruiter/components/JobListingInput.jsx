@@ -51,13 +51,19 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
 
     const saveJobListing = async (jobListingData) => {
         try {
+            console.log("jobListingData:", jobListingData)
             const updatedJobListingData = { 
                 ...jobListingData, 
                 recruiterId: user._id, 
                 recruiterName: user.fullName, 
                 recruiterProfileImage: user.profilePic, 
-                companyLogo: user.companyLogo
+                companyLogo: user.companyLogo,
+                companyWebsite: user.companyWebsite,
+                companySize: user.companySize,
+                company: user.companyName,
             };
+            console.log("updatedJobListingData:", updatedJobListingData)
+
 
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
@@ -100,6 +106,7 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             (field) => !prettyJson[field] || (prettyJson[field].length === 0)
         );
         if (missingFields.length > 0) {
+            console.log("--JobListing: ", { ...prettyJson, missingFields });
             setJobListing({ ...prettyJson, missingFields });
             setIsModalOpen(true);
             return true;
@@ -114,9 +121,14 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             let analyzedData = await analyzeFreeText(
                 `${input} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`
             );
+
+            console.log("--Analyzed data: ", analyzedData);
             if (!analyzedData) return;
 
             const hasMissingFields = handleMissingFields(analyzedData);
+
+            console.log("--hasMissingFields: ", hasMissingFields);
+
             if (hasMissingFields) return;
 
             await saveJobListing(analyzedData);
@@ -141,7 +153,8 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
                 return acc;
             }, "");
 
-            const analyzedData = await analyzeFreeText(combinedText);
+            const analyzedData = await analyzeFreeText(`${combinedText} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`
+            );
             if (!analyzedData) return;
             
             handleMissingFields(analyzedData);

@@ -259,8 +259,8 @@ const saveJobListing = async (req, res) => {
             recruiterProfileImage,
             companyLogo,
         } = normalizedBody;
-        
-        
+
+        console.log("normalizedBody: ",normalizedBody);
         
         // Validate required fields
         if (!jobRole || !location || !company || !experienceLevel || !jobType || !remote || !description) {
@@ -268,7 +268,7 @@ const saveJobListing = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
 
-        education.forEach((edu) => {
+        education?.forEach((edu) => {
           edu = checkAndInsertIn(edu);
         });
         
@@ -297,6 +297,7 @@ const saveJobListing = async (req, res) => {
             companyLogo,
         });
 
+        console.log("description: ",description);
         // Save the job listing to the database
         const savedJobListing = await newJobListing.save();
         notifyRelevantJobSeekers(newJobListing);
