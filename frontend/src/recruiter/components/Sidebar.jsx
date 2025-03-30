@@ -38,10 +38,13 @@ const Sidebar = ({
                 key={idx}
                 className="p-2 border rounded flex flex-col bg-white shadow-sm"
               >
-                <span className="font-medium">{interview.candidate}</span>
-                <span className="text-xs text-gray-500">
-                  {interview.jobTitle} – {interview.dateTime}
+                <span className="mb-1 font-medium">{interview.candidate}</span>
+                <span className="mb-1 text-xs text-gray-500">
+                  {interview.jobTitle}
                 </span>
+                <b className="mb-1 text-xs text-gray-500">
+                  {interview.dateTime}
+                </b>
                 <a
                   href={interview.meetingLink}
                   target="_blank"

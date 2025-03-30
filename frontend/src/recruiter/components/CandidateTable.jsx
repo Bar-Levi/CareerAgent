@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck } from "react-icons/fa";
+import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt } from "react-icons/fa";
 import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
 import { updateApplicantStatus } from "../../utils/applicantStatus";
+import CandidateNotesModal from "./CandidateNotesModal"; // Adjust import path
 
 const CandidateTable = ({
   applicants,
@@ -13,6 +14,7 @@ const CandidateTable = ({
 }) => {
   // State to control the modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [jobListingId, setJobListingId] = useState(null);
   const [renderKey, setRenderKey] = useState(0);
@@ -148,7 +150,7 @@ const CandidateTable = ({
               ].map(({ key, label }) => (
                 <th
                   key={key}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                   onClick={() => handleSort(key)}
                 >
                   <div className="flex items-center">
@@ -157,10 +159,10 @@ const CandidateTable = ({
                   </div>
                 </th>
               ))}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Next Step
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -182,7 +184,7 @@ const CandidateTable = ({
                     setSelectedApplicant(app);
                   }}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{app.name}</div>
@@ -191,18 +193,18 @@ const CandidateTable = ({
                     </div>
                   </td>
               
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                     {app.jobTitle}
                   </td>
               
                   {/* Application Date Column */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                     {app.applicationDate 
                       ? new Date(app.applicationDate).toLocaleDateString() 
                       : "—"}
                   </td>
               
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         app.status === "Applied"
@@ -224,7 +226,7 @@ const CandidateTable = ({
                     </span>
                   </td>
               
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                     {app.interviewId ? (
                       <div className="flex flex-col">
                         <span>{new Date(app.interviewId.scheduledTime).toLocaleString()}</span>
@@ -248,7 +250,7 @@ const CandidateTable = ({
               
                   {(
                     <>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                         {(statusAction && !["Hired", "Rejected"].includes(app.status))
                           ? statusAction.map((statusAction) => {
                               return (
@@ -271,7 +273,7 @@ const CandidateTable = ({
                         }
                       </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                         {!["Hired", "Rejected"].includes(app.status) ? (
                           <div className="flex flex-col justify-center space-y-3">
                             <button
@@ -304,6 +306,17 @@ const CandidateTable = ({
                             >
                               <FaCheck className="mr-1" /> Hire
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedApplicant(app); // assuming app is the candidate object
+                                setShowNotesModal(true);
+                              }}
+                              className="text-gray-600 hover:text-gray-900 transition-colors flex items-center"
+                            >
+                              <FaPencilAlt className="mr-1" />
+                              Notes
+                            </button>
                           </div>
                         ) : (
                           "—"
@@ -319,7 +332,7 @@ const CandidateTable = ({
 
         {/* Empty state */}
         {applicants && applicants.length === 0 && (
-          <div className="text-center py-8 px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-8 px-4 sm:px-4 lg:px-8">
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               No applicants
             </h3>
@@ -345,6 +358,19 @@ const CandidateTable = ({
           }}
         />
       )}
+
+      {showNotesModal && selectedApplicant && (
+        <CandidateNotesModal
+          isOpen={showNotesModal}
+          onClose={() => setShowNotesModal(false)}
+          applicant={selectedApplicant}
+          onNotesUpdated={(updatedApplicant) => {
+            // Optionally update your applicants state here.
+            refetchApplicants?.();
+          }}
+        />
+      )}
+
     </div>
   );
 };
