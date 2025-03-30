@@ -4,6 +4,7 @@ const ScheduleInterviewModal = ({
   isOpen,
   onClose,
   applicant,
+  setApplicants,
   jobListingId,
   recruiter,
   refetchApplicants
@@ -76,7 +77,13 @@ const ScheduleInterviewModal = ({
       console.log(googleUrl);
       setCalendarUrl(googleUrl);
       setShowCalendarBtn(true);
-      refetchApplicants();
+      setApplicants((applicants) => {
+        const updatedApplicant = applicants.find(
+          (app) => app._id === applicant._id
+        );
+        updatedApplicant.status = "Interview Scheduled";
+        return [...applicants];
+      });
     } catch (err) {
       setError(err.message);
     } finally {

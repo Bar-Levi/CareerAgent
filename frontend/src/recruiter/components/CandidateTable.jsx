@@ -5,6 +5,7 @@ import { updateApplicantStatus } from "../../utils/applicantStatus";
 
 const CandidateTable = ({
   applicants,
+  setApplicants,
   sortConfig,
   setSortConfig,
   recruiter,
@@ -66,63 +67,60 @@ const CandidateTable = ({
   const getStatusAction = (applicant) => {
     switch (applicant.status) {
       case "Applied":
-        return {
+        return [{
           label: "Review Application",
           onClick: async () => {
             window.open(applicant.cv, "_blank");
             await patchStatus(applicant._id, "In Review");
           },
-        };
+        }];
   
       case "In Review":
-        return {
-          label: "Schedule Interview 1",
+        return [{
+          label: "Schedule Interview",
           onClick: () => {
             setSelectedApplicant(applicant);
             setShowScheduleModal(true);
             refetchApplicants?.();
           },
-        };
+        }];
   
-      case "Interview 1 Scheduled":
-        return {
-          label: "Mark Interview 1 Done",
-          onClick: () => patchStatus(applicant._id, "Interview 1 Done"),
-        };
+      case "Interview Scheduled":
+        return [{
+          label: "Mark Interview Done",
+          onClick: () => patchStatus(applicant._id, "Interview Done"),
+        }];
   
-      case "Interview 1 Done":
-        return {
-          label: "Schedule Interview 2",
+      case "Interview Done":
+        return [
+          {
+          label: "Schedule Another Interview",
           onClick: () => {
             setSelectedApplicant(applicant);
             setShowScheduleModal(true);
             refetchApplicants?.();
           },
-        };
-  
-      case "Interview 2 Scheduled":
-        return {
-          label: "Mark Interview 2 Done",
-          onClick: () => patchStatus(applicant._id, "Interview 2 Done"),
-        };
-  
-      case "Interview 2 Done":
-        return {
-          label: "Make Offer",
-          onClick: () => patchStatus(applicant._id, "Offered"),
-        };
+          },
+          {
+            label: "Make Offer",
+            onClick: () => patchStatus(applicant._id, "Offered"),
+          }
+        ];
+
+      case "Interview Done":
+        return [];
   
       case "Offered":
-        return {
+        return [{
           label: "Mark as Accepted",
           onClick: () => patchStatus(applicant._id, "Accepted"),
-        };
+        }];
   
       case "Accepted":
-        return {
+        return [{
           label: "Mark as Hired",
           onClick: () => patchStatus(applicant._id, "Hired"),
-        };
+        }];
   
       default:
         return null;
@@ -229,19 +227,24 @@ const CandidateTable = ({
                   {(
                     <>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {(statusAction && !["Hired", "Rejected"].includes(app.status)) ? (
-                          <button
-                            className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                            title={statusAction.label}
-                            onClick={statusAction.onClick}
-                          >
-                            <FaCalendarPlus className="mr-1" />
-                            {statusAction.label}
-                          </button>
-                        ) : (
-                          "—"
-                        )}
+                        {(statusAction && !["Hired", "Rejected"].includes(app.status))
+                          ? statusAction.map((statusAction) => {
+                              return (
+                                <button
+                                  key={statusAction.label} // it's a good practice to include a unique key for list items
+                                  className="text-green-600 hover:text-green-900 transition-colors flex items-center"
+                                  title={statusAction.label}
+                                  onClick={statusAction.onClick}
+                                >
+                                  <FaCalendarPlus className="mr-1" />
+                                  {statusAction.label}
+                                </button>
+                              );
+                            })
+                          : "—"
+                        }
                       </td>
+
               
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         { !["Hired", "Rejected"].includes(app.status) ?
@@ -301,6 +304,7 @@ const CandidateTable = ({
           isOpen={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
           applicant={selectedApplicant}
+          setApplicants={setApplicants}
           jobListingId={jobListingId} 
           recruiter={recruiter}
           refetchApplicants={() => {

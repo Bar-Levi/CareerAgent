@@ -35,10 +35,8 @@ const applicantSchema = new mongoose.Schema({
         enum: [
             'Applied',
             'In Review',
-            'Interview 1 Scheduled',
-            'Interview 1 Done',
-            'Interview 2 Scheduled',
-            'Interview 2 Done',
+            'Interview Scheduled',
+            'Interview Done',
             'Offered',
             'Accepted',
             'Rejected',

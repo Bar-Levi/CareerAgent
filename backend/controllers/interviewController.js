@@ -34,12 +34,10 @@ const scheduleInterview = async (req, res, next) => {
       } else {
         const applicant = await Applicant.findById(applicantId);
 
-        const interviewNumber = applicant.status === "In Review" ? 1 : 2;
-        const interviewNumberAsWord = applicant.status === "In Review" ? "first" : "second";
         // Create the notification
         const newNotification = {
           type: "interview",
-          message: `You have a ${interviewNumberAsWord} interview scheduled with ${recruiterParticipant.name}`,
+          message: `A new interview was scheduled by ${recruiterParticipant.name}`,
           extraData: {
             goToRoute: '/interviews',
             stateAddition: {
@@ -58,7 +56,7 @@ const scheduleInterview = async (req, res, next) => {
         if (!applicant) {
           console.warn("Applicant not found:", applicantId);
         } else {
-          applicant.status = `Interview ${interviewNumber} Scheduled`;
+          applicant.status = `Interview Scheduled`;
 
           await applicant.save();
           console.log("Applicant status updated:", applicant.email);

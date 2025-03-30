@@ -181,6 +181,7 @@ const RecruiterApplicantsTracker = () => {
 
               <CandidateTable
                   applicants={filteredApplicants}
+                  setApplicants={setFilteredApplicants}
                   sortConfig={sortConfig}
                   setSortConfig={setSortConfig}
                   recruiter={user}              // pass the current recruiter info
