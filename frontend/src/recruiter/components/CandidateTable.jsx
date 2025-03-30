@@ -107,10 +107,6 @@ const CandidateTable = ({
             onClick: () => patchStatus(applicant._id, "Offered"),
           }
         ];
-
-      case "Interview Done":
-        return [];
-  
       case "Offered":
         return [{
           label: "Mark as Accepted",
@@ -128,10 +124,8 @@ const CandidateTable = ({
     }
   };
 
-
   const handleHireClick = (app) => {
-    patchStatus(app._id, "Hired")
-    
+    patchStatus(app._id, "Hired");
   };
 
   const handleRejectClick = (app) => {
@@ -147,6 +141,8 @@ const CandidateTable = ({
               {[
                 { key: "name", label: "Candidate" },
                 { key: "jobTitle", label: "Job Title" },
+                // Added Application Date column header
+                { key: "applicationDate", label: "Application Date" },
                 { key: "status", label: "Status" },
                 { key: "interviewDate", label: "Interview" },
               ].map(({ key, label }) => (
@@ -199,6 +195,13 @@ const CandidateTable = ({
                     {app.jobTitle}
                   </td>
               
+                  {/* Application Date Column */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {app.applicationDate 
+                      ? new Date(app.applicationDate).toLocaleDateString() 
+                      : "—"}
+                  </td>
+              
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -225,21 +228,23 @@ const CandidateTable = ({
                     {app.interviewId ? (
                       <div className="flex flex-col">
                         <span>{new Date(app.interviewId.scheduledTime).toLocaleString()}</span>
-                        <a 
-                          href={app.interviewId.meetingLink} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Enter the Meeting
-                        </a>
+                        {app.interviewId.meetingLink ? (
+                          <a 
+                            href={app.interviewId.meetingLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                          >
+                            Join Meeting
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">No Meeting Link</span>
+                        )}
                       </div>
                     ) : (
                       "—"
                     )}
                   </td>
-
-
               
                   {(
                     <>
@@ -248,10 +253,14 @@ const CandidateTable = ({
                           ? statusAction.map((statusAction) => {
                               return (
                                 <button
-                                  key={statusAction.label} // it's a good practice to include a unique key for list items
+                                  key={statusAction.label}
                                   className="text-green-600 hover:text-green-900 transition-colors flex items-center"
                                   title={statusAction.label}
-                                  onClick={statusAction.onClick}
+                                  onClick={async (e) => {
+                                    // Prevent the row's onClick from triggering
+                                    e.stopPropagation();
+                                    await statusAction.onClick();
+                                  }}
                                 >
                                   <FaCalendarPlus className="mr-1" />
                                   {statusAction.label}
@@ -262,42 +271,48 @@ const CandidateTable = ({
                         }
                       </td>
 
-              
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        { !["Hired", "Rejected"].includes(app.status) ?
-                        <div className="flex flex-col justify-center space-y-3">
-                          <button
-                            className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
-                            title="View Candidate"
-                            onClick={() => window.open(app.cv, "_blank", "noopener,noreferrer")}
-                          >
-                            <FaEye className="mr-1" /> View
-                          </button>
-              
-                          <button
-                            className="text-red-600 hover:text-red-900 transition-colors flex items-center"
-                            title="Reject Applicant"
-                            onClick={() => handleRejectClick(app)}
-                          >
-                            <FaTimes className="mr-1" /> Reject
-                          </button>
-              
-                          <button
-                            className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                            title="Hire Applicant"
-                            onClick={() => handleHireClick(app)}
-                          >
-                            <FaCheck className="mr-1" /> Hire
-                          </button>
-                        </div>
-                        : "—"}
+                        {!["Hired", "Rejected"].includes(app.status) ? (
+                          <div className="flex flex-col justify-center space-y-3">
+                            <button
+                              className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
+                              title="View Candidate"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(app.cv, "_blank", "noopener,noreferrer");
+                              }}
+                            >
+                              <FaEye className="mr-1" /> View
+                            </button>
+                            <button
+                              className="text-red-600 hover:text-red-900 transition-colors flex items-center"
+                              title="Reject Applicant"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRejectClick(app);
+                              }}
+                            >
+                              <FaTimes className="mr-1" /> Reject
+                            </button>
+                            <button
+                              className="text-green-600 hover:text-green-900 transition-colors flex items-center"
+                              title="Hire Applicant"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleHireClick(app);
+                              }}
+                            >
+                              <FaCheck className="mr-1" /> Hire
+                            </button>
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                     </>
                   )}
                 </tr>
               );
-              
-              
             })}
           </tbody>
         </table>

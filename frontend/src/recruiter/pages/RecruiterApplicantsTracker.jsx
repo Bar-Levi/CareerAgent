@@ -75,7 +75,7 @@ const RecruiterApplicantsTracker = () => {
     if (dateRange) {
       const selectedDate = new Date(dateRange);
       filtered = filtered.filter((c) => {
-        const appliedDate = new Date(c.appliedAt);
+        const appliedDate = new Date(c.applicationDate);
         return appliedDate >= selectedDate;
       });
     }
@@ -116,12 +116,13 @@ const RecruiterApplicantsTracker = () => {
     );
     // Upcoming interviews, sorted by date
     const upcoming = filtered
-      .filter((c) => c.interviewDate)
-      .sort((a, b) => new Date(a.interviewDate) - new Date(b.interviewDate))
-      .map((c) => ({
-        candidate: c.name,
-        jobTitle: c.jobTitle,
-        dateTime: new Date(c.interviewDate).toLocaleString(),
+      .filter((applicant) => applicant.interviewId)
+      .sort((app1, app2) => new Date(app1.interviewId.scheduledTime) - new Date(app2.interviewId.scheduledTime))
+      .map((applicant) => ({
+        candidate: applicant.name,
+        jobTitle: applicant.jobTitle,
+        dateTime: new Date(applicant.interviewId.scheduledTime).toLocaleString(),
+        meetingLink: applicant.interviewId.meetingLink,
       }));
 
     setAttentionItems(

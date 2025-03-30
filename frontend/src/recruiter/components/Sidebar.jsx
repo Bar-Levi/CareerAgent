@@ -42,6 +42,14 @@ const Sidebar = ({
                 <span className="text-xs text-gray-500">
                   {interview.jobTitle} – {interview.dateTime}
                 </span>
+                <a
+                  href={interview.meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline mt-1"
+                >
+                  Join Meeting
+                </a>
               </li>
             ))}
           </ul>
