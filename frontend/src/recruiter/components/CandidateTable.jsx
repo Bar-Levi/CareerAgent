@@ -33,6 +33,7 @@ const CandidateTable = ({
   useEffect(() => {
     if (selectedApplicant && applicants.length && selectedRowRef.current) {
       selectedRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      console.log("applicants: ", applicants);
     }
   }, [selectedApplicant, applicants]);
   
@@ -221,8 +222,24 @@ const CandidateTable = ({
                   </td>
               
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {app.interviewDate ? new Date(app.interviewDate).toLocaleString() : "—"}
+                    {app.interviewId ? (
+                      <div className="flex flex-col">
+                        <span>{new Date(app.interviewId.scheduledTime).toLocaleString()}</span>
+                        <a 
+                          href={app.interviewId.meetingLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          Enter the Meeting
+                        </a>
+                      </div>
+                    ) : (
+                      "—"
+                    )}
                   </td>
+
+
               
                   {(
                     <>

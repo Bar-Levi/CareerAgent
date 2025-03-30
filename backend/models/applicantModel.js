@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+
 const applicantSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -68,6 +69,10 @@ const applicantSchema = new mongoose.Schema({
     },
     jobTitle: {
         type: String,
+    },
+    interviewId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Interview',
     },
 });
 

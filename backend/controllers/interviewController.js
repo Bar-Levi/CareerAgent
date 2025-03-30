@@ -57,6 +57,7 @@ const scheduleInterview = async (req, res, next) => {
           console.warn("Applicant not found:", applicantId);
         } else {
           applicant.status = `Interview Scheduled`;
+          applicant.interviewId = interview._id;
 
           await applicant.save();
           console.log("Applicant status updated:", applicant.email);

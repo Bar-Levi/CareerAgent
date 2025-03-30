@@ -112,7 +112,7 @@ const ScheduleInterviewModal = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Scheduled Time
+              Scheduled Time *
             </label>
             <input
               type="datetime-local"
@@ -124,9 +124,10 @@ const ScheduleInterviewModal = ({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Meeting Link (optional)
+              Meeting Link *
             </label>
             <input
+              required
               type="url"
               value={meetingLink}
               onChange={(e) => setMeetingLink(e.target.value)}
@@ -134,23 +135,26 @@ const ScheduleInterviewModal = ({
               className="mt-1 block w-full border border-gray-300 rounded-md p-2"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-          >
-            {loading ? "Scheduling..." : "Schedule Interview"}
-          </button>
-        </form>
 
-        {showCalendarBtn && (
+          { showCalendarBtn ? (
           <button
             onClick={handleOpenCalendar}
             className="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
           >
             Add to Google Calendar
           </button>
-        )}
+          ):
+            <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            {loading ? "Scheduling..." : "Schedule Interview"}
+          </button>
+          }
+        </form>
+
+        
       </div>
     </div>
   );
