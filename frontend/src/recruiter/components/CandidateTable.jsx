@@ -66,7 +66,7 @@ const CandidateTable = ({
     await updateApplicantStatus(applicant, status, refetchApplicants);
     refetchApplicants?.();
   };
-  
+
   // Determine the appropriate action button label & logic per status
   const getStatusAction = (applicant) => {
     switch (applicant.status) {
@@ -131,12 +131,12 @@ const CandidateTable = ({
     }
   };
 
-  const handleHireClick = (app) => {
-    patchStatus(app._id, "Hired");
+  const handleHireClick = (applicant) => {
+    patchStatus(applicant, "Hired");
   };
 
-  const handleRejectClick = (app) => {
-    patchStatus(app._id, "Rejected");
+  const handleRejectClick = (applicant) => {
+    patchStatus(applicant, "Rejected");
   };
 
   return (

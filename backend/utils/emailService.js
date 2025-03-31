@@ -195,9 +195,49 @@ const sendJobNotificationEmail = async (
     }
   };  
 
+  const sendRejectionEmail = async (email, username, jobListing) => {
+    const mailOptions = {
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Application Update for ${jobListing.jobRole} at ${jobListing.company}`,
+        html: `
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 24px;">Application Update</h1>
+                </div>
+                <!-- Body -->
+                <div style="padding: 20px; background-color: #ffffff; line-height: 1.6;">
+                    <p>Hello ${username},</p>
+                    <p>
+                        Thank you for taking the time to apply for the position of 
+                        <strong>${jobListing.jobRole}</strong> at <strong>${jobListing.company}</strong> located in <strong>${jobListing.location}</strong>.
+                    </p>
+                    <p>
+                        After careful consideration, we have decided to move forward with other candidates for this role.
+                        We truly appreciate your interest in our team and encourage you to keep an eye on future opportunities
+                        that match your skills and experience.
+                    </p>
+                    <p>
+                        We wish you the very best in your job search and future endeavors.
+                    </p>
+                    <p style="margin-top: 20px;">Best regards,</p>
+                    <p><strong>The CareerAgent Team</strong></p>
+                </div>
+                <!-- Footer -->
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
+                    <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+                </div>
+            </div>
+        `,
+    };
+    await transporter.sendMail(mailOptions);
+};
+
 module.exports = {
     sendVerificationCode,
     sendResetPasswordEmail,
     generateResetToken,
-    sendJobNotificationEmail
+    sendJobNotificationEmail,
+    sendRejectionEmail
 };

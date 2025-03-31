@@ -2,6 +2,7 @@ const Applicant = require('../models/applicantModel');
 const Recruiter = require('../models/recruiterModel');
 const JobListing = require('../models/jobListingModel');
 const Interview = require('../models/interviewModel');
+const { sendRejectionEmail } = require('../utils/emailService');
 
 
 // Create a new applicant
@@ -143,26 +144,29 @@ const getJobSeekerApplicants = async (req, res) => {
 // Update a specific applicant by ID
 const updateApplicant = async (req, res) => {
     const { id } = req.params;
+    let { status, interviewId } = req.body;
 
     // If the applicant just finished an interview
-    if (req.body.status === "Interview Done") {
+    if (status === "Interview Done") {
         // Remove the interview ID from the interview schema
-        await Interview.findByIdAndDelete(req.body.interviewId);
-
-        // If the applicant has an interview scheduled, update it as well
-        req.body.interviewId = null;
-
+        await Interview.findByIdAndDelete(interviewId);
+        interviewId = null;
+    } else if (status === "Rejected") {
+        const applicant = await Applicant.findById(id).populate('jobId');
+        // If exisits - remove the interview ID from the interview schema
+        await Interview.findByIdAndDelete(interviewId);
+        sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
     }
 
     try {
-        const updatedApplicant = await Applicant.findByIdAndUpdate(id, req.body, {
-            new: true,
-            runValidators: true,
-        });
+        const updatedApplicant = await Applicant.findByIdAndUpdate(
+            id, 
+            { status, interviewId }, 
+            { new: true, runValidators: true }
+        );
         if (!updatedApplicant) {
             return res.status(404).json({ message: 'Applicant not found' });
         }
-
         res.status(200).json({
             message: 'Applicant updated successfully',
             applicant: updatedApplicant,
@@ -177,10 +181,11 @@ const updateApplicant = async (req, res) => {
 const deleteApplicant = async (req, res) => {
     const { id } = req.params;
     try {
-        const deletedApplicant = await Applicant.findByIdAndDelete(id);
+        const deletedApplicant = await Applicant.findByIdAndDelete(id).populate('jobId');
         if (!deletedApplicant) {
             return res.status(404).json({ message: 'Applicant not found' });
         }
+        
         res.status(200).json({
             message: 'Applicant deleted successfully',
             applicant: deletedApplicant,
@@ -190,6 +195,7 @@ const deleteApplicant = async (req, res) => {
         res.status(500).json({ message: 'Failed to delete applicant', error: error.message });
     }
 };
+
 
 module.exports = {
     createApplicant,
