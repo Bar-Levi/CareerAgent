@@ -108,7 +108,7 @@ const RecruiterApplicantsTracker = () => {
     const stuck = filtered.filter(
       (c) =>
         c.status === "In Review" &&
-        new Date() - new Date(c.appliedAt) > 7 * 24 * 60 * 60 * 1000
+        new Date() - new Date(c.applicationDate) > 7 * 24 * 60 * 60 * 1000
     );
     // Interviews missing feedback
     const noFeedback = filtered.filter(
@@ -128,10 +128,10 @@ const RecruiterApplicantsTracker = () => {
     setAttentionItems(
       [
         stuck.length
-          ? `${stuck.length} candidate(s) stuck in review > 7 days`
+          ? `${stuck.length} candidate(s) stuck in review for more than a week.`
           : null,
         noFeedback.length
-          ? `${noFeedback.length} interview(s) missing feedback`
+          ? `${noFeedback.length} interview(s) are done, and waiting for your action.`
           : null,
       ].filter(Boolean)
     );

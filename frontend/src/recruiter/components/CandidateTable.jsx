@@ -62,10 +62,11 @@ const CandidateTable = ({
       : <FaSortDown className="inline-block ml-2 text-blue-500 w-3 h-3" />;
   };
 
-  const patchStatus = async (id, status) => {
-    await updateApplicantStatus(id, status, refetchApplicants);
+  const patchStatus = async (applicant, status) => {
+    await updateApplicantStatus(applicant, status, refetchApplicants);
     refetchApplicants?.();
   };
+  
   // Determine the appropriate action button label & logic per status
   const getStatusAction = (applicant) => {
     switch (applicant.status) {
@@ -74,7 +75,7 @@ const CandidateTable = ({
           label: "Review Application",
           onClick: async () => {
             window.open(applicant.cv, "_blank");
-            await patchStatus(applicant._id, "In Review");
+            await patchStatus(applicant, "In Review");
           },
         }];
   
@@ -86,12 +87,16 @@ const CandidateTable = ({
             setShowScheduleModal(true);
             refetchApplicants?.();
           },
+        },
+        {
+          label: "Make Offer",
+          onClick: () => patchStatus(applicant, "Offered"),
         }];
   
       case "Interview Scheduled":
         return [{
           label: "Mark Interview Done",
-          onClick: () => patchStatus(applicant._id, "Interview Done"),
+          onClick: () => patchStatus(applicant, "Interview Done"),
         }];
   
       case "Interview Done":
@@ -106,19 +111,19 @@ const CandidateTable = ({
           },
           {
             label: "Make Offer",
-            onClick: () => patchStatus(applicant._id, "Offered"),
+            onClick: () => patchStatus(applicant, "Offered"),
           }
         ];
       case "Offered":
         return [{
           label: "Mark as Accepted",
-          onClick: () => patchStatus(applicant._id, "Accepted"),
+          onClick: () => patchStatus(applicant, "Accepted"),
         }];
   
       case "Accepted":
         return [{
           label: "Mark as Hired",
-          onClick: () => patchStatus(applicant._id, "Hired"),
+          onClick: () => patchStatus(applicant, "Hired"),
         }];
   
       default:
@@ -146,7 +151,6 @@ const CandidateTable = ({
                 // Added Application Date column header
                 { key: "applicationDate", label: "Application Date" },
                 { key: "status", label: "Status" },
-                { key: "interviewDate", label: "Interview" },
               ].map(({ key, label }) => (
                 <th
                   key={key}
@@ -159,6 +163,9 @@ const CandidateTable = ({
                   </div>
                 </th>
               ))}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Interview
+              </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Next Step
               </th>
@@ -288,7 +295,7 @@ const CandidateTable = ({
                                 setSelectedApplicant(app);
                               }}
                             >
-                              <FaEye className="mr-1" /> View
+                              <FaEye className="mr-1" /> View CV
                             </button>
                             <button
                               className="text-red-600 hover:text-red-900 transition-colors flex items-center"

@@ -1,6 +1,8 @@
 const Applicant = require('../models/applicantModel');
 const Recruiter = require('../models/recruiterModel');
 const JobListing = require('../models/jobListingModel');
+const Interview = require('../models/interviewModel');
+
 
 // Create a new applicant
 const createApplicant = async (req, res) => {
@@ -138,10 +140,20 @@ const getJobSeekerApplicants = async (req, res) => {
     }
 };
 
-
 // Update a specific applicant by ID
 const updateApplicant = async (req, res) => {
     const { id } = req.params;
+
+    // If the applicant just finished an interview
+    if (req.body.status === "Interview Done") {
+        // Remove the interview ID from the interview schema
+        await Interview.findByIdAndDelete(req.body.interviewId);
+
+        // If the applicant has an interview scheduled, update it as well
+        req.body.interviewId = null;
+
+    }
+
     try {
         const updatedApplicant = await Applicant.findByIdAndUpdate(id, req.body, {
             new: true,
@@ -150,6 +162,7 @@ const updateApplicant = async (req, res) => {
         if (!updatedApplicant) {
             return res.status(404).json({ message: 'Applicant not found' });
         }
+
         res.status(200).json({
             message: 'Applicant updated successfully',
             applicant: updatedApplicant,

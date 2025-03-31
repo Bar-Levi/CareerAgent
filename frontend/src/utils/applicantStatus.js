@@ -1,14 +1,14 @@
-export const updateApplicantStatus = async (applicantId, status, refetchApplicants) => {
+export const updateApplicantStatus = async (applicant, status, refetchApplicants) => {
     try {
         const response = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/applicants/${applicantId}`,
+          `${process.env.REACT_APP_BACKEND_URL}/api/applicants/${applicant._id}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({ status, interviewId: applicant?.interviewId?._id}),
           }
         );
 
