@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { FaCalendarAlt, FaClock, FaLink, FaChevronRight } from "react-icons/fa";
-
-const UpcomingEvents = ({ user }) => {
+import { FaCalendarAlt, FaClock, FaLink, FaChevronRight, FaStar } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom";
+const UpcomingInterviews = ({ user }) => {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { state } = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInterviews = async () => {
@@ -45,38 +47,38 @@ const UpcomingEvents = ({ user }) => {
         setLoading(false);
       }
     };
+
     fetchInterviews();
   }, [user]);
 
   // Helper function to format date and time
   const formatDateTime = (dateString) => {
-    if (!dateString)
-      return { date: "Date not set", time: "Time not set" };
-
+    if (!dateString) return { date: "Date not set", time: "Time not set" };
+    
     const date = new Date(dateString);
-
+    
     const formattedDate = date.toLocaleDateString("en-US", {
       weekday: "short",
-      month: "short",
-      day: "numeric",
+      month: "short", 
+      day: "numeric"
     });
-
+    
     const formattedTime = date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
-      hour12: true,
+      hour12: true
     });
-
+    
     return { date: formattedDate, time: formattedTime };
   };
 
   // Helper function to check if interview is today
   const isToday = (dateString) => {
     if (!dateString) return false;
-
+    
     const today = new Date();
     const interviewDate = new Date(dateString);
-
+    
     return (
       today.getDate() === interviewDate.getDate() &&
       today.getMonth() === interviewDate.getMonth() &&
@@ -87,14 +89,27 @@ const UpcomingEvents = ({ user }) => {
   // Helper function to check if interview is upcoming (within next 3 days)
   const isUpcoming = (dateString) => {
     if (!dateString) return false;
-
+    
     const today = new Date();
     const threeDaysLater = new Date(today);
     threeDaysLater.setDate(today.getDate() + 3);
-
+    
     const interviewDate = new Date(dateString);
-
+    
     return interviewDate > today && interviewDate <= threeDaysLater;
+  };
+
+  // When the user clicks "Talk with Chatbot", navigate to /chats with job data in state.
+  const handleInterviewChatClick = (jobListing) => {
+    console.log("JobListing: ", jobListing);
+    console.log("state: ", state);
+    navigate("/chats", { 
+      state: { 
+        ...state, 
+        interviewJobData: jobListing, 
+        chatType: "interviewer" 
+      } 
+    });
   };
 
   return (
@@ -146,7 +161,7 @@ const UpcomingEvents = ({ user }) => {
             const interview = applicant.interviewId;
             const { date, time } = formatDateTime(interview?.scheduledTime);
             const jobTitle = applicant.jobTitle || "Interview Event";
-            // Assuming recruiterId is populated with companyName and fullName.
+            // Assuming recruiterId is populated with companyName and fullName
             const companyName = applicant.recruiterId?.companyName || "Company";
             const recruiterName = applicant.recruiterId?.fullName || "Recruiter";
             const meetingLink = interview?.meetingLink;
@@ -169,35 +184,43 @@ const UpcomingEvents = ({ user }) => {
                       : "bg-gray-100"
                   }`}
                 >                 
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">{jobTitle}</h3>
                     <p className="text-sm text-gray-600">
                       {recruiterName} &middot; {companyName}
                     </p>
                     
                     <div className="mt-2 flex items-center text-sm text-gray-500">
-                      <FaClock className="w-4 h-4 mr-1" />
+                      <FaClock className="w-4 h-4 mr-1 text-gray-400" />
                       <span className="mr-3">{time}</span>
-                      <FaCalendarAlt className="w-4 h-4 mr-1" />
+                      <FaCalendarAlt className="w-4 h-4 mr-1 text-gray-400" />
                       <span>{date}</span>
                     </div>
                     
-                    {meetingLink && (
-                      <div className="mt-2 flex items-center text-sm">
-                        <FaLink className="w-4 h-4 mr-1 text-indigo-500" />
+                    <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                      <button
+                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg flex items-center justify-center"
+                        onClick={() => handleInterviewChatClick(applicant.jobId)}
+                      >
+                      AI Mock Interview
+                      </button>
+                      
+                      {meetingLink && (
                         <a 
                           href={meetingLink} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-700 font-medium"
+                          className="w-full sm:w-auto px-2 py-1 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md flex items-center justify-center"
                         >
-                          Join Meeting
+                          <FaLink className="w-3 h-3 mr-1 inline-block align-middle" />
+                          <span className="inline-block align-middle">Join Meeting</span>
                         </a>
-                      </div>
-                    )}
+                      )}
+                    </div>
+
                   </div>
                   
-                  <div className="flex flex-col items-end">
+                  <div className="flex flex-col items-end ml-4">
                     {interviewToday && (
                       <span className="inline-flex items-center px-2.5 py-0.5 mb-2 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Today
@@ -208,9 +231,6 @@ const UpcomingEvents = ({ user }) => {
                         Upcoming
                       </span>
                     )}
-                    <button className="ml-2 text-gray-400 hover:text-gray-600">
-                      <FaChevronRight className="w-5 h-5" />
-                    </button>
                   </div>
                 </div>
               </div>
@@ -218,17 +238,8 @@ const UpcomingEvents = ({ user }) => {
           })}
         </div>
       )}
-      
-      {interviews.length > 0 && (
-        <div className="bg-gray-50 px-4 py-3 text-right">
-          <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center justify-center mx-auto">
-            View All Interviews
-            <FaChevronRight className="w-4 h-4 ml-1" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };
 
-export default UpcomingEvents;
+export default UpcomingInterviews;
