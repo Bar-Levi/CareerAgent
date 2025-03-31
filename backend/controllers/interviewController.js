@@ -13,7 +13,7 @@ const scheduleInterview = async (req, res, next) => {
       res.status(400);
       return next(new Error("At least two participants and scheduledTime are required"));
     }
-
+    
     const interview = await Interview.create({
       participants,
       jobListing,

@@ -122,8 +122,8 @@ const getRecruiterApplicants = async (req, res) => {
 const getJobSeekerApplicants = async (req, res) => {
     const { jobSeekerId } = req.params;
     try {
-        const applicants = await Applicant.find({ jobSeekerId }).hint({ jobSeekerId: 1 });
-        
+        const applicants = await Applicant.find({ jobSeekerId }).hint({ jobSeekerId: 1 })
+        .populate('interviewId').populate('recruiterId');
         if (!applicants || applicants.length === 0) {
             return res.status(404).json({ message: 'No applicants found for this job seeker' });
         }

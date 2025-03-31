@@ -31,10 +31,10 @@ const JobCandidateDashboard = ({onlineUsers}) => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-screen">
         <PersonalOverview user={state.user}/>
         <JobApplications user={state.user}/>
-        <UpcomingEvents />
+        <UpcomingEvents user={state.user}/>
         <PerformanceInsights />
         <Gamification />
       </div>

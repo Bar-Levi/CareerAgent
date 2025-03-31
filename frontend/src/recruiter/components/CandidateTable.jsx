@@ -261,6 +261,8 @@ const CandidateTable = ({
                                   onClick={async (e) => {
                                     // Prevent the row's onClick from triggering
                                     e.stopPropagation();
+                                    setJobListingId(app.jobId);
+                                    setSelectedApplicant(app);
                                     await statusAction.onClick();
                                   }}
                                 >
@@ -282,6 +284,8 @@ const CandidateTable = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 window.open(app.cv, "_blank", "noopener,noreferrer");
+                                setJobListingId(app.jobId);
+                                setSelectedApplicant(app);
                               }}
                             >
                               <FaEye className="mr-1" /> View
@@ -292,6 +296,8 @@ const CandidateTable = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRejectClick(app);
+                                setJobListingId(app.jobId);
+                                setSelectedApplicant(app);
                               }}
                             >
                               <FaTimes className="mr-1" /> Reject
@@ -302,6 +308,8 @@ const CandidateTable = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleHireClick(app);
+                                setJobListingId(app.jobId);
+                                setSelectedApplicant(app);
                               }}
                             >
                               <FaCheck className="mr-1" /> Hire
@@ -311,6 +319,8 @@ const CandidateTable = ({
                                 e.stopPropagation();
                                 setSelectedApplicant(app); // assuming app is the candidate object
                                 setShowNotesModal(true);
+                                setJobListingId(app.jobId);
+                                setSelectedApplicant(app);
                               }}
                               className="text-gray-600 hover:text-gray-900 transition-colors flex items-center"
                             >
