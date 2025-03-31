@@ -196,12 +196,17 @@ const sendJobNotificationEmail = async (
   };  
 
   const sendRejectionEmail = async (email, username, jobListing) => {
+    // If a company website is provided, include a suggestion line
+    const companyWebsiteLine = jobListing.companyWebsite 
+        ? `<p>You might also consider visiting <a href="${jobListing.companyWebsite}" target="_blank" style="color: #0000aa; text-decoration: none; font-weight: bold;">our website</a> to explore new opportunities.</p>` 
+        : '';
+    
     const mailOptions = {
         from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: `Application Update for ${jobListing.jobRole} at ${jobListing.company}`,
         html: `
-            <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #000000; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
                 <!-- Header -->
                 <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
                     <h1 style="margin: 0; font-size: 24px;">Application Update</h1>
@@ -218,14 +223,19 @@ const sendJobNotificationEmail = async (
                         We truly appreciate your interest in our team and encourage you to keep an eye on future opportunities
                         that match your skills and experience.
                     </p>
+                    ${companyWebsiteLine}
                     <p>
                         We wish you the very best in your job search and future endeavors.
                     </p>
                     <p style="margin-top: 20px;">Best regards,</p>
-                    <p><strong>The CareerAgent Team</strong></p>
+                    <p><strong>${jobListing.recruiterName} &middot; ${jobListing.company}</strong></p>
+                    <p style="font-size: 12px; color: #000000;">
+                      If you wish to unsubscribe from these notifications, please 
+                      <a href="${process.env.FRONTEND_URL}/unsubscribe" style="color: #0000aa; text-decoration: none;">click here</a>.
+                    </p>
                 </div>
                 <!-- Footer -->
-                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #000000;">
                     <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
                 </div>
             </div>
@@ -233,6 +243,7 @@ const sendJobNotificationEmail = async (
     };
     await transporter.sendMail(mailOptions);
 };
+
 
 module.exports = {
     sendVerificationCode,
