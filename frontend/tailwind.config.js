@@ -6,9 +6,12 @@ module.exports = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ["Roboto", "sans-serif"],
-                heading: ["Montserrat", "sans-serif"],
-              },
+                sans: ["Inter", "system-ui", "sans-serif"],
+                heading: ["Plus Jakarta Sans", "sans-serif"],
+                display: ["Outfit", "sans-serif"],
+                modern: ["Space Grotesk", "sans-serif"],
+                elegant: ["Manrope", "sans-serif"],
+            },
             animation: {
                 // Faster pulse and sweep animations
                 'pulse-fast': 'pulse 2s infinite',

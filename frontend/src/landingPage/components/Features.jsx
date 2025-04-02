@@ -10,7 +10,7 @@ const Features = () => {
   return (
     <section className="w-full py-20 bg-black">
       <motion.h2
-        className="text-3xl text-center font-bold mb-8 text-gray-200"
+        className="text-4xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
@@ -19,13 +19,13 @@ const Features = () => {
         Our Features
       </motion.h2>
 
-      <div className="my-20 flex flex-col lg:flex-row items-center justify-center gap-4">
+      <div className="my-20 flex flex-col lg:flex-row items-center justify-center gap-8">
         {/* Mock Interviews Card */}
         <Card
           title="Customized Chatbots"
           icon={<AceternityIcon order="Customized Chatbots" />}
           description="Experience two powerful AI-driven tools: an Interviewer chatbot to simulate real-world interview scenarios and a Career Advisor chatbot to guide your career journey."
-          image={mockInterviewImage} // Pass the image as a prop
+          image={mockInterviewImage}
           index={3}
         >
           <CanvasRevealEffect
@@ -38,7 +38,6 @@ const Features = () => {
             dotSize={4}
           />
         </Card>
-
 
         {/* Career Guidance Card */}
         <Card
@@ -87,20 +86,19 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
     <motion.div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      initial={{ opacity: 0, scale: 0.1 }} // Start off-screen (left)
+      initial={{ opacity: 0, scale: 0.1 }}
       onViewportEnter={() => {
         if (!hasAnimated) {
-          setHasAnimated(true); // Mark as animated when in view
+          setHasAnimated(true);
         }
       }}
-      animate={hasAnimated ? { opacity: 1, scale: 1 } : {}} // Animate only once
+      animate={hasAnimated ? { opacity: 1, scale: 1 } : {}}
       transition={{
-        duration: 0.1, // Animation duration
-        delay: index * 0.2, // Staggered delay for multiple cards
-        ease: "easeInOut", // Smooth easing function
-
+        duration: 0.1,
+        delay: index * 0.2,
+        ease: "easeInOut",
       }}
-      className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-sm w-full mx-auto p-4 relative lg:h-[35rem] rounded-3xl overflow-hidden transition-transform ease-in-out duration-500 hover:scale-105"
+      className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-md w-full mx-auto p-8 relative lg:h-[40rem] rounded-3xl overflow-hidden transition-transform ease-in-out duration-500 hover:scale-105"
     >
       {/* Corner Plus Signs */}
       <span className="absolute h-6 w-6 -top-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-down" />
@@ -129,7 +127,7 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
           {icon}
         </div>
         <motion.h2
-          className="dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center text-3xl animate-slide-in"
+          className="dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-6 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center text-4xl animate-slide-in font-heading tracking-wide px-4"
           style={{
             textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
           }}
@@ -137,7 +135,7 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
           {title}
         </motion.h2>
         <h2
-          className="text-sm dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-down"
+          className="text-lg dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-6 font-modern leading-relaxed group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-down px-6"
           style={{
             textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
           }}

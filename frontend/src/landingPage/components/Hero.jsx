@@ -18,7 +18,7 @@ const Hero = () => {
           {/* Left content */}
           <div className="flex-1 p-8 md:p-12 relative z-10">
             <motion.h1
-              className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-8 leading-normal pb-2"
+              className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-8 leading-tight pb-2 tracking-tight font-display"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -26,22 +26,22 @@ const Hero = () => {
               CareerAgent
             </motion.h1>
             <motion.div
-              className="text-lg text-neutral-300 max-w-lg space-y-6"
+              className="text-xl text-neutral-300 max-w-lg space-y-6 font-elegant"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-500/10 to-transparent p-6 transition-all duration-300 hover:from-blue-500/20">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-600"></div>
-                <span className="text-blue-400 font-semibold text-lg mb-2 block">For Job Seekers:</span>
-                <p className="text-gray-300">
+                <span className="text-xl text-blue-400 font-heading font-semibold mb-2 block tracking-wide">For Job Seekers:</span>
+                <p className="text-lg text-gray-300 leading-relaxed font-modern tracking-wide">
                   Leverage AI-powered CV analysis and engage with personalized chatbots for career guidance and interview preparation, maximizing your chances of landing the perfect role.
                 </p>
               </div>
               <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-emerald-500/10 to-transparent p-6 transition-all duration-300 hover:from-emerald-500/20">
                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-emerald-400 to-emerald-600"></div>
-                <span className="text-emerald-400 font-semibold text-lg mb-2 block">For Recruiters:</span>
-                <p className="text-gray-300">
+                <span className="text-xl text-emerald-400 font-heading font-semibold mb-2 block tracking-wide">For Recruiters:</span>
+                <p className="text-lg text-gray-300 leading-relaxed font-modern tracking-wide">
                   Experience a streamlined, interactive recruitment process designed to help you identify and connect with top talent efficiently and effectively.
                 </p>
               </div>
