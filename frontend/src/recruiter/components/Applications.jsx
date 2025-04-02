@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
@@ -19,7 +19,14 @@ const Applications = ({
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const navigate = useNavigate();
 
-  // Existing methods...
+  const selectedCandidateRef = useRef();
+  
+  useEffect(() => {
+      if (selectedCandidateId && applications && selectedCandidateRef.current) {
+        selectedCandidateRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, [selectedApplicant, applications]);
+
   const getApplicantDataAsJobSeeker = async (application) => {
     const response = await fetch(
       `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?id=${encodeURIComponent(
@@ -133,7 +140,7 @@ const Applications = ({
   return (
     <div className="mx-auto">
       <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg">
-        <div className="shadow-lg bg-gradient-to-r bg-gray-200 p-6">
+        <div className="sticky top-0 z-10 shadow-lg bg-gradient-to-r bg-gray-200 p-6">
           <h2 className="text-2xl font-bold text-gray-800 text-center">
             Applications
           </h2>
@@ -157,6 +164,7 @@ const Applications = ({
               return (
                 <div
                   key={app._id}
+                  ref={isSelected? selectedCandidateRef : null}
                   className={`p-6 transition-colors duration-200 group ${
                     isSelected 
                       ? 'bg-gray-200 hover:bg-gray-300' 
@@ -197,8 +205,17 @@ const Applications = ({
 
                         <div
                           className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            statusColors[app.status] ||
-                            "bg-blue-100 text-blue-800"
+                            app.status === "Applied"
+                              ? "bg-blue-100 text-blue-800"
+                              : app.status.includes("Interview")
+                              ? "bg-purple-100 text-purple-800"
+                              : app.status === "Accepted"
+                              ? "bg-green-100 text-green-800"
+                              : app.status === "Rejected"
+                              ? "bg-red-100 text-red-800"
+                              : app.status === "In Review"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
                           }`}
                         >
                           {app.status}

@@ -27,6 +27,7 @@ const CandidateTable = ({
     const saved = localStorage.getItem("stateAddition");
     if (saved) {
       const { applicant } = JSON.parse(saved);
+      console.log("applicant: ", applicant);
       setSelectedApplicant(applicant);
       localStorage.removeItem("stateAddition");
     }
@@ -362,7 +363,6 @@ const CandidateTable = ({
           jobListingId={jobListingId} 
           recruiter={recruiter}
           refetchApplicants={async () => {
-            setShowScheduleModal(false);
             if (refetchApplicants) await refetchApplicants();
           }}
         />

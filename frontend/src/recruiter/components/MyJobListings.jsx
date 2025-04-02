@@ -104,6 +104,15 @@ const MyJobListings = ({
 
   const handleSortToggle = () => setSortDirection(prev => prev === "asc" ? "desc" : "asc");
 
+  const selectedJobListingRef = useRef();
+
+  useEffect(() => {
+      if (selectedJobListing && jobListings && selectedJobListingRef.current) {
+        selectedJobListingRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, [selectedJobListing, jobListings]);
+
+
   const filteredAndSortedListings = jobListings
     .filter(l => filterStatus === "All" || l.status === filterStatus)
     .filter(l => 
@@ -317,6 +326,7 @@ const MyJobListings = ({
             {filteredAndSortedListings.map((listing) => (
               <li
                 key={listing._id}
+                ref={selectedJobListing && selectedJobListing._id === listing._id ? selectedJobListingRef : null}
                 className={`relative transition-all duration-200 hover:bg-gray-300 ${
                   selectedJobListing && selectedJobListing._id === listing._id
                     ? 'bg-gray-200 border-l-4 border-gray-300'

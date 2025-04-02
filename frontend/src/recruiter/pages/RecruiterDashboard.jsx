@@ -230,7 +230,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
             />
           ) : (
             <Applications
-              applications={applications.filter(app => app.jobId === selectedJobListing?._id)}
+              applications={applications.filter(app => app.jobId._id === selectedJobListing?._id)}
               setSelectedConversationId={setSelectedConversationId}
               setSelectedJobListing={setSelectedJobListing}
               setSelectedCandidate={setSelectedCandidate}

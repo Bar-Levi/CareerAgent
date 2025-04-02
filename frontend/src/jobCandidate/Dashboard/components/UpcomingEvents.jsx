@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaCalendarAlt, FaClock, FaLink, FaChevronRight, FaStar, FaCalendarPlus } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
+
 const UpcomingInterviews = ({ user }) => {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { state } = useLocation();
   const navigate = useNavigate();
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const selectedEventRef = useRef();
 
   useEffect(() => {
     const fetchInterviews = async () => {
@@ -25,19 +30,16 @@ const UpcomingInterviews = ({ user }) => {
           }
         );
         if (!res.ok) {
-          // Instead of throwing error, set empty interviews
           setInterviews([]);
           setLoading(false);
           return;
         }
         const data = await res.json();
 
-        // Filter applicants who have an interviewId set
         const filteredInterviews = data.applicants.filter(
           (applicant) => applicant.interviewId
         );
 
-        // Sort by scheduled interview time (upcoming first)
         filteredInterviews.sort(
           (a, b) =>
             new Date(a.interviewId?.scheduledTime) - new Date(b.interviewId?.scheduledTime)
@@ -47,7 +49,6 @@ const UpcomingInterviews = ({ user }) => {
         setLoading(false);
 
       } catch (err) {
-        // Silently handle error and show empty state
         setInterviews([]);
         setLoading(false);
       }
@@ -56,34 +57,61 @@ const UpcomingInterviews = ({ user }) => {
     fetchInterviews();
   }, [user]);
 
-  // Helper function to format date and time
+  useEffect(() => {
+    console.log("Outside");
+    console.log("selectedEventId:", selectedEventId);
+    console.log("selectedEventRef:", selectedEventRef.current);
+    console.log("interviews:", interviews);
+    if (selectedEventId && selectedEventRef.current && interviews) {
+      console.log("Here");
+      selectedEventRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [interviews, selectedEventId, refreshToken, state]);
+
+  useEffect(() => {
+    const stateAddition = localStorage.getItem("stateAddition");
+    if (stateAddition) {
+      setRefreshToken((prev) => prev+1);
+      console.log("refreshToken: ", refreshToken);
+      try {
+        const parsedAddition = JSON.parse(stateAddition);
+        setSelectedEventId(parsedAddition.interviewId);
+      } catch (error) {
+        console.error("Error parsing stateAddition:", error);
+      } finally {
+        localStorage.removeItem("stateAddition");
+      }
+    } else {
+      console.log("No state addition found.");
+    }
+  }, [refreshToken, state]);
+
   const formatDateTime = (dateString) => {
     if (!dateString) return { date: "Date not set", time: "Time not set" };
-    
+
     const date = new Date(dateString);
-    
+
     const formattedDate = date.toLocaleDateString("en-US", {
       weekday: "short",
-      month: "short", 
+      month: "short",
       day: "numeric"
     });
-    
+
     const formattedTime = date.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true
     });
-    
+
     return { date: formattedDate, time: formattedTime };
   };
 
-  // Helper function to check if interview is today
   const isToday = (dateString) => {
     if (!dateString) return false;
-    
+
     const today = new Date();
     const interviewDate = new Date(dateString);
-    
+
     return (
       today.getDate() === interviewDate.getDate() &&
       today.getMonth() === interviewDate.getMonth() &&
@@ -91,29 +119,27 @@ const UpcomingInterviews = ({ user }) => {
     );
   };
 
-  // Helper function to check if interview is upcoming (within next 3 days)
   const isUpcoming = (dateString) => {
     if (!dateString) return false;
-    
+
     const today = new Date();
     const threeDaysLater = new Date(today);
     threeDaysLater.setDate(today.getDate() + 3);
-    
+
     const interviewDate = new Date(dateString);
-    
+
     return interviewDate > today && interviewDate <= threeDaysLater;
   };
 
-  // When the user clicks "Talk with Chatbot", navigate to /chats with job data in state.
   const handleInterviewChatClick = (jobListing) => {
     console.log("JobListing: ", jobListing);
     console.log("state: ", state);
-    navigate("/chats", { 
-      state: { 
-        ...state, 
-        interviewJobData: jobListing, 
-        chatType: "interviewer" 
-      } 
+    navigate("/chats", {
+      state: {
+        ...state,
+        interviewJobData: jobListing,
+        chatType: "interviewer"
+      }
     });
   };
 
@@ -122,28 +148,32 @@ const UpcomingInterviews = ({ user }) => {
       return date.toISOString().replace(/[-:]|\.\d{3}/g, "");
     };
 
-    // Create Google Calendar Link
     const startTime = new Date(interview.scheduledTime);
-    const endTime = new Date(startTime.getTime() + 60 * 30 * 1000); // 1/2 hour
+    const endTime = new Date(startTime.getTime() + 60 * 30 * 1000);
 
-    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Interview with ${applicant.name}&dates=${formatToGoogleDate(startTime)}/${formatToGoogleDate(endTime)}&details=Meeting Link: ${interview.meetingLink || "TBD"}&location=Online`;
+    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Interview with ${applicant.name} - ${applicant.jobTitle} at ${applicant.jobId.company}&dates=${formatToGoogleDate(startTime)}/${formatToGoogleDate(endTime)}&details=Meeting Link: ${interview.meetingLink || "TBD"}&location=Online`;
 
     window.open(calendarUrl, "_blank");
   };
+
+  const pulsingAnimation = `@keyframes subtle-pulsing {
+    0%, 100% { transform: scale(1.01); }
+    50% { transform: scale(1); }
+  }`;
+
   return (
-    <div className="m-3 col-span-1 bg-white border border-gray-200 shadow-xl rounded-lg overflow-y-auto max-h-screen">
-      {/* Sticky Header with Gradient */}
+    <div key={refreshToken} className="m-3 col-span-1 bg-white border border-gray-200 shadow-xl rounded-lg overflow-y-auto max-h-screen">
+      <style>{pulsingAnimation}</style>
       <div className="sticky top-0 z-10 px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-600">
         <h2 className="text-lg font-bold text-white flex items-center">
-          <FaCalendarAlt className="w-5 h-5 mr-2 flex-shrink-0" /> {/* Added flex-shrink-0 */}
+          <FaCalendarAlt className="w-5 h-5 mr-2 flex-shrink-0" />
           Upcoming Interviews
         </h2>
       </div>
 
       {loading ? (
-        // Improved Loading Skeleton Layout
         <div className="p-6">
-          {[...Array(3)].map((_, index) => ( // Show a few skeleton loaders
+          {[...Array(3)].map((_, index) => (
             <div key={index} className="animate-pulse flex space-x-4 mb-4 p-4 border border-gray-100 rounded-md">
               <div className="flex-1 space-y-4 py-1">
                 <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -163,7 +193,7 @@ const UpcomingInterviews = ({ user }) => {
           <p className="text-sm mb-3">{error}</p>
           <button
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-            onClick={() => window.location.reload()} // Simple reload action
+            onClick={() => window.location.reload()}
           >
             Try again
           </button>
@@ -179,7 +209,6 @@ const UpcomingInterviews = ({ user }) => {
       ) : (
         <div className="divide-y divide-gray-100">
           {interviews.map((applicant) => {
-            // Ensure nested properties are safely accessed
             const interview = applicant.interviewId || {};
             const recruiter = applicant.recruiterId || {};
             const { date, time } = formatDateTime(interview.scheduledTime);
@@ -189,90 +218,134 @@ const UpcomingInterviews = ({ user }) => {
             const meetingLink = interview.meetingLink;
 
             const interviewToday = isToday(interview.scheduledTime);
-            // Ensure "Upcoming" doesn't also apply if it's today for badge logic
             const interviewUpcoming = isUpcoming(interview.scheduledTime) && !interviewToday;
 
             return (
-              // Removed outer p-2, transition on the inner div now
-              <div key={applicant._id} className="block"> {/* Use block instead of flex for the outer wrapper */}
-                 <div
-                  className={`flex justify-between items-start p-4 transition-colors duration-150 rounded-md m-2 hover:bg-gray-50 ${ // Apply hover and margin here
+              <div
+                key={applicant._id}
+                ref={selectedEventId === applicant.interviewId._id ? selectedEventRef : null}
+                className={`
+                  relative flex justify-between items-start p-4 rounded-md m-2
+                  transition-all duration-300 ease-out
+                  backdrop-blur-sm
+                  ${
+                    "bg-white/95 hover:bg-white"
+                  }
+                  ${
                     interviewToday
-                      ? "bg-gradient-to-r from-green-50 via-white to-white border border-green-200" // Subtle gradient and border
+                      ? "bg-gradient-to-r from-green-50/80 via-green-50/20 to-transparent"
                       : interviewUpcoming
-                      ? "bg-gradient-to-r from-yellow-50 via-white to-white border border-yellow-200" // Subtle gradient and border
-                      : "bg-white border border-transparent" // Default white background, transparent border
-                  }`}
-                >
-                  <div className="flex-1 mr-4"> {/* Added margin-right */}
-                    <h3 className="font-semibold text-gray-800">{jobTitle}</h3> {/* Slightly darker text */}
-                    <p className="text-sm text-gray-600">
-                      {recruiterName} &middot; {companyName}
-                    </p>
+                      ? "bg-gradient-to-r from-yellow-50/80 via-yellow-50/20 to-transparent"
+                      : ""
+                  }
+                  ${
+                    applicant.interviewId?._id === selectedEventId
+                      ? `
+                        shadow-[0_8px_16px_-4px_rgba(59,130,246,0.15)]
+                        animate-[subtle-pulsing_2s_ease-in-out_infinite]
+                        scale-[1.01] z-10
+                        before:absolute before:inset-0 
+                        before:rounded-md before:bg-gradient-to-r 
+                        before:from-blue-500/10 before:to-transparent
+                        before:opacity-50 before:-z-10
+                      `
+                      : "border border-transparent hover:border-gray-200/80 hover:shadow-md"
+                  }
+                  ${
+                    "hover:bg-gradient-to-r hover:from-white hover:to-gray-50/80 cursor-pointer"
+                  }
+                `}
+                onClick={() => {
+                  setSelectedEventId(applicant.interviewId?._id);
+                  if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(50);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                aria-selected={applicant.interviewId?._id === selectedEventId}
+              >
+                <div className="absolute -top-2 -right-2 z-20">
+                  {interviewToday && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                      bg-gradient-to-r from-green-500 to-green-600
+                      text-white shadow-lg shadow-green-500/20
+                      border border-green-400/20 backdrop-blur-sm
+                      transform transition-all duration-300 hover:scale-105">
+                      <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
+                      Today
+                    </span>
+                  )}
+                  {interviewUpcoming && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                      bg-gradient-to-r from-yellow-500 to-amber-500
+                      text-white shadow-lg shadow-yellow-500/20
+                      border border-yellow-400/20 backdrop-blur-sm
+                      transform transition-all duration-300 hover:scale-105">
+                      <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
+                      Upcoming
+                    </span>
+                  )}
+                </div>
 
-                    <div className="mt-2 flex items-center text-sm text-gray-500">
-                      <FaClock className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" /> {/* Adjusted margin */}
-                      <span className="mr-3">{time}</span>
-                      <FaCalendarAlt className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" /> {/* Adjusted margin */}
-                      <span>{date}</span>
-                    </div>
+                {applicant.interviewId?._id === selectedEventId && (
+                  <>
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 
+                      bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 
+                      rounded-l-md animate-pulse" 
+                    />
+                    <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-3 h-3 
+                      bg-blue-500 rounded-full shadow-lg shadow-blue-500/50
+                      before:absolute before:inset-0 before:rounded-full 
+                      before:animate-ping before:bg-blue-500/50" 
+                    />
+                  </>
+                )}
 
-                    {/* Button Container - Reduced vertical gap */}
-                    <div className="mt-4 flex flex-col gap-2">
-                      {/* Top row of buttons */}
-                      <div className="flex flex-wrap gap-2"> {/* Allow buttons to wrap on small screens */}
-                        <button
-                          className="flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg"
-                          onClick={() => handleInterviewChatClick(applicant.jobId)}
-                        >
-                          AI Mock Interview
-                        </button>
+                <div className="flex-1 mr-4">
+                  <h3 className="font-semibold text-gray-800">{jobTitle}</h3>
+                  <p className="text-sm text-gray-600">
+                    {recruiterName} &middot; {companyName}
+                  </p>
 
-                        {meetingLink && (
-                          <a
-                            href={meetingLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            // Consistent vertical padding (py-2), slightly less horizontal (px-3)
-                            className="flex items-center justify-center px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
-                          >
-                            <FaLink className="w-3 h-3 mr-1.5" /> {/* Adjusted margin */}
-                            Join Meeting
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Bottom row button (Add to Calendar) */}
-                      {/* Removed justify-center, button aligns left by default in the flex-col */}
-                      <div>
-                        <button
-                          className="flex items-center justify-center w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md" // Adjusted border/text color for secondary action
-                          onClick={() => handleGoogleCalendarClick(interview, applicant)}
-                        >
-                          <FaCalendarPlus className="w-4 h-4 mr-1.5" /> {/* Adjusted icon size/margin */}
-                          Add to Calendar
-                        </button>
-                      </div>
-                    </div>
+                  <div className="mt-2 flex items-center text-sm text-gray-500">
+                    <FaClock className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" />
+                    <span className="mr-3">{time}</span>
+                    <FaCalendarAlt className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" />
+                    <span>{date}</span>
                   </div>
 
-                  {/* Status Badges */}
-                  <div className="flex flex-col items-end flex-shrink-0"> {/* Added flex-shrink-0 */}
-                    {interviewToday && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 mb-2 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Today
-                      </span>
-                    )}
-                    {interviewUpcoming && ( // Already excludes today
-                      <span className="inline-flex items-center px-2.5 py-0.5 mb-2 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Upcoming
-                      </span>
-                    )}
-                     {!interviewToday && !isUpcoming(interview.scheduledTime) && interview.scheduledTime && (
-                       <span className="inline-flex items-center px-2.5 py-0.5 mb-2 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                         Near Future
-                       </span>
-                     )}
+                  <div className="mt-4 flex flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg"
+                        onClick={() => handleInterviewChatClick(applicant.jobId)}
+                      >
+                        AI Mock Interview
+                      </button>
+
+                      {meetingLink && (
+                        <a
+                          href={meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                        >
+                          <FaLink className="w-3 h-3 mr-1.5" />
+                          Join Meeting
+                        </a>
+                      )}
+                    </div>
+
+                    <div>
+                      <button
+                        className="flex items-center justify-center w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                        onClick={() => handleGoogleCalendarClick(interview, applicant)}
+                      >
+                        <FaCalendarPlus className="w-4 h-4 mr-1.5" />
+                        Add to Calendar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

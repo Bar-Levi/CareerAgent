@@ -39,7 +39,7 @@ const scheduleInterview = async (req, res, next) => {
           type: "interview",
           message: `A new interview was scheduled by ${recruiterParticipant.name}`,
           extraData: {
-            goToRoute: '/interviews',
+            goToRoute: '/dashboard',
             stateAddition: {
               interviewId: interview._id,
             },

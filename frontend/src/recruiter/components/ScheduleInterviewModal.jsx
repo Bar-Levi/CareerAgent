@@ -73,7 +73,7 @@ const ScheduleInterviewModal = ({
       const startTime = new Date(scheduledTime);
       const endTime = new Date(startTime.getTime() + 60 * 30 * 1000); // 1/2 hour
 
-      const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Interview with ${applicant.name}&dates=${formatToGoogleDate(startTime)}/${formatToGoogleDate(endTime)}&details=Meeting Link: ${meetingLink || "TBD"}&location=Online`;
+      const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Interview with ${applicant.name} - ${applicant.jobTitle} at ${applicant.jobId.company}`)}&dates=${formatToGoogleDate(startTime)}/${formatToGoogleDate(endTime)}&details=${encodeURIComponent(`Meeting Link: ${meetingLink || "TBD"}`)}&location=Online`;
       console.log(googleUrl);
       setCalendarUrl(googleUrl);
       setShowCalendarBtn(true);
@@ -85,7 +85,7 @@ const ScheduleInterviewModal = ({
         return [...applicants];
       });
       // Refetch applicants to update the list
-      refetchApplicants?.();
+      await refetchApplicants?.();
     } catch (err) {
       setError(err.message);
     } finally {
