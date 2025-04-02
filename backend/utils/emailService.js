@@ -292,11 +292,54 @@ const sendHiredEmail = async (email, username, jobListing) => {
     await transporter.sendMail(mailOptions);
 };
 
+const sendApplicationInReviewEmail = async (email, username, jobListing) => {
+    const mailOptions = {
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Your Application for ${jobListing.jobRole} at ${jobListing.company} is Under Review`,
+        html: `
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #000000; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 24px;">Application Status Update</h1>
+                </div>
+                <!-- Body -->
+                <div style="padding: 20px; background-color: #ffffff; line-height: 1.6;">
+                    <p>Dear ${username},</p>
+                    <p>
+                        We wanted to let you know that your application for the position of 
+                        <strong>${jobListing.jobRole}</strong> at <strong>${jobListing.company}</strong> is now under review.
+                    </p>
+                    <p>
+                        Our recruiting team is carefully evaluating your qualifications and experience.
+                        We appreciate your patience during this process and will keep you updated on any developments.
+                    </p>
+                    <p>
+                        You can track your application status through your CareerAgent dashboard.
+                    </p>
+                    <p style="margin-top: 20px;">Best regards,</p>
+                    <p><strong>${jobListing.recruiterName} &middot; ${jobListing.company}</strong></p>
+                    <p style="font-size: 12px; color: #000000;">
+                        If you wish to unsubscribe from these notifications, please 
+                        <a href="${process.env.FRONTEND_URL}/unsubscribe" style="color: #0000aa; text-decoration: none;">click here</a>.
+                    </p>
+                </div>
+                <!-- Footer -->
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #000000;">
+                    <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+                </div>
+            </div>
+        `,
+    };
+    await transporter.sendMail(mailOptions);
+};
+
 module.exports = {
     sendVerificationCode,
     sendResetPasswordEmail,
     generateResetToken,
     sendJobNotificationEmail,
     sendRejectionEmail,
-    sendHiredEmail
+    sendHiredEmail,
+    sendApplicationInReviewEmail
 };

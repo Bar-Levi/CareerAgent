@@ -2,7 +2,8 @@ const Applicant = require('../models/applicantModel');
 const Recruiter = require('../models/recruiterModel');
 const JobListing = require('../models/jobListingModel');
 const Interview = require('../models/interviewModel');
-const { sendRejectionEmail, sendHiredEmail } = require('../utils/emailService');
+const JobSeeker = require('../models/jobSeekerModel');
+const { sendRejectionEmail, sendHiredEmail, sendApplicationInReviewEmail } = require('../utils/emailService');
 
 
 // Create a new applicant
@@ -193,7 +194,14 @@ const handleEmailUpdates = async (req, res) => {
     const { status, otherApplicants, applicant } = req.body;
 
     try {
-        if (status === "Rejected") {
+        if (status === "In Review") {
+            await sendApplicationInReviewEmail(applicant.email, applicant.name, applicant.jobId);
+            // Increment the number of reviewed applications for the job seeker
+            await JobSeeker.findByIdAndUpdate(
+                applicant.jobSeekerId,
+                { $inc: { numOfReviewedApplications: 1 } }
+            );
+        } else if (status === "Rejected") {
             await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
         } else if (status === "Hired") {
             if (!applicant) {
