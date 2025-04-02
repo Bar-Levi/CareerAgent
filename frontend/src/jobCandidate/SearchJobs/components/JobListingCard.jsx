@@ -321,7 +321,7 @@ const JobListingCard = ({
 
           {/* Score Display with Tooltip */}
           {score !== undefined && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 -ml-2">
               <span className="text-gray-800 text-base">
                 Score: {score}
               </span>
