@@ -47,6 +47,15 @@ const JobListingCardsList = ({
     loadRelevancePoints();
   }, [user.email, user.relevancePoints]);
 
+  // Update the count to reflect filtered results
+  useEffect(() => {
+    const savedIds = new Set((user.savedJobListings || []).map(id => id.toString()));
+    const currentFilteredListings = sortingMethod === 'saved'
+      ? jobListings.filter(job => savedIds.has(job._id.toString()))
+      : jobListings;
+    setJobListingsCount(currentFilteredListings.length);
+  }, [jobListings, sortingMethod, user.savedJobListings, setJobListingsCount]);
+
   // Fetch job listings and sort them
   useEffect(() => {
     const fetchAndSortJobListings = async (triesLeft) => {
@@ -134,7 +143,6 @@ const JobListingCardsList = ({
         }
 
         setJobListings(sortedListings);
-        setJobListingsCount(sortedListings.length);
         setLoading(false);
       } catch (err) {
         setLoading(false);
@@ -303,26 +311,50 @@ const JobListingCardsList = ({
 
   return (
     <div className="space-y-4 p-4">
-      {filteredListings.map((jobListing) => (
-        <div
-          key={jobListing._id}
-          onClick={() => {
-            onJobSelect(jobListing);
-          }}
-          className="cursor-pointer"
-        >
-          <JobListingCard
-            onJobSelect={onJobSelect}
-            jobListing={jobListing}
-            user={user}
-            setUser={setUser}
-            setShowModal={setShowModal}
-            showNotification={showNotification}
-            setRenderingConversationKey={setRenderingConversationKey}
-            setRenderingConversationData={setRenderingConversationData}
-          />
+      {filteredListings.length === 0 && sortingMethod === 'saved' ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <svg
+            className="w-16 h-16 text-gray-300 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+            />
+          </svg>
+          <p className="text-xl text-gray-600 font-medium">
+            No saved job listings yet
+          </p>
+          <p className="text-gray-400 mt-2 text-center">
+            Click the bookmark icon on any job listing to save it for later
+          </p>
         </div>
-      ))}
+      ) : (
+        filteredListings.map((jobListing) => (
+          <div
+            key={jobListing._id}
+            onClick={() => {
+              onJobSelect(jobListing);
+            }}
+            className="cursor-pointer"
+          >
+            <JobListingCard
+              onJobSelect={onJobSelect}
+              jobListing={jobListing}
+              user={user}
+              setUser={setUser}
+              setShowModal={setShowModal}
+              showNotification={showNotification}
+              setRenderingConversationKey={setRenderingConversationKey}
+              setRenderingConversationData={setRenderingConversationData}
+            />
+          </div>
+        ))
+      )}
     </div>
   );
 };
