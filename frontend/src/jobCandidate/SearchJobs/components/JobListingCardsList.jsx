@@ -210,7 +210,12 @@ const JobListingCardsList = ({
       skills: []
     };
   
-    const userData = user.analyzed_cv_content;
+    const userData = user?.analyzed_cv_content;
+    
+    // If no user data, return zero score
+    if (!userData) {
+      return { score: 0, matchedData };
+    }
   
     // Destructure relevance point values
     const {
@@ -222,7 +227,7 @@ const JobListingCardsList = ({
     } = relevancePoints;
   
     // Job Roles match
-    if (userData.job_role) {
+    if (userData.job_role && Array.isArray(userData.job_role)) {
       for (const job of userData.job_role) {
         if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
           score += matchedJobRolePoints;
@@ -232,7 +237,7 @@ const JobListingCardsList = ({
     }
   
     // Job Types match
-    if (userData.job_role) {
+    if (userData.job_role && Array.isArray(userData.job_role)) {
       if (userData.job_role.includes('Student')) {
         if (jobListing.jobType.includes('Student')) {
           score += 20;
@@ -256,7 +261,8 @@ const JobListingCardsList = ({
     }
   
     // Education match
-    if (userData.education.length > 0 && jobListing.education.length > 0) {
+    if (userData.education && Array.isArray(userData.education) && userData.education.length > 0 && 
+        jobListing.education && Array.isArray(jobListing.education) && jobListing.education.length > 0) {
       userData.education.forEach(edu => {
         if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
           score += matchedEducationPoints;
@@ -266,17 +272,17 @@ const JobListingCardsList = ({
     }
   
     // Previous work experience match
-    const { matchedJobs = [], experienceScore = 0 } =
-      jobListing.workExperience
-        ? calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints) || {}
-        : {};
-    if (experienceScore > 0) {
-      matchedData.workExperience.push(...matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
+    const workExperienceResult = jobListing.workExperience && userData.work_experience
+      ? calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints)
+      : { matchedJobs: [], experienceScore: 0 };
+
+    if (workExperienceResult.experienceScore > 0) {
+      matchedData.workExperience.push(...workExperienceResult.matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
     }
-    score += experienceScore;
+    score += workExperienceResult.experienceScore;
   
     // Skills match
-    if (userData.skills) {
+    if (userData.skills && Array.isArray(userData.skills) && jobListing.skills && Array.isArray(jobListing.skills)) {
       const matchedSkills = jobListing.skills.filter(skill =>
         userData.skills.includes(skill)
       );
@@ -288,7 +294,7 @@ const JobListingCardsList = ({
     return { score, matchedData };
   }
   
-  // Apply “Saved” filter if selected
+  // Apply "Saved" filter if selected
   const savedIds = new Set((user.savedJobListings || []).map(id => id.toString()));
   const filteredListings =
     sortingMethod === 'saved'
