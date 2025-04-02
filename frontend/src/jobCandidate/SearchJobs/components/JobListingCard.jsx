@@ -279,10 +279,10 @@ const JobListingCard = ({
 
       <hr className="border-gray-300 my-4" />
 
-      {/* Bottom Section: Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between">
+      {/* Bottom Section: Action Buttons and Stats */}
+      <div className="flex items-center gap-3">
         <button
-          className={`px-4 py-2 font-semibold rounded transition-all duration-300 ${
+          className={`px-3 py-2 text-base font-semibold rounded transition-all duration-300 whitespace-nowrap ${
             applyButtonEnabled
               ? "bg-gradient-to-tr from-green-300 to-green-600 text-white hover:from-green-400 hover:to-green-700 hover:shadow-lg"
               : "bg-gray-200 text-gray-700 flex items-center justify-center"
@@ -293,7 +293,7 @@ const JobListingCard = ({
           {applyButtonEnabled ? (
             "Apply Now"
           ) : (
-            <span className="flex items-center">
+            <span className="flex items-center whitespace-nowrap">
               <FaCheck className="mr-2 text-green-600" />
               Applied
             </span>
@@ -301,83 +301,85 @@ const JobListingCard = ({
         </button>
       
         <button onClick={toggleSave} className="p-2 rounded hover:bg-gray-200">
-        {isSaved ? <FaBookmark size={20}/> : <FaRegBookmark size={20}/>}
+          {isSaved ? <FaBookmark size={18}/> : <FaRegBookmark size={18}/>}
         </button>
 
         {/* Talk with Chatbot button */}
         {!showOnlyApply && (
         <button
-          className="px-4 py-2 font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg"
+          className="px-4 py-2 text-base font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg whitespace-nowrap"
           onClick={handleInterviewChatClick}
         >
           Talk with Chatbot
         </button>
         )}
 
-        <span className="py-2 text-gray-800 font-semibold rounded cursor-default">
-          Applied: {appliedCounter || 0}
-        </span>
+        <div className="flex items-center gap-4 ml-auto whitespace-nowrap">
+          <span className="text-gray-800 text-base">
+            Applied: {appliedCounter || 0}
+          </span>
 
-        {/* Score Display with Tooltip */}
-        {score !== undefined && (
-          <div className="flex justify-center items-center">
-            <span className="py-2 text-gray-800 font-semibold rounded">
-              Score: {score}
-            </span>
-            {score !== 0 && matchedData && (
-              <div className="relative group cursor-help">
-                <span className="text-gray-800 text-md">
-                  <i className="ml-3 fa fa-info-circle" />
-                </span>
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                  <p className="text-lg font-bold mb-3 border-b pb-2">Matched Criteria</p>
-                  <ul className="list-none pl-0 space-y-1">
-                    {matchedData?.jobRole?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Job Role:</strong>
-                        <span>{matchedData.jobRole.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.jobType?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Job Type:</strong>
-                        <span>{matchedData.jobType.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.securityClearance !== null && (
-                      <li>
-                        <strong className="block text-blue-600">Security Clearance:</strong>
-                        <span>{matchedData.securityClearance}</span>
-                      </li>
-                    )}
-                    {matchedData?.education?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Education:</strong>
-                        <span>{matchedData.education.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.workExperience?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Work Experience:</strong>
-                        <span>{matchedData.workExperience.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.skills?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Skills:</strong>
-                        <span>
-                          {matchedData.skills.length > 5
-                            ? matchedData.skills.slice(0, 5).join(", ") + ", ..."
-                            : matchedData.skills.join(", ")}
-                        </span>
-                      </li>
-                    )}
-                  </ul>
+          {/* Score Display with Tooltip */}
+          {score !== undefined && (
+            <div className="flex items-center gap-2">
+              <span className="text-gray-800 text-base">
+                Score: {score}
+              </span>
+              {score !== 0 && matchedData && (
+                <div className="relative group cursor-help">
+                  <span className="text-gray-800 text-base">
+                    <i className="fa fa-info-circle" />
+                  </span>
+                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+                    <p className="text-lg font-bold mb-3 border-b pb-2">Matched Criteria</p>
+                    <ul className="list-none pl-0 space-y-1">
+                      {matchedData?.jobRole?.length > 0 && (
+                        <li>
+                          <strong className="block text-blue-600">Job Role:</strong>
+                          <span>{matchedData.jobRole.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.jobType?.length > 0 && (
+                        <li>
+                          <strong className="block text-blue-600">Job Type:</strong>
+                          <span>{matchedData.jobType.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.securityClearance !== null && (
+                        <li>
+                          <strong className="block text-blue-600">Security Clearance:</strong>
+                          <span>{matchedData.securityClearance}</span>
+                        </li>
+                      )}
+                      {matchedData?.education?.length > 0 && (
+                        <li>
+                          <strong className="block text-blue-600">Education:</strong>
+                          <span>{matchedData.education.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.workExperience?.length > 0 && (
+                        <li>
+                          <strong className="block text-blue-600">Work Experience:</strong>
+                          <span>{matchedData.workExperience.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.skills?.length > 0 && (
+                        <li>
+                          <strong className="block text-blue-600">Skills:</strong>
+                          <span>
+                            {matchedData.skills.length > 5
+                              ? matchedData.skills.slice(0, 5).join(", ") + ", ..."
+                              : matchedData.skills.join(", ")}
+                          </span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
