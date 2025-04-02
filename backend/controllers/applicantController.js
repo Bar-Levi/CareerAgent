@@ -147,58 +147,70 @@ const updateApplicant = async (req, res) => {
     let { status, interviewId } = req.body;
 
     try {
-        // If the applicant just finished an interview
-        if (status === "Interview Done") {
-            await Interview.findByIdAndDelete(interviewId);
-            interviewId = null;
-        } else if (status === "Rejected") {
-            const applicant = await Applicant.findById(id).populate('jobId');
-            await Interview.findByIdAndDelete(interviewId);
-            sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
-        } else if (status === "Hired") {
-            // Get the current applicant first
-            const hiredApplicant = await Applicant.findById(id).populate('jobId');
-            if (!hiredApplicant) {
-                return res.status(404).json({ message: 'Applicant not found' });
-            }
-            // Send email to the hired applicant
-            await sendHiredEmail(hiredApplicant.email, hiredApplicant.name, hiredApplicant.jobId);
-            
-            // Find all other applicants for the same job (excluding the hired one)
-            const otherApplicants = await Applicant.find({
-                jobId: hiredApplicant.jobId,
-                _id: { $ne: id },
-                status: { $ne: 'Rejected' }
-            }).populate('jobId');
-
-            // Update status to 'Rejected' and send emails to all other applicants
-            for (const applicant of otherApplicants) {
-                await Applicant.findByIdAndUpdate(
-                    applicant._id,
-                    { status: 'Rejected' }
-                );
-                // Send rejection email to each applicant
-                await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
-            }
-        }
-
         const updatedApplicant = await Applicant.findByIdAndUpdate(
             id, 
             { status, interviewId }, 
             { new: true, runValidators: true }
-        );
+        ).populate('jobId');
 
         if (!updatedApplicant) {
             return res.status(404).json({ message: 'Applicant not found' });
         }
 
+        let otherApplicants = [];
+        if (status === "Hired") {
+            otherApplicants = await Applicant.find({
+                jobId: updatedApplicant.jobId,
+                _id: { $ne: id },
+                status: { $ne: 'Rejected' }
+            }).populate('jobId');
+        
+
+            for (const applicant of otherApplicants) {
+                await Applicant.findByIdAndUpdate(applicant._id, { status: 'Rejected' });
+            }
+        }
+
         res.status(200).json({
             message: 'Applicant updated successfully',
             applicant: updatedApplicant,
+            otherApplicants,
         });
     } catch (error) {
         console.error('Error updating applicant:', error);
         res.status(500).json({ message: 'Failed to update applicant', error: error.message });
+    }
+};
+
+// New function to handle status-specific logic
+const handleStatusLogic = async (req, res) => {
+    const { id } = req.params;
+    const { status, interviewId, otherApplicants, applicant } = req.body;
+
+    try {
+        if (status === "Interview Done") {
+            await Interview.findByIdAndDelete(interviewId);
+        } else if (status === "Rejected") {
+            const applicant = await Applicant.findById(id).populate('jobId');
+            await Interview.findByIdAndDelete(interviewId);
+            await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
+        } else if (status === "Hired") {
+            if (!applicant) {
+                return res.status(404).json({ message: 'Applicant not found' });
+            }
+            await sendHiredEmail(applicant.email, applicant.name, applicant.jobId);
+            
+            if (otherApplicants) {
+                for (const applicant of otherApplicants) {
+                    await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
+                }
+            }
+        }
+
+        res.status(200).json({ message: 'Status logic handled successfully' });
+    } catch (error) {
+        console.error('Error handling status logic:', error);
+        res.status(500).json({ message: 'Failed to handle status logic', error: error.message });
     }
 };
 
@@ -229,5 +241,6 @@ module.exports = {
     updateApplicant,
     deleteApplicant,
     getRecruiterApplicants,
-    getJobSeekerApplicants
+    getJobSeekerApplicants,
+    handleStatusLogic
 };
