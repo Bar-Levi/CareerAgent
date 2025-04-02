@@ -89,8 +89,8 @@ const CandidateTable = ({
           },
         },
         {
-          label: "Make Offer",
-          onClick: () => patchStatus(applicant, "Offered"),
+          label: "Mark as Accepted",
+          onClick: () => patchStatus(applicant, "Accepted"),
         }];
   
       case "Interview Scheduled":
@@ -110,16 +110,10 @@ const CandidateTable = ({
           },
           },
           {
-            label: "Make Offer",
-            onClick: () => patchStatus(applicant, "Offered"),
+            label: "Mark as Accepted",
+            onClick: () => patchStatus(applicant, "Accepted"),
           }
         ];
-      case "Offered":
-        return [{
-          label: "Mark as Accepted",
-          onClick: () => patchStatus(applicant, "Accepted"),
-        }];
-  
       case "Accepted":
         return [{
           label: "Mark as Hired",
@@ -218,8 +212,6 @@ const CandidateTable = ({
                           ? "bg-blue-100 text-blue-800"
                           : app.status.includes("Interview")
                           ? "bg-purple-100 text-purple-800"
-                          : app.status === "Offered"
-                          ? "bg-teal-100 text-teal-800"
                           : app.status === "Accepted"
                           ? "bg-green-100 text-green-800"
                           : app.status === "Rejected"

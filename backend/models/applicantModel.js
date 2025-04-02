@@ -38,7 +38,6 @@ const applicantSchema = new mongoose.Schema({
             'In Review',
             'Interview Scheduled',
             'Interview Done',
-            'Offered',
             'Accepted',
             'Rejected',
             'Hired'

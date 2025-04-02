@@ -65,8 +65,6 @@ const JobApplications = ({ user }) => {
                           ? "bg-purple-100 text-purple-700"
                           : app.status === "Interview Done"
                           ? "bg-purple-200 text-purple-800"
-                          : app.status === "Offered"
-                          ? "bg-teal-100 text-teal-700"
                           : app.status === "Hired"
                           ? "bg-green-200 text-green-800"
                           : "bg-gray-100 text-gray-700"

@@ -27,7 +27,6 @@ const FilterBar = ({
     "In Review",
     "Interview Scheduled",
     "Interview Done",
-    "Offered",
     "Accepted",
     "Rejected",
     "Hired",

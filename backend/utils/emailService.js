@@ -195,7 +195,7 @@ const sendJobNotificationEmail = async (
     }
   };  
 
-  const sendRejectionEmail = async (email, username, jobListing) => {
+const sendRejectionEmail = async (email, username, jobListing) => {
     // If a company website is provided, include a suggestion line
     const companyWebsiteLine = jobListing.companyWebsite 
         ? `<p>You might also consider visiting <a href="${jobListing.companyWebsite}" target="_blank" style="color: #0000aa; text-decoration: none; font-weight: bold;">our website</a> to explore new opportunities.</p>` 
@@ -244,11 +244,59 @@ const sendJobNotificationEmail = async (
     await transporter.sendMail(mailOptions);
 };
 
+const sendHiredEmail = async (email, username, jobListing) => {
+    const mailOptions = {
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Congratulations! You're Hired at ${jobListing.company}`,
+        html: `
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #000000; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 24px;">🎉 Congratulations! You're Hired!</h1>
+                </div>
+                <!-- Body -->
+                <div style="padding: 20px; background-color: #ffffff; line-height: 1.6;">
+                    <p>Dear ${username},</p>
+                    <p>
+                        We are delighted to inform you that you have been selected for the position of 
+                        <strong>${jobListing.jobRole}</strong> at <strong>${jobListing.company}</strong> in <strong>${jobListing.location}</strong>!
+                    </p>
+                    <p>
+                        Your skills, experience, and enthusiasm throughout the interview process impressed us, 
+                        and we believe you will be a valuable addition to our team.
+                    </p>
+                    <p>
+                        The hiring team will contact you shortly with additional details.
+                    </p>
+                    <p>
+                        Welcome to the team! We look forward to working with you.
+                    </p>
+                    <p>
+                        If you have any questions or need further information, please feel free to reach out.
+                    </p>
+                    <p style="margin-top: 20px;">Best regards,</p>
+                    <p><strong>${jobListing.recruiterName} &middot; ${jobListing.company}</strong></p>
+                    <p style="font-size: 12px; color: #000000;">
+                        If you wish to unsubscribe from these notifications, please 
+                        <a href="${process.env.FRONTEND_URL}/unsubscribe" style="color: #0000aa; text-decoration: none;">click here</a>.
+                    </p>
+                </div>
+                <!-- Footer -->
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #000000;">
+                    <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+                </div>
+            </div>
+        `,
+    };
+    await transporter.sendMail(mailOptions);
+};
 
 module.exports = {
     sendVerificationCode,
     sendResetPasswordEmail,
     generateResetToken,
     sendJobNotificationEmail,
-    sendRejectionEmail
+    sendRejectionEmail,
+    sendHiredEmail
 };

@@ -2,7 +2,7 @@ const Applicant = require('../models/applicantModel');
 const Recruiter = require('../models/recruiterModel');
 const JobListing = require('../models/jobListingModel');
 const Interview = require('../models/interviewModel');
-const { sendRejectionEmail } = require('../utils/emailService');
+const { sendRejectionEmail, sendHiredEmail } = require('../utils/emailService');
 
 
 // Create a new applicant
@@ -146,27 +146,52 @@ const updateApplicant = async (req, res) => {
     const { id } = req.params;
     let { status, interviewId } = req.body;
 
-    // If the applicant just finished an interview
-    if (status === "Interview Done") {
-        // Remove the interview ID from the interview schema
-        await Interview.findByIdAndDelete(interviewId);
-        interviewId = null;
-    } else if (status === "Rejected") {
-        const applicant = await Applicant.findById(id).populate('jobId');
-        // If exisits - remove the interview ID from the interview schema
-        await Interview.findByIdAndDelete(interviewId);
-        sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
-    }
-
     try {
+        // If the applicant just finished an interview
+        if (status === "Interview Done") {
+            await Interview.findByIdAndDelete(interviewId);
+            interviewId = null;
+        } else if (status === "Rejected") {
+            const applicant = await Applicant.findById(id).populate('jobId');
+            await Interview.findByIdAndDelete(interviewId);
+            sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
+        } else if (status === "Hired") {
+            // Get the current applicant first
+            const hiredApplicant = await Applicant.findById(id).populate('jobId');
+            if (!hiredApplicant) {
+                return res.status(404).json({ message: 'Applicant not found' });
+            }
+            // Send email to the hired applicant
+            await sendHiredEmail(hiredApplicant.email, hiredApplicant.name, hiredApplicant.jobId);
+            
+            // Find all other applicants for the same job (excluding the hired one)
+            const otherApplicants = await Applicant.find({
+                jobId: hiredApplicant.jobId,
+                _id: { $ne: id },
+                status: { $ne: 'Rejected' }
+            }).populate('jobId');
+
+            // Update status to 'Rejected' and send emails to all other applicants
+            for (const applicant of otherApplicants) {
+                await Applicant.findByIdAndUpdate(
+                    applicant._id,
+                    { status: 'Rejected' }
+                );
+                // Send rejection email to each applicant
+                await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
+            }
+        }
+
         const updatedApplicant = await Applicant.findByIdAndUpdate(
             id, 
             { status, interviewId }, 
             { new: true, runValidators: true }
         );
+
         if (!updatedApplicant) {
             return res.status(404).json({ message: 'Applicant not found' });
         }
+
         res.status(200).json({
             message: 'Applicant updated successfully',
             applicant: updatedApplicant,

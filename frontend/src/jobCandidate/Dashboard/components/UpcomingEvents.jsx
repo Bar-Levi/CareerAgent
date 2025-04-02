@@ -25,7 +25,10 @@ const UpcomingInterviews = ({ user }) => {
           }
         );
         if (!res.ok) {
-          throw new Error("Failed to fetch upcoming interviews");
+          // Instead of throwing error, set empty interviews
+          setInterviews([]);
+          setLoading(false);
+          return;
         }
         const data = await res.json();
 
@@ -42,8 +45,8 @@ const UpcomingInterviews = ({ user }) => {
 
         setInterviews(filteredInterviews);
       } catch (err) {
-        setError(err.message);
-      } finally {
+        // Silently handle error and show empty state
+        setInterviews([]);
         setLoading(false);
       }
     };
@@ -164,11 +167,11 @@ const UpcomingInterviews = ({ user }) => {
           </button>
         </div>
       ) : interviews.length === 0 ? (
-        <div className="p-8 text-center"> {/* Increased padding */}
-          <FaCalendarAlt className="w-12 h-12 mx-auto mb-4 text-gray-300" /> {/* Larger icon, adjusted margin */}
-          <p className="text-gray-700 font-semibold">No upcoming interviews</p> {/* Slightly bolder text */}
+        <div className="p-8 text-center">
+          <FaCalendarAlt className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="text-gray-700 font-semibold">No scheduled interviews yet</p>
           <p className="text-sm text-gray-500 mt-1">
-            Scheduled interviews will appear here.
+            Your upcoming interviews will appear here once scheduled.
           </p>
         </div>
       ) : (
