@@ -330,46 +330,44 @@ const JobListingCard = ({
                   <span className="text-gray-800 text-base">
                     <i className="fa fa-info-circle" />
                   </span>
-                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                    <p className="text-lg font-bold mb-3 border-b pb-2">Matched Criteria</p>
+                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-3 w-56 border border-gray-300 z-10">
+                    <p className="text-base font-bold mb-2 border-b pb-1">Matched Criteria</p>
                     <ul className="list-none pl-0 space-y-1">
                       {matchedData?.jobRole?.length > 0 && (
-                        <li>
-                          <strong className="block text-blue-600">Job Role:</strong>
-                          <span>{matchedData.jobRole.join(", ")}</span>
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Job Role:</strong>
+                          <span className="block truncate">{matchedData.jobRole.join(", ")}</span>
                         </li>
                       )}
                       {matchedData?.jobType?.length > 0 && (
-                        <li>
-                          <strong className="block text-blue-600">Job Type:</strong>
-                          <span>{matchedData.jobType.join(", ")}</span>
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Job Type:</strong>
+                          <span className="block truncate">{matchedData.jobType.join(", ")}</span>
                         </li>
                       )}
                       {matchedData?.securityClearance !== null && (
-                        <li>
-                          <strong className="block text-blue-600">Security Clearance:</strong>
-                          <span>{matchedData.securityClearance}</span>
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Security Clearance:</strong>
+                          <span className="block truncate">{matchedData.securityClearance}</span>
                         </li>
                       )}
                       {matchedData?.education?.length > 0 && (
-                        <li>
-                          <strong className="block text-blue-600">Education:</strong>
-                          <span>{matchedData.education.join(", ")}</span>
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Education:</strong>
+                          <span className="block truncate">{matchedData.education.join(", ")}</span>
                         </li>
                       )}
                       {matchedData?.workExperience?.length > 0 && (
-                        <li>
-                          <strong className="block text-blue-600">Work Experience:</strong>
-                          <span>{matchedData.workExperience.join(", ")}</span>
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Work Experience:</strong>
+                          <span className="block truncate">{matchedData.workExperience.join(", ")}</span>
                         </li>
                       )}
                       {matchedData?.skills?.length > 0 && (
-                        <li>
-                          <strong className="block text-blue-600">Skills:</strong>
-                          <span>
-                            {matchedData.skills.length > 5
-                              ? matchedData.skills.slice(0, 5).join(", ") + ", ..."
-                              : matchedData.skills.join(", ")}
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Skills:</strong>
+                          <span className="block truncate">
+                            {matchedData.skills.join(", ")}
                           </span>
                         </li>
                       )}
