@@ -44,6 +44,8 @@ const UpcomingInterviews = ({ user }) => {
         );
 
         setInterviews(filteredInterviews);
+        setLoading(false);
+
       } catch (err) {
         // Silently handle error and show empty state
         setInterviews([]);
@@ -268,7 +270,7 @@ const UpcomingInterviews = ({ user }) => {
                     )}
                      {!interviewToday && !isUpcoming(interview.scheduledTime) && interview.scheduledTime && (
                        <span className="inline-flex items-center px-2.5 py-0.5 mb-2 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                         Past
+                         Near Future
                        </span>
                      )}
                   </div>

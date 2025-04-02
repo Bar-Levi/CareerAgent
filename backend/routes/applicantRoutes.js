@@ -7,7 +7,7 @@ const {
     deleteApplicant,
     getRecruiterApplicants,
     getJobSeekerApplicants,
-    handleStatusLogic
+    handleEmailUpdates
 } = require('../controllers/applicantController');
 
 const {
@@ -35,7 +35,7 @@ router.get('/getJobSeekerApplications/:jobSeekerId', protect, getJobSeekerApplic
 router.put('/:id', protect, updateApplicant);
 
 // Handle status-specific logic
-router.post('/:id/handleStatusLogic', protect, handleStatusLogic);
+router.post('/handleEmailUpdates', protect, handleEmailUpdates);
 
 // Delete a specific applicant by ID
 router.delete('/:id', protect, deleteApplicant);

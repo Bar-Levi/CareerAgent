@@ -145,11 +145,12 @@ const getJobSeekerApplicants = async (req, res) => {
 const updateApplicant = async (req, res) => {
     const { id } = req.params;
     let { status, interviewId } = req.body;
+    let otherApplicants = [];
 
     try {
         const updatedApplicant = await Applicant.findByIdAndUpdate(
             id, 
-            { status, interviewId }, 
+            { status, interviewId: status === "Interview Done" ? null : interviewId}, 
             { new: true, runValidators: true }
         ).populate('jobId');
 
@@ -157,8 +158,14 @@ const updateApplicant = async (req, res) => {
             return res.status(404).json({ message: 'Applicant not found' });
         }
 
-        let otherApplicants = [];
-        if (status === "Hired") {
+        
+        if (status === "Interview Done") {
+            await Interview.findByIdAndDelete(interviewId);
+        } else if (status === "Rejected") {
+            await Applicant.findByIdAndUpdate(id, { interviewId: null });
+            
+            await Interview.findByIdAndDelete(interviewId);
+        } else if (status === "Hired") {
             otherApplicants = await Applicant.find({
                 jobId: updatedApplicant.jobId,
                 _id: { $ne: id },
@@ -170,7 +177,6 @@ const updateApplicant = async (req, res) => {
                 await Applicant.findByIdAndUpdate(applicant._id, { status: 'Rejected' });
             }
         }
-
         res.status(200).json({
             message: 'Applicant updated successfully',
             applicant: updatedApplicant,
@@ -182,17 +188,12 @@ const updateApplicant = async (req, res) => {
     }
 };
 
-// New function to handle status-specific logic
-const handleStatusLogic = async (req, res) => {
-    const { id } = req.params;
-    const { status, interviewId, otherApplicants, applicant } = req.body;
+// A function to handle status-specific email notifications.
+const handleEmailUpdates = async (req, res) => {
+    const { status, otherApplicants, applicant } = req.body;
 
     try {
-        if (status === "Interview Done") {
-            await Interview.findByIdAndDelete(interviewId);
-        } else if (status === "Rejected") {
-            const applicant = await Applicant.findById(id).populate('jobId');
-            await Interview.findByIdAndDelete(interviewId);
+        if (status === "Rejected") {
             await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
         } else if (status === "Hired") {
             if (!applicant) {
@@ -242,5 +243,5 @@ module.exports = {
     deleteApplicant,
     getRecruiterApplicants,
     getJobSeekerApplicants,
-    handleStatusLogic
+    handleEmailUpdates
 };

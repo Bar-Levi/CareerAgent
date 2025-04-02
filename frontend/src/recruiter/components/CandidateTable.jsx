@@ -64,7 +64,7 @@ const CandidateTable = ({
 
   const patchStatus = async (applicant, status) => {
     await updateApplicantStatus(applicant, status, refetchApplicants);
-    refetchApplicants?.();
+    await refetchApplicants?.();
   };
 
   // Determine the appropriate action button label & logic per status
@@ -82,10 +82,10 @@ const CandidateTable = ({
       case "In Review":
         return [{
           label: "Schedule Interview",
-          onClick: () => {
+          onClick: async () => {
             setSelectedApplicant(applicant);
             setShowScheduleModal(true);
-            refetchApplicants?.();
+            await refetchApplicants?.();
           },
         },
         {
@@ -103,10 +103,10 @@ const CandidateTable = ({
         return [
           {
           label: "Schedule Another Interview",
-          onClick: () => {
+          onClick: async () => {
             setSelectedApplicant(applicant);
             setShowScheduleModal(true);
-            refetchApplicants?.();
+            await refetchApplicants?.();
           },
           },
           {
@@ -361,9 +361,9 @@ const CandidateTable = ({
           setApplicants={setApplicants}
           jobListingId={jobListingId} 
           recruiter={recruiter}
-          refetchApplicants={() => {
+          refetchApplicants={async () => {
             setShowScheduleModal(false);
-            if (refetchApplicants) refetchApplicants();
+            if (refetchApplicants) await refetchApplicants();
           }}
         />
       )}
@@ -373,9 +373,8 @@ const CandidateTable = ({
           isOpen={showNotesModal}
           onClose={() => setShowNotesModal(false)}
           applicant={selectedApplicant}
-          onNotesUpdated={(updatedApplicant) => {
-            // Optionally update your applicants state here.
-            refetchApplicants?.();
+          onNotesUpdated={async () => {
+            await refetchApplicants?.();
           }}
         />
       )}

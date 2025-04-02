@@ -19,14 +19,15 @@ export const updateApplicantStatus = async (applicant, status, refetchApplicants
         }
 
         const data = await updateResponse.json();
-        const otherApplicants = data.otherApplicants;
+        const otherApplicants = data?.otherApplicants;
 
         // Optionally refetch or refresh the data
-        if (refetchApplicants) refetchApplicants();
+        if (refetchApplicants) await refetchApplicants();
+        
 
         // After successful status update, handle the status logic
         const logicResponse = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/applicants/${applicant._id}/handleStatusLogic`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/applicants/handleEmailUpdates`,
             {
                 method: "POST",
                 headers: {

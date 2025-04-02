@@ -84,6 +84,8 @@ const ScheduleInterviewModal = ({
         updatedApplicant.status = "Interview Scheduled";
         return [...applicants];
       });
+      // Refetch applicants to update the list
+      refetchApplicants?.();
     } catch (err) {
       setError(err.message);
     } finally {
