@@ -6,6 +6,7 @@ const JobSeeker = require('../models/jobSeekerModel');
 const { sendRejectionEmail, sendHiredEmail, sendApplicationInReviewEmail } = require('../utils/emailService');
 
 
+
 // Create a new applicant
 const createApplicant = async (req, res) => {
     try {
@@ -47,6 +48,11 @@ const createApplicant = async (req, res) => {
             stateAddition: {
                 viewMode: 'applications',
                 jobListing,
+                candidate: {
+                    profilePic: savedApplicant.profilePic,
+                    name: savedApplicant.name,
+                    senderId: savedApplicant.jobSeekerId,
+                  }, 
             },
             },
         };

@@ -47,6 +47,8 @@ const RecruiterDashboard = ({onlineUsers}) => {
         console.log("Parsed addition: ", parsedAddition);
         setViewMode("messages");
         setSelectedConversationId(parsedAddition.conversationId);
+        setSelectedCandidate(parsedAddition.candidate);
+        fetchApplications(); // Fetch applications again to ensure the latest data
         setSelectedJobListing(convertMongoObject(parsedAddition.jobListing));
         setTitle(parsedAddition.title);
         setViewMode(parsedAddition.viewMode);
