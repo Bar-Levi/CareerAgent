@@ -8,9 +8,9 @@ import recruiterCandidateImage from "../assets/recruiter-candidate.png";
 
 const Features = () => {
   return (
-    <section className="w-full py-20 bg-black">
+    <section className="w-full py-12 md:py-20 bg-black">
       <motion.h2
-        className="text-4xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight"
+        className="text-3xl md:text-4xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight px-4"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
@@ -19,7 +19,7 @@ const Features = () => {
         Our Features
       </motion.h2>
 
-      <div className="my-20 flex flex-col lg:flex-row items-center justify-center gap-8">
+      <div className="my-8 md:my-20 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 px-4 md:px-8">
         {/* Mock Interviews Card */}
         <Card
           title="Customized Chatbots"
@@ -52,7 +52,7 @@ const Features = () => {
             containerClassName="bg-black"
             colors={[
               [100, 170, 170],
-              [150, 220, 220]
+              [150, 220, 220],
             ]}
             dotSize={4}
           />
@@ -72,7 +72,6 @@ const Features = () => {
             colors={[[125, 211, 252]]}
           />
         </Card>
-
       </div>
     </section>
   );
@@ -98,74 +97,79 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
         delay: index * 0.2,
         ease: "easeInOut",
       }}
-      className="border border-white/[0.5] group/canvas-card flex items-center justify-center max-w-md w-full mx-auto p-8 relative lg:h-[40rem] rounded-3xl overflow-hidden transition-transform ease-in-out duration-500 hover:scale-105"
+      className="border border-white/[0.5] group/canvas-card flex flex-col items-center justify-center w-[90vw] sm:w-[80vw] lg:w-[25vw] h-[50vh] sm:h-[60vh] lg:h-[70vh] p-[2vw] relative rounded-[2vw] overflow-hidden transition-all duration-500 hover:scale-105 hover:border-white/80"
     >
-      {/* Corner Plus Signs */}
-      <span className="absolute h-6 w-6 -top-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-down" />
-      <span className="absolute h-6 w-6 -bottom-3 -left-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-up" />
-      <span className="absolute h-6 w-6 -top-3 -right-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-down-fast" />
-      <span className="absolute h-6 w-6 -bottom-3 -right-3 text-white bg-white text-lg font-bold flex items-center justify-center animate-slide-up-fast" />
+      {/* Background Gradient */}
+      <div 
+        className={`absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-black/90 transition-opacity duration-300 ${
+          hovered ? 'opacity-100' : 'opacity-0'
+        }`} 
+      />
 
-      {/* Hover Content */}
+      {/* Static Content */}
+      <div className="relative z-20 flex flex-col items-center justify-center h-full w-full">
+        {/* Icon with Title */}
+        <div className={`flex flex-col items-center transition-all duration-300 ${
+          hovered ? '-translate-y-[5vh]' : 'translate-y-0'
+        }`}>
+          <div className="mb-[2vh] transform transition-all duration-300">
+            {icon}
+          </div>
+          
+          
+        </div>
+
+        {/* Description and Image - Visible on Hover */}
+        <div className={`flex flex-col items-center transition-all duration-300 px-[2vw] ${
+          hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[2vh]'
+        }`}>
+          <p className="text-[2.5vw] sm:text-[1.8vw] lg:text-[1vw] text-white text-center mb-[2vh] max-w-[90%] leading-relaxed">
+            {description}
+          </p>
+
+          {image && (
+            <div className="w-full flex justify-center items-center">
+              <img
+                src={image}
+                alt={`${title} illustration`}
+                className={`w-auto max-w-[80%] h-auto max-h-[25vh] rounded-[1vw] object-contain transform transition-all duration-300 ${
+                  hovered ? 'scale-105 opacity-100' : 'scale-95 opacity-0'
+                }`}
+                style={{
+                  filter: "drop-shadow(0 0.5vw 1vw rgba(0,0,0,0.3))"
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Canvas Effect */}
       <AnimatePresence>
         {hovered && (
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="h-full w-full absolute inset-0 flex items-center justify-center"
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 flex items-center justify-center"
           >
             {children}
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Static Content */}
-      <div className="relative z-20">
-        <div className="text-center group-hover/canvas-card:-translate-y-4 absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] group-hover/canvas-card:opacity-0 transition duration-200 w-full mx-auto flex items-center justify-center animate-slide-up">
-          {icon}
-        </div>
-        <motion.h2
-          className="dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-6 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center text-4xl animate-slide-in font-heading tracking-wide px-4"
-          style={{
-            textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
-          }}
-        >
-          {title}
-        </motion.h2>
-        <h2
-          className="text-lg dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-6 font-modern leading-relaxed group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-down px-6"
-          style={{
-            textShadow: "0 0 10px rgba(0,0,0, 1), 0 0 10px rgba(0,0,0, 1)",
-          }}
-        >
-          {description}
-        </h2>
-        {image && (
-          <img
-            src={image}
-            alt={`${title} illustration`}
-            className="rounded-xl text-sm dark:text-white opacity-0 group-hover/canvas-card:opacity-100 relative z-10 text-black mt-4 font-bold group-hover/canvas-card:text-white group-hover/canvas-card:-translate-y-2 transition duration-200 text-center animate-slide-up-fast"
-            style={{
-              bottom: "5%",
-            }}
-          />
-        )}
-      </div>
     </motion.div>
   );
 };
 
-
-
-
 const AceternityIcon = ({ order }) => {
   return (
-    <button className="relative inline-flex h-12 overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
+    <button className="relative inline-flex min-h-[3rem] w-auto min-w-[12rem] overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
       <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-      <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-5 py-2 text-white backdrop-blur-3xl text-2xl font-bold">
-        {order}
+      <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-white backdrop-blur-3xl">
+        <span className="text-[1.15rem] sm:text-[1.25rem] font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+          {order}
+        </span>
       </span>
     </button>
   );

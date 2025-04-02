@@ -136,6 +136,11 @@ module.exports = {
                     foreground: 'rgb(250, 250, 250)'
                 },
             },
+            spacing: {
+                // Add viewport-based spacing if needed
+                'screen': '100vw',
+                'screen-h': '100vh',
+            },
         },
     },
     plugins: [],
