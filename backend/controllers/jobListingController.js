@@ -486,7 +486,7 @@ const filterActiveJobListings = async (req, res) => {
         }
 
         if (jobType) query.jobType = { $in: jobType.split(",").map((t) => t.trim()) };
-        if (remote) query.remote = remote === 'true'; // Convert to boolean
+        if (remote) query.remote = { $regex: remote, $options: "i" };
         if (skills) {
             const skillsArray = skills.split(",").map((s) => s.trim()); // Split and trim skills
             const lastSkill = skillsArray.length > 0 ? skillsArray.pop() : ""; // Get the last skill or empty string
@@ -509,9 +509,11 @@ const filterActiveJobListings = async (req, res) => {
           }
                   
           
-        if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance, 10) };
-        if (education) {
+          if (securityClearance) query.securityClearance = parseInt(securityClearance, 10);
+          if (education) {
+            console.log("education: ",education);
             const educationArray = education.split(",").map((e) => e.trim()); // Split and trim education values
+            console.log("educationArray: ",educationArray);
             const lastEducation = educationArray.length > 0 ? educationArray.pop() : ""; // Get the last education or empty string
           
             // Escape special characters in lastEducation

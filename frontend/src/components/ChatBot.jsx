@@ -147,7 +147,7 @@ const ChatBot = ({
           ? jobData.skills.join(", ")
           : "this job requires no specific skills";
       // Build the full prompt with additional details.
-      const prompt = `I am applying for the position of ${jobData.jobRole}. The job description is: ${jobData.description}. The job requires these skills: ${skillsText}. The required experience level is ${jobData.experienceLevel || "N/A"}, the job is ${jobData.remote ? "remote" : "on-site"}, and the job type is ${jobData.jobType ? jobData.jobType.join(", ") : "N/A"}. Please provide exactly 10 interview questions relevant to this job posting and then evaluate my answers to see if I am correct. Do not ask any additional questions.`;
+      const prompt = `I am applying for the position of ${jobData.jobRole}. The job description is: ${jobData.description}. The job requires these skills: ${skillsText}. The required experience level is ${jobData.experienceLevel || "N/A"}, the job is ${jobData.remote ? "remote" : "on site"}, and the job type is ${jobData.jobType ? jobData.jobType.join(", ") : "N/A"}. Please provide exactly 10 interview questions relevant to this job posting and then evaluate my answers to see if I am correct. Do not ask any additional questions.`;
       (async () => {
         try {
           // Save the auto-prompt as a user message.

@@ -717,7 +717,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
           <option value="">Choose Remote</option>
           <option value="Remote">Remote</option>
           <option value="Hybrid">Hybrid</option>
-          <option value="On-Site">On-Site</option>
+          <option value="On Site">On Site</option>
         </select>
 
         {/* Security Clearance */}

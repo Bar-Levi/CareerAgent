@@ -11,6 +11,7 @@ const Applications = ({
   setSelectedCandidate,
   setTitle,
   setViewMode,
+  selectedCandidateId,  
 }) => {
   const { state } = useLocation();
   const user = state?.user;
@@ -151,11 +152,16 @@ const Applications = ({
                 Pending: "bg-gray-100 text-gray-800 border-gray-200",
                 Accepted: "bg-green-100 text-green-800 border-green-200",
               };
+              const isSelected = app.jobSeekerId === selectedCandidateId;
 
               return (
                 <div
                   key={app._id}
-                  className="p-6 hover:bg-gray-50 transition-colors duration-200 group"
+                  className={`p-6 transition-colors duration-200 group ${
+                    isSelected 
+                      ? 'bg-gray-200 hover:bg-gray-300' 
+                      : 'hover:bg-gray-50'
+                  }`}
                 >
                   <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
                     {/* Profile Picture */}

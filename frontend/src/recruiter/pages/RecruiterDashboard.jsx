@@ -236,6 +236,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
               setSelectedCandidate={setSelectedCandidate}
               setTitle={setTitle}
               setViewMode={setViewMode}
+              selectedCandidateId={selectedCandidate?.senderId}
             />
           )}
 

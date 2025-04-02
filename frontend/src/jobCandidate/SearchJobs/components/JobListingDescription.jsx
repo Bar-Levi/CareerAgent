@@ -84,7 +84,7 @@ const JobListingDescription = ({ jobListing }) => {
         {jobType && jobType.length > 0 ? jobType.join(", ") : "N/A"}
       </div>
       <div className="mb-2">
-        <span className="font-semibold">Work Setup (Remote/On-Site):</span> {remote}
+        <span className="font-semibold">Work Setup:</span> {remote}
       </div>
       {companyWebsite && (
         <div className="mb-2">
