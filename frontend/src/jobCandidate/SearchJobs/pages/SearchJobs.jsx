@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import JobListingCardsList from "../components/JobListingCardsList";
 import SearchFilters from "../components/SearchFilters";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
@@ -33,6 +33,7 @@ const SearchJobs = ({onlineUsers}) => {
     jobListingRole: null,
   });
 
+  const descriptionRef = useRef(null);
 
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
@@ -217,6 +218,24 @@ const SearchJobs = ({onlineUsers}) => {
     }
   };
 
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (descriptionRef.current && !descriptionRef.current.contains(event.target)) {
+        // Check if the click was on a job listing card
+        const isJobCard = event.target.closest('.job-listing-card');
+        if (!isJobCard) {
+          setSelectedJob(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div key={state.refreshToken} className="bg-gray-100 h-screen flex flex-col">
       <NavigationBar userType={state?.user?.role}/>
@@ -389,9 +408,9 @@ const SearchJobs = ({onlineUsers}) => {
 
         {/* Right Area */}
         <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
-          { selectedJob &&
-              <JobListingDescription jobListing={selectedJob} />
-          }
+          <div ref={descriptionRef}>
+            {selectedJob && <JobListingDescription jobListing={selectedJob} />}
+          </div>
         </div>
 
       </div>

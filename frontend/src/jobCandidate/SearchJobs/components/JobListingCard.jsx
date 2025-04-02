@@ -214,7 +214,7 @@ const JobListingCard = ({
   }, [applicants, user._id]);
 
   return (
-    <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300">
+    <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300 job-listing-card">
       {/* Top Section: Recruiter Info */}
       <div className="flex items-center justify-between space-x-4">
         <div className="flex-shrink-0">
