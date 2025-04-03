@@ -1,14 +1,31 @@
 // NotificationPanel.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaComments, FaUser, FaCalendarCheck } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaComments, FaUser, FaCalendarCheck, FaTrash, FaBell } from 'react-icons/fa';
+import classNames from 'classnames';
 
-
-const NotificationPanel = ({ notifications, setNotifications, closePanel, handleNotificationClick, setUnreadNotificationsCount }) => {
+const NotificationPanel = ({ 
+  notifications, 
+  setNotifications, 
+  closePanel, 
+  handleNotificationClick, 
+  setUnreadNotificationsCount 
+}) => {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'
 
-  // Function to delete a single notification
+  // Filter notifications based on current filter
+  const filteredNotifications = notifications.filter(notification => {
+    if (filter === 'unread') return !notification.read;
+    if (filter === 'read') return notification.read;
+    return true;
+  });
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Function to mark a notification as read
   const markAsReadNotification = async (notification) => {
     if (notification.read)
       return;
@@ -84,95 +101,138 @@ const NotificationPanel = ({ notifications, setNotifications, closePanel, handle
     }
   };
 
+  const getNotificationIcon = (type) => {
+    const iconClasses = "w-6 h-6";
+    switch (type) {
+      case 'chat':
+        return <FaComments className={`${iconClasses} text-blue-500`} />;
+      case 'apply':
+        return <FaUser className={`${iconClasses} text-green-500`} />;
+      case 'interview':
+        return <FaCalendarCheck className={`${iconClasses} text-purple-500`} />;
+      default:
+        return <FaBell className={`${iconClasses} text-gray-500`} />;
+    }
+  };
+
   return (
-    <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-      <div className="p-4 border-b flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Notifications</h3>
-        <div className="flex space-x-2">
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-96 bg-white rounded-xl shadow-2xl z-50 overflow-hidden"
+    >
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4">
+        <div className="flex justify-between items-center text-white">
+          <div className="flex items-center space-x-2">
+            <FaBell className="w-5 h-5" />
+            <h3 className="text-lg font-semibold">Notifications</h3>
+            {unreadCount > 0 && (
+              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </div>
           <button
             onClick={handleDeleteAllNotifications}
-            className="text-sm text-red-500 hover:text-red-700 focus:outline-none"
+            className="text-white/80 hover:text-white transition-colors"
           >
-            Delete All
+            <FaTrash className="w-4 h-4" />
           </button>
         </div>
-      </div>
-      <ul className="max-h-80 overflow-y-auto">
-        {notifications.sort((a, b) => new Date(b.date) - new Date(a.date)).map((notification) => (
-          <li
-          key={notification._id}
-          onClick={async () => {
-            closePanel();
-            await markAsReadNotification(notification);
-            handleNotificationClick(notification);
-          }}
-          className={`
-            relative flex items-center p-4 cursor-pointer 
-            mb-2 
-            ${
-              notification.read
-                ? "bg-gray-100 text-gray-400 line-through" // read style
-                : "bg-orange-50 text-black font-semibold border-l-4 border-orange-400" // unread style
-            }
-            hover:bg-gray-200
-          `}
-        >
-          {/* Corner Ribbon for UNREAD */}
-          {!notification.read && (
-            <div className="absolute top-0 left-0">
-              <div className="bg-red-600 text-white text-xs font-bold px-2 py-1 transform -rotate-45 translate-y-1/4 -translate-x-1/4 rounded-lg">
-                NEW
-              </div>
-            </div>
-          )}
-        
-          {/* Left Pane: Icon (10% width) */}
-          {notification.type === "chat" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaComments className="w-8 h-8 text-blue-500 flex-shrink-0" />
-            </div>
-          ) : notification.type === "apply" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
-            </div>
-          ) : notification.type === "interview" ? (
-            <div className="p-4 w-[10%] flex justify-center">
-              <FaCalendarCheck className="w-8 h-8 text-red-500 flex-shrink-0" />
-            </div>
-          ) : null}
-        
-          {/* Message Text (80% width) */}
-          <div
-            className={`
-              p-4 w-[80%] flex flex-col justify-center break-words
-              ${notification.read ? "line-through" : ""}
-            `}
-          >
-            <p className="text-sm">
-              {notification.message}
-            </p>
-            <p className="text-xs text-gray-500">
-              {new Date(notification.date).toLocaleString()}
-            </p>
-          </div>
-        
-          {/* Right Pane: Delete Button (10% width) */}
-          <div className="p-4 w-[10%] flex justify-center">
+
+        {/* Filter Tabs */}
+        <div className="flex space-x-2 mt-4">
+          {['all', 'unread', 'read'].map((filterType) => (
             <button
-              onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering li onClick
-                handleDeleteNotification(notification._id);
-              }}
-              className="p-1 text-red-500 hover:bg-red-100 focus:outline-none rounded-full"
+              key={filterType}
+              onClick={() => setFilter(filterType)}
+              className={classNames(
+                'px-3 py-1 rounded-full text-sm transition-colors',
+                filter === filterType
+                  ? 'bg-white text-blue-600'
+                  : 'text-white/70 hover:text-white'
+              )}
             >
-              X
+              {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
             </button>
-          </div>
-        </li>
-          
-        ))}
-      </ul>
-    </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Notifications List */}
+      <div className="max-h-[400px] overflow-y-auto">
+        <AnimatePresence>
+          {filteredNotifications.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-8 text-center text-gray-500"
+            >
+              <FaBell className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p className="font-medium">No notifications</p>
+              <p className="text-sm">
+                {filter === 'all'
+                  ? "You're all caught up!"
+                  : `No ${filter} notifications`}
+              </p>
+            </motion.div>
+          ) : (
+            filteredNotifications
+              .sort((a, b) => new Date(b.date) - new Date(a.date))
+              .map((notification) => (
+                <motion.div
+                  key={notification._id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className={classNames(
+                    'flex items-start p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer',
+                    {
+                      'bg-blue-100/75': !notification.read,
+                      'bg-white': notification.read,
+                    }
+                  )}
+                  onClick={async () => {
+                    closePanel();
+                    await markAsReadNotification(notification);
+                    handleNotificationClick(notification);
+                  }}
+                >
+                  <div className="flex-shrink-0">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <p className={classNames('text-sm', {
+                      'font-semibold text-gray-900': !notification.read,
+                      'text-gray-600': notification.read,
+                    })}>
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notification.date).toLocaleString()}
+                    </p>
+                  </div>
+                  {!notification.read && (
+                    <span className="flex-shrink-0 ml-2 w-2 h-2 bg-blue-600 rounded-full" />
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteNotification(notification._id);
+                    }}
+                    className="ml-2 p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
+                  >
+                    <FaTrash className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ))
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 };
 
