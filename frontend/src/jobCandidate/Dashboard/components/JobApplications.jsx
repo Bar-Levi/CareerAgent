@@ -104,8 +104,8 @@ const JobApplications = ({ user }) => {
         ) : applications.length === 0 ? (
           <div className="text-center py-4">
             <FaBriefcase className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-gray-600 text-sm font-medium">No applications found</p>
-            <p className="text-gray-500 text-xs mt-1">Your job applications will appear here</p>
+            <p className="text-gray-600 text-base font-medium">No applications found</p>
+            <p className="text-gray-500 text-sm mt-1">Your job applications will appear here</p>
           </div>
         ) : (
           <div className="overflow-y-auto h-full">
@@ -113,25 +113,25 @@ const JobApplications = ({ user }) => {
               {applications.map((app) => (
                 <div
                   key={app._id}
-                  className="p-2 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
+                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-gray-900 capitalize text-sm">
+                      <h3 className="font-semibold text-gray-900 capitalize text-base">
                         {app.jobTitle || "N/A"}
                       </h3>
-                      <p className="text-xs text-gray-600 mt-0.5">
+                      <p className="text-sm text-gray-600 mt-0.5">
                         {app.jobId?.company || "Company Name"}
                       </p>
                     </div>
-                    <div className={`flex items-center space-x-1.5 px-2 py-0.5 rounded-full border ${getStatusColor(app.status)}`}>
+                    <div className={`flex items-center space-x-1.5 px-3 py-1 rounded-full border ${getStatusColor(app.status)}`}>
                       {getStatusIcon(app.status)}
-                      <span className="text-xs font-medium">{app.status}</span>
+                      <span className="text-sm font-medium">{app.status}</span>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
                     <span className="flex items-center">
-                      <FaClock className="w-3 h-3 mr-0.5" />
+                      <FaClock className="w-4 h-4 mr-1" />
                       {formatDate(app.applicationDate)}
                     </span>
                   </div>

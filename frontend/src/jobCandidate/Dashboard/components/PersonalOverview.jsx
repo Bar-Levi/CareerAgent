@@ -39,16 +39,30 @@ const PersonalOverview = ({ user }) => {
     { key: "cv", label: "CV", icon: FaFileAlt },
     { key: "githubUrl", label: "GitHub URL", icon: FaGithub },
     { key: "linkedinUrl", label: "LinkedIn URL", icon: FaLinkedin },
+    { 
+      key: "profilePic", 
+      label: "Profile Picture", 
+      icon: FaUser,
+      validate: (value) => value && value !== "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"
+    }
   ];
 
   const missingFields = requiredFields
-    .filter(field => !user?.[field.key] || user[field.key] === "")
+    .filter(field => {
+      if (field.validate) {
+        return !field.validate(user?.[field.key]);
+      }
+      return !user?.[field.key] || user[field.key] === "";
+    })
     .map(field => field.label);
 
   // Calculate profile completion percentage based on available fields
-  const filledCount = requiredFields.filter(
-    field => user?.[field.key] && user[field.key] !== ""
-  ).length;
+  const filledCount = requiredFields.filter(field => {
+    if (field.validate) {
+      return field.validate(user?.[field.key]);
+    }
+    return user?.[field.key] && user[field.key] !== "";
+  }).length;
   const profileCompletion = Math.round((filledCount / requiredFields.length) * 100);
 
   // Split fields into two columns
@@ -63,19 +77,19 @@ const PersonalOverview = ({ user }) => {
           <h2 className="text-lg font-bold text-white">Personal Overview</h2>
         </div>
         
-        <div className="flex-1 p-4 flex flex-col">
-          <div className="flex items-center space-x-4 mb-4">
+        <div className="flex-1 p-3 flex flex-col">
+          <div className="flex items-center space-x-3 mb-2">
             <div className="flex-shrink-0">
               {user?.profilePic ? (
                 <img
                   src={user.profilePic}
                   alt="Profile"
-                  className="w-16 h-16 rounded-full object-cover border-2 border-indigo-600 cursor-pointer hover:border-indigo-400 transition-colors duration-200"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-indigo-600 cursor-pointer hover:border-indigo-400 transition-colors duration-200"
                   onClick={() => setShowPreview(true)}
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <FaUser className="w-8 h-8 text-indigo-600" />
+                <div className="w-14 h-14 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <FaUser className="w-7 h-7 text-indigo-600" />
                 </div>
               )}
             </div>
@@ -83,33 +97,33 @@ const PersonalOverview = ({ user }) => {
               <h3 className="text-xl font-bold text-gray-900">
                 {user?.fullName || "N/A"}
               </h3>
-              <p className="text-sm text-gray-600 italic">{job_roles}</p>
+              <p className="text-base text-gray-600 italic">{job_roles}</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 flex-1">
+          <div className="grid grid-cols-2 gap-2 flex-1">
             {/* Left Column */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {leftColumnFields.map((field) => {
                 const Icon = field.icon;
                 const value = user?.[field.key];
                 
-                if (!value) return null;
+                if (!value || field.key === "profilePic" || field.key === "fullName") return null;
 
                 return (
-                  <div key={field.key} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                    <Icon className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                  <div key={field.key} className="flex items-center space-x-2 p-1.5 bg-gray-50 rounded-lg">
+                    <Icon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
                     {field.key === "linkedinUrl" || field.key === "githubUrl" || field.key === "cv" ? (
                       <a
                         href={value}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 hover:underline truncate text-sm"
+                        className="text-blue-600 hover:text-blue-800 hover:underline truncate text-base"
                       >
                         {field.key === "cv" ? "View CV" : value}
                       </a>
                     ) : (
-                      <span className="text-gray-700 text-sm truncate">{value}</span>
+                      <span className="text-gray-700 text-base truncate">{value}</span>
                     )}
                   </div>
                 );
@@ -117,36 +131,36 @@ const PersonalOverview = ({ user }) => {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {rightColumnFields.map((field) => {
                 const Icon = field.icon;
                 const value = user?.[field.key];
                 
-                if (!value) return null;
+                if (!value || field.key === "profilePic" || field.key === "fullName") return null;
 
                 return (
-                  <div key={field.key} className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                    <Icon className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                  <div key={field.key} className="flex items-center space-x-2 p-1.5 bg-gray-50 rounded-lg">
+                    <Icon className="w-5 h-5 text-indigo-600 flex-shrink-0" />
                     {field.key === "linkedinUrl" || field.key === "githubUrl" || field.key === "cv" ? (
                       <a
                         href={value}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 hover:underline truncate text-sm"
+                        className="text-blue-600 hover:text-blue-800 hover:underline truncate text-base"
                       >
                         {field.key === "cv" ? "View CV" : value}
                       </a>
                     ) : (
-                      <span className="text-gray-700 text-sm truncate">{value}</span>
+                      <span className="text-gray-700 text-base truncate">{value}</span>
                     )}
                   </div>
                 );
               })}
 
               {user?.dateOfBirth && (
-                <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
-                  <FaBirthdayCake className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                  <span className="text-gray-700 text-sm truncate">
+                <div className="flex items-center space-x-2 p-1.5 bg-gray-50 rounded-lg">
+                  <FaBirthdayCake className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                  <span className="text-gray-700 text-base truncate">
                     {new Date(user.dateOfBirth).toLocaleDateString()}
                   </span>
                 </div>
@@ -154,10 +168,10 @@ const PersonalOverview = ({ user }) => {
             </div>
           </div>
 
-          <div className="mt-4 flex-none">
+          <div className="mt-2 flex-none">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-medium text-gray-700">Profile Completion</span>
-              <span className="text-xs font-medium text-gray-700">{profileCompletion}%</span>
+              <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+              <span className="text-sm font-medium text-gray-700">{profileCompletion}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div
@@ -167,11 +181,11 @@ const PersonalOverview = ({ user }) => {
             </div>
             
             {profileCompletion < 100 && (
-              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-xs font-medium mb-1">
-                  Your profile is incomplete. Please update the following:
+              <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm font-medium">
+                  Your profile is incomplete. Please update:
                 </p>
-                <ul className="list-disc ml-4 text-red-700 text-xs">
+                <ul className="list-disc ml-4 text-red-700 text-sm">
                   {missingFields.map((field, index) => (
                     <li key={index}>{field}</li>
                   ))}
