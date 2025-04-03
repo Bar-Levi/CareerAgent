@@ -13,7 +13,7 @@ const Features = () => {
   return (
     <section className="w-full py-12 md:py-20 bg-black">
       <motion.h2
-        className="text-3xl md:text-4xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight px-4"
+        className="text-6xl md:text-6xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight px-4 ml-[-100px]"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
