@@ -58,7 +58,7 @@ const ParticlesComponent = memo(({ id, options: customOptions }) => {
       // Particle appearance and behavior settings
       particles: {
         number: {
-          value: 50, 
+          value: 60, 
           density: {
             enable: true,
             value_area: 800
@@ -110,8 +110,7 @@ const ParticlesComponent = memo(({ id, options: customOptions }) => {
             mode: "grab"
           },
           onClick: {
-            enable: true,
-            mode: "push"
+            enable: false // Disabled click interaction
           }
         },
         modes: {
@@ -120,9 +119,6 @@ const ParticlesComponent = memo(({ id, options: customOptions }) => {
             links: {
               opacity: 1
             }
-          },
-          push: {
-            quantity: 4
           }
         }
       },
