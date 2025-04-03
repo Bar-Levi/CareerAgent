@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, memo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { CanvasRevealEffect } from "./CanvasRevealEffect";
 import mockInterviewImage from "../assets/mock-interview.png";
 import cvScanningImage from "../assets/cv-scanning.png";
 import recruiterCandidateImage from "../assets/recruiter-candidate.png";
+import ParticlesComponent from "./ParticleComponent";
+
+// Memoize ParticlesComponent to prevent re-renders
+const MemoizedParticles = memo(ParticlesComponent);
 
 const Features = () => {
   return (
@@ -80,6 +84,33 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
   const [hovered, setHovered] = React.useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
 
+  // Memoize the CanvasRevealEffect
+  const memoizedCanvasEffect = useMemo(() => children, [children]);
+
+  // Memoize the Particles component
+  const memoizedParticles = useMemo(() => (
+    <MemoizedParticles id={`particles-${title.toLowerCase().replace(/\s+/g, '-')}`} />
+  ), [title]);
+
+  const memoizedHoverEffect = useMemo(() => {
+    return (
+      <AnimatePresence>
+        {hovered && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            {memoizedParticles}
+            {memoizedCanvasEffect}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }, [hovered, memoizedParticles, memoizedCanvasEffect]);
+
   return (
     <motion.div
       onMouseEnter={() => setHovered(true)}
@@ -114,8 +145,6 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
           <div className="mb-[2vh] transform transition-all duration-300">
             {icon}
           </div>
-          
-          
         </div>
 
         {/* Description and Image - Visible on Hover */}
@@ -143,20 +172,8 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
         </div>
       </div>
 
-      {/* Canvas Effect */}
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Combined Effects */}
+      {memoizedHoverEffect}
     </motion.div>
   );
 };

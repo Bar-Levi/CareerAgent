@@ -19,9 +19,10 @@ import { loadSlim } from "@tsparticles/slim"; // if you are going to use `loadSl
  * 
  * @param {Object} props - Component props
  * @param {string} props.id - Unique identifier for the particle container
+ * @param {Object} props.options - Custom particle configuration options
  * @returns {JSX.Element} Rendered particle system
  */
-const ParticlesComponent = memo((props) => {
+const ParticlesComponent = memo(({ id, options: customOptions }) => {
   // State to track if the particle engine has been initialized
   const [init, setInit] = useState(false);
 
@@ -49,90 +50,92 @@ const ParticlesComponent = memo((props) => {
       // Background configuration
       background: {
         color: {
-          value: "brand-primary", // Background color using brand primary color
+          value: "transparent", // Transparent background
         },
       },
       // Frame rate limit for performance optimization
       fpsLimit: 60,
+      // Particle appearance and behavior settings
+      particles: {
+        number: {
+          value: 50, 
+          density: {
+            enable: true,
+            value_area: 800
+          }
+        },
+        color: {
+          value: ["#6366f1", "#8b5cf6", "#ec4899"] // Indigo, Purple, Pink gradient
+        },
+        shape: {
+          type: "circle"
+        },
+        opacity: {
+          value: 0.8,
+          random: true,
+          animation: {
+            enable: true,
+            speed: 1,
+            minimumValue: 0.1,
+            sync: false
+          }
+        },
+        size: {
+          value: { min: 1, max: 5 },
+          random: true
+        },
+        links: {
+          enable: true,
+          distance: 150,
+          color: "#8b5cf6",
+          opacity: 0.4,
+          width: 1
+        },
+        move: {
+          enable: true,
+          speed: 2,
+          direction: "none",
+          random: true,
+          straight: false,
+          outModes: {
+            default: "bounce"
+          }
+        }
+      },
       // Interaction settings
       interactivity: {
         events: {
-          // Click interaction settings
-          onClick: {
-            enable: true,
-            mode: ["attract", "grab"], // Particles will attract and grab on click
-          },
-          // Hover interaction settings
           onHover: {
             enable: true,
-            mode: 'grab', // Particles will grab on hover
+            mode: "grab"
           },
+          onClick: {
+            enable: true,
+            mode: "push"
+          }
         },
         modes: {
-          // Push mode configuration
-          push: {
-            distance: 200, // Maximum distance for push effect
-            duration: 15, // Duration of push effect
-          },
-          // Grab mode configuration
           grab: {
-            distance: 150, // Maximum distance for grab effect
+            distance: 140,
+            links: {
+              opacity: 1
+            }
           },
-        },
-      },
-      // Particle appearance and behavior settings
-      particles: {
-        // Particle color settings
-        color: {
-          value: "#FFFFFF", // White color for particles
-        },
-        // Particle link settings
-        links: {
-          color: "#FFFFFF", // White color for links
-          distance: 150, // Maximum distance for links
-          enable: true, // Enable links between particles
-          opacity: 0.2, // Link opacity
-          width: 2, // Link width
-        },
-        // Particle movement settings
-        move: {
-          direction: "none", // No specific direction
-          enable: true, // Enable particle movement
-          outModes: {
-            default: "bounce", // Particles bounce at boundaries
-          },
-          random: true, // Enable random movement
-          speed: 1, // Movement speed
-          straight: false, // Disable straight-line movement
-        },
-        // Particle count settings
-        number: {
-          density: {
-            enable: true, // Enable density-based distribution
-          },
-          value: 50, // Total number of particles
-        },
-        // Particle opacity settings
-        opacity: {
-          value: 1.0, // Full opacity
-        },
-        // Particle shape settings
-        shape: {
-          type: "circle", // Circular particles
-        },
-        // Particle size settings
-        size: {
-          value: { min: 1, max: 3 }, // Random size between 1 and 3
-        },
+          push: {
+            quantity: 4
+          }
+        }
       },
       // Enable retina display support
       detectRetina: true,
+      // Merge with custom options if provided
+      ...customOptions,
     }),
-    [], // Empty dependency array ensures options are created only once
+    [customOptions], // Include customOptions in dependency array
   );
 
   // Render the Particles component with configured options
-  return <Particles id={props.id} init={particlesLoaded} options={options} />;
+  return <Particles id={id} init={particlesLoaded} options={options} />;
 });
 
 export default ParticlesComponent;

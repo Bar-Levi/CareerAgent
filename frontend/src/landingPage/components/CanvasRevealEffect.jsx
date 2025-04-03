@@ -2,52 +2,122 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import React, { useMemo, useRef } from "react";
 import * as THREE from "three";
 
-export const CanvasRevealEffect = ({
-  animationSpeed = 0.4,
-  opacities = [1, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5, 0.3, 0.3, 0.3], // Reversed
-  colors = [[200, 200, 200]],
-  containerClassName,
-  dotSize,
-  showGradient = true,
-}) => {
+const Shader = ({ source, uniforms, maxFps = 60 }) => {
   return (
-    <div className={`h-full relative bg-purple w-full ${containerClassName}`}>
-      <div className="h-full w-full">
-        <DotMatrix
-          colors={colors ?? [[0, 255, 255]]}
-          dotSize={dotSize ?? 3}
-          opacities={
-            opacities ?? [1, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5, 0.3, 0.3, 0.3]
-          } // Reversed
-          shader={`
-              float animation_speed_factor = ${animationSpeed.toFixed(1)};
-              float intro_offset = distance(u_resolution / 2.0 / u_total_size, st2) * 0.01 + (random(st2) * 0.15);
-              opacity *= step(intro_offset, u_time * animation_speed_factor);
-              opacity *= clamp((1.0 - step(intro_offset + 0.1, u_time * animation_speed_factor)) * 1.25, 1.0, 1.25);
-            `}
-          center={["x", "y"]}
-        />
-      </div>
-      {showGradient && (
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 to-[84%]" />
-      )}
-    </div>
+    <Canvas className="absolute inset-0 h-full w-full">
+      <ShaderMaterial source={source} uniforms={uniforms} maxFps={maxFps} />
+    </Canvas>
+  );
+};
+
+const ShaderMaterial = ({ source, uniforms, maxFps = 60 }) => {
+  const { size } = useThree();
+  const ref = useRef();
+  let lastFrameTime = 0;
+
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const timestamp = clock.getElapsedTime();
+    if (timestamp - lastFrameTime < 1 / maxFps) {
+      return;
+    }
+    lastFrameTime = timestamp;
+
+    const material = ref.current.material;
+    const timeLocation = material.uniforms.u_time;
+    timeLocation.value = timestamp;
+  });
+
+  const getUniforms = useMemo(() => {
+    const preparedUniforms = {};
+
+    for (const uniformName in uniforms) {
+      const uniform = uniforms[uniformName];
+
+      switch (uniform.type) {
+        case "uniform1f":
+          preparedUniforms[uniformName] = { value: uniform.value, type: "1f" };
+          break;
+        case "uniform3f":
+          preparedUniforms[uniformName] = {
+            value: new THREE.Vector3().fromArray(uniform.value),
+            type: "3f",
+          };
+          break;
+        case "uniform1fv":
+          preparedUniforms[uniformName] = { value: uniform.value, type: "1fv" };
+          break;
+        case "uniform3fv":
+          preparedUniforms[uniformName] = {
+            value: uniform.value.map((v) =>
+              new THREE.Vector3().fromArray(v)
+            ),
+            type: "3fv",
+          };
+          break;
+        case "uniform2f":
+          preparedUniforms[uniformName] = {
+            value: new THREE.Vector2().fromArray(uniform.value),
+            type: "2f",
+          };
+          break;
+        default:
+          console.error(`Invalid uniform type for '${uniformName}'.`);
+          break;
+      }
+    }
+
+    preparedUniforms["u_time"] = { value: 0, type: "1f" };
+    preparedUniforms["u_resolution"] = {
+      value: new THREE.Vector2(size.width * 2, size.height * 2),
+    };
+    return preparedUniforms;
+  }, [uniforms, size.width, size.height]);
+
+  const material = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: `
+      precision mediump float;
+      in vec2 coordinates;
+      uniform vec2 u_resolution;
+      out vec2 fragCoord;
+      void main(){
+        float x = position.x;
+        float y = position.y;
+        gl_Position = vec4(x, y, 0.0, 1.0);
+        fragCoord = (position.xy + vec2(1.0)) * 0.5 * u_resolution;
+        fragCoord.y = u_resolution.y - fragCoord.y;
+      }
+      `,
+      fragmentShader: source,
+      uniforms: getUniforms,
+      glslVersion: THREE.GLSL3,
+      blending: THREE.CustomBlending,
+      blendSrc: THREE.SrcAlphaFactor,
+      blendDst: THREE.OneFactor,
+    });
+  }, [source, getUniforms]);
+
+  return (
+    <mesh ref={ref}>
+      <planeGeometry args={[2, 2]} />
+      <primitive object={material} attach="material" />
+    </mesh>
   );
 };
 
 const DotMatrix = ({
-  colors = [[0, 0, 0]], // Accept any number of colors
-  opacities = [0.14, 0.08, 0.08, 0.08, 0.08, 0.04, 0.04, 0.04, 0.04, 0.04], // Reversed
+  colors = [[0, 0, 0]],
+  opacities = [0.14, 0.08, 0.08, 0.08, 0.08, 0.04, 0.04, 0.04, 0.04, 0.04],
   totalSize = 4,
   dotSize = 2,
   shader = "",
   center = ["x", "y"],
 }) => {
   const uniforms = useMemo(() => {
-    // Dynamically scale the colorsArray to match the number of required slots
-    const requiredColors = 6; // Maximum number of slots for the uniform `u_colors`
+    const requiredColors = 6;
     const colorsArray = Array.from({ length: requiredColors }, (_, index) => {
-      return colors[index % colors.length]; // Cycle through colors if fewer than requiredColors
+      return colors[index % colors.length];
     });
 
     return {
@@ -131,107 +201,35 @@ const DotMatrix = ({
   );
 };
 
-
-const ShaderMaterial = ({ source, uniforms, maxFps = 60 }) => {
-  const { size } = useThree();
-  const ref = useRef();
-  let lastFrameTime = 0;
-
-  useFrame(({ clock }) => {
-    if (!ref.current) return;
-    const timestamp = clock.getElapsedTime();
-    if (timestamp - lastFrameTime < 1 / maxFps) {
-      return;
-    }
-    lastFrameTime = timestamp;
-
-    const material = ref.current.material;
-    const timeLocation = material.uniforms.u_time;
-    timeLocation.value = timestamp;
-  });
-
-  const getUniforms = () => {
-    const preparedUniforms = {};
-
-    for (const uniformName in uniforms) {
-      const uniform = uniforms[uniformName];
-
-      switch (uniform.type) {
-        case "uniform1f":
-          preparedUniforms[uniformName] = { value: uniform.value, type: "1f" };
-          break;
-        case "uniform3f":
-          preparedUniforms[uniformName] = {
-            value: new THREE.Vector3().fromArray(uniform.value),
-            type: "3f",
-          };
-          break;
-        case "uniform1fv":
-          preparedUniforms[uniformName] = { value: uniform.value, type: "1fv" };
-          break;
-        case "uniform3fv":
-          preparedUniforms[uniformName] = {
-            value: uniform.value.map((v) =>
-              new THREE.Vector3().fromArray(v)
-            ),
-            type: "3fv",
-          };
-          break;
-        case "uniform2f":
-          preparedUniforms[uniformName] = {
-            value: new THREE.Vector2().fromArray(uniform.value),
-            type: "2f",
-          };
-          break;
-        default:
-          console.error(`Invalid uniform type for '${uniformName}'.`);
-          break;
-      }
-    }
-
-    preparedUniforms["u_time"] = { value: 0, type: "1f" };
-    preparedUniforms["u_resolution"] = {
-      value: new THREE.Vector2(size.width * 2, size.height * 2),
-    };
-    return preparedUniforms;
-  };
-
-  const material = useMemo(() => {
-    return new THREE.ShaderMaterial({
-      vertexShader: `
-      precision mediump float;
-      in vec2 coordinates;
-      uniform vec2 u_resolution;
-      out vec2 fragCoord;
-      void main(){
-        float x = position.x;
-        float y = position.y;
-        gl_Position = vec4(x, y, 0.0, 1.0);
-        fragCoord = (position.xy + vec2(1.0)) * 0.5 * u_resolution;
-        fragCoord.y = u_resolution.y - fragCoord.y;
-      }
-      `,
-      fragmentShader: source,
-      uniforms: getUniforms(),
-      glslVersion: THREE.GLSL3,
-      blending: THREE.CustomBlending,
-      blendSrc: THREE.SrcAlphaFactor,
-      blendDst: THREE.OneFactor,
-    });
-  }, [size.width, size.height, source]);
-
+export const CanvasRevealEffect = ({
+  animationSpeed = 0.4,
+  opacities = [1, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5, 0.3, 0.3, 0.3],
+  colors = [[200, 200, 200]],
+  containerClassName,
+  dotSize,
+  showGradient = true,
+}) => {
   return (
-    <mesh ref={ref}>
-      <planeGeometry args={[2, 2]} />
-      <primitive object={material} attach="material" />
-    </mesh>
-  );
-};
-
-const Shader = ({ source, uniforms, maxFps = 60 }) => {
-  return (
-    <Canvas className="absolute inset-0 h-full w-full">
-      <ShaderMaterial source={source} uniforms={uniforms} maxFps={maxFps} />
-    </Canvas>
+    <div className={`h-full relative bg-purple w-full ${containerClassName}`}>
+      <div className="h-full w-full">
+        <DotMatrix
+          colors={colors ?? [[0, 255, 255]]}
+          dotSize={dotSize ?? 3}
+          opacities={
+            opacities ?? [1, 0.8, 0.8, 0.8, 0.5, 0.5, 0.5, 0.3, 0.3, 0.3]
+          }
+          shader={`
+              float animation_speed_factor = ${animationSpeed.toFixed(1)};
+              float intro_offset = distance(u_resolution / 2.0 / u_total_size, st2) * 0.01 + (random(st2) * 0.15);
+              opacity *= step(intro_offset, u_time * animation_speed_factor);
+              opacity *= clamp((1.0 - step(intro_offset + 0.1, u_time * animation_speed_factor)) * 1.25, 1.0, 1.25);
+            `}
+          center={["x", "y"]}
+        />
+      </div>
+      {showGradient && (
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-950 to-[84%]" />
+      )}
+    </div>
   );
 };
