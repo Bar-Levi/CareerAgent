@@ -99,6 +99,56 @@ const TestimonialCard = ({ handleShuffle, testimonial, position, id, author }) =
   );
 };
 
+const ArrowButton = ({ onClick }) => {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      className="absolute left-[-250px] top-1/2 -translate-y-1/2 -translate-x-16 z-20 group"
+    >
+      <div className="relative">
+        <motion.div
+          className="absolute inset-0 bg-purple-500/30 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"
+          animate={{
+            scale: [1, 1.4, 1],
+            opacity: [0.3, 0.5, 0.3],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-sm border border-purple-500/30 group-hover:border-purple-500/50 transition-colors">
+          <svg
+            className="w-6 h-6 text-purple-400 group-hover:text-purple-300 transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <motion.path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut",
+              }}
+            />
+          </svg>
+        </div>
+      </div>
+    </motion.button>
+  );
+};
+
 const Testimonials = () => {
   const [positions, setPositions] = useState(testimonials.map((_, index) => index));
 
@@ -122,6 +172,7 @@ const Testimonials = () => {
           What Our Users Say
         </motion.h2>
         <div className="relative h-[450px] w-[350px] -translate-x-20 mx-auto md:mx-0 md:ml-[10%]">
+          <ArrowButton onClick={handleShuffle} />
           {testimonials.map((testimonial, index) => (
             <TestimonialCard
               key={testimonial.id}
