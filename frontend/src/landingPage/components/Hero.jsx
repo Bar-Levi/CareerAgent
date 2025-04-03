@@ -65,6 +65,11 @@ const Hero = () => {
               <AnimatedButton
                 className="bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-400/50 hover:from-emerald-500 hover:to-emerald-600 shadow-emerald-500/20"
                 icon={ArrowRight}
+                onClick={() => {
+                  document.getElementById("features-section")?.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                }}
               >
                 Learn More
               </AnimatedButton>
