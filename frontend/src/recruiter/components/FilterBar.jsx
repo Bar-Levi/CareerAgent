@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { FaFilter, FaCalendarAlt, FaSearch, FaCog } from "react-icons/fa";
 
 const FilterBar = ({
@@ -12,17 +13,15 @@ const FilterBar = ({
   setDateRange,
   visibleColumns,
   setVisibleColumns,
-  columns,
+  columns = [],
 }) => {
-  const [showColumnSettings, setShowColumnSettings] = React.useState(false);
+  const [showColumnSettings, setShowColumnSettings] = useState(false);
 
-  // You can customize which attributes to filter by:
   const filterOptions = [
     { label: "Name", value: "name" },
     { label: "Email", value: "email" },
     { label: "Job Title", value: "jobTitle" },
     { label: "Status", value: "status" },
-    // Add more as needed
   ];
 
   const statusOptions = [
@@ -146,6 +145,25 @@ const FilterBar = ({
       </div>
     </div>
   );
+};
+
+FilterBar.propTypes = {
+  filterAttribute: PropTypes.string.isRequired,
+  setFilterAttribute: PropTypes.func.isRequired,
+  filterValue: PropTypes.string.isRequired,
+  setFilterValue: PropTypes.func.isRequired,
+  statusFilter: PropTypes.string.isRequired,
+  setStatusFilter: PropTypes.func.isRequired,
+  dateRange: PropTypes.string.isRequired,
+  setDateRange: PropTypes.func.isRequired,
+  visibleColumns: PropTypes.object.isRequired,
+  setVisibleColumns: PropTypes.func.isRequired,
+  columns: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired
+    })
+  ).isRequired
 };
 
 export default FilterBar;

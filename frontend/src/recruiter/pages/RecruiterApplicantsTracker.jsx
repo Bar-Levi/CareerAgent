@@ -49,6 +49,28 @@ const RecruiterApplicantsTracker = () => {
   const [attentionItems, setAttentionItems] = useState([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
 
+  // Add columns configuration
+  const columns = [
+    { key: 'name', label: 'Name' },
+    { key: 'jobTitle', label: 'Job Title' },
+    { key: 'applicationDate', label: 'Application Date' },
+    { key: 'status', label: 'Status' },
+    { key: 'interview', label: 'Interview' },
+    { key: 'nextStep', label: 'Next Step' },
+    { key: 'actions', label: 'Actions' }
+  ];
+
+  // Add visibleColumns state
+  const [visibleColumns, setVisibleColumns] = useState({
+    name: true,
+    jobTitle: true,
+    applicationDate: true,
+    status: true,
+    interview: true,
+    nextStep: true,
+    actions: true
+  });
+
   // -- Fetch data from backend on mount
   useEffect(() => {
     if (!user?._id) return;
@@ -80,6 +102,8 @@ const RecruiterApplicantsTracker = () => {
       const selectedDate = new Date(dateRange);
       filtered = filtered.filter((c) => {
         const appliedDate = new Date(c.applicationDate);
+        console.log("appliedData: " + appliedDate);
+        console.log("selectedDate: " + selectedDate);
         return appliedDate >= selectedDate;
       });
     }
@@ -164,6 +188,9 @@ const RecruiterApplicantsTracker = () => {
     setStatusFilter,
     dateRange,
     setDateRange,
+    columns,
+    visibleColumns,
+    setVisibleColumns
   };
 
   const refetchApplicants = async () => {
@@ -175,35 +202,60 @@ const RecruiterApplicantsTracker = () => {
     const copyright = [{
       Name: `© CareerAgent ${new Date().getFullYear()}. All rights reserved.`,
       Email: '',
-      JobTitle: '',
+      Phone: '',
+      LinkedIn: '',
+      GitHub: '',
+      'Job Title': '',
       Status: '',
-      ApplicationDate: ''
+      'Application Date': '',
+      Interview: ''
     }];
 
     const data = applicants.map((applicant) => ({
       Name: applicant.name,
       Email: applicant.email,
-      JobTitle: applicant.jobTitle,
+      Phone: applicant.phone || '—',
+      LinkedIn: applicant.linkedinUrl || '—',
+      GitHub: applicant.githubUrl || '—',
+      'Job Title': applicant.jobTitle,
       Status: applicant.status,
-      ApplicationDate: applicant.applicationDate ? 
+      'Application Date': applicant.applicationDate ? 
         new Date(applicant.applicationDate).toLocaleDateString() : '—',
+      Interview: applicant.interviewId ? 
+        new Date(applicant.interviewId.scheduledTime).toLocaleString() : '—'
     }));
 
     return [...copyright, ...data];
   };
 
   const exportToPDF = (applicants) => {
+    // Add column count check
+    const visibleColumnCount = Object.values(visibleColumns).filter(Boolean).length;
+    
+    if (visibleColumnCount > 6) {
+      const shouldProceed = window.confirm(
+        'Exporting many columns might affect PDF readability. Consider hiding some columns for better results.\n\nDo you want to proceed anyway?'
+      );
+      if (!shouldProceed) return;
+    }
+
     try {
+      // Create PDF in landscape orientation with larger page size
       const doc = new jsPDF();
       
       // Format the data for the table
       const tableData = applicants.map(applicant => [
         applicant.name,
         applicant.email,
+        applicant.phone || '—',
+        applicant.linkedinUrl ? 'Yes' : 'No',
+        applicant.githubUrl ? 'Yes' : 'No',
         applicant.jobTitle,
         applicant.status,
-        applicant.applicationDate ? new Date(applicant.applicationDate).toLocaleDateString() : '—',
-        applicant.interviewId ? new Date(applicant.interviewId.scheduledTime).toLocaleString() : '—'
+        applicant.applicationDate ? 
+          new Date(applicant.applicationDate).toLocaleDateString() : '—',
+        applicant.interviewId ? 
+          new Date(applicant.interviewId.scheduledTime).toLocaleString() : '—'
       ]);
 
       // Add title and copyright
@@ -211,38 +263,55 @@ const RecruiterApplicantsTracker = () => {
       doc.text('Candidates Report', 14, 15);
       doc.setFontSize(10);
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 25);
-      
+
       // Add copyright text
-      doc.setTextColor(128, 128, 128); // Gray color for copyright
+      doc.setTextColor(128, 128, 128);
       doc.setFontSize(8);
       doc.text(`© CareerAgent ${new Date().getFullYear()}. All rights reserved.`, 14, doc.internal.pageSize.height - 10);
 
-      // Generate the table using autoTable
+      // Generate the table with improved settings
       autoTable(doc, {
         startY: 30,
-        head: [['Name', 'Email', 'Job Title', 'Status', 'Application Date', 'Interview']],
+        head: [['Name', 'Email', 'Phone', 'LinkedIn', 'GitHub', 'Job Title', 'Status', 'Application Date', 'Interview']],
         body: tableData,
         theme: 'grid',
         styles: {
           fontSize: 8,
-          cellPadding: 3,
+          cellPadding: 2,
+          overflow: 'linebreak',
+          cellWidth: 'wrap'
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: [255, 255, 255],
-          fontStyle: 'bold'
+          fontStyle: 'bold',
+          halign: 'left'
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245]
         },
         columnStyles: {
-          0: { fontStyle: 'bold' },
-          3: { 
-            fontStyle: 'bold',
-            cellWidth: 'auto'
-          }
+          0: { cellWidth: 30 },  // Name
+          1: { cellWidth: 45 },  // Email
+          2: { cellWidth: 25 },  // Phone
+          3: { cellWidth: 15 },  // LinkedIn
+          4: { cellWidth: 15 },  // GitHub
+          5: { cellWidth: 35 },  // Job Title
+          6: { cellWidth: 20 },  // Status
+          7: { cellWidth: 25 },  // Application Date
+          8: { cellWidth: 35 }   // Interview
         },
-        margin: { top: 30, bottom: 15 } // Added bottom margin for copyright
+        margin: { top: 30, left: 10, right: 10, bottom: 15 },
+        didDrawPage: function (data) {
+          // Add copyright text on each page
+          doc.setTextColor(128, 128, 128);
+          doc.setFontSize(8);
+          doc.text(
+            `© CareerAgent ${new Date().getFullYear()}. All rights reserved.`,
+            data.settings.margin.left,
+            doc.internal.pageSize.height - 10
+          );
+        }
       });
 
       // Save the PDF
@@ -267,11 +336,26 @@ const RecruiterApplicantsTracker = () => {
           {/* Left Panel with Table */}
           <div className="col-span-9 flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Header with Title and Export Buttons */}
-            <div className="flex-none h-20 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <div className="flex-none h-20 px-10 py-4 border-b border-gray-200 flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">
                 Applicants Tracker
               </h1>
               <div className="flex space-x-3">
+                <div className="group relative">
+                  <button
+                    onClick={() => exportToPDF(filteredApplicants)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    <FaDownload className="w-4 h-4" />
+                    <span>PDF</span>
+                  </button>
+                  
+                  <div className="absolute left-1/2 top-full transform -translate-x-1/2 mt-2 px-3 py-2 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                    For best results, hide unnecessary columns before export
+                    {/* Arrow pointing up */}
+                    <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-full border-8 border-transparent border-b-gray-900"></div>
+                  </div>
+                </div>
                 <CSVLink
                   data={getCSVData(filteredApplicants)}
                   filename="candidates.csv"
@@ -280,13 +364,6 @@ const RecruiterApplicantsTracker = () => {
                   <FaDownload className="w-4 h-4" />
                   <span>CSV</span>
                 </CSVLink>
-                <button
-                  onClick={() => exportToPDF(filteredApplicants)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-                >
-                  <FaDownload className="w-4 h-4" />
-                  <span>PDF</span>
-                </button>
               </div>
             </div>
 
@@ -304,6 +381,7 @@ const RecruiterApplicantsTracker = () => {
                 setSortConfig={setSortConfig}
                 recruiter={user}
                 refetchApplicants={refetchApplicants}
+                visibleColumns={visibleColumns}
               />
             </div>
           </div>
