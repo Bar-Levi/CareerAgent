@@ -37,6 +37,12 @@ module.exports = {
                 'rotate-scale': 'rotate-scale 1s ease-in-out',
                 'scale-up': 'scale-up 0.5s ease-in-out',
                 'scale-down': 'scale-down 0.5s ease-in-out',
+                'star-movement-top': 'star-movement-top 4s linear infinite',
+                'star-movement-right': 'star-movement-right 4s linear infinite',
+                'star-movement-bottom': 'star-movement-bottom 4s linear infinite',
+                'star-movement-left': 'star-movement-left 4s linear infinite',
+                'star-circular-1': 'star-circular-1 6s linear infinite',
+                'star-circular-2': 'star-circular-2 8s linear infinite',
             },
             keyframes: {
                 // Sweeping effects
@@ -112,6 +118,32 @@ module.exports = {
                     "0%": { transform: "translateY(100%)", opacity: 0 },
                     "100%": { transform: "translateY(0)", opacity: 1 },
                     },
+                'star-movement-top': {
+                    '0%': { transform: 'translateX(0) rotate(0deg)' },
+                    '100%': { transform: 'translateX(100%) rotate(360deg)' },
+                },
+                'star-movement-right': {
+                    '0%': { transform: 'translateY(0) rotate(0deg)' },
+                    '100%': { transform: 'translateY(100%) rotate(360deg)' },
+                },
+                'star-movement-bottom': {
+                    '0%': { transform: 'translateX(0) rotate(0deg)' },
+                    '100%': { transform: 'translateX(100%) rotate(-360deg)' },
+                },
+                'star-movement-left': {
+                    '0%': { transform: 'translateY(0) rotate(0deg)' },
+                    '100%': { transform: 'translateY(100%) rotate(-360deg)' },
+                },
+                'star-circular-1': {
+                    '0%': { transform: 'rotate(0deg) scale(1)' },
+                    '50%': { transform: 'rotate(180deg) scale(1.2)' },
+                    '100%': { transform: 'rotate(360deg) scale(1)' },
+                },
+                'star-circular-2': {
+                    '0%': { transform: 'rotate(0deg) scale(1.2)' },
+                    '50%': { transform: 'rotate(-180deg) scale(1)' },
+                    '100%': { transform: 'rotate(-360deg) scale(1.2)' },
+                },
             },
             colors: {
                 // Custom colors for brand or themes

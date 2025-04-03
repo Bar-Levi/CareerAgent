@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 import { useNavigate } from "react-router-dom";
 import { SplineScene } from "../../components/ui/spline";
+import { AnimatedButton } from "../../components/ui/AnimatedButton";
+import { ChevronRight, ArrowRight } from "lucide-react";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -48,38 +50,24 @@ const Hero = () => {
             </motion.div>
 
             <motion.div
-              className="flex flex-wrap gap-4 mt-8"
+              className="flex flex-wrap gap-6 mt-12 justify-start"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <motion.button
+              <AnimatedButton
                 onClick={() => navigate("/authentication")}
-                className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-medium overflow-hidden transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-b from-blue-600 to-blue-700 border-blue-400/50 hover:from-blue-500 hover:to-blue-600"
+                icon={ChevronRight}
               >
-                <span className="relative z-10 flex items-center">
-                  Get Started
-                  <svg className="w-5 h-5 ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </span>
-                <div className="absolute inset-0 w-3 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:translate-x-[400px] transition-all duration-1000 ease-out transform -skew-x-12"></div>
-              </motion.button>
-              <motion.button
-                className="group relative px-8 py-4 bg-black text-gray-300 font-medium overflow-hidden border border-blue-800/30 hover:border-blue-700/50 transition-all duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                Get Started
+              </AnimatedButton>
+              <AnimatedButton
+                className="bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-400/50 hover:from-emerald-500 hover:to-emerald-600 shadow-emerald-500/20"
+                icon={ArrowRight}
               >
-                <span className="relative z-10 flex items-center">
-                  Learn More
-                  <svg className="w-5 h-5 ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-800/10 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
-              </motion.button>
+                Learn More
+              </AnimatedButton>
             </motion.div>
           </div>
 
