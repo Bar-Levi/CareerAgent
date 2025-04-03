@@ -141,6 +141,12 @@ module.exports = {
                 'screen': '100vw',
                 'screen-h': '100vh',
             },
+            height: {
+                'screen-navbar': 'calc(100vh - 4rem)',
+            },
+            gridTemplateColumns: {
+                'main-layout': '9fr 3fr',
+            },
         },
     },
     plugins: [],
