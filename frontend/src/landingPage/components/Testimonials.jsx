@@ -1,4 +1,4 @@
-import React, { useState, memo } from "react";
+import React, { useState, memo, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 
@@ -28,7 +28,7 @@ const testimonials = [
   }
 ];
 
-const TestimonialCard = ({ handleShuffle, testimonial, position, id, author }) => {
+const TestimonialCard = memo(({ handleShuffle, testimonial, position, id, author }) => {
   const dragRef = React.useRef(0);
   const isFront = position === 0;
 
@@ -46,21 +46,39 @@ const TestimonialCard = ({ handleShuffle, testimonial, position, id, author }) =
 
   const imagePath = getImagePath();
   
-  const rotation = position * 5;
-  const xOffset = position * 25;
-  const yOffset = position * 10;
+  const { rotation, xOffset, yOffset, scale } = useMemo(() => ({
+    rotation: position * 5,
+    xOffset: position * 25,
+    yOffset: position * 10,
+    scale: 1 - (position * 0.05)
+  }), [position]);
+
+  const handleDragStart = useCallback((e) => {
+    dragRef.current = e.clientX;
+  }, []);
+
+  const handleDragEnd = useCallback((e) => {
+    if (dragRef.current - e.clientX > 150) {
+      handleShuffle();
+    }
+    dragRef.current = 0;
+  }, [handleShuffle]);
+
+  const motionStyles = useMemo(() => ({
+    zIndex: testimonials.length - position
+  }), [position]);
+
+  const motionAnimate = useMemo(() => ({
+    rotate: `${-rotation}deg`,
+    x: `${xOffset}%`,
+    y: `${yOffset}px`,
+    scale
+  }), [rotation, xOffset, yOffset, scale]);
 
   return (
     <motion.div
-      style={{
-        zIndex: testimonials.length - position
-      }}
-      animate={{
-        rotate: `${-rotation}deg`,
-        x: `${xOffset}%`,
-        y: `${yOffset}px`,
-        scale: 1 - (position * 0.05)
-      }}
+      style={motionStyles}
+      animate={motionAnimate}
       whileHover={isFront ? { scale: 1.02, rotate: 0 } : {}}
       drag={true}
       dragElastic={0.35}
@@ -71,15 +89,8 @@ const TestimonialCard = ({ handleShuffle, testimonial, position, id, author }) =
         right: 0,
         bottom: 0
       }}
-      onDragStart={(e) => {
-        dragRef.current = e.clientX;
-      }}
-      onDragEnd={(e) => {
-        if (dragRef.current - e.clientX > 150) {
-          handleShuffle();
-        }
-        dragRef.current = 0;
-      }}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       transition={{ 
         duration: 0.4,
         ease: "easeOut"
@@ -97,9 +108,9 @@ const TestimonialCard = ({ handleShuffle, testimonial, position, id, author }) =
       <span className="text-center text-sm font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{author}</span>
     </motion.div>
   );
-};
+});
 
-const ArrowButton = ({ onClick }) => {
+const ArrowButton = memo(({ onClick }) => {
   return (
     <div className="absolute left-[-200px] top-1/2 -translate-y-1/2 z-20">
       <motion.button
@@ -149,16 +160,16 @@ const ArrowButton = ({ onClick }) => {
       </motion.button>
     </div>
   );
-};
+});
 
 const Testimonials = () => {
   const [positions, setPositions] = useState(testimonials.map((_, index) => index));
 
-  const handleShuffle = () => {
+  const handleShuffle = useCallback(() => {
     const newPositions = [...positions];
     newPositions.unshift(newPositions.pop());
     setPositions(newPositions);
-  };
+  }, [positions]);
 
   return (
     <section className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20">
