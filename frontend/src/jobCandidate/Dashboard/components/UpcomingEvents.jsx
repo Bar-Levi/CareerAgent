@@ -162,197 +162,203 @@ const UpcomingInterviews = ({ user }) => {
   }`;
 
   return (
-    <div key={refreshToken} className="m-3 col-span-1 bg-white border border-gray-200 shadow-xl rounded-lg overflow-y-auto max-h-screen">
+    <div key={refreshToken} className="bg-white rounded-lg shadow-lg h-full flex flex-col min-h-0">
       <style>{pulsingAnimation}</style>
-      <div className="sticky top-0 z-10 px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-600">
+      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2 flex-none">
         <h2 className="text-lg font-bold text-white flex items-center">
           <FaCalendarAlt className="w-5 h-5 mr-2 flex-shrink-0" />
           Upcoming Interviews
         </h2>
       </div>
 
-      {loading ? (
-        <div className="p-6">
-          {[...Array(3)].map((_, index) => (
-            <div key={index} className="animate-pulse flex space-x-4 mb-4 p-4 border border-gray-100 rounded-md">
-              <div className="flex-1 space-y-4 py-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                </div>
-              </div>
-              <div className="rounded-full bg-gray-200 h-10 w-10"></div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="p-6 m-4 bg-red-50 text-red-600 rounded-md border border-red-200">
-          <p className="font-medium">Error loading interviews:</p>
-          <p className="text-sm mb-3">{error}</p>
-          <button
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-            onClick={() => window.location.reload()}
-          >
-            Try again
-          </button>
-        </div>
-      ) : interviews.length === 0 ? (
-        <div className="p-8 text-center">
-          <FaCalendarAlt className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-700 font-semibold">No scheduled interviews yet</p>
-          <p className="text-sm text-gray-500 mt-1">
-            Your upcoming interviews will appear here once scheduled.
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-gray-100">
-          {interviews.map((applicant) => {
-            const interview = applicant.interviewId || {};
-            const recruiter = applicant.recruiterId || {};
-            const { date, time } = formatDateTime(interview.scheduledTime);
-            const jobTitle = applicant.jobTitle || "Interview Event";
-            const companyName = recruiter.companyName || "Company";
-            const recruiterName = recruiter.fullName || "Recruiter";
-            const meetingLink = interview.meetingLink;
-
-            const interviewToday = isToday(interview.scheduledTime);
-            const interviewUpcoming = isUpcoming(interview.scheduledTime) && !interviewToday;
-
-            return (
-              <div
-                key={applicant._id}
-                ref={selectedEventId === applicant.interviewId._id ? selectedEventRef : null}
-                className={`
-                  relative flex justify-between items-start p-4 rounded-md m-2
-                  transition-all duration-300 ease-out
-                  backdrop-blur-sm
-                  ${
-                    "bg-white/95 hover:bg-white"
-                  }
-                  ${
-                    interviewToday
-                      ? "bg-gradient-to-r from-green-50/80 via-green-50/20 to-transparent"
-                      : interviewUpcoming
-                      ? "bg-gradient-to-r from-yellow-50/80 via-yellow-50/20 to-transparent"
-                      : ""
-                  }
-                  ${
-                    applicant.interviewId?._id === selectedEventId
-                      ? `
-                        shadow-[0_8px_16px_-4px_rgba(59,130,246,0.15)]
-                        animate-[subtle-pulsing_2s_ease-in-out_infinite]
-                        scale-[1.01] z-10
-                        before:absolute before:inset-0 
-                        before:rounded-md before:bg-gradient-to-r 
-                        before:from-blue-500/10 before:to-transparent
-                        before:opacity-50 before:-z-10
-                      `
-                      : "border border-transparent hover:border-gray-200/80 hover:shadow-md"
-                  }
-                  ${
-                    "hover:bg-gradient-to-r hover:from-white hover:to-gray-50/80 cursor-pointer"
-                  }
-                `}
-                onClick={() => {
-                  setSelectedEventId(applicant.interviewId?._id);
-                  if (window.navigator && window.navigator.vibrate) {
-                    window.navigator.vibrate(50);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                aria-selected={applicant.interviewId?._id === selectedEventId}
-              >
-                <div className="absolute -top-2 -right-2 z-20">
-                  {interviewToday && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                      bg-gradient-to-r from-green-500 to-green-600
-                      text-white shadow-lg shadow-green-500/20
-                      border border-green-400/20 backdrop-blur-sm
-                      transform transition-all duration-300 hover:scale-105">
-                      <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
-                      Today
-                    </span>
-                  )}
-                  {interviewUpcoming && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                      bg-gradient-to-r from-yellow-500 to-amber-500
-                      text-white shadow-lg shadow-yellow-500/20
-                      border border-yellow-400/20 backdrop-blur-sm
-                      transform transition-all duration-300 hover:scale-105">
-                      <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
-                      Upcoming
-                    </span>
-                  )}
-                </div>
-
-                {applicant.interviewId?._id === selectedEventId && (
-                  <>
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 
-                      bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 
-                      rounded-l-md animate-pulse" 
-                    />
-                    <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-3 h-3 
-                      bg-blue-500 rounded-full shadow-lg shadow-blue-500/50
-                      before:absolute before:inset-0 before:rounded-full 
-                      before:animate-ping before:bg-blue-500/50" 
-                    />
-                  </>
-                )}
-
-                <div className="flex-1 mr-4">
-                  <h3 className="font-semibold text-gray-800">{jobTitle}</h3>
-                  <p className="text-sm text-gray-600">
-                    {recruiterName} &middot; {companyName}
-                  </p>
-
-                  <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <FaClock className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" />
-                    <span className="mr-3">{time}</span>
-                    <FaCalendarAlt className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" />
-                    <span>{date}</span>
+      <div className="flex-1 min-h-0">
+        {loading ? (
+          <div className="p-4">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="animate-pulse flex space-x-4 mb-4 p-4 border border-gray-100 rounded-md">
+                <div className="flex-1 space-y-4 py-1">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                   </div>
+                </div>
+                <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+              </div>
+            ))}
+          </div>
+        ) : error ? (
+          <div className="p-4 m-4 bg-red-50 text-red-600 rounded-md border border-red-200">
+            <p className="font-medium">Error loading interviews:</p>
+            <p className="text-sm mb-3">{error}</p>
+            <button
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </button>
+          </div>
+        ) : interviews.length === 0 ? (
+          <div className="p-8 text-center">
+            <FaCalendarAlt className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-gray-700 font-semibold">No scheduled interviews yet</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Your upcoming interviews will appear here once scheduled.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-y-auto h-full">
+            <div className="p-4">
+              <div className="space-y-2">
+                {interviews.map((applicant) => {
+                  const interview = applicant.interviewId || {};
+                  const recruiter = applicant.recruiterId || {};
+                  const { date, time } = formatDateTime(interview.scheduledTime);
+                  const jobTitle = applicant.jobTitle || "Interview Event";
+                  const companyName = recruiter.companyName || "Company";
+                  const recruiterName = recruiter.fullName || "Recruiter";
+                  const meetingLink = interview.meetingLink;
 
-                  <div className="mt-4 flex flex-col gap-2">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        className="flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg"
-                        onClick={() => handleInterviewChatClick(applicant.jobId)}
-                      >
-                        AI Mock Interview
-                      </button>
+                  const interviewToday = isToday(interview.scheduledTime);
+                  const interviewUpcoming = isUpcoming(interview.scheduledTime) && !interviewToday;
 
-                      {meetingLink && (
-                        <a
-                          href={meetingLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
-                        >
-                          <FaLink className="w-3 h-3 mr-1.5" />
-                          Join Meeting
-                        </a>
+                  return (
+                    <div
+                      key={applicant._id}
+                      ref={selectedEventId === applicant.interviewId._id ? selectedEventRef : null}
+                      className={`
+                        relative flex justify-between items-start p-4 rounded-md m-2
+                        transition-all duration-300 ease-out
+                        backdrop-blur-sm
+                        ${
+                          "bg-white/95 hover:bg-white"
+                        }
+                        ${
+                          interviewToday
+                            ? "bg-gradient-to-r from-green-50/80 via-green-50/20 to-transparent"
+                            : interviewUpcoming
+                            ? "bg-gradient-to-r from-yellow-50/80 via-yellow-50/20 to-transparent"
+                            : ""
+                        }
+                        ${
+                          applicant.interviewId?._id === selectedEventId
+                            ? `
+                              shadow-[0_8px_16px_-4px_rgba(59,130,246,0.15)]
+                              animate-[subtle-pulsing_2s_ease-in-out_infinite]
+                              scale-[1.01] z-10
+                              before:absolute before:inset-0 
+                              before:rounded-md before:bg-gradient-to-r 
+                              before:from-blue-500/10 before:to-transparent
+                              before:opacity-50 before:-z-10
+                            `
+                            : "border border-transparent hover:border-gray-200/80 hover:shadow-md"
+                        }
+                        ${
+                          "hover:bg-gradient-to-r hover:from-white hover:to-gray-50/80 cursor-pointer"
+                        }
+                      `}
+                      onClick={() => {
+                        setSelectedEventId(applicant.interviewId?._id);
+                        if (window.navigator && window.navigator.vibrate) {
+                          window.navigator.vibrate(50);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-selected={applicant.interviewId?._id === selectedEventId}
+                    >
+                      <div className="absolute -top-2 -right-2 z-20">
+                        {interviewToday && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r from-green-500 to-green-600
+                            text-white shadow-lg shadow-green-500/20
+                            border border-green-400/20 backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105">
+                            <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
+                            Today
+                          </span>
+                        )}
+                        {interviewUpcoming && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r from-yellow-500 to-amber-500
+                            text-white shadow-lg shadow-yellow-500/20
+                            border border-yellow-400/20 backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105">
+                            <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
+                            Upcoming
+                          </span>
+                        )}
+                      </div>
+
+                      {applicant.interviewId?._id === selectedEventId && (
+                        <>
+                          <div className="absolute left-0 top-0 bottom-0 w-1.5 
+                            bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600 
+                            rounded-l-md animate-pulse" 
+                          />
+                          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-3 h-3 
+                            bg-blue-500 rounded-full shadow-lg shadow-blue-500/50
+                            before:absolute before:inset-0 before:rounded-full 
+                            before:animate-ping before:bg-blue-500/50" 
+                          />
+                        </>
                       )}
-                    </div>
 
-                    <div>
-                      <button
-                        className="flex items-center justify-center w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
-                        onClick={() => handleGoogleCalendarClick(interview, applicant)}
-                      >
-                        <FaCalendarPlus className="w-4 h-4 mr-1.5" />
-                        Add to Calendar
-                      </button>
+                      <div className="flex-1 mr-4">
+                        <h3 className="font-semibold text-gray-800">{jobTitle}</h3>
+                        <p className="text-sm text-gray-600">
+                          {recruiterName} &middot; {companyName}
+                        </p>
+
+                        <div className="mt-2 flex items-center text-sm text-gray-500">
+                          <FaClock className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" />
+                          <span className="mr-3">{time}</span>
+                          <FaCalendarAlt className="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0" />
+                          <span>{date}</span>
+                        </div>
+
+                        <div className="mt-4 flex flex-col gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              className="flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg"
+                              onClick={() => handleInterviewChatClick(applicant.jobId)}
+                            >
+                              AI Mock Interview
+                            </button>
+
+                            {meetingLink && (
+                              <a
+                                href={meetingLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                              >
+                                <FaLink className="w-3 h-3 mr-1.5" />
+                                Join Meeting
+                              </a>
+                            )}
+                          </div>
+
+                          <div>
+                            <button
+                              className="flex items-center justify-center w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                              onClick={() => handleGoogleCalendarClick(interview, applicant)}
+                            >
+                              <FaCalendarPlus className="w-4 h-4 mr-1.5" />
+                              Add to Calendar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
