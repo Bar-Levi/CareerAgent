@@ -37,7 +37,7 @@ const scheduleInterview = async (req, res, next) => {
         // Create the notification
         const newNotification = {
           type: "interview",
-          message: `A new interview was scheduled by ${recruiterParticipant.name}`,
+          message: `A new interview for ${jobListing.jobRole} at ${jobListing.company} was scheduled by ${recruiterParticipant.name} on ${new Date(scheduledTime).toLocaleDateString()}.`,
           extraData: {
             goToRoute: '/dashboard',
             stateAddition: {
