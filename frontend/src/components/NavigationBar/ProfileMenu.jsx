@@ -8,6 +8,7 @@ import showUpdateCVModal from "./modals/UpdateCVModal";
 import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal";
 import changeMailSubscriptionStatus from "./modals/ChangeMailSubscriptionStatus";
 import { useNavigate, useLocation } from "react-router-dom";
+import showDeleteAccountModal from './modals/DeleteAccountModal';
 
 const ProfileMenu = ({ userType, user }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -68,6 +69,38 @@ const ProfileMenu = ({ userType, user }) => {
       console.error("Error during logout:", error);
       alert("Failed to log out. Please try again.");
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDropdownOpen(false);
+    showDeleteAccountModal(async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/auth/delete-user/${user._id}/${userType}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem("token")}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to delete account');
+        }
+
+        // Clear local storage and session storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Navigate to auth page
+        navigate('/authentication', { replace: true });
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        throw error; // Re-throw to handle in the modal
+      }
+    });
   };
 
   return (
@@ -159,9 +192,20 @@ const ProfileMenu = ({ userType, user }) => {
             Change Mail Subscription
           </button>
 
-          {/* Log Out */}
+          {/* Delete Account Button */}
           <button
             className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
+            onClick={() => {
+              setDropdownOpen(false);
+              handleDeleteAccount();
+            }}
+          >
+            Delete Account
+          </button>
+
+          {/* Log Out Button */}
+          <button
+            className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded mt-2"
             onClick={() => {
               setDropdownOpen(false);
               handleLogout();

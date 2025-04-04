@@ -7,6 +7,12 @@ const JobSeeker = require('../models/jobSeekerModel');
 const Recruiter = require('../models/recruiterModel');
 const CryptoJS = require("crypto-js");
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
+const cloudinary = require('cloudinary');
+const JobListing = require('../models/jobListingModel');
+const Applicant = require('../models/applicantModel');
+const Interview = require('../models/interviewModel');
+const Conversation = require('../models/conversationModel');
+const BotConversation = require('../models/botConversationModel');
 require('dotenv').config();
 
 // Helper Function: Get Schema Based on Role
@@ -582,6 +588,83 @@ const checkEmail = async (req, res) => {
   }
 };
 
+const deleteUser = async (req, res) => {
+    try {
+        const { userId, userType } = req.params;
+        const Schema = getSchemaByRole(userType);
+        const user = await Schema.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Delete profile picture from Cloudinary if not default
+        const defaultProfilePic = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+        if (user.profilePic && user.profilePic !== defaultProfilePic) {
+            const profilePicPublicId = user.profilePic.split('/upload/')[1].split('/').slice(1).join('/').split('.')[0];
+            await cloudinary.uploader.destroy(profilePicPublicId);
+        }
+
+        // For recruiters, delete company logo and job listings
+        if (userType === 'Recruiter') {
+            const defaultCompanyLogo = 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png';
+            if (user.companyLogo && user.companyLogo !== defaultCompanyLogo) {
+                const companyLogoPublicId = user.companyLogo.split('/upload/')[1].split('/').slice(1).join('/').split('.')[0];
+                await cloudinary.uploader.destroy(companyLogoPublicId);
+            }
+            // Delete all job listings posted by this recruiter
+            await JobListing.deleteMany({ recruiterId: userId });
+        }
+
+        // Delete user from applicants array in JobListing model
+        if (userType === 'JobSeeker') {
+            // Delete CV from Cloudinary if it exists
+            if (user.cv) {
+                // Extract the public_id from the CV URL
+                const cvPublicId = user.cv.split('/upload/')[1].split('/').slice(1).join('/').split('.')[0];
+                await cloudinary.uploader.destroy(cvPublicId, { resource_type: 'raw' });
+            }
+
+            // Find all job listings where this job seeker is an applicant
+            // This query will match any job listing where ANY object in the applicants array has jobSeekerId matching userId
+            const jobListings = await JobListing.find({ 'applicants.jobSeekerId': userId });
+            
+            // For each job listing, remove the job seeker from applicants array
+            for (const jobListing of jobListings) {
+                jobListing.applicants = jobListing.applicants.filter(
+                    applicant => applicant.jobSeekerId.toString() !== userId
+                );
+                await jobListing.save();
+            }
+
+            // Delete entries from ApplicantModel
+            await Applicant.deleteMany({ jobSeekerId: userId });
+
+            // Delete entries from InterviewModel
+            await Interview.deleteMany({ 'participants.0.userId': userId });
+
+            // Delete entries from ConversationModel
+            await Conversation.deleteMany({ 'participants.0.userId': userId });
+
+            // Delete entries from BotConversationModel
+            await BotConversation.deleteMany({ email: user.email });
+        } else {
+            // For recruiters, do the same cleanup
+            await Applicant.deleteMany({ recruiterId: userId });
+            await Interview.deleteMany({ 'participants.1.userId': userId });
+            await Conversation.deleteMany({ 'participants.1.userId': userId });
+            await BotConversation.deleteMany({ email: user.email });
+        }
+
+        // Finally, delete the user
+        await Schema.findByIdAndDelete(userId);
+
+        res.status(200).json({ message: 'User deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ message: 'Failed to delete user.' });
+    }
+};
 
 module.exports = {
     registerRecruiter,
@@ -600,4 +683,5 @@ module.exports = {
     deleteAllNotifications,
     markAsReadNotification,
     checkEmail,
+    deleteUser,
 };
