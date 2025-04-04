@@ -129,12 +129,17 @@ const jobSeekerSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    numOfApplicationsSent: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
     numOfReviewedApplications: {
         type: Number,
         default: 0,
         required: false,
     },
-    numOfInterviewesScheduled: {
+    numOfInterviewsScheduled: {
         type: Number,
         default: 0,
         required: false,

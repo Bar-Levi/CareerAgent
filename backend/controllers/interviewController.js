@@ -57,7 +57,7 @@ const scheduleInterview = async (req, res, next) => {
         jobSeeker.notifications.push(newNotification);
         
         // Increment the number of interviews scheduled
-        jobSeeker.numOfInterviewesScheduled = (jobSeeker.numOfInterviewesScheduled || 0) + 1;
+        jobSeeker.numOfInterviewsScheduled = (jobSeeker.numOfInterviewsScheduled || 0) + 1;
         
         await jobSeeker.save();
         console.log("Notification added to jobSeekerParticipant:", jobSeeker.email);

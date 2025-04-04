@@ -11,6 +11,7 @@ const JobListingCard = ({
   setRenderingConversationKey,
   setRenderingConversationData,
   showOnlyApply = false,
+  setUser,
 }) => {
   const {
     jobRole,
@@ -192,6 +193,16 @@ const JobListingCard = ({
           showNotification("success", "Application submitted successfully!");
           setAppliedCounter((prev) => prev + 1);
           setApplyButtonEnabled(false);
+
+          // Update the user state with incremented numOfApplicationsSent
+          const updatedUser = {
+            ...user,
+            numOfApplicationsSent: (user.numOfApplicationsSent || 0) + 1
+          };
+          setUser(updatedUser);
+          
+          // Navigate back to the same location with updated state
+          navigate(location.pathname, { state: { ...state, user: updatedUser } });
         } else {
           showNotification("error", "Failed to update job listing with the new applicant.");
         }

@@ -34,6 +34,13 @@ const createApplicant = async (req, res) => {
 
         const newApplicant = new Applicant(req.body);
         const savedApplicant = await newApplicant.save();
+
+        // Increment the numOfApplicationsSent counter for the job seeker
+        await JobSeeker.findByIdAndUpdate(
+            req.body.jobSeekerId,
+            { $inc: { numOfApplicationsSent: 1 } }
+        );
+
         res.status(201).json({
             message: 'Applicant created successfully',
             applicant: savedApplicant,
