@@ -12,6 +12,7 @@ const UpcomingInterviews = ({ user }) => {
 
   const [selectedEventId, setSelectedEventId] = useState(null);
   const selectedEventRef = useRef();
+  const containerRef = useRef();
 
   const getStatusStyles = (interviewToday, interviewUpcoming, interviewPassed) => {
     if (interviewPassed) {
@@ -130,6 +131,20 @@ const UpcomingInterviews = ({ user }) => {
       console.log("No state addition found.");
     }
   }, [refreshToken, state]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside any interview item
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setSelectedEventId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const formatDateTime = (dateString) => {
     if (!dateString) return { date: "Date not set", time: "Time not set" };
@@ -260,7 +275,7 @@ const UpcomingInterviews = ({ user }) => {
             </p>
           </div>
         ) : (
-          <div className="overflow-y-auto h-full">
+          <div className="overflow-y-auto h-full" ref={containerRef}>
             <div className="p-4">
               <div className="space-y-2">
                 {interviews.map((applicant) => {
