@@ -309,6 +309,16 @@ const UpcomingInterviews = ({ user }) => {
                             Passed
                           </span>
                         )}
+                        {!interviewToday && !interviewUpcoming && !interviewPassed && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r from-purple-500 to-indigo-500
+                            text-white shadow-lg shadow-purple-500/20
+                            border border-purple-400/20 backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105">
+                            <FaCalendarAlt className="w-3 h-3 mr-1.5" />
+                            Future
+                          </span>
+                        )}
                       </div>
 
                       {applicant.interviewId?._id === selectedEventId && (
@@ -339,36 +349,40 @@ const UpcomingInterviews = ({ user }) => {
                         </div>
 
                         <div className="mt-4 flex flex-col gap-2">
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              className="flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg"
-                              onClick={() => handleInterviewChatClick(applicant.jobId)}
-                            >
-                              AI Mock Interview
-                            </button>
-
-                            {meetingLink && (
-                              <a
-                                href={meetingLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                          {!interviewPassed && (
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                className="flex items-center justify-center px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 ease-in-out shadow-md hover:shadow-lg"
+                                onClick={() => handleInterviewChatClick(applicant.jobId)}
                               >
-                                <FaLink className="w-3 h-3 mr-1.5" />
-                                Join Meeting
-                              </a>
-                            )}
-                          </div>
+                                AI Mock Interview
+                              </button>
 
-                          <div>
-                            <button
-                              className="flex items-center justify-center w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
-                              onClick={() => handleGoogleCalendarClick(interview, applicant)}
-                            >
-                              <FaCalendarPlus className="w-4 h-4 mr-1.5" />
-                              Add to Calendar
-                            </button>
-                          </div>
+                              {meetingLink && (
+                                <a
+                                  href={meetingLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-center px-3 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                                >
+                                  <FaLink className="w-3 h-3 mr-1.5" />
+                                  Join Meeting
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {!interviewPassed && (
+                            <div>
+                              <button
+                                className="flex items-center justify-center w-auto px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg bg-white border border-gray-400 text-gray-700 hover:bg-gray-50 transition-all duration-200 ease-in-out shadow-sm hover:shadow-md"
+                                onClick={() => handleGoogleCalendarClick(interview, applicant)}
+                              >
+                                <FaCalendarPlus className="w-4 h-4 mr-1.5" />
+                                Add to Calendar
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
