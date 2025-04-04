@@ -1,11 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { FaEye, FaPaperPlane, FaUserTie, FaChartLine, FaChartBar } from "react-icons/fa";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const PerformanceInsights = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [userData, setUserData] = useState(location.state?.user || null);
   const [statistics, setStatistics] = useState({
     numOfApplicationsSent: 0,
     numOfInterviewsScheduled: 0,
@@ -18,19 +16,24 @@ const PerformanceInsights = () => {
     const fetchStatistics = async () => {
       try {
         const token = localStorage.getItem('token');
-        const encodedEmail = encodeURIComponent(userData?.email);
+        const userEmail = location.state?.user?.email;
         
+        if (!userEmail) {
+          throw new Error('User email not found');
+        }
+
+        const encodedEmail = encodeURIComponent(userEmail);
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/personal/statistics?email=${encodedEmail}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
+        
         if (!response.ok) {
           throw new Error('Failed to fetch statistics');
         }
-        const data = await response.json();
         
-        // Update statistics state
+        const data = await response.json();
         setStatistics(data);
         
         // Set message based on interview success rate
@@ -39,32 +42,13 @@ const PerformanceInsights = () => {
         } else {
           setMessage("Great job! Your interview success rate is above average. Keep up the good work!");
         }
-
-        // Update user data with the latest statistics
-        if (userData) {
-          const updatedUserData = {
-            ...userData,
-            numOfApplicationsSent: data.numOfApplicationsSent,
-            numOfInterviewsScheduled: data.numOfInterviewsScheduled,
-            numOfReviewedApplications: data.numOfReviewedApplications
-          };
-          
-          setUserData(updatedUserData);
-          // Update location state with new user data
-          navigate(location.pathname, { 
-            state: { user: updatedUserData },
-            replace: true 
-          });
-        }
       } catch (error) {
         console.error("Error fetching statistics:", error);
       }
     };
 
-    if (userData?.email) {
-      fetchStatistics();
-    }
-  }, [userData?.email, location.pathname, navigate]);
+    fetchStatistics();
+  }, []);
 
   return (
     <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
