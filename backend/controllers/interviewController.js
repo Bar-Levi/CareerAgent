@@ -1,6 +1,8 @@
 const Interview = require("../models/interviewModel");
 const JobSeeker = require("../models/jobSeekerModel");
 const Applicant = require("../models/applicantModel");
+const Recruiter = require("../models/recruiterModel");
+const { sendInterviewScheduledEmailToJobSeeker, sendInterviewScheduledEmailToRecruiter } = require("../utils/emailService");
 
 // Schedule a new interview
 // POST /api/interviews
@@ -26,18 +28,21 @@ const scheduleInterview = async (req, res, next) => {
     const recruiterParticipant = participants.find((p) => p.role !== "JobSeeker");
 
     if (jobSeekerParticipant && recruiterParticipant) {
-
       // Add a notification to the jobSeeker
       const jobSeeker = await JobSeeker.findById(jobSeekerParticipant.userId);
+      const recruiter = await Recruiter.findById(recruiterParticipant.userId);
+
       if (!jobSeeker) {
-        console.warn("Applicant not found:", jobSeekerParticipant.userId);
+        console.warn("JobSeeker not found:", jobSeekerParticipant.userId);
+      } else if (!recruiter) {
+        console.warn("Recruiter not found:", recruiterParticipant.userId);
       } else {
         const applicant = await Applicant.findById(applicantId);
 
         // Create the notification
         const newNotification = {
           type: "interview",
-          message: `A new interview for ${jobListing.jobRole} at ${jobListing.company} was scheduled by ${recruiterParticipant.name} on ${new Date(scheduledTime).toLocaleDateString()}.`,
+          message: `A new interview for ${jobListing.jobRole} at ${jobListing.company} was scheduled by ${recruiter.fullName} on ${new Date(scheduledTime).toLocaleDateString()}.`,
           extraData: {
             goToRoute: '/dashboard',
             stateAddition: {
@@ -50,8 +55,59 @@ const scheduleInterview = async (req, res, next) => {
           jobSeeker.notifications = [];
         }
         jobSeeker.notifications.push(newNotification);
+        
+        // Increment the number of interviews scheduled
+        jobSeeker.numOfInterviewesScheduled = (jobSeeker.numOfInterviewesScheduled || 0) + 1;
+        
         await jobSeeker.save();
         console.log("Notification added to jobSeekerParticipant:", jobSeeker.email);
+
+        // Validate email addresses before sending
+        if (!jobSeeker.email) {
+          console.warn("Job seeker email not found:", jobSeeker._id);
+        } else if (!recruiter.email) {
+          console.warn("Recruiter email not found:", recruiter._id);
+        } else {
+          try {
+            // Check if job seeker and recruiter have the same email
+            if (jobSeeker.email === recruiter.email) {
+              // If they have the same email, send only one email with combined content
+              await sendInterviewScheduledEmailToJobSeeker(
+                jobSeeker.email,
+                jobSeeker.fullName,
+                jobListing,
+                recruiter.fullName,
+                scheduledTime,
+                meetingLink
+              );
+              console.log("Combined interview notification email sent to:", jobSeeker.email);
+            } else {
+              // Send separate emails if emails are different
+              await sendInterviewScheduledEmailToJobSeeker(
+                jobSeeker.email,
+                jobSeeker.fullName,
+                jobListing,
+                recruiter.fullName,
+                scheduledTime,
+                meetingLink
+              );
+              console.log("Interview notification email sent to job seeker:", jobSeeker.email);
+
+              await sendInterviewScheduledEmailToRecruiter(
+                recruiter.email,
+                recruiter.fullName,
+                jobSeeker.fullName,
+                jobListing,
+                scheduledTime,
+                meetingLink
+              );
+              console.log("Interview notification email sent to recruiter:", recruiter.email);
+            }
+          } catch (emailError) {
+            console.error("Error sending interview notification emails:", emailError);
+            // Continue with the rest of the function even if email sending fails
+          }
+        }
 
         if (!applicant) {
           console.warn("Applicant not found:", applicantId);
