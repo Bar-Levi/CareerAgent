@@ -21,6 +21,7 @@ const {
   deleteAllNotifications,
   markAsReadNotification,
   checkEmail,
+  deleteUser,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -54,5 +55,8 @@ router.patch("/upload-cv/:id", protect, upload.single("cv"), uploadCV);
 router.patch("/mark-as-read-notification/:userId/:notificationId", protect, generalLimiter, markAsReadNotification);
 router.delete("/delete-notification/:userId/:notificationId", protect, generalLimiter, deleteNotification);
 router.delete("/delete-all-notifications/:userId", protect, generalLimiter, deleteAllNotifications);
+
+// Route for deleting user
+router.delete("/delete-user/:userId/:userType", protect, generalLimiter, deleteUser);
 
 module.exports = router;
