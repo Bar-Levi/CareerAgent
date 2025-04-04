@@ -120,7 +120,9 @@ const PersonalOverview = ({ user }) => {
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 hover:underline truncate text-base"
                       >
-                        {field.key === "cv" ? "View CV" : value}
+                        {field.key === "cv" ? "View CV" : 
+                         field.key === "linkedinUrl" ? "LinkedIn Profile" :
+                         field.key === "githubUrl" ? "GitHub Profile" : value}
                       </a>
                     ) : (
                       <span className="text-gray-700 text-base truncate">{value}</span>
@@ -148,7 +150,9 @@ const PersonalOverview = ({ user }) => {
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800 hover:underline truncate text-base"
                       >
-                        {field.key === "cv" ? "View CV" : value}
+                        {field.key === "cv" ? "View CV" : 
+                         field.key === "linkedinUrl" ? "LinkedIn Profile" :
+                         field.key === "githubUrl" ? "GitHub Profile" : value}
                       </a>
                     ) : (
                       <span className="text-gray-700 text-base truncate">{value}</span>
@@ -169,28 +173,36 @@ const PersonalOverview = ({ user }) => {
           </div>
 
           <div className="mt-2 flex-none">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-              <span className="text-sm font-medium text-gray-700">{profileCompletion}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div
-                className="bg-gradient-to-r from-indigo-600 to-blue-600 h-1.5 rounded-full transition-all duration-500"
-                style={{ width: `${profileCompletion}%` }}
-              ></div>
-            </div>
-            
-            {profileCompletion < 100 && (
-              <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm font-medium">
-                  Your profile is incomplete. Please update:
+            {profileCompletion === 100 ? (
+              <div className="p-2 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-700 text-sm font-medium flex items-center justify-center">
+                  🎉 Excellent! Your profile is complete and ready to shine!
                 </p>
-                <ul className="list-disc ml-4 text-red-700 text-sm">
-                  {missingFields.map((field, index) => (
-                    <li key={index}>{field}</li>
-                  ))}
-                </ul>
               </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+                  <span className="text-sm font-medium text-gray-700">{profileCompletion}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div
+                    className="bg-gradient-to-r from-indigo-600 to-blue-600 h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${profileCompletion}%` }}
+                  ></div>
+                </div>
+                
+                <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 text-sm font-medium">
+                    Your profile is incomplete. Please update:
+                  </p>
+                  <ul className="list-disc ml-4 text-red-700 text-sm">
+                    {missingFields.map((field, index) => (
+                      <li key={index}>{field}</li>
+                    ))}
+                  </ul>
+                </div>
+              </>
             )}
           </div>
         </div>
