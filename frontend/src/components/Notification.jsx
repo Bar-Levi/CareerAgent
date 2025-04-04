@@ -18,11 +18,13 @@ const Notification = ({ type = 'success', message, onClose }) => {
             : 'bg-blue-500';
 
     return (
-        <div
-            className={`fixed top-0 left-0 right-0 mx-auto w-fit px-6 py-3 ${bgColor} text-white text-sm font-medium rounded-b-lg shadow-lg animate-slide-down`}
-            role="alert"
-        >
-            {message}
+        <div className="fixed top-0 left-0 right-0 flex justify-center">
+            <div
+                className={`inline-block px-6 py-3 ${bgColor} text-white text-sm font-medium rounded-lg shadow-lg animate-slide-down`}
+                role="alert"
+            >
+                {message}
+            </div>
         </div>
     );
 };
