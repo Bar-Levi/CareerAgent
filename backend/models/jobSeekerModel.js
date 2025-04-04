@@ -129,6 +129,21 @@ const jobSeekerSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    numOfApplicationsSent: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
+    numOfReviewedApplications: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
+    numOfInterviewsScheduled: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
     notifications: [notificationSchema],
     savedJobListings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobListing' }],
 });

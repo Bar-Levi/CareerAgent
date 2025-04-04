@@ -7,7 +7,7 @@ import ProfileMenu from "./ProfileMenu";
 import socket from "../../socket";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaComments, FaUser } from "react-icons/fa";
+import { FaComments, FaUser, FaCalendarCheck } from "react-icons/fa";
 
 const NavigationBar = ({ userType }) => {
   const navigate = useNavigate();
@@ -38,6 +38,10 @@ const NavigationBar = ({ userType }) => {
           <div className="p-4 w-[10%] flex justify-center">
             <FaUser className="w-8 h-8 text-green-500 flex-shrink-0" />
           </div>
+        ) : notificationData.type === "interview" ? (
+          <div className="p-4 w-[10%] flex justify-center">
+            <FaCalendarCheck className="w-8 h-8 text-red-500 flex-shrink-0" />
+          </div>
         ) : null}
           <span>
             {notificationData.message.length > 30
@@ -63,6 +67,41 @@ const NavigationBar = ({ userType }) => {
       fetchNotifications();
     });
 
+    socket.on("interviewScheduled", (data) => {
+      toast.success(
+        <div className="flex items-center space-x-2">
+          <div className="p-4 w-[10%] flex justify-center">
+            <svg className="w-8 h-8 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M6 2a1 1 0 011 1v1h6V3a1 1 0 112 0v1h1a2 2 0 012 2v1H3V6a2 2 0 012-2h1V3a1 1 0 011-1zM3 9h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            </svg>
+          </div>
+          <span>
+            {data.message.length > 30 ? data.message.slice(0, 30) + "..." : data.message}
+          </span>
+        </div>,
+        {
+          onClick: () => {
+            handleNotificationClick({
+              extraData: {
+                goToRoute: `/interviews`, // Optional: navigate to interviews page
+                stateAddition: { interviewId: data.interview._id },
+              },
+            });
+          },
+          autoClose: 6000,
+          pauseOnHover: true,
+          draggable: true,
+          closeButton: false,
+          closeOnClick: true,
+          pauseOnFocusLoss: true,
+          icon: false,
+          toastClassName: "cursor-pointer bg-purple-100 text-purple-900 p-4 rounded",
+        }
+      );
+    
+      fetchNotifications(); // Optionally update notifications
+    });
+    
     fetchNotifications();
 
     return () => {

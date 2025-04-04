@@ -89,7 +89,8 @@ const MyJobListings = ({
   setSelectedJobListing,
   setMetrics,
   setSelectedConversationId,
-  setSelectedCandidate
+  setSelectedCandidate,
+  setViewMode
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
@@ -102,6 +103,15 @@ const MyJobListings = ({
   const [sortDirection, setSortDirection] = useState("asc");
 
   const handleSortToggle = () => setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+
+  const selectedJobListingRef = useRef();
+
+  useEffect(() => {
+      if (selectedJobListing && jobListings && selectedJobListingRef.current) {
+        selectedJobListingRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, [selectedJobListing, jobListings]);
+
 
   const filteredAndSortedListings = jobListings
     .filter(l => filterStatus === "All" || l.status === filterStatus)
@@ -227,7 +237,7 @@ const MyJobListings = ({
             {jobListings.length > 0 && (
               <button
                 onClick={() => setShowConfirmDialog(true)}
-                className="px-4 py-2 bg-red-600 text-red rounded-lg hover:bg-red-700 transition duration-150 text-sm font-medium"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 text-sm font-medium"
               >
                 Remove All
               </button>
@@ -312,13 +322,14 @@ const MyJobListings = ({
             </p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="bg-gray-100">
             {filteredAndSortedListings.map((listing) => (
               <li
                 key={listing._id}
-                className={`relative transition-all duration-200 hover:bg-gray-50 ${
+                ref={selectedJobListing && selectedJobListing._id === listing._id ? selectedJobListingRef : null}
+                className={`relative transition-all duration-200 hover:bg-gray-300 ${
                   selectedJobListing && selectedJobListing._id === listing._id
-                    ? 'bg-gray-50 border-l-4 border-gray-300'
+                    ? 'bg-gray-200 border-l-4 border-gray-300'
                     : ''
                 }`}
               >
@@ -393,6 +404,7 @@ const MyJobListings = ({
                     <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0">
                       <div className="relative">
                         <button
+                          disabled={listing.status === "Closed"}
                           onClick={() => handleStatusMenuToggle(listing._id)}
                           className={`px-3 py-1.5 text-xs font-medium rounded-full flex items-center ${
                             listing.status === 'Active'
@@ -423,15 +435,18 @@ const MyJobListings = ({
                           />
                         )}
                       </div>
-                      <button
-                        onClick={() => {
-                          setSelectedJobListing(listing);
-                          setSelectedConversationId(null);
-                          setSelectedCandidate(null);
-                        }}
-                        className="px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition duration-150 flex items-center"
-                      >
-                        <svg
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedJobListing(listing);
+                            setViewMode("messages");
+                            setSelectedConversationId(null);
+                            setSelectedCandidate(null);
+                          }}
+                          className="px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition flex items-center"
+                        >
+                          <svg
                           className="w-3.5 h-3.5 mr-1"
                           fill="none"
                           stroke="currentColor"
@@ -444,8 +459,37 @@ const MyJobListings = ({
                             d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                           ></path>
                         </svg>
-                        View Messages
-                      </button>
+                         View Messages
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setSelectedJobListing(listing);
+                            setViewMode("applications");
+                            setSelectedConversationId(null);
+                            setSelectedCandidate(null);
+                          }}
+                          className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition flex items-center"
+                        >
+                          <svg
+                            className="w-3.5 h-3.5 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                            ></path>
+                          </svg>
+                           View Applicants
+                        </button>
+                      </div>
+
+
+
                       <div className="relative">
                         <button
                           onClick={() => handleSettingsMenuToggle(listing._id)}

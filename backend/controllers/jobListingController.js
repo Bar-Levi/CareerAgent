@@ -4,6 +4,7 @@ const Applicant = require("../models/applicantModel");
 const { getMetricsByRecruiterId } = require("../utils/metricsUtils");
 const { sendJobNotificationEmail } = require("../utils/emailService");
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
+const { removeJobAndNotify } = require('../utils/jobHelpers');
 const Conversation = require("../models/conversationModel");
 
 const normalizeNullValues = (data) => {
@@ -258,8 +259,8 @@ const saveJobListing = async (req, res) => {
             recruiterProfileImage,
             companyLogo,
         } = normalizedBody;
-        
-        
+
+        console.log("normalizedBody: ",normalizedBody);
         
         // Validate required fields
         if (!jobRole || !location || !company || !experienceLevel || !jobType || !remote || !description) {
@@ -267,7 +268,7 @@ const saveJobListing = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
 
-        education.forEach((edu) => {
+        education?.forEach((edu) => {
           edu = checkAndInsertIn(edu);
         });
         
@@ -296,6 +297,7 @@ const saveJobListing = async (req, res) => {
             companyLogo,
         });
 
+        console.log("description: ",description);
         // Save the job listing to the database
         const savedJobListing = await newJobListing.save();
         notifyRelevantJobSeekers(newJobListing);
@@ -426,62 +428,15 @@ const updateJobListing = async (req, res) => {
     }
 };
 
-// Delete a job listing by ID
+
 const deleteJobListing = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    // Find the job listing before deleting
-    const jobListing = await JobListing.findById(id);
-    if (!jobListing) {
-      return res.status(404).json({ message: "Job listing not found." });
-    }
-
-    // Delete the job listing
-    const deletedJobListing = await JobListing.findByIdAndDelete(id);
-
-    // Fetch applicants before deleting them
-    const applicants = await Applicant.find({ jobId: id });
-
-    // Delete all applicants for this job listing
-    await Applicant.deleteMany({ jobId: id });
-
-    // Update all Conversations that reference this jobListing
-    // Set jobListingId to null for conversations with the deleted job listing
-    await Conversation.updateMany({ jobListingId: id }, { jobListingId: null });
-
-    // **REMOVE THIS JOB ID FROM EVERY JOB SEEKER’S SAVED LISTINGS**
-    await JobSeeker.updateMany(
-      { savedJobListings: id },
-      { $pull: { savedJobListings: id } }
-    );
-
-    // Filter applicants who are subscribed to notifications
-    const applicantsToNotify = applicants.filter(applicant => applicant.isSubscribed);
-
-    // Send emails using Promise.allSettled to avoid one failure stopping the process
-    if (applicantsToNotify.length > 0) {
-      const results = await Promise.allSettled(
-        applicantsToNotify.map(applicant =>
-          sendJobNotificationEmail(applicant.email, deletedJobListing, 'jobListingDeleted')
-        )
-      );
-
-      // Log results for each candidate
-      results.forEach((result, index) => {
-        if (result.status !== 'fulfilled') {
-          console.error(`❌ Failed to send email to ${applicantsToNotify[index].email}:`, result.reason);
-        }
-      });
-    }
-
-    res.status(200).json({
-      message: "Job listing deleted successfully.",
-      jobListing: deletedJobListing,
-    });
+    const deletedJob = await removeJobAndNotify(req.params.id, 'remove');
+    res.status(200).json({ message: "Job listing deleted successfully.", jobListing: deletedJob });
   } catch (error) {
-    console.error("❌ Error deleting job listing:", error);
-    res.status(500).json({ message: "Internal Server Error", error: error.message });
+    console.error("Error deleting job listing:", error);
+    const status = error.message.includes('not found') ? 404 : 500;
+    res.status(status).json({ message: error.message, error: error.message });
   }
 };
 
@@ -531,7 +486,7 @@ const filterActiveJobListings = async (req, res) => {
         }
 
         if (jobType) query.jobType = { $in: jobType.split(",").map((t) => t.trim()) };
-        if (remote) query.remote = remote === 'true'; // Convert to boolean
+        if (remote) query.remote = { $regex: remote, $options: "i" };
         if (skills) {
             const skillsArray = skills.split(",").map((s) => s.trim()); // Split and trim skills
             const lastSkill = skillsArray.length > 0 ? skillsArray.pop() : ""; // Get the last skill or empty string
@@ -554,9 +509,11 @@ const filterActiveJobListings = async (req, res) => {
           }
                   
           
-        if (securityClearance) query.securityClearance = { $gte: parseInt(securityClearance, 10) };
-        if (education) {
+          if (securityClearance) query.securityClearance = parseInt(securityClearance, 10);
+          if (education) {
+            console.log("education: ",education);
             const educationArray = education.split(",").map((e) => e.trim()); // Split and trim education values
+            console.log("educationArray: ",educationArray);
             const lastEducation = educationArray.length > 0 ? educationArray.pop() : ""; // Get the last education or empty string
           
             // Escape special characters in lastEducation
