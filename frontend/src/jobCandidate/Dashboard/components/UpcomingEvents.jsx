@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaCalendarAlt, FaClock, FaLink, FaChevronRight, FaStar, FaCalendarPlus } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaLink, FaChevronRight, FaStar, FaCalendarPlus, FaCheckCircle } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const UpcomingInterviews = ({ user }) => {
@@ -131,6 +131,13 @@ const UpcomingInterviews = ({ user }) => {
     return interviewDate > today && interviewDate <= threeDaysLater;
   };
 
+  const isPassed = (dateString) => {
+    if (!dateString) return false;
+    const now = new Date();
+    const interviewDate = new Date(dateString);
+    return interviewDate < now;
+  };
+
   const handleInterviewChatClick = (jobListing) => {
     console.log("JobListing: ", jobListing);
     console.log("state: ", state);
@@ -222,6 +229,7 @@ const UpcomingInterviews = ({ user }) => {
 
                   const interviewToday = isToday(interview.scheduledTime);
                   const interviewUpcoming = isUpcoming(interview.scheduledTime) && !interviewToday;
+                  const interviewPassed = isPassed(interview.scheduledTime);
 
                   return (
                     <div
@@ -239,6 +247,8 @@ const UpcomingInterviews = ({ user }) => {
                             ? "bg-gradient-to-r from-green-50/80 via-green-50/20 to-transparent"
                             : interviewUpcoming
                             ? "bg-gradient-to-r from-yellow-50/80 via-yellow-50/20 to-transparent"
+                            : interviewPassed
+                            ? "bg-gradient-to-r from-gray-50/80 via-gray-50/20 to-transparent"
                             : ""
                         }
                         ${
@@ -269,7 +279,7 @@ const UpcomingInterviews = ({ user }) => {
                       aria-selected={applicant.interviewId?._id === selectedEventId}
                     >
                       <div className="absolute -top-2 -right-2 z-20">
-                        {interviewToday && (
+                        {interviewToday && !interviewPassed && (
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
                             bg-gradient-to-r from-green-500 to-green-600
                             text-white shadow-lg shadow-green-500/20
@@ -287,6 +297,16 @@ const UpcomingInterviews = ({ user }) => {
                             transform transition-all duration-300 hover:scale-105">
                             <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
                             Upcoming
+                          </span>
+                        )}
+                        {interviewPassed && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r from-gray-500 to-gray-600
+                            text-white shadow-lg shadow-gray-500/20
+                            border border-gray-400/20 backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105">
+                            <FaCheckCircle className="w-3 h-3 mr-1.5" />
+                            Passed
                           </span>
                         )}
                       </div>
