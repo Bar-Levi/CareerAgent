@@ -13,6 +13,51 @@ const UpcomingInterviews = ({ user }) => {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const selectedEventRef = useRef();
 
+  const getStatusStyles = (interviewToday, interviewUpcoming, interviewPassed) => {
+    if (interviewPassed) {
+      return {
+        gradient: "bg-gradient-to-r from-gray-50 to-gray-50/50",
+        border: "border-gray-200",
+        badge: {
+          bg: "from-gray-500 to-gray-600",
+          shadow: "shadow-gray-500/20",
+          border: "border-gray-400/20"
+        }
+      };
+    }
+    if (interviewToday) {
+      return {
+        gradient: "bg-gradient-to-r from-green-50 to-green-50/50",
+        border: "border-green-200",
+        badge: {
+          bg: "from-green-500 to-green-600",
+          shadow: "shadow-green-500/20",
+          border: "border-green-400/20"
+        }
+      };
+    }
+    if (interviewUpcoming) {
+      return {
+        gradient: "bg-gradient-to-r from-yellow-50 to-yellow-50/50",
+        border: "border-yellow-200",
+        badge: {
+          bg: "from-yellow-500 to-amber-500",
+          shadow: "shadow-yellow-500/20",
+          border: "border-yellow-400/20"
+        }
+      };
+    }
+    return {
+      gradient: "bg-gradient-to-r from-purple-50 to-purple-50/50",
+      border: "border-purple-200",
+      badge: {
+        bg: "from-purple-500 to-indigo-500",
+        shadow: "shadow-purple-500/20",
+        border: "border-purple-400/20"
+      }
+    };
+  };
+
   useEffect(() => {
     const fetchInterviews = async () => {
       if (!user) {
@@ -235,86 +280,78 @@ const UpcomingInterviews = ({ user }) => {
                     <div
                       key={applicant._id}
                       ref={selectedEventId === applicant.interviewId._id ? selectedEventRef : null}
+                      onClick={() => setSelectedEventId(applicant.interviewId?._id)}
                       className={`
                         relative flex justify-between items-start p-4 rounded-md m-2
                         transition-all duration-300 ease-out
-                        backdrop-blur-sm
-                        ${
-                          "bg-white/95 hover:bg-white"
-                        }
-                        ${
-                          interviewToday
-                            ? "bg-gradient-to-r from-green-50/80 via-green-50/20 to-transparent"
-                            : interviewUpcoming
-                            ? "bg-gradient-to-r from-yellow-50/80 via-yellow-50/20 to-transparent"
-                            : interviewPassed
-                            ? "bg-gradient-to-r from-gray-50/80 via-gray-50/20 to-transparent"
-                            : ""
-                        }
+                        border ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).border}
+                        ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).gradient}
+                        hover:shadow-lg cursor-pointer
                         ${
                           applicant.interviewId?._id === selectedEventId
                             ? `
                               shadow-[0_8px_16px_-4px_rgba(59,130,246,0.15)]
                               animate-[subtle-pulsing_2s_ease-in-out_infinite]
                               scale-[1.01] z-10
+                              ring-2 ring-blue-500/50
                               before:absolute before:inset-0 
                               before:rounded-md before:bg-gradient-to-r 
                               before:from-blue-500/10 before:to-transparent
                               before:opacity-50 before:-z-10
                             `
-                            : "border border-transparent hover:border-gray-200/80 hover:shadow-md"
-                        }
-                        ${
-                          "hover:bg-gradient-to-r hover:from-white hover:to-gray-50/80 cursor-pointer"
+                            : 'shadow-sm hover:shadow-md hover:scale-[1.005]'
                         }
                       `}
-                      onClick={() => {
-                        setSelectedEventId(applicant.interviewId?._id);
-                        if (window.navigator && window.navigator.vibrate) {
-                          window.navigator.vibrate(50);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      aria-selected={applicant.interviewId?._id === selectedEventId}
                     >
                       <div className="absolute -top-2 -right-2 z-20">
                         {interviewToday && !interviewPassed && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                            bg-gradient-to-r from-green-500 to-green-600
-                            text-white shadow-lg shadow-green-500/20
-                            border border-green-400/20 backdrop-blur-sm
-                            transform transition-all duration-300 hover:scale-105">
+                          <span className={`
+                            inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.bg}
+                            text-white shadow-lg ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.shadow}
+                            border ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.border}
+                            backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105
+                          `}>
                             <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
                             Today
                           </span>
                         )}
                         {interviewUpcoming && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                            bg-gradient-to-r from-yellow-500 to-amber-500
-                            text-white shadow-lg shadow-yellow-500/20
-                            border border-yellow-400/20 backdrop-blur-sm
-                            transform transition-all duration-300 hover:scale-105">
+                          <span className={`
+                            inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.bg}
+                            text-white shadow-lg ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.shadow}
+                            border ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.border}
+                            backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105
+                          `}>
                             <div className="w-2 h-2 rounded-full bg-white/90 mr-1.5 animate-pulse" />
                             Upcoming
                           </span>
                         )}
                         {interviewPassed && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                            bg-gradient-to-r from-gray-500 to-gray-600
-                            text-white shadow-lg shadow-gray-500/20
-                            border border-gray-400/20 backdrop-blur-sm
-                            transform transition-all duration-300 hover:scale-105">
+                          <span className={`
+                            inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.bg}
+                            text-white shadow-lg ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.shadow}
+                            border ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.border}
+                            backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105
+                          `}>
                             <FaCheckCircle className="w-3 h-3 mr-1.5" />
                             Passed
                           </span>
                         )}
                         {!interviewToday && !interviewUpcoming && !interviewPassed && (
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                            bg-gradient-to-r from-purple-500 to-indigo-500
-                            text-white shadow-lg shadow-purple-500/20
-                            border border-purple-400/20 backdrop-blur-sm
-                            transform transition-all duration-300 hover:scale-105">
+                          <span className={`
+                            inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            bg-gradient-to-r ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.bg}
+                            text-white shadow-lg ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.shadow}
+                            border ${getStatusStyles(interviewToday, interviewUpcoming, interviewPassed).badge.border}
+                            backdrop-blur-sm
+                            transform transition-all duration-300 hover:scale-105
+                          `}>
                             <FaCalendarAlt className="w-3 h-3 mr-1.5" />
                             Future
                           </span>
