@@ -1,9 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { FaSpinner, FaBriefcase, FaCheckCircle, FaTimesCircle, FaClock, FaUserTie } from "react-icons/fa";
+import { FaSpinner, FaBriefcase, FaCheckCircle, FaTimesCircle, FaClock, FaUserTie, FaSearch, FaFilter } from "react-icons/fa";
 
 const JobApplications = ({ user }) => {
   const [applications, setApplications] = useState([]);
+  const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Add filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // Define status options
+  const statusOptions = [
+    "Applied",
+    "In Review",
+    "Rejected",
+    "Accepted",
+    "Interview Scheduled",
+    "Interview Done",
+    "Hired"
+  ];
 
   useEffect(() => {
     if (user?._id) {
@@ -32,6 +50,43 @@ const JobApplications = ({ user }) => {
       fetchApplications();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Apply filters whenever applications or filter values change
+    let filtered = [...applications];
+
+    if (searchTerm) {
+      filtered = filtered.filter(app => 
+        app.jobTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter) {
+      filtered = filtered.filter(app => app.status === statusFilter);
+    }
+
+    if (startDate) {
+      filtered = filtered.filter(app => 
+        new Date(app.applicationDate) >= new Date(startDate)
+      );
+    }
+
+    if (endDate) {
+      filtered = filtered.filter(app => 
+        new Date(app.applicationDate) <= new Date(endDate)
+      );
+    }
+
+    setFilteredApplications(filtered);
+  }, [applications, searchTerm, statusFilter, startDate, endDate]);
+
+  // Add reset filters function
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setStartDate("");
+    setEndDate("");
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -96,21 +151,92 @@ const JobApplications = ({ user }) => {
         <h2 className="text-lg font-bold text-white">Job Applications</h2>
       </div>
 
+      {/* Add Filter Section */}
+      <div className="bg-gray-50 border-b border-gray-200 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search Input */}
+          <div className="relative flex flex-col">
+            <label className="block text-sm text-gray-600 mb-1">Search Job Title</label>
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search by job title..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
+              />
+              <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
+          
+          {/* Status Filter */}
+          <div className="flex flex-col">
+            <label className="block text-sm text-gray-600 mb-1">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
+            >
+              <option value="">All Statuses</option>
+              {statusOptions.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* From Date */}
+          <div className="flex flex-col">
+            <label className="block text-sm text-gray-600 mb-1">From Date</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
+            />
+          </div>
+
+          {/* To Date */}
+          <div className="flex flex-col">
+            <label className="block text-sm text-gray-600 mb-1">To Date</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
+            />
+          </div>
+        </div>
+        
+        <div className="mt-2 flex justify-end">
+          <button
+            onClick={resetFilters}
+            className="text-sm text-gray-600 hover:text-indigo-600 flex items-center gap-1"
+          >
+            <FaFilter className="w-4 h-4" />
+            Reset Filters
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 min-h-0">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <FaSpinner className="animate-spin text-3xl text-indigo-600" />
           </div>
-        ) : applications.length === 0 ? (
+        ) : filteredApplications.length === 0 ? (
           <div className="text-center py-4">
             <FaBriefcase className="w-8 h-8 mx-auto text-gray-400 mb-2" />
             <p className="text-gray-600 text-base font-medium">No applications found</p>
-            <p className="text-gray-500 text-sm mt-1">Your job applications will appear here</p>
+            <p className="text-gray-500 text-sm mt-1">
+              {applications.length > 0 
+                ? "No applications match your filters" 
+                : "Your job applications will appear here"}
+            </p>
           </div>
         ) : (
           <div className="overflow-y-auto h-full">
             <div className="p-4 space-y-2">
-              {applications.map((app) => (
+              {filteredApplications.map((app) => (
                 <div
                   key={app._id}
                   className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
