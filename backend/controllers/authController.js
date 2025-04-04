@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const BlacklistedToken = require('../models/BlacklistedTokenModel');
 const crypto = require('crypto');
-const { sendVerificationCode, sendResetPasswordEmail, generateResetToken } = require('../utils/emailService');
+const { sendVerificationCode, sendResetPasswordEmail, generateResetToken, sendJobNotificationEmail } = require('../utils/emailService');
 const JobSeeker = require('../models/jobSeekerModel');
 const Recruiter = require('../models/recruiterModel');
 const CryptoJS = require("crypto-js");
@@ -612,6 +612,35 @@ const deleteUser = async (req, res) => {
                 const companyLogoPublicId = user.companyLogo.split('/upload/')[1].split('/').slice(1).join('/').split('.')[0];
                 await cloudinary.uploader.destroy(companyLogoPublicId);
             }
+
+            // Find all job listings with applicants before deleting them
+            const jobListings = await JobListing.find({ recruiterId: userId });
+            
+            // Notify all job seekers who applied to any of the recruiter's job listings
+            const notifiedJobSeekers = new Set(); // To avoid duplicate notifications
+            
+            for (const jobListing of jobListings) {
+                if (jobListing.applicants && jobListing.applicants.length > 0) {
+                    for (const applicant of jobListing.applicants) {
+                        if (!notifiedJobSeekers.has(applicant.jobSeekerId.toString())) {
+                            const jobSeeker = await JobSeeker.findById(applicant.jobSeekerId);
+                            if (jobSeeker) {
+                                await sendJobNotificationEmail(
+                                    jobSeeker.email,
+                                    {
+                                        jobRole: jobListing.jobRole,
+                                        company: jobListing.company,
+                                        location: jobListing.location
+                                    },
+                                    "jobListingDeleted"
+                                );
+                                notifiedJobSeekers.add(applicant.jobSeekerId.toString());
+                            }
+                        }
+                    }
+                }
+            }
+
             // Delete all job listings posted by this recruiter
             await JobListing.deleteMany({ recruiterId: userId });
         }

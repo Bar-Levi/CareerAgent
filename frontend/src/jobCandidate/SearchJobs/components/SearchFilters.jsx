@@ -29,6 +29,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
     "JavaScript Developer",
     "PHP Developer",
     "Ruby Developer",
+    "Python Developer",
     "Python Web Developer",
     "ASP.NET Developer",
     "Angular Developer",

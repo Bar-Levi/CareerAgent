@@ -9,9 +9,11 @@ import showEditRelevancePointsModal from "./modals/EditRelevancePointsModal";
 import changeMailSubscriptionStatus from "./modals/ChangeMailSubscriptionStatus";
 import { useNavigate, useLocation } from "react-router-dom";
 import showDeleteAccountModal from './modals/DeleteAccountModal';
+import Notification from '../Notification';
 
 const ProfileMenu = ({ userType, user }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notification, setNotification] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -94,128 +96,145 @@ const ProfileMenu = ({ userType, user }) => {
         localStorage.clear();
         sessionStorage.clear();
         
-        // Navigate to auth page
-        navigate('/authentication', { replace: true });
+        // Show success notification and navigate
+        setNotification({
+          type: 'success',
+          message: 'Account deleted successfully'
+        });
+        
+        // Navigate to auth page after a short delay
+        setTimeout(() => {
+          navigate('/authentication', { replace: true });
+        }, 2000);
       } catch (error) {
         console.error('Error deleting account:', error);
-        throw error; // Re-throw to handle in the modal
+        throw error;
       }
     });
   };
 
   return (
-    <div className="relative dropdown">
-      <button
-        className="flex items-center px-4 py-2 rounded font-medium transition duration-300 bg-brand-secondary text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-        onClick={() => setDropdownOpen((prev) => !prev)}
-      >
-        <FaCogs className="mr-2" /> Settings
-      </button>
-      {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-brand-secondary shadow-lg rounded-md py-2 z-50">
-          {/* Change Password */}
-          <button
-            className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => {
-              setDropdownOpen(false);
-              handleChangePassword();
-            }}
-          >
-            Change Password
-          </button>
-
-          {/* Change Profile Picture (always shown) */}
-          <button
-            className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => {
-              setDropdownOpen(false);
-              handleChangePic("profile"); // <== pass "profile" as the picType
-            }}
-          >
-            Change Profile Picture
-          </button>
-
-          {/* Recruiter-specific: Change Company Logo */}
-          {userType === "Recruiter" && (
+    <>
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
+      <div className="relative dropdown">
+        <button
+          className="flex items-center px-4 py-2 rounded font-medium transition duration-300 bg-brand-secondary text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+          onClick={() => setDropdownOpen((prev) => !prev)}
+        >
+          <FaCogs className="mr-2" /> Settings
+        </button>
+        {dropdownOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-brand-secondary shadow-lg rounded-md py-2 z-50">
+            {/* Change Password */}
             <button
               className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
               onClick={() => {
                 setDropdownOpen(false);
-                handleChangePic("company"); // <== pass "company" as the picType
+                handleChangePassword();
               }}
             >
-              Change Company Logo
+              Change Password
             </button>
-          )}
 
-          {/* Change Personal Details */}
-          <button
-            className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={() => {
-              setDropdownOpen(false);
-              handleChangePersonalDetails();
-            }}
-          >
-            Change Personal Details
-          </button>
+            {/* Change Profile Picture (always shown) */}
+            <button
+              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleChangePic("profile"); // <== pass "profile" as the picType
+              }}
+            >
+              Change Profile Picture
+            </button>
 
-          {/* JobSeeker-specific items */}
-          {userType === "JobSeeker" && (
-            <>
+            {/* Recruiter-specific: Change Company Logo */}
+            {userType === "Recruiter" && (
               <button
                 className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
                 onClick={() => {
                   setDropdownOpen(false);
-                  handleUpdateCV();
+                  handleChangePic("company"); // <== pass "company" as the picType
                 }}
               >
-                Update CV
+                Change Company Logo
               </button>
+            )}
 
-              <button
-                className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-                onClick={() => {
-                  setDropdownOpen(false);
-                  handleEditRelevancePoints();
-                }}
-              >
-                Edit Relevance Points
-              </button>
-            </>
-          )}
+            {/* Change Personal Details */}
+            <button
+              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleChangePersonalDetails();
+              }}
+            >
+              Change Personal Details
+            </button>
 
-          {/* Change Mail Subscription */}
-          <button
-            className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
-            onClick={handleChangeMailSubscription}
-          >
-            Change Mail Subscription
-          </button>
+            {/* JobSeeker-specific items */}
+            {userType === "JobSeeker" && (
+              <>
+                <button
+                  className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    handleUpdateCV();
+                  }}
+                >
+                  Update CV
+                </button>
 
-          {/* Delete Account Button */}
-          <button
-            className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
-            onClick={() => {
-              setDropdownOpen(false);
-              handleDeleteAccount();
-            }}
-          >
-            Delete Account
-          </button>
+                <button
+                  className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    handleEditRelevancePoints();
+                  }}
+                >
+                  Edit Relevance Points
+                </button>
+              </>
+            )}
 
-          {/* Log Out Button */}
-          <button
-            className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded mt-2"
-            onClick={() => {
-              setDropdownOpen(false);
-              handleLogout();
-            }}
-          >
-            Log Out
-          </button>
-        </div>
-      )}
-    </div>
+            {/* Change Mail Subscription */}
+            <button
+              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              onClick={handleChangeMailSubscription}
+            >
+              Change Mail Subscription
+            </button>
+
+            {/* Delete Account Button */}
+            <button
+              className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleDeleteAccount();
+              }}
+            >
+              Delete Account
+            </button>
+
+            {/* Log Out Button */}
+            <button
+              className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded mt-2"
+              onClick={() => {
+                setDropdownOpen(false);
+                handleLogout();
+              }}
+            >
+              Log Out
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
