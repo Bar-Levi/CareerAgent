@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+
 const applicantSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -32,9 +33,17 @@ const applicantSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Applied', 'In review', 'Rejected', 'Accepted'],
+        enum: [
+            'Applied',
+            'In Review',
+            'Interview Scheduled',
+            'Interview Done',
+            'Accepted',
+            'Rejected',
+            'Hired'
+        ],
         default: 'Applied',
-    },
+    },    
     notes: {
         type: String,
     },
@@ -59,6 +68,10 @@ const applicantSchema = new mongoose.Schema({
     },
     jobTitle: {
         type: String,
+    },
+    interviewId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Interview',
     },
 });
 

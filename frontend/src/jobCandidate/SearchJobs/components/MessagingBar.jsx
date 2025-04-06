@@ -28,13 +28,13 @@ const MessagingBar = ({
         if (!response.ok) throw new Error("Failed to fetch conversations");
         const data = await response.json();
         // Filter out conversations with zero messages
-        setConversations(data.conversations.filter((c) => c.messages.length) || []);
+        setConversations(data.conversations.filter((c) => c.messages.length && c.participants[0].isVisible) || []);
       } catch (error) {
         console.error("Error fetching conversations:", error);
       }
     };
     fetchConversations();
-  }, [user?._id]);
+  }, [user?._id, renderingConversationKey]);
 
   // If renderingConversationData has a convId, select that conversation
   useEffect(() => {
@@ -137,6 +137,35 @@ const MessagingBar = ({
     return participantName.includes(term) || role.includes(term);
   });
 
+  const handleRemoveConversation = async (conversationId) => {
+    // Capture the removed conversation so we can restore it if the API call fails
+    const removed = conversations.find(c => c._id === conversationId);
+  
+    // Optimistically remove from UI
+    setConversations(prev => prev.filter(c => c._id !== conversationId));
+  
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${conversationId}/hide`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to hide conversation");
+      }
+    } catch (error) {
+      console.error(error);
+      // Revert UI change on failure
+      setConversations(prev => [removed, ...prev]);
+      alert("Could not hide conversation — please try again.");
+    }
+  };
+  
+
+
   return (
     <div
       className="
@@ -216,85 +245,51 @@ const MessagingBar = ({
 
                   return (
                     <li
-  key={conv._id}
-  onClick={() => handleSelectConversation(conv._id, secondParticipant?.profilePic, participantName, conv.jobListingRole)}
-  className={`
-    group
-    relative
-    flex items-start gap-3
-    px-4 py-3
-    border-b last:border-b-0 border-gray-200
-    cursor-pointer
-    transform-gpu
-    transition-all duration-300 ease-out
-    ${
-      isActive
-        ? // ACTIVE STATE
-          "bg-gradient-to-r from-blue-200 to-white border-l-4 border-blue-400 scale-100 shadow-sm"
-        : // HOVER STATE
-          "hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"
-    }
-  `}
->
+                      key={conv._id}
+                      onClick={() => handleSelectConversation(conv._id, secondParticipant?.profilePic, participantName, conv.jobListingRole)}
+                      className={`
+                        group relative flex items-start gap-3 px-4 py-3 border-b last:border-b-0 border-gray-200 cursor-pointer transform-gpu transition-all duration-300 ease-out
+                        ${isActive
+                          ? "bg-gradient-to-r from-blue-200 to-white border-l-4 border-blue-400 scale-100 shadow-sm"
+                          : "hover:scale-[1.02] hover:bg-gray-50 hover:shadow-md"}
+                      `}
+                    >
                       {/* Profile Picture + Online Indicator */}
                       <div className="relative">
-                        <img
-                          src={secondParticipant?.profilePic || "fallback.jpg"}
-                          alt="profilePic"
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        {isOnline && (
-                          <span
-                            className="
-                              absolute
-                              bottom-0 right-0
-                              w-3 h-3
-                              bg-green-500
-                              border-2 border-white
-                              dark:border-gray-800
-                              rounded-full
-                            "
-                          />
-                        )}
+                        <img src={secondParticipant?.profilePic || "fallback.jpg"} alt="profilePic" className="w-10 h-10 rounded-full object-cover" />
+                        {isOnline && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full" />}
                       </div>
 
                       {/* Conversation Info */}
                       <div className="flex flex-col flex-1">
-                        {/* Participant Name & Role Badge */}
-                        <span className="font-semibold text-gray-800 group-hover:text-gray-900 leading-5">
-                          {participantName}
-                        </span>
+                        <span className="font-semibold text-gray-800 group-hover:text-gray-900 leading-5">{participantName}</span>
                         {conv.jobListingRole && (
-                          <span
-                            className="
-                              inline-block
-                              mt-1
-                              w-fit
-                              text-xs
-                              text-gray-600
-                              bg-gray-200
-                              px-2
-                              py-0.5
-                              rounded-full
-                            "
-                          >
+                          <span className="inline-block mt-1 w-fit text-xs text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full">
                             {conv.jobListingRole}
                           </span>
                         )}
-
-                        {/* Last Message (if any) */}
                         {lastMessage && (
                           <div className="flex justify-between items-center mt-2">
                             <span className="text-xs text-gray-500 truncate max-w-[150px]">
                               <b>{lastMessage.senderName}:</b> {lastMessage.text}
                             </span>
-                            <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
-                              {formattedTime}
-                            </span>
+                            <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">{formattedTime}</span>
                           </div>
                         )}
                       </div>
+
+                      {/* Remove Conversation Button */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemoveConversation(conv._id); }}
+                        className="flex-shrink-0 p-1 hover:bg-gray-200 rounded-full transition"
+                        aria-label="Remove conversation"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </li>
+
                   );
                 })}
               </ul>

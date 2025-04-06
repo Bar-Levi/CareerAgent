@@ -12,6 +12,7 @@ const {
     getMinPointsForUpdate,
     setMinPointsForUpdate,
     subscribeOrUnsubscribe,
+    getJobSeekerStatistics,
  } = require('../controllers/jobSeekerPersonalDetailsController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
@@ -50,5 +51,8 @@ router.post('/reset-job-seeker-details', protect, resetJobSeekerPersonalDetails)
 
 // Route to subscribe or unsubscribe from email notifications
 router.put('/subscribeOrUnsubscribe', protect, subscribeOrUnsubscribe);
+
+// Route to get job seeker statistics
+router.get('/statistics', protect, getJobSeekerStatistics);
 
 module.exports = router;

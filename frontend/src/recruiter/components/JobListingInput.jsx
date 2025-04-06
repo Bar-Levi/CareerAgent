@@ -1,19 +1,17 @@
 import React, { useState } from "react";
 import Notification from "../../components/Notification";
 import JobListingModal from "./JobListingModal";
-import SpeechToText from "../../components/SpeechToText"; // Adjust path based on your folder structure
+import SpeechToText from "../../components/SpeechToText";
 
 const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) => {
-    const [input, setInput] = useState(""); // State to hold user input
+    const [input, setInput] = useState("");
     const [notification, setNotification] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
-    const [jobListing, setJobListing] = useState(null); // State for job listing data
-    const [isPosting, setIsPosting] = useState(false); // State for loading interaction
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [jobListing, setJobListing] = useState(null);
+    const [isPosting, setIsPosting] = useState(false);
 
-    // Get token from localStorage
     const token = localStorage.getItem("token");
 
-    // Show notification
     const showNotification = (type, message) => {
         setNotification({ type, message });
         setTimeout(() => setNotification(null), 4000);
@@ -39,14 +37,12 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             }
 
             const jsonResponse = await response.json();
-
-            // Safeguard for JSON extraction in case the expected format is not met
             const jsonRaw = jsonResponse.response;
             const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
             if (!match) {
                 throw new Error("Invalid JSON format in response.");
             }
-            return JSON.parse(match[1]); // Parse the extracted JSON string
+            return JSON.parse(match[1]);
         } catch (error) {
             console.error("Error analyzing free text:", error.message);
             throw error;
@@ -55,7 +51,19 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
 
     const saveJobListing = async (jobListingData) => {
         try {
-            const updatedJobListingData = { ...jobListingData, recruiterId: user._id, recruiterName: user.fullName, recruiterProfileImage: user.profilePic, companyLogo: user.companyLogo};
+            console.log("jobListingData:", jobListingData)
+            const updatedJobListingData = { 
+                ...jobListingData, 
+                recruiterId: user._id, 
+                recruiterName: user.fullName, 
+                recruiterProfileImage: user.profilePic, 
+                companyLogo: user.companyLogo,
+                companyWebsite: user.companyWebsite,
+                companySize: user.companySize,
+                company: user.companyName,
+            };
+            console.log("updatedJobListingData:", updatedJobListingData)
+
 
             const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/joblistings/save`, {
                 method: "POST",
@@ -69,7 +77,6 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
 
             if (!response.ok) {
                 if (response.status === 400) {
-                    // Handle missing fields
                     handleMissingFields(result.jsonToFill);
                 }
                 throw new Error("Failed to save job listing.");
@@ -99,37 +106,45 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
             (field) => !prettyJson[field] || (prettyJson[field].length === 0)
         );
         if (missingFields.length > 0) {
+            console.log("--JobListing: ", { ...prettyJson, missingFields });
             setJobListing({ ...prettyJson, missingFields });
             setIsModalOpen(true);
-            return true; // Missing fields detected
+            return true;
         }
 
-        return false; // All required fields are present
+        return false;
     };
 
     const handlePost = async () => {
-        setIsPosting(true); // Start loading
+        setIsPosting(true);
         try {
-            let analyzedData = await analyzeFreeText(`${input} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`);
+            let analyzedData = await analyzeFreeText(
+                `${input} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`
+            );
+
+            console.log("--Analyzed data: ", analyzedData);
             if (!analyzedData) return;
 
             const hasMissingFields = handleMissingFields(analyzedData);
+
+            console.log("--hasMissingFields: ", hasMissingFields);
+
             if (hasMissingFields) return;
 
-            const saveResult = await saveJobListing(analyzedData);
+            await saveJobListing(analyzedData);
             
-            setInput(""); // Clear the input
+            setInput("");
             if (onPostSuccess) onPostSuccess();
         } catch (error) {
             showNotification("error", error.message);
         } finally {
-            setIsPosting(false); // Stop loading
+            setIsPosting(false);
         }
     };
 
     const handleModalSubmit = async () => {
-        setIsModalOpen(false); // Close modal
-        setIsPosting(true); // Start loading
+        setIsModalOpen(false);
+        setIsPosting(true);
         try {
             const combinedText = input + Object.entries(jobListing).reduce((acc, [key, value]) => {
                 if (key !== "missingFields" && value) {
@@ -138,18 +153,19 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
                 return acc;
             }, "");
 
-            const analyzedData = await analyzeFreeText(combinedText);
-            handleMissingFields(analyzedData);
+            const analyzedData = await analyzeFreeText(`${combinedText} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`
+            );
             if (!analyzedData) return;
+            
+            handleMissingFields(analyzedData);
+            await saveJobListing(analyzedData);
 
-            const saveResult = await saveJobListing(analyzedData);
-
-            setJobListing(null); // Clear job listing state
+            setJobListing(null);
             if (onPostSuccess) onPostSuccess();
         } catch (error) {
             showNotification("error", error.message);
         } finally {
-            setIsPosting(false); // Stop loading
+            setIsPosting(false);
         }
     };
 
@@ -160,59 +176,95 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
     };
 
     return (
-        <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-2xl border-2 border-brand-primary">
-    {notification && (
-        <Notification
-            type={notification.type}
-            message={notification.message}
-            onClose={() => setNotification(null)}
-        />
-    )}
-    <h1 className="text-3xl font-semibold text-brand-primary mb-6 text-center">
-        Find Your Ideal Candidate
-    </h1>
-    <p className="text-gray-600 text-center mb-4">
-        Describe the profile you're looking for, and we'll help you create the perfect job listing!
-    </p>
-    <textarea
-        className="w-full h-48 border-2 border-brand-secondary rounded-lg p-4 text-gray-700 text-lg focus:outline-none focus:ring-4 focus:ring-indigo-300 resize-none placeholder-gray-400 transition-all"
-        placeholder={`Describe your ideal candidate profile here...
-e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience in React.js and TypeScript for a full-time position at TechCorp Inc., based in New York City. The role requires expertise in web performance optimization and responsive design. This is a hybrid position. A Level 2 Security Clearance is required for this role.`}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-    ></textarea>
-    <div className="flex justify-center mt-6 space-x-4">
-        <SpeechToText onTextChange={handleSpeechToText} showNotification={showNotification} />
-        <button
-            onClick={handlePost}
-            disabled={isPosting}
-            className={`px-6 py-3 font-semibold rounded-lg transition-all duration-200 transform ${
-                isPosting
-                    ? "bg-gray-400 text-white cursor-not-allowed scale-100"
-                    : "bg-pink-500 text-white hover:bg-pink-600 hover:scale-105"
-            }`}
-        >
-            {isPosting ? "Posting..." : "POST"}
-        </button>
-    </div>
-    
-    <div className="flex items-center justify-center bg-white p-3">
-    <span className="text-xs text-center text-gray-500">
-        Your job listing is being analyzed to improve your experience.<br />
-        Our bot may occasionally make mistakes, please review and confirm all key details.
-    </span>
-    </div>
+        <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl p-8 w-full max-w-2xl shadow-lg">
+            {notification && (
+                <Notification
+                    type={notification.type}
+                    message={notification.message}
+                    onClose={() => setNotification(null)}
+                />
+            )}
+            
+            <div className="mb-6 flex items-center">
+                <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-800">
+                        Find Your Ideal Candidate
+                    </h1>
+                    <p className="text-gray-500 text-sm">
+                        AI-powered job listing creation
+                    </p>
+                </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+                <textarea
+                    className="w-full h-36 border-0 bg-transparent text-gray-700 text-base focus:outline-none resize-none placeholder-gray-400"
+                    placeholder="Describe your ideal candidate profile here...
+e.g: We are looking for a Senior Front-End Engineer with 5+ years of experience in React.js and TypeScript for a full-time position at TechCorp Inc., based in New York City. The role requires expertise in web performance optimization and responsive design. This is a hybrid position. A Level 2 Security Clearance is required for this role."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                ></textarea>
+            </div>
+            
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center space-x-2">
+                    <span className="text-xs font-medium text-gray-500">POWERED BY</span>
+                    <div className="bg-indigo-100 text-indigo-600 py-1 px-3 rounded-full text-xs font-medium">
+                        CareerAgent AI
+                    </div>
+                </div>
+                
+                <SpeechToText onTextChange={handleSpeechToText} showNotification={showNotification} />
+            </div>
+            
+            <div className="flex justify-center">
+                <button
+                    onClick={handlePost}
+                    disabled={isPosting}
+                    className={`
+                        relative w-full max-w-md py-3.5 px-6 rounded-xl 
+                        font-sans text-sm font-semibold tracking-wide
+                        transform transition-all duration-300
+                        ${isPosting 
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
+                            : "bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"}
+                        after:content-[''] after:absolute after:inset-0 after:bg-white after:rounded-xl after:opacity-0 after:transition-opacity 
+                        after:duration-300 hover:after:opacity-10 active:after:opacity-20
+                        border border-transparent hover:border-indigo-400 
+                        shadow-md`}
+                >
+                    {isPosting ? (
+                        <div className="flex items-center justify-center">
+                            <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Analyzing...
+                        </div>
+                    ) : "Create Job Listing"}
+                </button>
+            </div>
+            
+            <div className="mt-4 text-center">
+                <span className="text-xs text-gray-400">
+                Your job listing is being analyzed to improve your experience.<br />
+                Our bot may occasionally make mistakes, please review and confirm all key details.
+                </span>
+            </div>
 
-
-    <JobListingModal
-        isOpen={isModalOpen}
-        jobListing={jobListing}
-        onChange={(field, value) => setJobListing((prev) => ({ ...prev, [field]: value }))}
-        onSubmit={handleModalSubmit}
-        onClose={handleModalClose}
-    />
-    </div>
-
+            <JobListingModal
+                isOpen={isModalOpen}
+                jobListing={jobListing}
+                onChange={(field, value) => setJobListing((prev) => ({ ...prev, [field]: value }))}
+                onSubmit={handleModalSubmit}
+                onClose={handleModalClose}
+            />
+        </div>
     );
 };
 

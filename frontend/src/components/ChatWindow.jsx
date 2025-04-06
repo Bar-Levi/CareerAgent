@@ -40,6 +40,7 @@ const ChatWindow = ({ user, title, currentOpenConversationId}) => {
   const chatEndRef = useRef(null);
   const [profilePics, setProfilePics] = useState(null);
   const token = localStorage.getItem("token");
+  const [selectedJobListingId, setSelectedJobListingId] = useState(null);
 
   // Refs for scrolling.
   const messagesContainerRef = useRef(null);
@@ -53,6 +54,33 @@ const ChatWindow = ({ user, title, currentOpenConversationId}) => {
         messagesContainerRef.current.scrollHeight;
     }
   };
+
+  useEffect(() => {
+    // Get jobListingId using the currentOpenConversationId
+    const getJobListingId = async () => {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations/jobListingId/${currentOpenConversationId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`, // Include bearer token in the request header
+          },
+        }
+      );
+      const data = await response.json();
+      if (response.status === 404) {
+          // alert(data.message);
+          return;
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log("data: ", data);
+      // Handle response: update the state with the jobListingId received
+      setSelectedJobListingId(data.jobListingId);
+      console.log("Job listing id set to - ", data.jobListingId);
+    };
+    getJobListingId();
+  }, [currentOpenConversationId]);
 
   const loadInitialMessages = async () => { // Error state
     if (!currentOpenConversationId) return;
@@ -73,7 +101,11 @@ const ChatWindow = ({ user, title, currentOpenConversationId}) => {
       const data = await response.json();
       console.log("data: ", data);
       // Handle response: update the state with the messages received
-      setMessages(data.conversation.messages || []);
+      setMessages(
+        (data.conversation.messages || []).sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        )
+      );
       setProfilePics(data.pics);
     } catch (error) {
       // Handle error: log it and update an error state
@@ -246,6 +278,30 @@ const fetchLatestMessage = async () => {
 
  // Send a new message.
 const sendMessage = async ({ text, file }) => {
+  // Check if the jobListing is still available on the database.
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/conversations/jobListingId/${currentOpenConversationId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+    console.log("response: ", response);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        alert(data.message);
+        return;
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    } else {
+      setSelectedJobListingId(data.jobListingId);
+    }
+  
+    console.log("Here");
   let attachmentData = null;
   if (file) {
     try {
@@ -308,6 +364,10 @@ const sendMessage = async ({ text, file }) => {
     await response.json();
   } catch (error) {
     console.error("Error sending message", error);
+  }
+
+  } catch (error) {
+    console.error("Error1 fetching job listing", error);
   }
 };
 
@@ -402,6 +462,7 @@ const sendMessage = async ({ text, file }) => {
         onSend={sendMessage}
         conversationId={currentOpenConversationId}
         senderId={user._id}
+        selectedJobListingId={selectedJobListingId}
       />
     </div>
   );

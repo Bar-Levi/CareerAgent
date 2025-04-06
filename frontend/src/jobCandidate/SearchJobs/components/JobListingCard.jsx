@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaBookmark, FaRegBookmark } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const JobListingCard = ({ 
@@ -11,6 +11,7 @@ const JobListingCard = ({
   setRenderingConversationKey,
   setRenderingConversationData,
   showOnlyApply = false,
+  setUser,
 }) => {
   const {
     jobRole,
@@ -40,7 +41,37 @@ const JobListingCard = ({
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
+  const [isSaved, setIsSaved] = useState(
+    user.savedJobListings?.map(id => id.toString()).includes(jobId.toString())
+  );  
   const token = localStorage.getItem('token');
+
+  const toggleSave = async () => {
+    const method = isSaved ? "DELETE" : "POST";
+    const url = `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/${user._id}/saved/${jobId}`;
+  
+    try {
+      await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+  
+      // Compute new saved list
+      const updatedSaved = isSaved
+        ? user.savedJobListings.filter(id => id.toString() !== jobId.toString())
+        : [...(user.savedJobListings || []), jobId];
+  
+      const updatedUser = { ...user, savedJobListings: updatedSaved };
+  
+      // Push new state into the same route
+      navigate(location.pathname, { state: { ...state, user: updatedUser } });
+  
+      setIsSaved(!isSaved);
+      showNotification("success", isSaved ? "Removed from Saved" : "Job Saved");
+    } catch {
+      showNotification("error", "Unable to update saved jobs");
+    }
+  };  
 
   const handleChatButtonClick = async () => {
     try {
@@ -65,6 +96,7 @@ const JobListingCard = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ 
+          isJobSeeker: true,
           participants,
           jobListingId: jobId,
         }),
@@ -161,6 +193,16 @@ const JobListingCard = ({
           showNotification("success", "Application submitted successfully!");
           setAppliedCounter((prev) => prev + 1);
           setApplyButtonEnabled(false);
+
+          // Update the user state with incremented numOfApplicationsSent
+          const updatedUser = {
+            ...user,
+            numOfApplicationsSent: (user.numOfApplicationsSent || 0) + 1
+          };
+          setUser(updatedUser);
+          
+          // Navigate back to the same location with updated state
+          navigate(location.pathname, { state: { ...state, user: updatedUser } });
         } else {
           showNotification("error", "Failed to update job listing with the new applicant.");
         }
@@ -183,7 +225,7 @@ const JobListingCard = ({
   }, [applicants, user._id]);
 
   return (
-    <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300">
+    <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300 job-listing-card">
       {/* Top Section: Recruiter Info */}
       <div className="flex items-center justify-between space-x-4">
         <div className="flex-shrink-0">
@@ -248,10 +290,10 @@ const JobListingCard = ({
 
       <hr className="border-gray-300 my-4" />
 
-      {/* Bottom Section: Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between">
+      {/* Bottom Section: Action Buttons and Stats */}
+      <div className="flex items-center gap-3">
         <button
-          className={`px-4 py-2 font-semibold rounded transition-all duration-300 ${
+          className={`px-3 py-2 text-base font-semibold rounded transition-all duration-300 whitespace-nowrap ${
             applyButtonEnabled
               ? "bg-gradient-to-tr from-green-300 to-green-600 text-white hover:from-green-400 hover:to-green-700 hover:shadow-lg"
               : "bg-gray-200 text-gray-700 flex items-center justify-center"
@@ -262,87 +304,91 @@ const JobListingCard = ({
           {applyButtonEnabled ? (
             "Apply Now"
           ) : (
-            <span className="flex items-center">
+            <span className="flex items-center whitespace-nowrap">
               <FaCheck className="mr-2 text-green-600" />
               Applied
             </span>
           )}
         </button>
+      
+        <button onClick={toggleSave} className="p-2 rounded hover:bg-gray-200">
+          {isSaved ? <FaBookmark size={18}/> : <FaRegBookmark size={18}/>}
+        </button>
 
         {/* Talk with Chatbot button */}
         {!showOnlyApply && (
         <button
-          className="px-4 py-2 font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg"
+          className="px-4 py-2 text-base font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg whitespace-nowrap"
           onClick={handleInterviewChatClick}
         >
           Talk with Chatbot
         </button>
         )}
 
-        <span className="py-2 text-gray-800 font-semibold rounded cursor-default">
-          Applied: {appliedCounter || 0}
-        </span>
+        <div className="flex items-center gap-4 ml-auto whitespace-nowrap">
+          <span className="text-gray-800 text-base">
+            Applied: {appliedCounter || 0}
+          </span>
 
-        {/* Score Display with Tooltip */}
-        {score !== undefined && (
-          <div className="flex justify-center items-center">
-            <span className="py-2 text-gray-800 font-semibold rounded">
-              Score: {score}
-            </span>
-            {score !== 0 && matchedData && (
-              <div className="relative group cursor-help">
-                <span className="text-gray-800 text-md">
-                  <i className="ml-3 fa fa-info-circle" />
-                </span>
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                  <p className="text-lg font-bold mb-3 border-b pb-2">Matched Criteria</p>
-                  <ul className="list-none pl-0 space-y-1">
-                    {matchedData?.jobRole?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Job Role:</strong>
-                        <span>{matchedData.jobRole.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.jobType?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Job Type:</strong>
-                        <span>{matchedData.jobType.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.securityClearance !== null && (
-                      <li>
-                        <strong className="block text-blue-600">Security Clearance:</strong>
-                        <span>{matchedData.securityClearance}</span>
-                      </li>
-                    )}
-                    {matchedData?.education?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Education:</strong>
-                        <span>{matchedData.education.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.workExperience?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Work Experience:</strong>
-                        <span>{matchedData.workExperience.join(", ")}</span>
-                      </li>
-                    )}
-                    {matchedData?.skills?.length > 0 && (
-                      <li>
-                        <strong className="block text-blue-600">Skills:</strong>
-                        <span>
-                          {matchedData.skills.length > 5
-                            ? matchedData.skills.slice(0, 5).join(", ") + ", ..."
-                            : matchedData.skills.join(", ")}
-                        </span>
-                      </li>
-                    )}
-                  </ul>
+          {/* Score Display with Tooltip */}
+          {score !== undefined && (
+            <div className="flex items-center gap-1 -ml-2">
+              <span className="text-gray-800 text-base">
+                Score: {score}
+              </span>
+              {score !== 0 && matchedData && (
+                <div className="relative group cursor-help">
+                  <span className="text-gray-800 text-base">
+                    <i className="fa fa-info-circle" />
+                  </span>
+                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-3 w-56 border border-gray-300 z-10">
+                    <p className="text-base font-bold mb-2 border-b pb-1">Matched Criteria</p>
+                    <ul className="list-none pl-0 space-y-1">
+                      {matchedData?.jobRole?.length > 0 && (
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Job Role:</strong>
+                          <span className="block truncate">{matchedData.jobRole.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.jobType?.length > 0 && (
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Job Type:</strong>
+                          <span className="block truncate">{matchedData.jobType.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.securityClearance !== null && (
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Security Clearance:</strong>
+                          <span className="block truncate">{matchedData.securityClearance}</span>
+                        </li>
+                      )}
+                      {matchedData?.education?.length > 0 && (
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Education:</strong>
+                          <span className="block truncate">{matchedData.education.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.workExperience?.length > 0 && (
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Work Experience:</strong>
+                          <span className="block truncate">{matchedData.workExperience.join(", ")}</span>
+                        </li>
+                      )}
+                      {matchedData?.skills?.length > 0 && (
+                        <li className="overflow-hidden">
+                          <strong className="block text-blue-600 text-sm">Skills:</strong>
+                          <span className="block truncate">
+                            {matchedData.skills.join(", ")}
+                          </span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

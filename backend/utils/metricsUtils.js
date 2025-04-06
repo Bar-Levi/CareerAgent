@@ -15,7 +15,6 @@ const getMetricsByRecruiterId = async (recruiterId) => {
   try {
     // Fetch all job listings for the given recruiter
     const jobListings = await JobListing.find({ recruiterId });
-
     // If no job listings are found, return metrics with zeros
     if (!jobListings.length) {
       return {
@@ -36,11 +35,13 @@ const getMetricsByRecruiterId = async (recruiterId) => {
       0
     );
 
+    
     // Filter closed job listings (assuming closingTime exists for closed listings)
     const closedJobListings = jobListings.filter(
       (job) => job.closingTime && job.createdAt
     );
 
+    console.log("closedJobListings:" , closedJobListings);
     // Calculate total time to hire (in days) for closed listings
     const totalTimeToHire = closedJobListings.reduce((total, job) => {
       const closingTime = new Date(job.closingTime);

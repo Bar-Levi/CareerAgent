@@ -129,7 +129,23 @@ const jobSeekerSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    numOfApplicationsSent: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
+    numOfReviewedApplications: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
+    numOfInterviewsScheduled: {
+        type: Number,
+        default: 0,
+        required: false,
+    },
     notifications: [notificationSchema],
+    savedJobListings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobListing' }],
 });
 
 // Pre-save hook to update verificationCodeSentAt when verificationCode changes
@@ -140,4 +156,5 @@ jobSeekerSchema.pre('save', function (next) {
     next();
 });
 
-module.exports = mongoose.model('JobSeeker', jobSeekerSchema);
+module.exports = mongoose.models.JobSeeker ||
+mongoose.model('JobSeeker', jobSeekerSchema);

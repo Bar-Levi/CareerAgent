@@ -3,7 +3,6 @@ import PersonalOverview from "../components/PersonalOverview";
 import JobApplications from "../components/JobApplications";
 import UpcomingEvents from "../components/UpcomingEvents";
 import PerformanceInsights from "../components/PerformanceInsights";
-import Gamification from "../components/Gamification";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
@@ -19,7 +18,7 @@ const JobCandidateDashboard = ({onlineUsers}) => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 animate-fade-in">
+    <div className="h-screen flex flex-col bg-gray-100 animate-fade-in overflow-hidden">
       <Botpress />
       <NavigationBar userType={state?.user?.role || state?.role} notifications={state?.user?.notifications || []}/>
 
@@ -31,12 +30,25 @@ const JobCandidateDashboard = ({onlineUsers}) => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <PersonalOverview user={state.user}/>
-        <JobApplications user={state.user}/>
-        <UpcomingEvents />
-        <PerformanceInsights />
-        <Gamification />
+      <div className="flex-1 p-4 overflow-hidden min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+          <div className="grid grid-rows-2 gap-4 h-full min-h-0">
+            <div className="h-full overflow-hidden min-h-0">
+              <PersonalOverview user={state.user}/>
+            </div>
+            <div className="h-full overflow-hidden min-h-0">
+              <JobApplications user={state.user}/>
+            </div>
+          </div>
+          <div className="grid grid-rows-2 gap-4 h-full min-h-0">
+            <div className="h-full overflow-hidden min-h-0">
+              <UpcomingEvents user={state.user}/>
+            </div>
+            <div className="h-full overflow-hidden min-h-0">
+              <PerformanceInsights />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

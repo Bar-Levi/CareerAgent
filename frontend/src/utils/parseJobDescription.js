@@ -1,37 +1,29 @@
-export const parseJobDescription = (desc = "") => {
-  // Regex groups:
-  // (.*)     => all text before `company:`
-  // (.*)     => text after `company:` until `company size:`
-  // (.*)     => text after `company size:` until `company website:`
-  // (.*)     => text after `company website:` to the end
-  const regex = /(.*)company:\s*(.*)company size:\s*(.*)company website:\s*(.*)/i;
-  const match = desc.match(regex);
+export const parseJobDescription = (description = "") => {
+  /* 
+    Revised Regex explanation:
+    - (.*)                   => Capture everything (including newlines) before the footer block.
+                                This will be our main description.
+    - company:\s*([^,]+),   => After the literal "company:" (followed by optional spaces),
+                                capture one or more characters that are not a comma. This is our company.
+    - \s*company size:\s*([^,]+),  => After a comma and optional spaces, match "company size:" 
+                                and capture the non-comma text for company size.
+    - \s*company website:\s*(.*)$  => Finally, after a comma and optional spaces, match "company website:" 
+                                and capture everything until the end (company website).
+    
+    We use the 'i' flag for case-insensitive matching.
+  */
+  const regex = /(.*)company:\s*([^,]+),\s*company size:\s*([^,]+),\s*company website:\s*(.*)$/is;
+  const match = description.match(regex);
   
   if (!match) {
-    // If it doesn’t match this pattern, just return the entire string
-    return <p>{desc}</p>;
+    // If it doesn’t match, return the entire description as a paragraph
+    return <p>{description}</p>;
   }
-
+  
+  // Group 1: Everything before the footer block
   const descriptionMain = match[1].trim();
-  const company = match[2].replace(/,\s*$/, "").trim(); // remove trailing comma
-  const companySize = match[3].replace(/,\s*$/, "").trim();
-
-  // If the website portion is empty, default to "Not provided"
-  const rawWebsite = match[4].replace(/,\s*$/, "").trim();
-  const companyWebsite = rawWebsite ? rawWebsite : "Not provided";
 
   return (
-    <>
-      <p>{descriptionMain}</p>
-      <p>
-        <strong>Company:</strong> {company}
-      </p>
-      <p>
-        <strong>Company Size:</strong> {companySize}
-      </p>
-      <p>
-        <strong>Company Website:</strong> {companyWebsite}
-      </p>
-    </>
+    <p>{descriptionMain}</p>
   );
 };

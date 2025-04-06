@@ -47,6 +47,15 @@ const JobListingCardsList = ({
     loadRelevancePoints();
   }, [user.email, user.relevancePoints]);
 
+  // Update the count to reflect filtered results
+  useEffect(() => {
+    const savedIds = new Set((user.savedJobListings || []).map(id => id.toString()));
+    const currentFilteredListings = sortingMethod === 'saved'
+      ? jobListings.filter(job => savedIds.has(job._id.toString()))
+      : jobListings;
+    setJobListingsCount(currentFilteredListings.length);
+  }, [jobListings, sortingMethod, user.savedJobListings, setJobListingsCount]);
+
   // Fetch job listings and sort them
   useEffect(() => {
     const fetchAndSortJobListings = async (triesLeft) => {
@@ -134,7 +143,6 @@ const JobListingCardsList = ({
         }
 
         setJobListings(sortedListings);
-        setJobListingsCount(sortedListings.length);
         setLoading(false);
       } catch (err) {
         setLoading(false);
@@ -210,7 +218,12 @@ const JobListingCardsList = ({
       skills: []
     };
   
-    const userData = user.analyzed_cv_content;
+    const userData = user?.analyzed_cv_content;
+    
+    // If no user data, return zero score
+    if (!userData) {
+      return { score: 0, matchedData };
+    }
   
     // Destructure relevance point values
     const {
@@ -222,7 +235,7 @@ const JobListingCardsList = ({
     } = relevancePoints;
   
     // Job Roles match
-    if (userData.job_role) {
+    if (userData.job_role && Array.isArray(userData.job_role)) {
       for (const job of userData.job_role) {
         if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
           score += matchedJobRolePoints;
@@ -232,7 +245,7 @@ const JobListingCardsList = ({
     }
   
     // Job Types match
-    if (userData.job_role) {
+    if (userData.job_role && Array.isArray(userData.job_role)) {
       if (userData.job_role.includes('Student')) {
         if (jobListing.jobType.includes('Student')) {
           score += 20;
@@ -256,7 +269,8 @@ const JobListingCardsList = ({
     }
   
     // Education match
-    if (userData.education.length > 0 && jobListing.education.length > 0) {
+    if (userData.education && Array.isArray(userData.education) && userData.education.length > 0 && 
+        jobListing.education && Array.isArray(jobListing.education) && jobListing.education.length > 0) {
       userData.education.forEach(edu => {
         if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
           score += matchedEducationPoints;
@@ -266,17 +280,17 @@ const JobListingCardsList = ({
     }
   
     // Previous work experience match
-    const { matchedJobs = [], experienceScore = 0 } =
-      jobListing.workExperience
-        ? calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints) || {}
-        : {};
-    if (experienceScore > 0) {
-      matchedData.workExperience.push(...matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
+    const workExperienceResult = jobListing.workExperience && userData.work_experience
+      ? calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperiencePoints)
+      : { matchedJobs: [], experienceScore: 0 };
+
+    if (workExperienceResult.experienceScore > 0) {
+      matchedData.workExperience.push(...workExperienceResult.matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
     }
-    score += experienceScore;
+    score += workExperienceResult.experienceScore;
   
     // Skills match
-    if (userData.skills) {
+    if (userData.skills && Array.isArray(userData.skills) && jobListing.skills && Array.isArray(jobListing.skills)) {
       const matchedSkills = jobListing.skills.filter(skill =>
         userData.skills.includes(skill)
       );
@@ -288,30 +302,83 @@ const JobListingCardsList = ({
     return { score, matchedData };
   }
   
-
+  // Apply "Saved" filter if selected
+  const savedIds = new Set((user.savedJobListings || []).map(id => id.toString()));
+  const filteredListings =
+    sortingMethod === 'saved'
+      ? jobListings.filter(job => savedIds.has(job._id.toString()))
+      : jobListings;
 
   return (
     <div className="space-y-4 p-4">
-      {jobListings.map((jobListing) => (
-        <div
-          key={jobListing._id}
-          onClick={() => {
-            onJobSelect(jobListing);
-          }}
-          className="cursor-pointer"
-        >
-          <JobListingCard
-            onJobSelect={onJobSelect}
-            jobListing={jobListing}
-            user={user}
-            setUser={setUser}
-            setShowModal={setShowModal}
-            showNotification={showNotification}
-            setRenderingConversationKey={setRenderingConversationKey}
-            setRenderingConversationData={setRenderingConversationData}
-          />
+      {filteredListings.length === 0 && sortingMethod === 'saved' ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <svg
+            className="w-16 h-16 text-gray-300 mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+            />
+          </svg>
+          <p className="text-xl text-gray-600 font-medium">
+            No saved job listings yet
+          </p>
+          <p className="text-gray-400 mt-2 text-center">
+            Click the bookmark icon on any job listing to save it for later
+          </p>
         </div>
-      ))}
+      ) : filteredListings.length === 0 ?
+      (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+            <svg
+              className="w-16 h-16 text-gray-300 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              ></path>
+            </svg>
+            <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">
+              No active job listings
+            </p>
+            <p className="text-gray-400 mt-2 text-center">
+              New job listings will appear here once created
+            </p>
+          </div>
+      ):
+      (
+        filteredListings.map((jobListing) => (
+          <div
+            key={jobListing._id}
+            onClick={() => {
+              onJobSelect(jobListing);
+            }}
+            className="cursor-pointer"
+          >
+            <JobListingCard
+              onJobSelect={onJobSelect}
+              jobListing={jobListing}
+              user={user}
+              setUser={setUser}
+              setShowModal={setShowModal}
+              showNotification={showNotification}
+              setRenderingConversationKey={setRenderingConversationKey}
+              setRenderingConversationData={setRenderingConversationData}
+            />
+          </div>
+        ))
+      )}
     </div>
   );
 };

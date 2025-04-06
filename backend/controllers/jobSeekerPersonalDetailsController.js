@@ -1,4 +1,3 @@
-
 const bcrypt = require('bcryptjs');
 const CryptoJS = require('crypto-js');
 const cloudinary = require('../config/cloudinary');
@@ -11,42 +10,7 @@ const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
 const defaultProfilePic = "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png";
 const defaultCompanyLogo = "https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png";
-
-/**
- * Helper function to extract Cloudinary public_id from the secure_url.
- * Assumes the URL is in the standard format. 
- * Returns: "profile_pictures/filename"
- */
-const extractPublicId = (url) => {
-  const cloudName = cloudinary.config().cloud_name;
-  const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload/`;
-  if (!url.startsWith(baseUrl)) return null;
-  let publicIdWithExt = url.substring(baseUrl.length); // e.g. "v1735084555/profile_pictures/filename.png"
-  // Remove version if present (starts with v followed by digits)
-  const parts = publicIdWithExt.split('/');
-  if (parts[0].startsWith('v')) {
-    parts.shift();
-  }
-  const publicIdWithExtNoQuery = parts.join('/');
-  const dotIndex = publicIdWithExtNoQuery.lastIndexOf('.');
-  const publicId = dotIndex !== -1 ? publicIdWithExtNoQuery.substring(0, dotIndex) : publicIdWithExtNoQuery;
-  return publicId;
-};
-
-/**
- * Wrap Cloudinary's destroy method in a Promise.
- */
-const deleteFromCloudinary = (publicId) => {
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.destroy(publicId, (error, result) => {
-      if (error) {
-        console.error("Cloudinary destroy error:", error);
-        return reject(error);
-      }
-      return resolve(result);
-    });
-  });
-};
+const { extractPublicId, deleteFromCloudinary } = require('../utils/cloudinaryUtils');
 
 /**
  * Controller to change a user's password.
@@ -570,6 +534,38 @@ const subscribeOrUnsubscribe = async (req, res) => {
   }
 };
 
+const getJobSeekerStatistics = async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found." });
+    }
+
+    const statistics = {
+      numOfApplicationsSent: jobSeeker.numOfApplicationsSent || 0,
+      numOfInterviewsScheduled: jobSeeker.numOfInterviewsScheduled || 0,
+      numOfReviewedApplications: jobSeeker.numOfReviewedApplications || 0
+    };
+
+    // Calculate interview success rate
+    const interviewSuccessRate = statistics.numOfReviewedApplications > 0 
+      ? (statistics.numOfInterviewsScheduled / statistics.numOfReviewedApplications) * 100 
+      : 0;
+
+    statistics.interviewSuccessRate = interviewSuccessRate;
+
+    res.status(200).json(statistics);
+  } catch (error) {
+    console.error("Error fetching job seeker statistics:", error);
+    res.status(500).json({ message: "Failed to fetch statistics" });
+  }
+};
+
 module.exports = {
   changePassword,
   changePic,
@@ -584,5 +580,5 @@ module.exports = {
   deleteCV,
   uploadCVMiddleware: uploadCV.single("cv"),
   subscribeOrUnsubscribe,
-
+  getJobSeekerStatistics,
 };

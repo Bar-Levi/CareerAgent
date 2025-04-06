@@ -13,6 +13,9 @@ const jobListingRoutes = require("./routes/jobListingRoutes");
 const applicantsRoutes = require('./routes/applicantRoutes');
 const conversationRoutes = require("./routes/conversationRoutes");
 const mailNotificationRoutes = require("./routes/mailNotificationsRoutes");
+const interviewRoutes = require("./routes/interviewRoutes");
+const saveJobListingRoutes = require('./routes/saveJobListingRoutes');
+
 require('./tasks/cleanupTokens');
 
 // Load environment variables and connect to DB
@@ -23,7 +26,11 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(bodyParser.json());
 
@@ -38,6 +45,8 @@ app.use("/api/joblistings", jobListingRoutes);
 app.use("/api/applicants", applicantsRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use('/api/mailNotifications', mailNotificationRoutes);
+app.use("/api/interviews", interviewRoutes);
+app.use('/api/jobseeker', saveJobListingRoutes);
 
 // Create HTTP server and integrate Socket.IO
 const http = require("http");

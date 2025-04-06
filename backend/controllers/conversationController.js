@@ -48,9 +48,6 @@ const getConversationById = async (req, res) => {
     const recruiter = await Recruiter.findById(recruiterId);
     const jobSeeker = await JobSeeker.findById(jobSeekerId);
 
-    console.log("Recruiter:", recruiter);
-    console.log("JobSeeker:", jobSeeker);
-
     // Build an array of profilePics.
     // (If recruiter or jobSeeker is null, use optional chaining or defaults.)
     const profilePics = [
@@ -66,8 +63,6 @@ const getConversationById = async (req, res) => {
       },
     ];
 
-    console.log("profilePics:", profilePics);
-
     res.json({ conversation: conversationObj, pics: profilePics });
   } catch (err) {
     console.error("Error fetching conversation:", err);
@@ -78,8 +73,8 @@ const getConversationById = async (req, res) => {
 
 
 const createConversation = async (req, res) => {
-  const { participants, jobListingId, isGroupChat, groupChatName } = req.body;
-  console.log("participants:", participants);
+  const { isJobSeeker, participants, jobListingId, isGroupChat, groupChatName } = req.body;
+  
   if (!jobListingId) {
     return res.status(400).json({ message: "jobListingId is required" });
   }
@@ -90,7 +85,7 @@ const createConversation = async (req, res) => {
     if (!jobListingObject) {
       return res.status(404).json({ message: "Job listing not found" });
     }
-    console.log("jobListing object: ", jobListingObject);
+    
     // Check if a conversation with the same participants and jobListingId already exists
     const participantIds = participants.map((p) => p.userId);
 
@@ -107,6 +102,9 @@ const createConversation = async (req, res) => {
     });
 
     if (existingConversation) {
+      isJobSeeker ? existingConversation.participants[0].isVisible = true : existingConversation.participants[1].isVisible = true;
+      await existingConversation.save();
+
       return res.status(200).json({ conversation: existingConversation, jobListingObject });
     }
 
@@ -116,8 +114,8 @@ const createConversation = async (req, res) => {
     const conversation = new Conversation(newConversationObject);
     const newConversation = await conversation.save();
 
-    console.log("New conversation: ", newConversation);
-    console.log("Job listing: ", jobListingObject);
+    
+    
     res.status(201).json({ conversation: newConversation, jobListingObject });
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -200,6 +198,11 @@ const addMessageToConversation = async (req, res) => {
 
     const jobListing = await JobListing.findById(conversation.jobListingId);
 
+    // Check if the job listing already removed
+    if(!jobListing) {
+      return res.status(404).json({ message: "Job listing was removed by the recruiter..." });
+    }
+
     // Create and push a new notification to the receiver
     const newNotification = {
       type: "chat",
@@ -212,6 +215,7 @@ const addMessageToConversation = async (req, res) => {
           conversationId: conversation._id,
           secondParticipantProfilePic: senderRole === "Recruiter" ? conversation.participants[1].profilePic : conversation.participants[0].profilePic,
           jobListing,
+          viewMode: "messages"
         },
       },
     };
@@ -302,22 +306,20 @@ const getJobListingConversations = async (req, res) => {
 const getConversationByJobCandidateId = async (req, res) => {
   try {
     const userId = req.params.userId;
-    console.log("UserId:", userId);
+    
 
     // Find conversations where participants[0].userId matches the userId
     const conversations = await Conversation.find({
       "participants.0.userId": userId,
     });
 
-    console.log("Conversations:", conversations);
+    
     res.status(200).json({ conversations });
   } catch (err) {
     console.error("Error fetching conversations:", err);
     res.status(500).json({ message: err.message });
   }
 };
-
-
 
 const markMessagesAsReadInternal = async (conversationId, readerId) => {
   // Update all messages (where the sender is not the reader) to read: true
@@ -364,6 +366,55 @@ const markMessagesAsRead = async (req, res) => {
   }
 };
 
+const getJobListingIdByConversationId = async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const conversation = await Conversation.findById(conversationId);
+    console.log("conversationId: ",conversationId);
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+    console.log("conversation.jobListingId: ",conversation.jobListingId);
+    if (!conversation.jobListingId) {
+      return res.status(404).json({ message: "Job listing not found." });
+    } else {
+      const jobListing = await JobListing.findById(conversation.jobListingId);
+      if (!jobListing) {
+        return res.status(404).json({ message: "Job listing not found." });
+      }
+    }
+    console.log("Got here!");
+    res.status(200).json({ jobListingId: conversation.jobListingId });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const hideConversation = async (req, res) => {
+  try {
+    const { convId } = req.params;
+    const userId = req.user._id;
+
+    console.log("convid", convId);
+    console.log("userId", userId);
+
+    const result = await Conversation.updateOne(
+      { _id: convId, "participants.0.userId": userId },
+      { $set: { "participants.$.isVisible": false } }
+    );
+
+    if (!result.matchedCount) {
+      res.status(404);
+      throw new Error("Conversation not found or you are not a participant");
+    }
+
+    res.status(200).json({ message: "Conversation hidden successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
 module.exports = {
   getAllConversations,
   getConversationById,
@@ -377,5 +428,7 @@ module.exports = {
   markMessagesAsRead,
   markMessagesAsReadInternal,
   markMessagesAsRead,
-  getConversationByJobCandidateId
+  getConversationByJobCandidateId,
+  getJobListingIdByConversationId,
+  hideConversation
 };

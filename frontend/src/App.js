@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import ProtectedRoute from './routes/ProtectedRoute';
 import AuthenticationPage from './pages/AuthenticationPage';
 import Dashboard from './pages/Dashboard';
@@ -18,6 +18,7 @@ import socket from "./socket";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import RecruiterApplicantsTracker from './recruiter/pages/RecruiterApplicantsTracker';
 
 function App() {
     const [onlineUsers, setOnlineUsers] = useState([]);
@@ -73,9 +74,14 @@ function App() {
                     <ProtectedRoute>
                         <SearchJobs onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
-                    } />
-
-            </Routes>
+                }/>
+                <Route path="/recruiter-candidate-tracker" element={
+                    <ProtectedRoute>
+                        <RecruiterApplicantsTracker onlineUsers={onlineUsers}/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
         </Router>
         </>
     );

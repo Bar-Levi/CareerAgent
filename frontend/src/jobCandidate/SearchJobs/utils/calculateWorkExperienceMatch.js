@@ -16,6 +16,10 @@ function calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperienc
   const normalizedJobListingRole = normalizeText(jobListing.jobRole);
   const listingTokens = new Set(normalizedJobListingRole.split(" "));
 
+  if (!userData.work_experience || !Array.isArray(userData.work_experience)) {
+    return { matchedJobs: [], experienceScore: 0 };
+  }
+
   userData.work_experience.forEach((experience) => {
     // Normalize the job titles
     const normalizedUserJobTitle = normalizeText(experience.job_title);
@@ -43,7 +47,7 @@ function calculateWorkExperienceMatch(userData, jobListing, matchedWorkExperienc
       experienceScore: matchedWorkExperiencePoints,
     };
   } else {
-    return 0;
+    return { matchedJobs: [], experienceScore: 0 };
   }
 }
 
