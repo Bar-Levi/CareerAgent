@@ -220,6 +220,15 @@ const showChangePasswordModal = async (user) => {
       formValues.oldPassword = CryptoJS.AES.encrypt(formValues.oldPassword, secretKey).toString();
       formValues.newPassword = CryptoJS.AES.encrypt(formValues.newPassword, secretKey).toString();
 
+      // Show loading screen before making the request
+      Swal.fire({
+        title: "Changing Password...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       return fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/personal/change-password`,
         {
