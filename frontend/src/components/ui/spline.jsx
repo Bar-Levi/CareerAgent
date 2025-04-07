@@ -1,23 +1,41 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
+import LoadingPage from '../../landingPage/components/LoadingPage';
 
 const Spline = lazy(() => import('@splinetool/react-spline'));
 
-const LoadingSpinner = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="relative w-16 h-16">
-      <div className="absolute inset-0 border-4 border-blue-500/30 rounded-full"></div>
-      <div className="absolute inset-0 border-4 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-      <span className="loader"></span>
-    </div>
-  </div>
-);
-
 const SplineScene = ({ scene, className }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasSeenLanding, setHasSeenLanding] = useState(false);
+
+  useEffect(() => {
+    // Check if user has seen the landing page before
+    const hasSeen = localStorage.getItem('hasSeenLanding');
+    if (hasSeen) {
+      setHasSeenLanding(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Simulate minimum loading time for better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      // Mark that user has seen the landing page
+      localStorage.setItem('hasSeenLanding', 'true');
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading && !hasSeenLanding) {
+    return <LoadingPage />;
+  }
+
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={null}>
       <Spline
         scene={scene}
         className={className}
+        onLoad={() => setIsLoading(false)}
       />
     </Suspense>
   );
