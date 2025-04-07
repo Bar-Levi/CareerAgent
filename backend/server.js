@@ -40,6 +40,10 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 // Routes
+// Create health route
+app.get('/health', (req, res) => {
+  res.status(200).json({ message: 'Server is running' });
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/personal', personalDetailsRoutes);
