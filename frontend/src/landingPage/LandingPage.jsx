@@ -3,7 +3,6 @@ import Hero from "./components/Hero";
 import Features from "./components/Features";
 import DemoSection from "./components/DemoSection";
 import Testimonials from "./components/Testimonials";
-import Footer from "./components/Footer";
 import Botpress from "../botpress/Botpress";
 
 const LandingPage = () => {
@@ -21,9 +20,6 @@ const LandingPage = () => {
       </section>
       <section className="w-full h-screen flex-shrink-0 snap-start">
         <Testimonials />
-      </section>
-      <section className="w-full flex-shrink-0 snap-start">
-        <Footer />
       </section>
     </div>
   );

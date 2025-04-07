@@ -1,23 +1,30 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
+import LoadingPage from '../../landingPage/components/LoadingPage';
 
 const Spline = lazy(() => import('@splinetool/react-spline'));
 
-const LoadingSpinner = () => (
-  <div className="w-full h-full flex items-center justify-center">
-    <div className="relative w-16 h-16">
-      <div className="absolute inset-0 border-4 border-blue-500/30 rounded-full"></div>
-      <div className="absolute inset-0 border-4 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-      <span className="loader"></span>
-    </div>
-  </div>
-);
-
 const SplineScene = ({ scene, className }) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate minimum loading time for better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingPage />;
+  }
+
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<LoadingPage />}>
       <Spline
         scene={scene}
         className={className}
+        onLoad={() => setIsLoading(false)}
       />
     </Suspense>
   );
