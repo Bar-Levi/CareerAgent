@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { FaCogs } from "react-icons/fa";
+import { 
+  FaCogs, 
+  FaKey, 
+  FaUserCircle,
+  FaUserEdit,
+  FaBuilding, 
+  FaFileAlt, 
+  FaStar, 
+  FaEnvelope, 
+  FaTrash, 
+  FaSignOutAlt 
+} from "react-icons/fa";
 import showChangePasswordModal from "./modals/ChangePasswordModal";
 import showChangePicModal from "./modals/ChangePicModal";
 import { showJobSeekerPersonalDetailsModal } from "./modals/PersonalDetailsModal";
@@ -124,112 +135,123 @@ const ProfileMenu = ({ userType, user }) => {
       )}
       <div className="relative dropdown">
         <button
-          className="flex items-center px-4 py-2 rounded font-medium transition duration-300 bg-brand-secondary text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+          className="flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-300 bg-brand-secondary text-brand-primary hover:bg-brand-primary hover:text-brand-secondary shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           onClick={() => setDropdownOpen((prev) => !prev)}
         >
-          <FaCogs className="mr-2" /> Settings
+          <FaCogs className="mr-2 text-lg" /> Settings
         </button>
         {dropdownOpen && (
-          <div className="absolute right-0 mt-2 w-48 bg-brand-secondary shadow-lg rounded-md py-2 z-50">
+          <div className="absolute right-0 mt-2 w-56 bg-white shadow-xl rounded-lg py-2 z-50 border border-gray-100">
             {/* Change Password */}
             <button
-              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
               onClick={() => {
                 setDropdownOpen(false);
                 handleChangePassword();
               }}
             >
-              Change Password
+              <FaKey className="mr-3 text-lg min-w-[24px]" />
+              <span className="text-left">Change Password</span>
             </button>
 
-            {/* Change Profile Picture (always shown) */}
+            {/* Change Profile Picture */}
             <button
-              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
               onClick={() => {
                 setDropdownOpen(false);
-                handleChangePic("profile"); // <== pass "profile" as the picType
+                handleChangePic("profile");
               }}
             >
-              Change Profile Picture
+              <FaUserCircle className="mr-3 text-lg min-w-[24px]" />
+              <span className="text-left">Change Profile Picture</span>
             </button>
 
             {/* Recruiter-specific: Change Company Logo */}
             {userType === "Recruiter" && (
               <button
-                className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
                 onClick={() => {
                   setDropdownOpen(false);
-                  handleChangePic("company"); // <== pass "company" as the picType
+                  handleChangePic("company");
                 }}
               >
-                Change Company Logo
+                <FaBuilding className="mr-3 text-lg min-w-[24px]" />
+                <span className="text-left">Change Company Logo</span>
               </button>
             )}
 
             {/* Change Personal Details */}
             <button
-              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
               onClick={() => {
                 setDropdownOpen(false);
                 handleChangePersonalDetails();
               }}
             >
-              Change Personal Details
+              <FaUserEdit className="mr-3 text-lg min-w-[24px]" />
+              <span className="text-left">Change Personal Details</span>
             </button>
 
             {/* JobSeeker-specific items */}
             {userType === "JobSeeker" && (
               <>
                 <button
-                  className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                  className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
                   onClick={() => {
                     setDropdownOpen(false);
                     handleUpdateCV();
                   }}
                 >
-                  Update CV
+                  <FaFileAlt className="mr-3 text-lg min-w-[24px]" />
+                  <span className="text-left">Update CV</span>
                 </button>
 
                 <button
-                  className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+                  className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
                   onClick={() => {
                     setDropdownOpen(false);
                     handleEditRelevancePoints();
                   }}
                 >
-                  Edit Relevance Points
+                  <FaStar className="mr-3 text-lg min-w-[24px]" />
+                  <span className="text-left">Edit Relevance Points</span>
                 </button>
               </>
             )}
 
             {/* Change Mail Subscription */}
             <button
-              className="block w-full text-left px-4 py-2 text-brand-primary hover:bg-brand-primary hover:text-brand-secondary"
+              className="flex items-center justify-start w-full px-4 py-3 text-gray-700 hover:bg-brand-secondary/40 hover:text-brand-primary hover:border-l-4 hover:border-brand-primary transition-all duration-100"
               onClick={handleChangeMailSubscription}
             >
-              Change Mail Subscription
+              <FaEnvelope className="mr-3 text-lg min-w-[24px]" />
+              <span className="text-left">Change Mail Subscription</span>
             </button>
+
+            <div className="border-t border-gray-100 my-2"></div>
 
             {/* Delete Account Button */}
             <button
-              className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded"
+              className="flex items-center justify-start w-full px-4 py-3 text-red-600 hover:bg-red-200 hover:text-red-700 hover:border-l-4 hover:border-red-600 transition-all duration-100"
               onClick={() => {
                 setDropdownOpen(false);
                 handleDeleteAccount();
               }}
             >
-              Delete Account
+              <FaTrash className="mr-3 text-lg min-w-[24px]" />
+              <span className="text-left">Delete Account</span>
             </button>
 
             {/* Log Out Button */}
             <button
-              className="block w-full text-left px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded mt-2"
+              className="flex items-center justify-start w-full px-4 py-3 text-red-600 hover:bg-red-200 hover:text-red-700 hover:border-l-4 hover:border-red-600 transition-all duration-100"
               onClick={() => {
                 setDropdownOpen(false);
                 handleLogout();
               }}
             >
-              Log Out
+              <FaSignOutAlt className="mr-3 text-lg min-w-[24px]" />
+              <span className="text-left">Log Out</span>
             </button>
           </div>
         )}
