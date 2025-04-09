@@ -376,6 +376,9 @@ const ChatsPage = () => {
                       <div className="flex items-center space-x-2">
                         <FiBriefcase className="text-blue-600" />
                         <h3 className="text-lg font-semibold text-gray-800">Career Advisor</h3>
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">
+                          {careerChats.length}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
@@ -487,7 +490,7 @@ const ChatsPage = () => {
                                     onClick={() => createNewConversation("careerAdvisor")}
                                     className="mt-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
                                   >
-                                    Start your first chat
+                                    Start your first career advisement
                                   </button>
                                 </motion.div>
                               )}
@@ -513,6 +516,9 @@ const ChatsPage = () => {
                       <div className="flex items-center space-x-2">
                         <FiMessageSquare className="text-green-600" />
                         <h3 className="text-lg font-semibold text-gray-800">Interviewer</h3>
+                        <span className="px-2 py-0.5 bg-green-50 text-green-600 text-xs font-medium rounded-full">
+                          {interviewChats.length}
+                        </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
