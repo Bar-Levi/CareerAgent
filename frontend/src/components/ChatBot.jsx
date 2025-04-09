@@ -16,15 +16,19 @@ const ChatBot = ({
   initialMessages = [],
   jobData,
 }) => {
-  const [messages, setMessages] = useState(initialMessages);
+  const { state } = useLocation();
+  const email = state?.email || "";
+  const token = state?.token || "";
+  
+  const [messages, setMessages] = useState(initialMessages.map(msg => ({
+    ...msg,
+    fullName: msg.fullName || state?.user?.fullName || "User"
+  })));
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState("");
   const autoPromptSentRef = useRef(false);
   const messagesEndRef = useRef(null);
-  const { state } = useLocation();
-  const email = state?.email || "";
-  const token = state?.token || "";
   const MAX_MESSAGE_COUNT = 100;
   const [notification, setNotification] = useState(null);
 
@@ -115,7 +119,7 @@ const ChatBot = ({
       sender: "user",
       text: textToSend,
       timestamp: new Date().toISOString(),
-      fullName: state?.user?.fullName || "User",
+      fullName: state?.user?.fullName || state?.fullName || "User",
     };
 
     if (messages.length < MAX_MESSAGE_COUNT)
