@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ChatBot from "../components/ChatBot";
 import NavigationBar from "../components/NavigationBar/NavigationBar";
 import Notification from "../components/Notification";
+import Tooltip from "../components/Tooltip";
 import Botpress from "../botpress/Botpress";
 import { 
   FiEdit, 
@@ -451,9 +452,11 @@ const ChatsPage = () => {
                                   ) : (
                                     <div className="flex items-center space-x-3">
                                       <div className="flex-1 min-w-0" onClick={() => handleChatSelection(chat, "careerAdvisor")}>
-                                        <p className="font-medium text-gray-800 truncate">
-                                          {chat.conversationTitle}
-                                        </p>
+                                        <Tooltip content={chat.conversationTitle}>
+                                          <p className="font-medium text-gray-800 truncate">
+                                            {chat.conversationTitle}
+                                          </p>
+                                        </Tooltip>
                                         <div className="flex items-center text-sm text-gray-500 mt-1">
                                           <FiClock className="w-3 h-3 mr-1" />
                                           {prettyDate(chat.createdAt)}
@@ -590,9 +593,11 @@ const ChatsPage = () => {
                                   ) : (
                                     <div className="flex items-center space-x-3">
                                       <div className="flex-1 min-w-0" onClick={() => handleChatSelection(chat, "interviewer")}>
-                                        <p className="font-medium text-gray-800 truncate">
-                                          {chat.conversationTitle}
-                                        </p>
+                                        <Tooltip content={chat.conversationTitle}>
+                                          <p className="font-medium text-gray-800 truncate">
+                                            {chat.conversationTitle}
+                                          </p>
+                                        </Tooltip>
                                         <div className="flex items-center text-sm text-gray-500 mt-1">
                                           <FiClock className="w-3 h-3 mr-1" />
                                           {prettyDate(chat.createdAt)}
