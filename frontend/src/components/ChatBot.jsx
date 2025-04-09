@@ -222,11 +222,11 @@ const ChatBot = ({
                     {botSettings.avatar}
                   </div>
                 )}
-                <div className={`max-w-[70%] ${msg.sender === "user" ? "order-1" : "order-2"}`}>
+                <div className={`max-w-[70%] ${msg.sender === "user" ? "order-2" : "order-2"}`}>
                   <div
                     className={`p-3 rounded-2xl ${
                       msg.sender === "user"
-                        ? "bg-blue-600 text-white rounded-br-none"
+                        ? "bg-blue-600 text-white rounded-bl-none"
                         : "bg-white text-gray-800 rounded-bl-none shadow-sm"
                     }`}
                   >
@@ -245,7 +245,7 @@ const ChatBot = ({
                   </span>
                 </div>
                 {msg.sender === "user" && (
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium order-3">
                     {getUserInitial(msg.fullName)}
                   </div>
                 )}
