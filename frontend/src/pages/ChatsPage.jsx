@@ -18,6 +18,25 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useMediaQuery } from "react-responsive";
 
+// Skeleton Loading Component
+const ChatItemSkeleton = () => (
+  <div className="p-3 rounded-lg border border-gray-200 animate-pulse">
+    <div className="flex items-center space-x-3">
+      <div className="flex-1">
+        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div className="flex items-center">
+          <div className="h-3 w-3 bg-gray-200 rounded-full mr-1"></div>
+          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+        </div>
+      </div>
+      <div className="flex items-center space-x-1">
+        <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+        <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  </div>
+);
+
 const ChatsPage = () => {
   const [careerChats, setCareerChats] = useState([]);
   const [interviewChats, setInterviewChats] = useState([]);
@@ -28,6 +47,7 @@ const ChatsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCareerSectionCollapsed, setIsCareerSectionCollapsed] = useState(false);
   const [isInterviewSectionCollapsed, setIsInterviewSectionCollapsed] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { state } = useLocation();
   const navigate = useNavigate();
   const email = state?.email || state?.user?.email || "";
@@ -54,6 +74,7 @@ const ChatsPage = () => {
 
   // Fetch chat histories from the backend.
   const fetchHistoryChats = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/?email=${encodeURIComponent(email)}`,
@@ -75,6 +96,13 @@ const ChatsPage = () => {
       setInterviewChats(interviewChatsData.reverse());
     } catch (error) {
       console.error("Error fetching chat histories:", error);
+      showNotification("error", "Failed to load conversations");
+    } finally {
+      setIsLoading(false);
+      // Simulate minimum loading time for better UX
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   };
 
@@ -375,78 +403,89 @@ const ChatsPage = () => {
                           exit={{ opacity: 0, height: 0 }}
                           className="space-y-2"
                         >
-                          {careerChats
-                            .filter(chat => 
-                              chat.conversationTitle.toLowerCase().includes(searchQuery.toLowerCase())
-                            )
-                            .map((chat) => (
-                            <motion.div
-                              key={chat._id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              whileHover={{ scale: 1.02 }}
-                              className={`group p-3 rounded-lg cursor-pointer transition-all ${
-                                selectedChat?._id === chat._id
-                                  ? "bg-blue-50 border-2 border-blue-200 shadow-sm"
-                                  : "hover:bg-gray-50 border border-transparent hover:border-gray-200"
-                              }`}
-                            >
-                              {editingChatId === chat._id ? (
-                                <input
-                                  type="text"
-                                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  value={editingTitle}
-                                  onChange={(e) => handleTitleChange(e, chat._id, "careerAdvisor")}
-                                  onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
-                                  onKeyDown={(e) =>
-                                    e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
-                                  }
-                                  autoFocus
-                                />
-                              ) : (
-                                <div className="flex items-center space-x-3">
-                                  <div className="flex-1" onClick={() => handleChatSelection(chat, "careerAdvisor")}>
-                                    <p className="font-medium text-gray-800 truncate">
-                                      {chat.conversationTitle}
-                                    </p>
-                                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                                      <FiClock className="w-3 h-3 mr-1" />
-                                      {prettyDate(chat.createdAt)}
+                          {isLoading ? (
+                            // Show 3 skeleton items while loading
+                            <>
+                              <ChatItemSkeleton />
+                              <ChatItemSkeleton />
+                              <ChatItemSkeleton />
+                            </>
+                          ) : (
+                            <>
+                              {careerChats
+                                .filter(chat => 
+                                  chat.conversationTitle.toLowerCase().includes(searchQuery.toLowerCase())
+                                )
+                                .map((chat) => (
+                                <motion.div
+                                  key={chat._id}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  className={`group p-3 rounded-lg cursor-pointer transition-all ${
+                                    selectedChat?._id === chat._id
+                                      ? "bg-blue-50 border-2 border-blue-200 shadow-sm"
+                                      : "hover:bg-gray-50 border border-transparent hover:border-gray-200"
+                                  }`}
+                                >
+                                  {editingChatId === chat._id ? (
+                                    <input
+                                      type="text"
+                                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      value={editingTitle}
+                                      onChange={(e) => handleTitleChange(e, chat._id, "careerAdvisor")}
+                                      onBlur={() => saveEditedTitle(chat._id, "careerAdvisor")}
+                                      onKeyDown={(e) =>
+                                        e.key === "Enter" && saveEditedTitle(chat._id, "careerAdvisor")
+                                      }
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <div className="flex items-center space-x-3">
+                                      <div className="flex-1" onClick={() => handleChatSelection(chat, "careerAdvisor")}>
+                                        <p className="font-medium text-gray-800 truncate">
+                                          {chat.conversationTitle}
+                                        </p>
+                                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                                          <FiClock className="w-3 h-3 mr-1" />
+                                          {prettyDate(chat.createdAt)}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center space-x-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
+                                        <button
+                                          onClick={() => startEditingTitle(chat._id, chat.conversationTitle)}
+                                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                                        >
+                                          <FiEdit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => removeConversation(chat._id, "careerAdvisor")}
+                                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                                        >
+                                          <FiTrash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center space-x-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
-                                    <button
-                                      onClick={() => startEditingTitle(chat._id, chat.conversationTitle)}
-                                      className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
-                                    >
-                                      <FiEdit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => removeConversation(chat._id, "careerAdvisor")}
-                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-                                    >
-                                      <FiTrash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
+                                  )}
+                                </motion.div>
+                              ))}
+                              {careerChats.length === 0 && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  className="text-center py-8"
+                                >
+                                  <FiMessageSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                                  <p className="text-gray-500">No career chats yet</p>
+                                  <button
+                                    onClick={() => createNewConversation("careerAdvisor")}
+                                    className="mt-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                                  >
+                                    Start your first chat
+                                  </button>
+                                </motion.div>
                               )}
-                            </motion.div>
-                          ))}
-                          {careerChats.length === 0 && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="text-center py-8"
-                            >
-                              <FiMessageSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                              <p className="text-gray-500">No career chats yet</p>
-                              <button
-                                onClick={() => createNewConversation("careerAdvisor")}
-                                className="mt-4 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                              >
-                                Start your first chat
-                              </button>
-                            </motion.div>
+                            </>
                           )}
                         </motion.div>
                       )}
@@ -495,78 +534,89 @@ const ChatsPage = () => {
                           exit={{ opacity: 0, height: 0 }}
                           className="space-y-2"
                         >
-                          {interviewChats
-                            .filter(chat => 
-                              chat.conversationTitle.toLowerCase().includes(searchQuery.toLowerCase())
-                            )
-                            .map((chat) => (
-                            <motion.div
-                              key={chat._id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              whileHover={{ scale: 1.02 }}
-                              className={`group p-3 rounded-lg cursor-pointer transition-all ${
-                                selectedChat?._id === chat._id
-                                  ? "bg-green-50 border-2 border-green-200 shadow-sm"
-                                  : "hover:bg-gray-50 border border-transparent hover:border-gray-200"
-                              }`}
-                            >
-                              {editingChatId === chat._id ? (
-                                <input
-                                  type="text"
-                                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                                  value={editingTitle}
-                                  onChange={(e) => handleTitleChange(e, chat._id, "interviewer")}
-                                  onBlur={() => saveEditedTitle(chat._id, "interviewer")}
-                                  onKeyDown={(e) =>
-                                    e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")
-                                  }
-                                  autoFocus
-                                />
-                              ) : (
-                                <div className="flex items-center space-x-3">
-                                  <div className="flex-1" onClick={() => handleChatSelection(chat, "interviewer")}>
-                                    <p className="font-medium text-gray-800 truncate">
-                                      {chat.conversationTitle}
-                                    </p>
-                                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                                      <FiClock className="w-3 h-3 mr-1" />
-                                      {prettyDate(chat.createdAt)}
+                          {isLoading ? (
+                            // Show 3 skeleton items while loading
+                            <>
+                              <ChatItemSkeleton />
+                              <ChatItemSkeleton />
+                              <ChatItemSkeleton />
+                            </>
+                          ) : (
+                            <>
+                              {interviewChats
+                                .filter(chat => 
+                                  chat.conversationTitle.toLowerCase().includes(searchQuery.toLowerCase())
+                                )
+                                .map((chat) => (
+                                <motion.div
+                                  key={chat._id}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  className={`group p-3 rounded-lg cursor-pointer transition-all ${
+                                    selectedChat?._id === chat._id
+                                      ? "bg-green-50 border-2 border-green-200 shadow-sm"
+                                      : "hover:bg-gray-50 border border-transparent hover:border-gray-200"
+                                  }`}
+                                >
+                                  {editingChatId === chat._id ? (
+                                    <input
+                                      type="text"
+                                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                                      value={editingTitle}
+                                      onChange={(e) => handleTitleChange(e, chat._id, "interviewer")}
+                                      onBlur={() => saveEditedTitle(chat._id, "interviewer")}
+                                      onKeyDown={(e) =>
+                                        e.key === "Enter" && saveEditedTitle(chat._id, "interviewer")
+                                      }
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <div className="flex items-center space-x-3">
+                                      <div className="flex-1" onClick={() => handleChatSelection(chat, "interviewer")}>
+                                        <p className="font-medium text-gray-800 truncate">
+                                          {chat.conversationTitle}
+                                        </p>
+                                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                                          <FiClock className="w-3 h-3 mr-1" />
+                                          {prettyDate(chat.createdAt)}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center space-x-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
+                                        <button
+                                          onClick={() => startEditingTitle(chat._id, chat.conversationTitle)}
+                                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
+                                        >
+                                          <FiEdit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => removeConversation(chat._id, "interviewer")}
+                                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                                        >
+                                          <FiTrash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center space-x-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
-                                    <button
-                                      onClick={() => startEditingTitle(chat._id, chat.conversationTitle)}
-                                      className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
-                                    >
-                                      <FiEdit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => removeConversation(chat._id, "interviewer")}
-                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
-                                    >
-                                      <FiTrash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
+                                  )}
+                                </motion.div>
+                              ))}
+                              {interviewChats.length === 0 && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  className="text-center py-8"
+                                >
+                                  <FiMessageSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                                  <p className="text-gray-500">No interview chats yet</p>
+                                  <button
+                                    onClick={() => createNewConversation("interviewer")}
+                                    className="mt-4 px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
+                                  >
+                                    Start your first interview preparation
+                                  </button>
+                                </motion.div>
                               )}
-                            </motion.div>
-                          ))}
-                          {interviewChats.length === 0 && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="text-center py-8"
-                            >
-                              <FiMessageSquare className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                              <p className="text-gray-500">No interview chats yet</p>
-                              <button
-                                onClick={() => createNewConversation("interviewer")}
-                                className="mt-4 px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
-                              >
-                                Start your first interview
-                              </button>
-                            </motion.div>
+                            </>
                           )}
                         </motion.div>
                       )}
