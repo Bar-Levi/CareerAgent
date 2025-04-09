@@ -361,15 +361,16 @@ const ChatsPage = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="flex-1 overflow-hidden flex flex-col">
                 {/* Career Advisor Section */}
-                <div className="p-4">
+                <div className="p-4 flex flex-col min-h-0 flex-1">
                   <motion.div
                     initial={false}
-                    animate={{ height: isCareerSectionCollapsed ? "auto" : "auto" }}
+                    animate={{ height: isCareerSectionCollapsed ? "40px" : "100%" }}
+                    className="flex flex-col h-full"
                   >
                     <div 
-                      className="flex items-center justify-between mb-4 cursor-pointer"
+                      className="flex items-center justify-between mb-4 cursor-pointer shrink-0"
                       onClick={() => setIsCareerSectionCollapsed(!isCareerSectionCollapsed)}
                     >
                       <div className="flex items-center space-x-2">
@@ -401,7 +402,12 @@ const ChatsPage = () => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="space-y-2"
+                          className="space-y-2 overflow-y-auto custom-scrollbar flex-1 min-h-0"
+                          style={{
+                            maxHeight: "calc(50vh - 80px)", // Adjust this value as needed
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#CBD5E0 #F3F4F6'
+                          }}
                         >
                           {isLoading ? (
                             // Show 3 skeleton items while loading
@@ -493,14 +499,15 @@ const ChatsPage = () => {
                   </motion.div>
                 </div>
 
-                {/* Interviewer Section - Similar structure */}
-                <div className="p-4 border-t border-gray-100">
+                {/* Interviewer Section */}
+                <div className="p-4 flex flex-col min-h-0 flex-1 border-t border-gray-100">
                   <motion.div
                     initial={false}
-                    animate={{ height: isInterviewSectionCollapsed ? "auto" : "auto" }}
+                    animate={{ height: isInterviewSectionCollapsed ? "40px" : "100%" }}
+                    className="flex flex-col h-full"
                   >
                     <div 
-                      className="flex items-center justify-between mb-4 cursor-pointer"
+                      className="flex items-center justify-between mb-4 cursor-pointer shrink-0"
                       onClick={() => setIsInterviewSectionCollapsed(!isInterviewSectionCollapsed)}
                     >
                       <div className="flex items-center space-x-2">
@@ -532,7 +539,12 @@ const ChatsPage = () => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="space-y-2"
+                          className="space-y-2 overflow-y-auto custom-scrollbar flex-1 min-h-0"
+                          style={{
+                            maxHeight: "calc(50vh - 80px)", // Adjust this value as needed
+                            scrollbarWidth: 'thin',
+                            scrollbarColor: '#CBD5E0 #F3F4F6'
+                          }}
                         >
                           {isLoading ? (
                             // Show 3 skeleton items while loading
@@ -624,6 +636,25 @@ const ChatsPage = () => {
                   </motion.div>
                 </div>
               </div>
+
+              {/* Add custom scrollbar styles */}
+              <style jsx>{`
+                .custom-scrollbar::-webkit-scrollbar {
+                  width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                  background: #F3F4F6;
+                  border-radius: 3px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                  background-color: #CBD5E0;
+                  border-radius: 3px;
+                  border: 2px solid #F3F4F6;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                  background-color: #A0AEC0;
+                }
+              `}</style>
             </motion.div>
           )}
         </AnimatePresence>
