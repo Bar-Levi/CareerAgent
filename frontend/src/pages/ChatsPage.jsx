@@ -279,7 +279,7 @@ const ChatsPage = () => {
   useEffect(() => {
     fetchHistoryChats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChat]);
+  }, []);
 
   // Auto-create an interviewer conversation only if router state includes valid job data,
   // no conversation is currently selected, and the sessionStorage flag is not set.
