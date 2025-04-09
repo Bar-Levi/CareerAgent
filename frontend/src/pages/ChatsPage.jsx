@@ -430,7 +430,6 @@ const ChatsPage = () => {
                                   key={chat._id}
                                   initial={{ opacity: 0, y: 20 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  whileHover={{ scale: 1.02 }}
                                   className={`group p-3 rounded-lg cursor-pointer transition-all ${
                                     selectedChat?._id === chat._id
                                       ? "bg-blue-50 border-2 border-blue-200 shadow-sm"
@@ -570,7 +569,6 @@ const ChatsPage = () => {
                                   key={chat._id}
                                   initial={{ opacity: 0, y: 20 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  whileHover={{ scale: 1.02 }}
                                   className={`group p-3 rounded-lg cursor-pointer transition-all ${
                                     selectedChat?._id === chat._id
                                       ? "bg-green-50 border-2 border-green-200 shadow-sm"
