@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import Notification from "./Notification";
 import HeaderWithToggle from "./HeaderWithToggle";
+import { FiSend } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ChatBot = ({
   chatId,
@@ -14,25 +16,37 @@ const ChatBot = ({
   initialMessages = [],
   jobData,
 }) => {
-  const [messages, setMessages] = useState(initialMessages);
+  const { state } = useLocation();
+  const email = state?.email || "";
+  const token = state?.token || "";
+  
+  const [messages, setMessages] = useState(initialMessages.map(msg => ({
+    ...msg,
+    fullName: msg.fullName || state?.user?.fullName || "User"
+  })));
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState("");
   const autoPromptSentRef = useRef(false);
-  const { state } = useLocation();
-  const email = state?.email || "";
-  const token = state?.token || "";
+  const messagesEndRef = useRef(null);
   const MAX_MESSAGE_COUNT = 100;
   const [notification, setNotification] = useState(null);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
 
   const botConfig = {
     careerAdvisor: {
       title: "Career Advisor",
       apiEndpoint: `${process.env.REACT_APP_BACKEND_URL}/api/ai/sendToBot`,
+      avatar: "🤖",
     },
     interviewer: {
       title: "Interviewer",
       apiEndpoint: `${process.env.REACT_APP_BACKEND_URL}/api/ai/sendToBot`,
+      avatar: "👨‍💼",
     },
   };
 
@@ -82,7 +96,6 @@ const ChatBot = ({
     }
   };
 
-  // Helper function to save a message wrapped in a "message" key
   const saveMessage = async (messageObject) => {
     const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/bot-conversations/${chatId}/messages`, {
       method: "POST",
@@ -106,6 +119,7 @@ const ChatBot = ({
       sender: "user",
       text: textToSend,
       timestamp: new Date().toISOString(),
+      fullName: state?.user?.fullName || state?.fullName || "User",
     };
 
     if (messages.length < MAX_MESSAGE_COUNT)
@@ -113,9 +127,7 @@ const ChatBot = ({
     setInput("");
 
     try {
-      // First, save the user message.
       await saveMessage(userMessage);
-      // Then get the bot reply.
       const botReply = await sendMessageToAPI(textToSend);
       const botMessage = {
         sender: "bot",
@@ -123,7 +135,6 @@ const ChatBot = ({
         timestamp: new Date().toISOString(),
       };
 
-      // Save the bot message.
       await saveMessage(botMessage);
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -132,7 +143,7 @@ const ChatBot = ({
     }
   };
 
-  // Auto-send prompt for interviewer chats if conversation is new.
+  // Auto-send prompt for interviewer chats if conversation is new
   useEffect(() => {
     if (
       type === "interviewer" &&
@@ -141,24 +152,21 @@ const ChatBot = ({
       !autoPromptSentRef.current
     ) {
       autoPromptSentRef.current = true;
-      // Determine the skills text:
       const skillsText =
         jobData.skills && jobData.skills.length > 0
           ? jobData.skills.join(", ")
           : "this job requires no specific skills";
-      // Build the full prompt with additional details.
       const prompt = `I am applying for the position of ${jobData.jobRole}. The job description is: ${jobData.description}. The job requires these skills: ${skillsText}. The required experience level is ${jobData.experienceLevel || "N/A"}, the job is ${jobData.remote ? "remote" : "on site"}, and the job type is ${jobData.jobType ? jobData.jobType.join(", ") : "N/A"}. Please provide exactly 10 interview questions relevant to this job posting and then evaluate my answers to see if I am correct. Do not ask any additional questions.`;
       (async () => {
         try {
-          // Save the auto-prompt as a user message.
           const userPromptMsg = {
             sender: "user",
             text: prompt,
             timestamp: new Date().toISOString(),
+            fullName: state?.user?.fullName || "User",
           };
           await saveMessage(userPromptMsg);
           setMessages((prev) => [...prev, userPromptMsg]);
-          // Get the bot reply.
           const botReply = await sendMessageToAPI(prompt);
           const botMessage = {
             sender: "bot",
@@ -172,7 +180,6 @@ const ChatBot = ({
         }
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, jobData, initialMessages]);
 
   const displayedTitle =
@@ -182,8 +189,12 @@ const ChatBot = ({
       ? `Interview for ${jobData.jobRole}`
       : "Chat Conversation";
 
+  const getUserInitial = (fullName) => {
+    return fullName ? fullName.charAt(0).toUpperCase() : "U";
+  };
+
   return (
-    <div className="relative flex flex-col h-full w-full border border-gray-300 rounded-lg shadow-md overflow-hidden">
+    <div className="relative flex flex-col h-full w-full bg-white rounded-lg shadow-lg overflow-hidden">
       {notification && (
         <Notification
           type={notification.type}
@@ -198,72 +209,103 @@ const ChatBot = ({
         token={token}
         email={email}
       />
-      <div className="flex-1 bg-gray-100 p-4 overflow-y-auto">
-        {messages
-          .filter((msg) => msg && msg.text)
-          .map((msg, index) => (
-            <div
-              key={index}
-              className={`flex flex-col ${
-                msg.sender === "user" ? "items-end" : "items-start"
-              } mb-4`}
-            >
-              <ReactMarkdown
-                className={`max-w-[70%] overflow-x-auto p-3 rounded-lg ${
-                  msg.sender === "user"
-                    ? "bg-brand-primary text-white"
-                    : "bg-gray-300 text-gray-900"
-                }`}
-                components={{
-                  p: ({ node, children }) => (
-                    <p className="whitespace-pre-wrap">{children}</p>
-                  ),
-                }}
+      <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+        <div className="space-y-4">
+          {messages
+            .filter((msg) => msg && msg.text)
+            .map((msg, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} items-end space-x-2`}
               >
-                {msg.text}
-              </ReactMarkdown>
-              <span className="text-xs text-gray-500 mt-1">
-                {prettyDate(msg.timestamp || new Date())}
-              </span>
-            </div>
-          ))}
-        {isTyping && (
-          <div className="flex flex-col items-start mb-4">
-            <div className="max-w-[70%] p-3 rounded-lg bg-gray-300 text-gray-900">
-              Typing{typingDots}
-            </div>
-          </div>
-        )}
+                {msg.sender === "bot" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
+                    {botSettings.avatar}
+                  </div>
+                )}
+                <div className={`max-w-[70%] ${msg.sender === "user" ? "order-2" : "order-2"}`}>
+                  <div
+                    className={`p-3 rounded-2xl ${
+                      msg.sender === "user"
+                        ? "bg-blue-600 text-white rounded-bl-none"
+                        : "bg-white text-gray-800 rounded-bl-none shadow-sm"
+                    }`}
+                  >
+                    <ReactMarkdown
+                      components={{
+                        p: ({ node, children }) => (
+                          <p className="whitespace-pre-wrap">{children}</p>
+                        ),
+                      }}
+                    >
+                      {msg.text}
+                    </ReactMarkdown>
+                  </div>
+                  <span className="text-xs text-gray-500 mt-1 block">
+                    {prettyDate(msg.timestamp || new Date())}
+                  </span>
+                </div>
+                {msg.sender === "user" && (
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium order-3">
+                    {getUserInitial(msg.fullName)}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          {isTyping && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center space-x-2"
+            >
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
+                {botSettings.avatar}
+              </div>
+              <div className="bg-white p-3 rounded-2xl rounded-bl-none shadow-sm">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
       </div>
-      <div className="flex p-3 border-t bg-white">
-        <textarea
-          placeholder="Type a message..."
-          className="flex-1 border border-gray-300 rounded-lg p-3 mr-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm resize-none bg-gray-100 text-gray-900 placeholder-gray-500"
-          value={input}
-          rows={1}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && e.shiftKey) {
-              e.preventDefault();
-              setInput((prevInput) => prevInput + "\n");
-            } else if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-        />
-        <button
-          onClick={handleSend}
-          className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-green-600 focus:outline-none"
-        >
-          Send
-        </button>
-      </div>
-      <div className="flex items-center justify-center bg-gray-50 p-3">
-        <span className="text-xs text-center text-gray-500">
-          Our bot may occasionally make mistakes.
-          <br />Please verify critical information.
-        </span>
+      <div className="p-4 bg-white border-t border-gray-100 relative z-[999]">
+        <div className="flex items-center space-x-2 mb-16">
+          <textarea
+            placeholder="Type a message..."
+            className="flex-1 border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm resize-none bg-gray-50 text-gray-900 placeholder-gray-500 transition-all duration-200"
+            value={input}
+            rows={1}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && e.shiftKey) {
+                e.preventDefault();
+                setInput((prevInput) => prevInput + "\n");
+              } else if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+          />
+          <button
+            onClick={handleSend}
+            className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95"
+          >
+            <FiSend className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="absolute bottom-2 left-0 right-0 text-center">
+          <span className="text-xs text-gray-500">
+            Our bot may occasionally make mistakes. Please verify critical information.
+          </span>
+        </div>
       </div>
     </div>
   );
