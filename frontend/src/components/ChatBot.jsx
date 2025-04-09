@@ -17,8 +17,8 @@ const ChatBot = ({
   jobData,
 }) => {
   const { state } = useLocation();
-  const email = state?.email || "";
-  const token = state?.token || "";
+  const email = state?.user?.email || state?.email || "";
+  const token = localStorage.getItem("token") || state?.token || "";
   
   const [messages, setMessages] = useState(initialMessages.map(msg => ({
     ...msg,
