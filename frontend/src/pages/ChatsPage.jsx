@@ -450,7 +450,7 @@ const ChatsPage = () => {
                                     />
                                   ) : (
                                     <div className="flex items-center space-x-3">
-                                      <div className="flex-1" onClick={() => handleChatSelection(chat, "careerAdvisor")}>
+                                      <div className="flex-1 min-w-0" onClick={() => handleChatSelection(chat, "careerAdvisor")}>
                                         <p className="font-medium text-gray-800 truncate">
                                           {chat.conversationTitle}
                                         </p>
@@ -459,7 +459,7 @@ const ChatsPage = () => {
                                           {prettyDate(chat.createdAt)}
                                         </div>
                                       </div>
-                                      <div className="flex items-center space-x-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
+                                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                                         <button
                                           onClick={() => startEditingTitle(chat._id, chat.conversationTitle)}
                                           className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
@@ -589,7 +589,7 @@ const ChatsPage = () => {
                                     />
                                   ) : (
                                     <div className="flex items-center space-x-3">
-                                      <div className="flex-1" onClick={() => handleChatSelection(chat, "interviewer")}>
+                                      <div className="flex-1 min-w-0" onClick={() => handleChatSelection(chat, "interviewer")}>
                                         <p className="font-medium text-gray-800 truncate">
                                           {chat.conversationTitle}
                                         </p>
@@ -598,7 +598,7 @@ const ChatsPage = () => {
                                           {prettyDate(chat.createdAt)}
                                         </div>
                                       </div>
-                                      <div className="flex items-center space-x-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all">
+                                      <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
                                         <button
                                           onClick={() => startEditingTitle(chat._id, chat.conversationTitle)}
                                           className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all"
