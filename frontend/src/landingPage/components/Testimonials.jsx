@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback, useMemo } from "react";
+import React, { useState, memo, useCallback, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 
@@ -55,13 +55,23 @@ const TestimonialCard = memo(({ handleShuffle, testimonial, position, id, author
 
   const handleDragStart = useCallback((e) => {
     dragRef.current = e.clientX;
+    // Prevent event from bubbling to parent
+    e.stopPropagation();
   }, []);
 
-  const handleDragEnd = useCallback((e) => {
+  const handleDragEnd = useCallback((e, info) => {
     if (dragRef.current - e.clientX > 150) {
       handleShuffle();
     }
+    
+    // Reset drag state
     dragRef.current = 0;
+    
+    // Ensure that the drag constraints are reset
+    e.target.style.transform = '';
+    
+    // Prevent event from bubbling to parent
+    e.stopPropagation();
   }, [handleShuffle]);
 
   const motionStyles = useMemo(() => ({
@@ -80,17 +90,21 @@ const TestimonialCard = memo(({ handleShuffle, testimonial, position, id, author
       style={motionStyles}
       animate={motionAnimate}
       whileHover={isFront ? { scale: 1.02, rotate: 0 } : {}}
-      drag={true}
-      dragElastic={0.35}
-      dragListener={isFront}
+      drag={isFront}
+      dragElastic={0.1}
+      dragTransition={{ 
+        bounceStiffness: 300,
+        bounceDamping: 20 
+      }}
       dragConstraints={{
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0
+        top: -50,
+        left: -50,
+        right: 50,
+        bottom: 50
       }}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onClick={(e) => e.stopPropagation()} // Prevent click from bubbling
       transition={{ 
         duration: 0.4,
         ease: "easeOut"
@@ -112,12 +126,15 @@ const TestimonialCard = memo(({ handleShuffle, testimonial, position, id, author
 
 const ArrowButton = memo(({ onClick }) => {
   return (
-    <div className="absolute left-[-200px] top-1/2 -translate-y-1/2 z-20">
+    <div className="absolute left-[-200px] top-1/2 -translate-y-1/2 z-20 pointer-events-none">
       <motion.button
-        onClick={onClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="group"
+        className="group pointer-events-auto"
       >
         <div className="relative">
           <motion.div
@@ -164,6 +181,7 @@ const ArrowButton = memo(({ onClick }) => {
 
 const Testimonials = () => {
   const [positions, setPositions] = useState(testimonials.map((_, index) => index));
+  const sectionRef = useRef(null);
 
   const handleShuffle = useCallback(() => {
     const newPositions = [...positions];
@@ -171,11 +189,42 @@ const Testimonials = () => {
     setPositions(newPositions);
   }, [positions]);
 
-  return (
-    <section className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20">
-      <MemoizedParticles id="particles-testimonials" />
+  // Add a cleanup effect to ensure scrolling works even if component unmounts during drag
+  useEffect(() => {
+    // Function to ensure scroll is enabled when clicking outside cards
+    const handleSectionClick = () => {
+      // No longer manipulating document overflow styles
+    };
+    
+    // Add event listeners to section
+    const section = sectionRef.current;
+    if (section) {
+      section.addEventListener('click', handleSectionClick);
+      section.addEventListener('mousedown', handleSectionClick);
+      section.addEventListener('touchstart', handleSectionClick, { passive: true });
+    }
+    
+    return () => {
+      // Remove event listeners
+      if (section) {
+        section.removeEventListener('click', handleSectionClick);
+        section.removeEventListener('mousedown', handleSectionClick);
+        section.removeEventListener('touchstart', handleSectionClick);
+      }
+    };
+  }, []);
 
-      <div className="max-w-6xl mx-auto text-center px-4 z-10 relative">
+  return (
+    <section 
+      ref={sectionRef}
+      className="w-full h-screen relative bg-black bg-cover bg-center flex items-center justify-center py-20"
+      style={{ pointerEvents: 'auto' }}
+    >
+      <div className="pointer-events-none absolute inset-0">
+        <MemoizedParticles id="particles-testimonials" />
+      </div>
+
+      <div className="max-w-6xl mx-auto text-center px-4 z-10 relative pointer-events-auto">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

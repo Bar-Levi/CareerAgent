@@ -1,41 +1,27 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
-import LoadingPage from '../../landingPage/components/LoadingPage';
+import React, { Suspense, lazy } from 'react';
 
-const Spline = lazy(() => import('@splinetool/react-spline'));
+// Lazy load with a custom delay to prevent waterfalls
+const Spline = lazy(() => {
+  // Add a small delay before loading to prioritize critical content
+  return new Promise(resolve => {
+    // Use requestIdleCallback or setTimeout as fallback
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(() => resolve(import('@splinetool/react-spline')));
+    } else {
+      setTimeout(() => resolve(import('@splinetool/react-spline')), 100);
+    }
+  });
+});
 
 const SplineScene = ({ scene, className }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasSeenLanding, setHasSeenLanding] = useState(false);
-
-  useEffect(() => {
-    // Check if user has seen the landing page before
-    const hasSeen = localStorage.getItem('hasSeenLanding');
-    if (hasSeen) {
-      setHasSeenLanding(true);
-      setIsLoading(false);
-      return;
-    }
-
-    // Simulate minimum loading time for better UX
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      // Mark that user has seen the landing page
-      localStorage.setItem('hasSeenLanding', 'true');
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading && !hasSeenLanding) {
-    return <LoadingPage />;
-  }
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="w-full h-full flex items-center justify-center">
+      <div className="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+    </div>}>
       <Spline
         scene={scene}
         className={className}
-        onLoad={() => setIsLoading(false)}
       />
     </Suspense>
   );

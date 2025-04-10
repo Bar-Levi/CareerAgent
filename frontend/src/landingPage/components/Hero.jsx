@@ -1,16 +1,39 @@
-import React from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 import { useNavigate } from "react-router-dom";
-import { SplineScene } from "../../components/ui/spline";
 import { AnimatedButton } from "../../components/ui/AnimatedButton";
 import { ChevronRight, ArrowRight } from "lucide-react";
 
+// Lazy load SplineScene component
+const SplineScene = lazy(() => import("../../components/ui/spline").then(module => ({ default: module.SplineScene })));
+
 const Hero = () => {
   const navigate = useNavigate();
+  const [splineVisible, setSplineVisible] = useState(false);
+
+  // Only load the 3D scene after the critical content has rendered
+  useEffect(() => {
+    // Use intersection observer to determine when to load the 3D model
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          // Delay loading slightly for better performance
+          setTimeout(() => setSplineVisible(true), 1000);
+          observer.disconnect();
+        }
+      });
+    }, { threshold: 0.1 });
+
+    // Start observing the hero section
+    const heroSection = document.querySelector('#hero-section');
+    if (heroSection) observer.observe(heroSection);
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section className="relative min-h-screen bg-black flex items-center justify-center overflow-hidden">
+    <section id="hero-section" className="relative min-h-screen bg-black flex items-center justify-center overflow-hidden">
       {/* Particles Background */}
       <ParticlesComponent id="particles" />
 
@@ -78,10 +101,25 @@ const Hero = () => {
 
           {/* Right content - 3D Scene */}
           <div className="flex-1 h-[600px] w-full relative">
-            <SplineScene 
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-full"
-            />
+            {splineVisible ? (
+              <Suspense fallback={
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                </div>
+              }>
+                <SplineScene 
+                  scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                  className="w-full h-full"
+                />
+              </Suspense>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="p-8 rounded-xl bg-gradient-to-br from-black/30 to-blue-900/10 backdrop-blur-sm border border-blue-500/20">
+                  <div className="text-2xl text-blue-300 mb-4">Loading 3D Experience...</div>
+                  <div className="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin mx-auto"></div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

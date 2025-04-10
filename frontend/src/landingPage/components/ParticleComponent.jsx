@@ -40,8 +40,7 @@ const ParticlesComponent = memo(({ id, options: customOptions }) => {
 
   // Callback function that runs when particles are loaded
   const particlesLoaded = (container) => {
-    // Log the container instance for debugging purposes
-    console.log(container);
+    // Nothing needed here
   };
 
   // Memoized configuration object for the particle system
@@ -54,81 +53,64 @@ const ParticlesComponent = memo(({ id, options: customOptions }) => {
         },
       },
       // Frame rate limit for performance optimization
-      fpsLimit: 60,
+      fpsLimit: 30,
       // Particle appearance and behavior settings
       particles: {
         number: {
-          value: 60, 
+          value: 15, // Reduced particle count
           density: {
-            enable: true,
-            value_area: 800
+            enable: false, // Disabled density
           }
         },
         color: {
-          value: ["#6366f1", "#8b5cf6", "#ec4899"] // Indigo, Purple, Pink gradient
+          value: "#8b5cf6" // Single color
         },
         shape: {
           type: "circle"
         },
         opacity: {
-          value: 0.8,
-          random: true,
-          animation: {
-            enable: true,
-            speed: 1,
-            minimumValue: 0.1,
-            sync: false
-          }
+          value: 0.3, // Fixed opacity
         },
         size: {
-          value: { min: 1, max: 5 },
-          random: true
+          value: 2, // Fixed size
         },
         links: {
-          enable: true,
-          distance: 150,
-          color: "#8b5cf6",
-          opacity: 0.4,
-          width: 1
+          enable: false, // Disabled links
         },
         move: {
           enable: true,
-          speed: 2,
+          speed: 1,
           direction: "none",
           random: true,
           straight: false,
           outModes: {
-            default: "bounce"
+            default: "out"
           }
         }
       },
-      // Interaction settings
+      // Interaction settings - simplified for performance
       interactivity: {
+        detectsOn: "window", // Changed from canvas
         events: {
           onHover: {
-            enable: true,
-            mode: "grab"
+            enable: false
           },
           onClick: {
-            enable: false // Disabled click interaction
-          }
-        },
-        modes: {
-          grab: {
-            distance: 140,
-            links: {
-              opacity: 1
-            }
-          }
+            enable: false
+          },
+          resize: true
         }
       },
       // Enable retina display support
-      detectRetina: true,
+      detectRetina: false,
       // Merge with custom options if provided
       ...customOptions,
     }),
     [customOptions], // Include customOptions in dependency array
   );
+
+  // Only render when init is true
+  if (!init) return null;
 
   // Render the Particles component with configured options
   return <Particles id={id} init={particlesLoaded} options={options} />;
