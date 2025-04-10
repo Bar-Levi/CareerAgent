@@ -217,6 +217,7 @@ const Testimonials = () => {
   return (
     <section 
       ref={sectionRef}
+      id="testimonials"
       className="w-full h-screen relative bg-black bg-cover bg-center flex items-center justify-center py-20"
       style={{ pointerEvents: 'auto' }}
     >
