@@ -4,7 +4,7 @@ import ParticlesComponent from "./ParticleComponent";
 import chatbotImage from "../assets/chatbot-image.png";
 
 const DemoSection = () => (
-  <section className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
+  <section className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden" id="demo">
     {/* Particles Background */}
     <ParticlesComponent id="particles-demo" />
 
