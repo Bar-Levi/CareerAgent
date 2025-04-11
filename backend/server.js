@@ -24,11 +24,13 @@ connectDB();
 
 // Initialize Express app
 const app = express();
+app.set('trust proxy', 1);
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.BACKEND_URL,
-  'https://careeragent-icnn.onrender.com'
+  'https://careeragent-icnn.onrender.com',
+  'https://careeragent-ai.online'
 ];
 
 // Middleware
