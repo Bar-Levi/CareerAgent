@@ -13,7 +13,7 @@ const jobListingRoutes = require("./routes/jobListingRoutes");
 const applicantsRoutes = require('./routes/applicantRoutes');
 const conversationRoutes = require("./routes/conversationRoutes");
 const mailNotificationRoutes = require("./routes/mailNotificationsRoutes");
-const interviewRoutes = require("./routes/interviewRoutes");
+const interviewRoutes = require('./routes/interviewRoutes');
 const saveJobListingRoutes = require('./routes/saveJobListingRoutes');
 
 require('./tasks/cleanupTokens');
@@ -25,9 +25,15 @@ connectDB();
 // Initialize Express app
 const app = express();
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.BACKEND_URL,
+  'https://careeragent-icnn.onrender.com'
+];
+
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials: true
 }));
@@ -35,6 +41,10 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 // Routes
+// Create health route
+app.get('/health', (req, res) => {
+  res.status(200).json({ message: 'Server is running' });
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/personal', personalDetailsRoutes);
@@ -53,11 +63,20 @@ const http = require("http");
 const server = http.createServer(app);
 const socketIo = require("socket.io");
 const { markMessagesAsReadInternal } = require('./controllers/conversationController');
+
+// Update Socket.IO configuration with more specific settings
 const io = socketIo(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+  },
+  transports: ['websocket', 'polling'], // Add explicit transports
+  path: '/socket.io/', // Explicit path
+  allowEIO3: true, // Allow Engine.IO version 3
+  pingTimeout: 60000, // Increase ping timeout
+  pingInterval: 25000, // Increase ping interval
 });
 
 const onlineUsers = new Map();
@@ -65,9 +84,19 @@ const onlineUsers = new Map();
 // Store the io instance in app locals so controllers can access it if needed
 app.set("io", io);
 
-// Socket.IO connection handling
+// Add a middleware to log connection attempts
+io.use((socket, next) => {
+  console.log('Connection attempt from origin:', socket.handshake.headers.origin);
+  next();
+});
+
+// Update the connection handler with better error handling
 io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
+  console.log("New client connected:", socket.id, "from:", socket.handshake.headers.origin);
+
+  socket.on("error", (error) => {
+    console.error("Socket error:", error);
+  });
 
   // Listen for a 'join' event, expecting a primitive user ID
   socket.on("join", (userId) => {
