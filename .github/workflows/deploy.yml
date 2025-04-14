@@ -1,0 +1,73 @@
+name: CD Workflow
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy to Remote Server
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
+            set -e
+
+            echo "🔧 Updating system and installing curl..."
+            sudo apt-get update
+            sudo apt-get install -y curl
+
+            echo "🔍 Checking current Node.js version..."
+            CURRENT_NODE_VERSION=$(node -v || echo "none")
+            echo "Current Node.js version: \$CURRENT_NODE_VERSION"
+
+            echo "📦 Installing n (Node version manager)..."
+            if ! command -v n &> /dev/null; then
+              sudo npm install -g n
+            fi
+
+            echo "⬆️ Installing latest stable Node.js..."
+            sudo n stable
+
+            echo "✅ Verifying latest Node & npm versions..."
+            node -v
+            npm -v
+
+            echo "🚀 Navigating to project directory..."
+            cd ~/CareerAgent
+
+            echo "📂 Checking out main branch and pulling latest changes..."
+            git fetch origin
+            git checkout main
+            git reset --hard origin/main
+
+            echo "🧹 Restarting all PM2 processes..."
+            pm2 delete all || true
+
+            echo "📦 Installing backend dependencies..."
+            cd backend
+            npm install
+
+            echo "🟢 Starting backend with PM2..."
+            pm2 start server.js --name "backend" --env production
+
+            echo "📦 Installing frontend dependencies..."
+            cd ../frontend
+            npm install
+            npm run build
+
+            echo "🟢 Starting frontend with PM2..."
+            pm2 start serve --name "frontend" -- -s build -l 3000
+EOF
