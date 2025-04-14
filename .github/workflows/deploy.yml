@@ -1,6 +1,5 @@
 name: CD Workflow
 
-# Trigger the workflow when a pull request targeting the "main" branch is closed
 on:
   pull_request:
     types:
@@ -13,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the latest code from the repository
+      # Step 1: Checkout the latest code from the repository.
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Use an SSH action to connect to your remote server
+      # Step 2: Connect to your remote server via SSH and run deployment commands.
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -42,9 +41,13 @@ jobs:
             node -v
             npm -v
 
-            # Install PM2 globally to manage your Node processes
+            # Install PM2 globally to manage Node processes
             echo "🔨 Installing PM2 globally..."
             sudo npm install -g pm2
+
+            # Install 'serve' globally for serving frontend builds
+            echo "🔨 Installing serve globally..."
+            sudo npm install -g serve
 
             # Verify PM2 installation
             echo "✅ Verifying PM2 version..."
@@ -59,17 +62,27 @@ jobs:
             git checkout main
             git pull
 
-            # Install backend dependencies and start backend with PM2
+            # Install backend dependencies and start backend with PM2.
             echo "📦 Installing backend dependencies..."
             cd backend
             npm install
+
+            # Remove any existing backend process to avoid 'Script already launched' error.
+            echo "🧹 Deleting any existing backend PM2 process..."
+            pm2 delete backend || true
+
             echo "🟢 Starting backend with PM2..."
             pm2 start server.js --name "backend" --env production
 
-            # Install frontend dependencies, build and start frontend with PM2
+            # Install frontend dependencies, build and start frontend with PM2.
             echo "📦 Installing frontend dependencies..."
             cd ../frontend
             npm install
             npm run build
+
+            # Remove any existing frontend process before starting a new one.
+            echo "🧹 Deleting any existing frontend PM2 process..."
+            pm2 delete frontend || true
+
             echo "🟢 Starting frontend with PM2..."
             pm2 start serve --name "frontend" -- -s build -l 3000
