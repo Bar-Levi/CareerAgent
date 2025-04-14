@@ -81,32 +81,17 @@ jobs:
           echo "Frontend environment variables configured:"
         working-directory: frontend
 
-      # Step 8: Build frontend
-      - name: Build frontend
-        run:
-          npm install --save-dev @babel/plugin-proposal-private-property-in-object &&
-          CI=false npm run build
-        working-directory: frontend
-
-      # Step 9: Start backend
+      # Step 8: Start backend
       - name: Start backend
         run: npm start &
         working-directory: backend
 
-      # Step 10: Wait for backend to initialize
-      - name: Wait for backend to initialize
-        run: sleep 5
-
-      # Step 11: Start frontend
+      # Step 9: Start frontend
       - name: Start frontend
         run: npm start &
         working-directory: frontend
 
-      # Step 12: Wait for frontend to initialize
-      - name: Wait for frontend to initialize
-        run: sleep 5
-
-      # Step 13: Run Cypress tests
+      # Step 10: Run Cypress tests
       - name: Run Cypress tests
         run: npx cypress run
         working-directory: frontend
