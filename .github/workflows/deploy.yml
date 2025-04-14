@@ -1,5 +1,6 @@
 name: CD Workflow
 
+# Trigger the workflow when a pull request targeting the "main" branch is closed
 on:
   pull_request:
     types:
@@ -9,53 +10,66 @@ on:
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
+      # Step 1: Checkout the latest code from the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Deploy to Remote Server
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-        run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST << 'EOF'
-            set -e
+      # Step 2: Use an SSH action to connect to your remote server
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            # Update package lists and install curl (if not already installed)
             echo "🔧 Updating system and installing curl..."
-            sudo apt-get update
-            sudo apt-get install -y curl
-            echo "🔍 Checking current Node.js version..."
-            CURRENT_NODE_VERSION=$(node -v || echo "none")
-            echo "Current Node.js version: \$CURRENT_NODE_VERSION"
+            sudo apt-get update -y && sudo apt-get install -y curl
+
+            # Install 'n' to manage Node.js versions globally
             echo "📦 Installing n (Node version manager)..."
-            if ! command -v n &> /dev/null; then
-              sudo npm install -g n
-            fi
+            sudo npm install -g n
+
+            # Install the latest stable Node.js version
             echo "⬆️ Installing latest stable Node.js..."
             sudo n stable
-            echo "✅ Verifying latest Node & npm versions..."
+
+            # Verify the installed Node.js version
+            echo "✅ Verifying Node.js version..."
             node -v
             npm -v
+
+            # Install PM2 globally to manage your Node processes
+            echo "🔨 Installing PM2 globally..."
+            sudo npm install -g pm2
+
+            # Verify PM2 installation
+            echo "✅ Verifying PM2 version..."
+            pm2 -v
+
+            # Navigate to your project directory – update the path accordingly.
             echo "🚀 Navigating to project directory..."
             cd ~/CareerAgent
+
+            # Checkout the main branch and pull the latest changes
             echo "📂 Checking out main branch and pulling latest changes..."
-            git fetch origin
             git checkout main
-            git reset --hard origin/main
-            echo "🧹 Restarting all PM2 processes..."
-            pm2 delete all || true
+            git pull
+
+            # Install backend dependencies and start backend with PM2
             echo "📦 Installing backend dependencies..."
             cd backend
             npm install
             echo "🟢 Starting backend with PM2..."
             pm2 start server.js --name "backend" --env production
+
+            # Install frontend dependencies, build and start frontend with PM2
             echo "📦 Installing frontend dependencies..."
             cd ../frontend
             npm install
             npm run build
             echo "🟢 Starting frontend with PM2..."
             pm2 start serve --name "frontend" -- -s build -l 3000
-          EOF
