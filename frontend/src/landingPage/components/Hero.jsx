@@ -5,12 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { SplineScene } from "../../components/ui/spline";
 import { AnimatedButton } from "../../components/ui/AnimatedButton";
 import { ChevronRight, ArrowRight } from "lucide-react";
+import NavigationArrow from "./NavigationArrow";
 
 const Hero = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-screen bg-black flex items-center justify-center overflow-hidden">
+    <section id="hero-section" className="relative min-h-screen bg-black flex items-center justify-center overflow-hidden">
       {/* Particles Background */}
       <ParticlesComponent id="particles" />
 
@@ -86,36 +87,11 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Down Arrow */}
-      <motion.div
-        onClick={() => {
-          document.getElementById("features-section")?.scrollIntoView({
-            behavior: "smooth",
-          });
-        }}
-        animate={{ y: [0, 10, 0] }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          repeatType: "loop",
-        }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 cursor-pointer"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="white"
-          className="w-8 h-8"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19.5 12.75L12 20.25L4.5 12.75"
-          />
-        </svg>
-      </motion.div>
+      <NavigationArrow 
+        targetId="features-section" 
+        direction="down"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
     </section>
   );
 };

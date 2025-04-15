@@ -1,6 +1,7 @@
 import React, { useState, memo, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
+import NavigationArrow from "./NavigationArrow";
 
 // Memoize ParticlesComponent to prevent re-renders
 const MemoizedParticles = memo(ParticlesComponent);
@@ -201,6 +202,12 @@ const Testimonials = () => {
           </div>
         </div>
       </div>
+
+      <NavigationArrow 
+        targetId="demo-section" 
+        direction="up"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
     </section>
   );
 };

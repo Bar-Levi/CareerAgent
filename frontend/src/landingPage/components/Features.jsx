@@ -5,6 +5,7 @@ import mockInterviewImage from "../assets/mock-interview.png";
 import cvScanningImage from "../assets/cv-scanning.png";
 import recruiterCandidateImage from "../assets/recruiter-candidate.png";
 import ParticlesComponent from "./ParticleComponent";
+import NavigationArrow from "./NavigationArrow";
 
 // Memoize ParticlesComponent to prevent re-renders
 const MemoizedParticles = memo(ParticlesComponent);
@@ -80,36 +81,16 @@ const Features = () => {
         </Card>
       </div>
 
-      {/* Down Arrow: scrolls to DemoSection */}
-      <motion.div
-        onClick={() => {
-          document.getElementById("demo-section")?.scrollIntoView({
-            behavior: "smooth",
-          });
-        }}
-        animate={{ y: [0, 10, 0] }}
-        transition={{
-          duration: 1.5,
-          repeat: Infinity,
-          repeatType: "loop",
-        }}
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-[100] cursor-pointer backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="white"
-          className="w-8 h-8"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19.5 12.75L12 20.25L4.5 12.75"
-          />
-        </svg>
-      </motion.div>
+      <NavigationArrow 
+        targetId="hero-section" 
+        direction="up"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
+      <NavigationArrow 
+        targetId="demo-section" 
+        direction="down"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
     </section>
   );
 };
