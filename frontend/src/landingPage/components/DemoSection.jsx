@@ -4,7 +4,10 @@ import ParticlesComponent from "./ParticleComponent";
 import chatbotImage from "../assets/chatbot-image.png";
 
 const DemoSection = () => (
-  <section className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
+  <section
+    id="demo-section"
+    className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden"
+  >
     {/* Particles Background */}
     <ParticlesComponent id="particles-demo" />
 
@@ -43,6 +46,37 @@ const DemoSection = () => (
         </div>
       </motion.div>
     </div>
+
+    {/* Down Arrow: scrolls to Testimonials */}
+    <motion.div
+      onClick={() => {
+        document.getElementById("testimonials-section")?.scrollIntoView({
+          behavior: "smooth",
+        });
+      }}
+      animate={{ y: [0, 10, 0] }}
+      transition={{
+        duration: 1.5,
+        repeat: Infinity,
+        repeatType: "loop",
+      }}
+      className="absolute bottom-8 left-1/2 transform -translate-x-1/2 cursor-pointer"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.5}
+        stroke="white"
+        className="w-8 h-8"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M19.5 12.75L12 20.25L4.5 12.75"
+        />
+      </svg>
+    </motion.div>
   </section>
 );
 

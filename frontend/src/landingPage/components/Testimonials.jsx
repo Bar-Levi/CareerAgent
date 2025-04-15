@@ -172,7 +172,10 @@ const Testimonials = () => {
   }, [positions]);
 
   return (
-    <section className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20">
+    <section
+      id="testimonials-section"
+      className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20"
+    >
       <MemoizedParticles id="particles-testimonials" />
 
       <div className="max-w-6xl mx-auto text-center px-4 z-10 relative">
