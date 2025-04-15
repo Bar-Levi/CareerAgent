@@ -5,13 +5,17 @@ import mockInterviewImage from "../assets/mock-interview.png";
 import cvScanningImage from "../assets/cv-scanning.png";
 import recruiterCandidateImage from "../assets/recruiter-candidate.png";
 import ParticlesComponent from "./ParticleComponent";
+import NavigationArrow from "./NavigationArrow";
 
 // Memoize ParticlesComponent to prevent re-renders
 const MemoizedParticles = memo(ParticlesComponent);
 
 const Features = () => {
   return (
-    <section className="w-full py-12 md:py-20 bg-black">
+    <section
+      id="features-section"
+      className="relative w-full py-12 md:py-20 bg-black pb-24"
+    >
       <motion.h2
         className="text-6xl md:text-6xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight px-4 ml-[-100px]"
         initial={{ opacity: 0, y: 50 }}
@@ -76,6 +80,17 @@ const Features = () => {
           />
         </Card>
       </div>
+
+      <NavigationArrow 
+        targetId="hero-section" 
+        direction="up"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
+      <NavigationArrow 
+        targetId="demo-section" 
+        direction="down"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
     </section>
   );
 };
@@ -127,7 +142,7 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
         delay: index * 0.2,
         ease: "easeInOut",
       }}
-      className="border border-white/[0.5] group/canvas-card flex flex-col items-center justify-center w-[90vw] sm:w-[80vw] lg:w-[25vw] h-[50vh] sm:h-[60vh] lg:h-[70vh] p-[2vw] relative rounded-[2vw] overflow-hidden transition-all duration-500 hover:scale-105 hover:border-white/80"
+      className="border border-white/[0.5] group/canvas-card flex flex-col items-center w-[90vw] sm:w-[80vw] lg:w-[25vw] h-[40vh] sm:h-[50vh] lg:h-[60vh] p-[2vw] relative rounded-[2vw] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:translate-y-[-10px] hover:border-white/80"
     >
       {/* Background Gradient */}
       <div 
@@ -137,21 +152,21 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
       />
 
       {/* Static Content */}
-      <div className="relative z-20 flex flex-col items-center justify-center h-full w-full">
-        {/* Icon with Title */}
-        <div className={`flex flex-col items-center transition-all duration-300 ${
-          hovered ? '-translate-y-[5vh]' : 'translate-y-0'
+      <div className="relative z-20 flex flex-col items-center h-full w-full">
+        {/* Icon with Title - Fixed position */}
+        <div className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-300 ${
+          hovered ? '-translate-y-8' : 'translate-y-0'
         }`}>
-          <div className="mb-[2vh] transform transition-all duration-300">
+          <div className="transform transition-all duration-300 scale-90">
             {icon}
           </div>
         </div>
 
-        {/* Description and Image - Visible on Hover */}
-        <div className={`flex flex-col items-center transition-all duration-300 px-[2vw] ${
-          hovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[2vh]'
+        {/* Description and Image */}
+        <div className={`mt-24 flex-1 flex flex-col items-center justify-start transition-all duration-300 px-[2vw] ${
+          hovered ? 'opacity-100 translate-y-[-20px]' : 'opacity-0 translate-y-[2vh]'
         }`}>
-          <p className="text-[2.5vw] sm:text-[1.8vw] lg:text-[1vw] text-white text-center mb-[2vh] max-w-[90%] leading-relaxed">
+          <p className="text-[2vw] sm:text-[1.6vw] lg:text-[1vw] text-white text-center mb-[2vh] max-w-[90%] leading-relaxed">
             {description}
           </p>
 
@@ -160,7 +175,7 @@ const Card = ({ title, icon, children, description, image, index = 1 }) => {
               <img
                 src={image}
                 alt={`${title} illustration`}
-                className={`w-auto max-w-[80%] h-auto max-h-[25vh] rounded-[1vw] object-contain transform transition-all duration-300 ${
+                className={`w-auto max-w-[70%] h-auto max-h-[20vh] rounded-[1vw] object-contain transform transition-all duration-300 ${
                   hovered ? 'scale-105 opacity-100' : 'scale-95 opacity-0'
                 }`}
                 style={{

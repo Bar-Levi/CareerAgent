@@ -2,9 +2,13 @@ import React from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 import chatbotImage from "../assets/chatbot-image.png";
+import NavigationArrow from "./NavigationArrow";
 
 const DemoSection = () => (
-  <section className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden">
+  <section
+    id="demo-section"
+    className="relative bg-black bg-cover bg-center h-screen flex items-center justify-center overflow-hidden"
+  >
     {/* Particles Background */}
     <ParticlesComponent id="particles-demo" />
 
@@ -43,6 +47,17 @@ const DemoSection = () => (
         </div>
       </motion.div>
     </div>
+
+    <NavigationArrow 
+      targetId="features-section" 
+      direction="up"
+      className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+    />
+    <NavigationArrow 
+      targetId="testimonials-section" 
+      direction="down"
+      className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+    />
   </section>
 );
 

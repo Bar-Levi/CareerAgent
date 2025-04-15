@@ -1,6 +1,7 @@
 import React, { useState, memo, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
+import NavigationArrow from "./NavigationArrow";
 
 // Memoize ParticlesComponent to prevent re-renders
 const MemoizedParticles = memo(ParticlesComponent);
@@ -172,7 +173,10 @@ const Testimonials = () => {
   }, [positions]);
 
   return (
-    <section className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20">
+    <section
+      id="testimonials-section"
+      className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20"
+    >
       <MemoizedParticles id="particles-testimonials" />
 
       <div className="max-w-6xl mx-auto text-center px-4 z-10 relative">
@@ -198,6 +202,12 @@ const Testimonials = () => {
           </div>
         </div>
       </div>
+
+      <NavigationArrow 
+        targetId="demo-section" 
+        direction="up"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+      />
     </section>
   );
 };
