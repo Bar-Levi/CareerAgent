@@ -25,7 +25,7 @@ const PerformanceInsights = () => {
         const encodedEmail = encodeURIComponent(userEmail);
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/personal/statistics?email=${encodedEmail}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`
           }
         });
         
@@ -52,11 +52,11 @@ const PerformanceInsights = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
-      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2 rounded-t-lg">
+      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2">
         <h2 className="text-lg font-bold text-white">Performance Insights</h2>
       </div>
 
-      <div className="flex flex-col gap-2 p-2">
+      <div className="flex flex-col gap-2 p-2 overflow-y-auto">
         {/* Applications Sent */}
         <div className="bg-green-50 rounded-lg p-3 border border-green-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-green-100">
           <div className="flex items-center justify-between">

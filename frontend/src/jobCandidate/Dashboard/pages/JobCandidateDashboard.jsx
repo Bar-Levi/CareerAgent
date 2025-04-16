@@ -7,6 +7,7 @@ import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
 import { useLocation } from "react-router-dom";
+import MapWithAutocomplete from "../components/MapWithAutocomplete";
 
 const JobCandidateDashboard = ({onlineUsers}) => {
   const [notification, setNotification] = useState(null);
@@ -34,6 +35,7 @@ const JobCandidateDashboard = ({onlineUsers}) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
           <div className="grid grid-rows-2 gap-4 h-full min-h-0">
             <div className="h-full overflow-hidden min-h-0">
+              <MapWithAutocomplete />
               <PersonalOverview user={state.user}/>
             </div>
             <div className="h-full overflow-hidden min-h-0">

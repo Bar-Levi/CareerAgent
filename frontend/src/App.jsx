@@ -14,7 +14,7 @@ import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
 import socket from "./socket";
-
+import MapsProvider from './providers/MapsProvider';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -46,6 +46,7 @@ function App() {
     return (
         <>
         <ToastContainer position="top-right" autoClose={5000} />
+        <MapsProvider>
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
@@ -81,8 +82,9 @@ function App() {
                     </ProtectedRoute>
                 }/>
                 <Route path="*" element={<Navigate to="/dashboard"/>} />
-        </Routes>
+            </Routes>
         </Router>
+        </MapsProvider>
         </>
     );
 }
