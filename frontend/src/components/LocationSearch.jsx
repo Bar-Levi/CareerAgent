@@ -1,25 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 
 const LocationSearch = ({ onLocationSelect, initialValue = '' }) => {
   const [query, setQuery] = useState(initialValue);
   const [suggestions, setSuggestions] = useState([]);
 
-  const handleSearch = async (value) => {
-    setQuery(value);
-    if (value.length < 3) return;
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    (() => {
+      let timeoutId;
+      return (value) => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(async () => {
+          if (value.length < 3) return;
 
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${value}+Israel&addressdetails=1&countrycodes=IL`
-      );
-      const data = await response.json();
-      setSuggestions(data.filter(item => 
-        item.address.country === 'Israel' || 
-        item.address.country_code === 'il'
-      ));
-    } catch (error) {
-      console.error('Error fetching locations:', error);
-    }
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/search?format=json&q=${value}+Israel&addressdetails=1&countrycodes=IL`
+            );
+            const data = await response.json();
+            setSuggestions(data.filter(item => 
+              item.address.country === 'Israel' || 
+              item.address.country_code === 'il'
+            ));
+          } catch (error) {
+            console.error('Error fetching locations:', error);
+          }
+        }, 300); // 300ms delay
+      };
+    })(),
+    []
+  );
+
+  const handleSearch = (value) => {
+    setQuery(value);
+    debouncedSearch(value);
   };
 
   return (
