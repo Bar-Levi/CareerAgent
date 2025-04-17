@@ -235,13 +235,14 @@ function toTitleCase(value) {
   
 // Controller to handle saving a new job listing
 const saveJobListing = async (req, res) => {
-    
+    console.log("coordinates: ",req.body.coordinates);
     const normalizedBody = normalizeNullValues(req.body);
     try {
         // Extract job listing data from the request body
         const {
             jobRole,
             location,
+            coordinates,
             company,
             experienceLevel,
             companySize,
@@ -263,7 +264,7 @@ const saveJobListing = async (req, res) => {
         console.log("normalizedBody: ",normalizedBody);
         
         // Validate required fields
-        if (!jobRole || !location || !company || !experienceLevel || !jobType || !remote || !description) {
+        if (!jobRole || !location || !coordinates || !company || !experienceLevel || !jobType || !remote || !description) {
             
             return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
@@ -279,6 +280,7 @@ const saveJobListing = async (req, res) => {
         const newJobListing = new JobListing({
             jobRole,
             location,
+            coordinates,
             company,
             experienceLevel: toTitleCase(experienceLevel),
             jobType: toTitleCase(jobType),

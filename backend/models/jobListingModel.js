@@ -10,6 +10,11 @@ const jobListingSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    coordinates: {
+        type: [Number],
+        required: true,
+        index: '2dsphere'
+    },
     company: {
         type: String,
         required: true

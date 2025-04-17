@@ -61,6 +61,8 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
                 companyWebsite: user.companyWebsite,
                 companySize: user.companySize,
                 company: user.companyName,
+                // Ensure coordinates are included in the data sent to backend
+                coordinates: jobListingData.coordinates || null
             };
             console.log("updatedJobListingData:", updatedJobListingData)
 
@@ -146,19 +148,32 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
         setIsModalOpen(false);
         setIsPosting(true);
         try {
+            // Include coordinates in the text analysis if they exist
+            const locationInfo = jobListing.coordinates ? 
+                `location: ${jobListing.location}, coordinates: [${jobListing.coordinates[0]}, ${jobListing.coordinates[1]}]` :
+                `location: ${jobListing.location}`;
+
             const combinedText = input + Object.entries(jobListing).reduce((acc, [key, value]) => {
-                if (key !== "missingFields" && value) {
+                if (key !== 'missingFields' && key !== 'coordinates' && value) {
                     return acc + ` ${key}: ${value}`;
                 }
                 return acc;
             }, "");
 
-            const analyzedData = await analyzeFreeText(`${combinedText} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`
+            const analyzedData = await analyzeFreeText(
+                `${combinedText} ${locationInfo} company: ${user.companyName}, company size: ${user.companySize}, company website: ${user.companyWebsite}`
             );
+
             if (!analyzedData) return;
             
-            handleMissingFields(analyzedData);
-            await saveJobListing(analyzedData);
+            // Ensure coordinates are included in the final data
+            const finalAnalyzedData = {
+                ...analyzedData,
+                coordinates: jobListing.coordinates || null
+            };
+            
+            handleMissingFields(finalAnalyzedData);
+            await saveJobListing(finalAnalyzedData);
 
             setJobListing(null);
             if (onPostSuccess) onPostSuccess();

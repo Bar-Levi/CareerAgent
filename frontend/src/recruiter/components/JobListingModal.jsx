@@ -1,4 +1,5 @@
 import React from "react";
+import LocationSearch from '../../components/LocationSearch';
 
 const JobListingModal = ({ isOpen, jobListing, onChange, onSubmit, onClose }) => {
     if (!isOpen) return null;
@@ -19,6 +20,12 @@ const JobListingModal = ({ isOpen, jobListing, onChange, onSubmit, onClose }) =>
         onSubmit(); // Call the provided submit function
     };
 
+    const handleLocationSelect = (location) => {
+        onChange('location', location.display_name);
+        // You can also store the coordinates if needed
+        onChange('coordinates', location.coords);
+    };
+
     return (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center">
             <div className="bg-white rounded-lg p-6 w-96">
@@ -27,14 +34,21 @@ const JobListingModal = ({ isOpen, jobListing, onChange, onSubmit, onClose }) =>
                     {jobListing?.missingFields?.map((field) => (
                         <div key={field} className="mb-4">
                             <label className="block text-gray-700 font-semibold mb-2">{field}</label>
-                            <input
-                                type="text"
-                                className="w-full border rounded-lg p-2"
-                                value={jobListing[field] || ""}
-                                placeholder={placeholders[field] || "Enter value"} // Provide the placeholder
-                                onChange={(e) => onChange(field, e.target.value)}
-                                required
-                            />
+                            {field === 'location' ? (
+                                <LocationSearch
+                                    onLocationSelect={handleLocationSelect}
+                                    initialValue={jobListing[field] || ''}
+                                />
+                            ) : (
+                                <input
+                                    type="text"
+                                    className="w-full border rounded-lg p-2"
+                                    value={jobListing[field] || ""}
+                                    placeholder={placeholders[field] || "Enter value"}
+                                    onChange={(e) => onChange(field, e.target.value)}
+                                    required
+                                />
+                            )}
                         </div>
                     ))}
                     <div className="flex justify-end">
