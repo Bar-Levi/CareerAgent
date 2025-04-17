@@ -161,84 +161,105 @@ const deleteConversation = async (req, res) => {
 
 // Controller functions for messages within a conversation
 const addMessageToConversation = async (req, res) => {
+  console.lo
+
   try {
-    
     const { senderId, senderRole, senderName, text, attachments } = req.body;
     
-    if (!senderId || !senderName || !text) {
+    if (!senderId || !senderName || (!text && attachments.length === 0)) {
+    
       return res.status(400).json({ message: "Missing required message fields" });
     }
     
     const conversation = await Conversation.findById(req.params.id);
+    
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
-
-    const newMessage = { senderId, senderName, text, attachments };
-    
+    const newMessage = { 
+      senderId,
+      senderName,
+      text: text ? text : " ",
+      attachments
+    };
+  
     conversation.messages.push(newMessage);
     conversation.lastMessage = conversation.messages[conversation.messages.length - 1];
-
+  
     await conversation.save();
-
-    // Assuming the recruiter is at index 0 in the participants array and job seeker at index 1.
+  
+    // Participant IDs
     const recruiterParticipantId = conversation.participants[1].userId.toString();
     const jobSeekerParticipantId = conversation.participants[0].userId.toString();
 
-    // Determine the receiver based on the sender's role
+    // Determine receiver
     const recieverId = senderRole === "Recruiter" ? jobSeekerParticipantId : recruiterParticipantId;
+  
 
     const reciever = senderRole === "Recruiter" ?
       await JobSeeker.findById(recieverId) :
       await Recruiter.findById(recieverId);
-
+    
     if (!reciever) {
+    
       return res.status(404).json({ message: "Reciever not found" });
     }
 
     const jobListing = await JobListing.findById(conversation.jobListingId);
-
-    // Check if the job listing already removed
     if(!jobListing) {
+    
       return res.status(404).json({ message: "Job listing was removed by the recruiter..." });
     }
 
-    // Create and push a new notification to the receiver
+    // Create notification
     const newNotification = {
       type: "chat",
-      message: `${senderName}: ${text}`,
+      message: attachments && attachments.length > 0 
+        ? text 
+          ? `${senderName}: ${text} (+ ${attachments.length} ${attachments.length === 1 ? 'attachment' : 'attachments'})`
+          : `${senderName} sent ${attachments.length} ${attachments.length === 1 ? 'attachment' : 'attachments'}`
+        : `${senderName}: ${text}`,
       conversationId: conversation._id,
       extraData: {
         goToRoute: senderRole === "Recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
           title: senderName,
           conversationId: conversation._id,
-          secondParticipantProfilePic: senderRole === "Recruiter" ? conversation.participants[1].profilePic : conversation.participants[0].profilePic,
+          secondParticipantProfilePic: senderRole === "Recruiter" ? 
+            conversation.participants[1].profilePic : 
+            conversation.participants[0].profilePic,
           jobListing,
           viewMode: "messages"
         },
       },
     };
+  
+
     if (!reciever.notifications) {
+    
       reciever.notifications = [];
     }
     reciever.notifications.push(newNotification);
     await reciever.save();
-    
-    // Retrieve the Socket.IO instance from the app and emit the notification event.
+  
+
+    // Socket.IO handling
     const io = req.app.get("io");
+  
 
     let notificationWithMessageObject = newNotification;
     notificationWithMessageObject.messageObject = newMessage;
-
     notificationWithMessageObject.messageObject.timestamp = new Date().toISOString();
+  
 
-    
-    // Assuming the receiver's socket(s) join a room identified by their user ID (as a string)
     io.to(reciever._id.toString()).emit("newNotification", notificationWithMessageObject);
+  
 
+  
     res.status(201).json(conversation);
   } catch (err) {
+    console.error('Error in addMessageToConversation:', err);
+    console.error('Stack trace:', err.stack);
     res.status(400).json({ message: err.message });
   }
 };
