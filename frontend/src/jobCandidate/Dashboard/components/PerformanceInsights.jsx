@@ -52,67 +52,13 @@ const PerformanceInsights = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg h-full flex flex-col">
-      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2 rounded-t-lg">
+      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2">
         <h2 className="text-lg font-bold text-white">Performance Insights</h2>
       </div>
 
-      <div className="flex flex-col gap-2 p-2">
-        {/* Applications Sent */}
-        <div className="bg-green-50 rounded-lg p-3 border border-green-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-green-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 transition-colors duration-300 group-hover:bg-green-200">
-                <FaPaperPlane className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">Applications Sent</div>
-                <div className="text-xl font-bold text-gray-900">{statistics.numOfApplicationsSent}</div>
-              </div>
-            </div>
-            <button className="text-gray-400 hover:text-gray-500 transition-colors duration-300">
-              <FaChartLine className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Interviews Scheduled */}
-        <div className="bg-purple-50 rounded-lg p-3 border border-purple-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-purple-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 transition-colors duration-300 group-hover:bg-purple-200">
-                <FaUserTie className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">Interviews Scheduled</div>
-                <div className="text-xl font-bold text-gray-900">{statistics.numOfInterviewsScheduled}</div>
-              </div>
-            </div>
-            <button className="text-gray-400 hover:text-gray-500 transition-colors duration-300">
-              <FaChartLine className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Applications Reviewed */}
-        <div className="bg-blue-50 rounded-lg p-3 border border-blue-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-blue-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 transition-colors duration-300 group-hover:bg-blue-200">
-                <FaEye className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">Applications Reviewed</div>
-                <div className="text-xl font-bold text-gray-900">{statistics.numOfReviewedApplications}</div>
-              </div>
-            </div>
-            <button className="text-gray-400 hover:text-gray-500 transition-colors duration-300">
-              <FaChartLine className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Interview Success Rate */}
-        <div className={`rounded-lg p-3 border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+      <div className="flex flex-col gap-4 p-4">
+        {/* Interview Success Rate - Now at the top */}
+        <div className={`rounded-lg p-4 border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
           statistics.interviewSuccessRate >= 50 
             ? 'bg-green-50 border-green-100 hover:bg-green-100' 
             : 'bg-yellow-50 border-yellow-100 hover:bg-yellow-100'
@@ -128,11 +74,11 @@ const PerformanceInsights = () => {
                   statistics.interviewSuccessRate >= 50 ? 'text-green-600' : 'text-yellow-600'
                 }`} />
               </div>
-              <div>
+              <div className="flex-1">
                 <div className="text-sm text-gray-600">Interview Success Rate</div>
                 <div className="text-xl font-bold text-gray-900">{statistics.interviewSuccessRate.toFixed(1)}%</div>
                 {message && (
-                  <div className={`text-sm mt-0.5 ${
+                  <div className={`text-sm mt-2 ${
                     statistics.interviewSuccessRate >= 50 ? 'text-green-700' : 'text-yellow-700'
                   }`}>
                     {message}
@@ -140,9 +86,54 @@ const PerformanceInsights = () => {
                 )}
               </div>
             </div>
-            <button className="text-gray-400 hover:text-gray-500 transition-colors duration-300">
-              <FaChartLine className="w-5 h-5" />
-            </button>
+          </div>
+        </div>
+
+        {/* Statistics Grid - Now below */}
+        <div className="grid grid-cols-3 gap-4">
+          {/* Applications Sent */}
+          <div className="bg-green-50 rounded-lg p-3 border border-green-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-green-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 transition-colors duration-300 group-hover:bg-green-200">
+                  <FaPaperPlane className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Applications<br/>Sent</div>
+                  <div className="text-xl font-bold text-gray-900">{statistics.numOfApplicationsSent}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interviews Scheduled */}
+          <div className="bg-purple-50 rounded-lg p-3 border border-purple-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-purple-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100 transition-colors duration-300 group-hover:bg-purple-200">
+                  <FaUserTie className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Interviews<br/>Scheduled</div>
+                  <div className="text-xl font-bold text-gray-900">{statistics.numOfInterviewsScheduled}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Applications Reviewed */}
+          <div className="bg-blue-50 rounded-lg p-3 border border-blue-100 transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-blue-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100 transition-colors duration-300 group-hover:bg-blue-200">
+                  <FaEye className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Applications<br/>Reviewed</div>
+                  <div className="text-xl font-bold text-gray-900">{statistics.numOfReviewedApplications}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
