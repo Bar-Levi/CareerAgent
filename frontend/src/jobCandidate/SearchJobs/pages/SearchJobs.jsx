@@ -11,6 +11,8 @@ import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
 import JobListingDescription from "../components/JobListingDescription";
 import MessagingBar from "../components/MessagingBar";
+import { FaList, FaMapMarkedAlt } from 'react-icons/fa';
+import WorldMap from '../../../components/WorldMap';
 
 const SearchJobs = ({onlineUsers}) => {
   // Get state from location and initialize our user state
@@ -21,6 +23,7 @@ const SearchJobs = ({onlineUsers}) => {
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
+  const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
   // Initialize conversation and job listing states from notification (if any)
   const [selectedJob, setSelectedJob] = useState(null);
@@ -266,11 +269,29 @@ const SearchJobs = ({onlineUsers}) => {
             renderingConversationData={renderingConversationData}
             renderingConversationKey={renderingConversationKey}
             />
-          <div className="flex sticky top-0 z-10">
+          <div className="flex sticky top-0 z-30">
             <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
               <h1>Search Results</h1>
-              <div className="relative flex">
-                {/* Sorting Dropdown */}
+              <div className="relative flex items-center gap-4">
+                {/* View Toggle Button */}
+                <button
+                  onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded bg-white text-gray-700 hover:bg-gray-50 border shadow-sm"
+                >
+                  {viewMode === 'list' ? (
+                    <>
+                      <FaMapMarkedAlt className="text-gray-600" />
+                      <span className="text-sm">Map View</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaList className="text-gray-600" />
+                      <span className="text-sm">List View</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Existing sorting dropdown */}
                 <select
                   value={sortingMethod}
                   onChange={handleSortChange}
@@ -283,127 +304,138 @@ const SearchJobs = ({onlineUsers}) => {
                   <option value="newest">Newest First</option>
                   <option value="oldest">Oldest First</option>
                 </select>
-
-                <div className="relative group cursor-help">
-                  {/* Custom Tooltip */}
-                  <span className="text-white text-lg">
-                    <i className="ml-1 fa fa-info-circle" />
-                  </span>
-                  {user.analyzed_cv_content ? (
-                    <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                      <p className="text-lg font-bold mb-3 border-b pb-2">
-                        Analyzed CV Content
-                      </p>
-                      <ul className="list-none pl-0 space-y-1">
-                        {/* Job Roles */}
-                        <li>
-                          <strong className="block text-blue-600">Job Roles:</strong>
-                          <span>
-                            {Array.isArray(user.analyzed_cv_content.job_role) &&
-                            user.analyzed_cv_content.job_role.length > 0
-                              ? user.analyzed_cv_content.job_role.join(", ")
-                              : "None"}
-                          </span>
-                        </li>
-                        {/* Security Clearance */}
-                        <li>
-                          <strong className="block text-blue-600">
-                            Security Clearance:
-                          </strong>
-                          <span>
-                            {user.analyzed_cv_content.security_clearance ||
-                              "None"}
-                          </span>
-                        </li>
-                        {/* Education */}
-                        <li>
-                          <strong className="block text-blue-600">Education:</strong>
-                          {Array.isArray(user.analyzed_cv_content.education) &&
-                          user.analyzed_cv_content.education.length > 0 ? (
-                            user.analyzed_cv_content.education.map((edu, index) => (
-                              <span key={index} className="block">
-                                {edu.degree} from{" "}
-                                <span className="font-medium">
-                                  {edu.institution}
-                                </span>
+              </div>
+              <div className="relative group cursor-help">
+                {/* Custom Tooltip */}
+                <span className="text-white text-lg">
+                  <i className="ml-1 fa fa-info-circle" />
+                </span>
+                {user.analyzed_cv_content ? (
+                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+                    <p className="text-lg font-bold mb-3 border-b pb-2">
+                      Analyzed CV Content
+                    </p>
+                    <ul className="list-none pl-0 space-y-1">
+                      {/* Job Roles */}
+                      <li>
+                        <strong className="block text-blue-600">Job Roles:</strong>
+                        <span>
+                          {Array.isArray(user.analyzed_cv_content.job_role) &&
+                          user.analyzed_cv_content.job_role.length > 0
+                            ? user.analyzed_cv_content.job_role.join(", ")
+                            : "None"}
+                        </span>
+                      </li>
+                      {/* Security Clearance */}
+                      <li>
+                        <strong className="block text-blue-600">
+                          Security Clearance:
+                        </strong>
+                        <span>
+                          {user.analyzed_cv_content.security_clearance ||
+                            "None"}
+                        </span>
+                      </li>
+                      {/* Education */}
+                      <li>
+                        <strong className="block text-blue-600">Education:</strong>
+                        {Array.isArray(user.analyzed_cv_content.education) &&
+                        user.analyzed_cv_content.education.length > 0 ? (
+                          user.analyzed_cv_content.education.map((edu, index) => (
+                            <span key={index} className="block">
+                              {edu.degree} from{" "}
+                              <span className="font-medium">
+                                {edu.institution}
                               </span>
-                            ))
-                          ) : (
-                            <span>None</span>
-                          )}
-                        </li>
-                        {/* Work Experience */}
-                        <li>
-                          <strong className="block text-blue-600">
-                            Work Experience:
-                          </strong>
-                          {Array.isArray(user.analyzed_cv_content.work_experience) &&
-                          user.analyzed_cv_content.work_experience.length > 0 ? (
-                            user.analyzed_cv_content.work_experience.map(
-                              (exp, index) => {
-                                const yearsOfExperience =
-                                  (exp.end_year || new Date().getFullYear()) -
-                                  exp.start_year;
-                                return (
-                                  <span key={index} className="block">
-                                    {exp.job_title}{" "}
-                                    <span className="font-medium">
-                                      at {exp.company} ({exp.start_year} -{" "}
-                                      {exp.end_year || "Present"}) -{" "}
-                                      {yearsOfExperience} year(s)
-                                    </span>
+                            </span>
+                          ))
+                        ) : (
+                          <span>None</span>
+                        )}
+                      </li>
+                      {/* Work Experience */}
+                      <li>
+                        <strong className="block text-blue-600">
+                          Work Experience:
+                        </strong>
+                        {Array.isArray(user.analyzed_cv_content.work_experience) &&
+                        user.analyzed_cv_content.work_experience.length > 0 ? (
+                          user.analyzed_cv_content.work_experience.map(
+                            (exp, index) => {
+                              const yearsOfExperience =
+                                (exp.end_year || new Date().getFullYear()) -
+                                exp.start_year;
+                              return (
+                                <span key={index} className="block">
+                                  {exp.job_title}{" "}
+                                  <span className="font-medium">
+                                    at {exp.company} ({exp.start_year} -{" "}
+                                    {exp.end_year || "Present"}) -{" "}
+                                    {yearsOfExperience} year(s)
                                   </span>
-                                );
-                              }
-                            )
-                          ) : (
-                            <span>None</span>
-                          )}
-                        </li>
-                        {/* Skills */}
-                        <li>
-                          <strong className="block text-blue-600">Skills:</strong>
-                          <span>
-                            {Array.isArray(user.analyzed_cv_content.skills) &&
-                            user.analyzed_cv_content.skills.length > 0
-                              ? user.analyzed_cv_content.skills.length > 5
-                                ? user.analyzed_cv_content.skills
-                                    .slice(0, -1)
-                                    .join(", ") + ", " + user.analyzed_cv_content.skills[user.analyzed_cv_content.skills.length - 1]
-                                : user.analyzed_cv_content.skills.join(", ")
-                              : "None"}
-                          </span>
-                        </li>
-                      </ul>
-                    </div>
-                  ) : (
-                    <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                      <p className="text-sm text-gray-500">
-                        No analyzed CV content found.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                                </span>
+                              );
+                            }
+                          )
+                        ) : (
+                          <span>None</span>
+                        )}
+                      </li>
+                      {/* Skills */}
+                      <li>
+                        <strong className="block text-blue-600">Skills:</strong>
+                        <span>
+                          {Array.isArray(user.analyzed_cv_content.skills) &&
+                          user.analyzed_cv_content.skills.length > 0
+                            ? user.analyzed_cv_content.skills.length > 5
+                              ? user.analyzed_cv_content.skills
+                                  .slice(0, -1)
+                                  .join(", ") + ", " + user.analyzed_cv_content.skills[user.analyzed_cv_content.skills.length - 1]
+                              : user.analyzed_cv_content.skills.join(", ")
+                            : "None"}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
+                    <p className="text-sm text-gray-500">
+                      No analyzed CV content found.
+                    </p>
+                  </div>
+                )}
               </div>
               <span className="py-1 px-2 bg-green-500 text-white text-sm font-semibold rounded transition-all">
                 Found {jobListingsCount} results
               </span>
             </div>
           </div>
-          <JobListingCardsList
-            key={`${user.cv}-${JSON.stringify(filters)}`}
-            filters={filters}
-            onJobSelect={setSelectedJob}
-            user={user}
-            setUser={setUser}
-            setShowModal={setShowModal}
-            showNotification={showNotification}
-            setJobListingsCount={setJobListingsCount}
-            sortingMethod={sortingMethod}
-            setEducationListedOptions={setEducationListedOptions}
-            setRenderingConversationKey={setRenderingConversationKey}
-            setRenderingConversationData={setRenderingConversationData}
+          
+          {viewMode === 'list' ? (
+            <JobListingCardsList
+              key={`${user.cv}-${JSON.stringify(filters)}`}
+              filters={filters}
+              onJobSelect={setSelectedJob}
+              user={user}
+              setUser={setUser}
+              setShowModal={setShowModal}
+              showNotification={showNotification}
+              setJobListingsCount={setJobListingsCount}
+              sortingMethod={sortingMethod}
+              setEducationListedOptions={setEducationListedOptions}
+              setRenderingConversationKey={setRenderingConversationKey}
+              setRenderingConversationData={setRenderingConversationData}
             />
+          ) : (
+            <div>
+              <WorldMap
+                key={`${user.cv}-${JSON.stringify(filters)}`}
+                onMarkerClick={setSelectedJob}
+                filters={filters}
+                sortingMethod={sortingMethod}
+              />
+            </div>
+          )}
         </div>
 
         {/* Right Area */}
