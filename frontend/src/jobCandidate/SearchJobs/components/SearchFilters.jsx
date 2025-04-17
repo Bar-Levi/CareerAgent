@@ -1,17 +1,9 @@
 // File: SearchFilters.jsx
 
-import React, { useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import LocationSearch from "../../../components/LocationSearch";
 
-const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptions }) => {
-  const [filteredRoles, setFilteredRoles] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [filteredSkills, setFilteredSkills] = useState([]);
-  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
-  const [filteredEducation, setFilteredEducation] = useState([]);
-  const [showEducationDropdown, setShowEducationDropdown] = useState(false);
-
-
-  const jobRoles = [
+const jobRoles = [
     "Student",
     "Software Developer",
     "Software Engineer",
@@ -291,7 +283,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
 ];
 
 
-  const skillsList = [
+const skillsList = [
     "React",
     "Vue",
     "Angular",
@@ -470,282 +462,334 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
     "Blockchain Technology",
   ];
 
+  const SearchFilters = ({
+    filters,
+    setFilters,
+    clearFilters,
+    educationListedOptions,
+    jobListings
+  }) => {
+    // ─── Hook declarations (unconditional, top‐level) ───────────────────────────
+    const [filteredRoles, setFilteredRoles]             = useState([]);
+    const [showRolesDropdown, setShowRolesDropdown]     = useState(false);
   
+    const [filteredSkills, setFilteredSkills]           = useState([]);
+    const [showSkillsDropdown, setShowSkillsDropdown]   = useState(false);
   
-
-  // Handle input changes for filters
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(name, value); // Update specific filter key
-
-    if (name === "jobRole") {
-      if (value.trim() === "") {
-        setFilteredRoles([]);
-        setShowDropdown(false);
-      } else {
-        const matches = jobRoles.filter((role) =>
-          role.toLowerCase().includes(value.toLowerCase())
-        );
-        setFilteredRoles(matches);
-        setShowDropdown(matches.length > 0);
+    const [filteredEducation, setFilteredEducation]           = useState([]);
+    const [showEducationDropdown, setShowEducationDropdown]   = useState(false);
+  
+    const [filteredLocations, setFilteredLocations]           = useState([]);
+    const [showLocationsDropdown, setShowLocationsDropdown]   = useState(false);
+  
+    // ─── 1. Derive unique locations via useMemo + Set :contentReference[oaicite:5]{index=5}
+    const locationsList = useMemo(() => {
+      return Array.from(new Set(jobListings.map(job => job.location)));
+    }, [jobListings]);
+  
+    // ─── Generic input change handler :contentReference[oaicite:6]{index=6}
+    const handleChange = e => {
+      const { name, value } = e.target;
+      setFilters(name, value);
+  
+      // Job Role prefix filter
+      if (name === "jobRole") {
+        if (!value.trim()) {
+          setFilteredRoles([]);
+          setShowRolesDropdown(false);
+        } else {
+          const matches = jobRoles.filter(role =>
+            role.toLowerCase().includes(value.toLowerCase())
+          );
+          setFilteredRoles(matches);
+          setShowRolesDropdown(matches.length > 0);
+        }
       }
-    }
-
-    if (name === "skills") {
-      const enteredSkills = value.split(",").map((skill) => skill.trim());
-      const lastSkill = enteredSkills[enteredSkills.length - 1];
-
-      if (lastSkill.trim() === "") {
-        setFilteredSkills([]);
-        setShowSkillsDropdown(false);
-      } else {
-        const matches = skillsList.filter((skill) =>
-          skill.toLowerCase().startsWith(lastSkill.toLowerCase())
-        );
-        setFilteredSkills(matches);
-        setShowSkillsDropdown(matches.length > 0);
+  
+      // Skills comma‑separated filter
+      if (name === "skills") {
+        const parts = value.split(",").map(s => s.trim());
+        const last  = parts[parts.length - 1] || "";
+        if (!last) {
+          setFilteredSkills([]);
+          setShowSkillsDropdown(false);
+        } else {
+          const matches = skillsList.filter(skill =>
+            skill.toLowerCase().startsWith(last.toLowerCase())
+          );
+          setFilteredSkills(matches);
+          setShowSkillsDropdown(matches.length > 0);
+        }
       }
-    }
-
-    if (name === "education") {
-      const enteredEducation = value.split(",").map((edu) => edu.trim());
-      const lastEducation = enteredEducation[enteredEducation.length - 1];
-
-      if (lastEducation.trim() === "") {
-        setFilteredEducation([]);
-        setShowEducationDropdown(false);
-      } else {
-        const matches = educationListedOptions.filter((skill) =>
-          skill.toLowerCase().startsWith(lastEducation.toLowerCase())
-        );
-        setFilteredEducation(matches);
-        setShowEducationDropdown(matches.length > 0);
+  
+      // Education comma‑separated filter
+      if (name === "education") {
+        const parts   = value.split(",").map(e => e.trim());
+        const lastEdu = parts[parts.length - 1] || "";
+        if (!lastEdu) {
+          setFilteredEducation([]);
+          setShowEducationDropdown(false);
+        } else {
+          const matches = educationListedOptions.filter(opt =>
+            opt.toLowerCase().startsWith(lastEdu.toLowerCase())
+          );
+          setFilteredEducation(matches);
+          setShowEducationDropdown(matches.length > 0);
+        }
       }
-    }
-  };
-
-  // Handle dropdown item click for jobRole
-  const handleDropdownClick = (role) => {
-    setFilters("jobRole", role);
-    setFilteredRoles([]);
-    setShowDropdown(false);
-  };
-
-  // Handle dropdown item click for skills
-  const handleSkillsDropdownClick = (skill) => {
-    const currentSkills = filters.skills ? filters.skills.split(",").map((s) => s.trim()) : [];
-    currentSkills.pop(); // Remove the last partial skill
-    currentSkills.push(skill); // Add the selected skill
-
-    setFilters("skills", currentSkills.join(", "));
-    setFilteredSkills([]);
-    setShowSkillsDropdown(false);
-  };
-
-  // Handle dropdown item click for education
-  const handleEducationDropdownClick = (education) => {
-    const currentEducation = filters.education
-      ? filters.education.split(",").map((e) => e.trim())
-      : [];
-    currentEducation.pop(); // Remove the last partial education entry
-    currentEducation.push(education); // Add the selected education level
-
-    setFilters("education", currentEducation.join(", "));
-    setFilteredEducation([]); // Clear the filtered list
-    setShowEducationDropdown(false); // Close the dropdown
-  };
-
-
-  return (
-    <div className="relative bg-white shadow rounded-lg max-h-screen">
-      <div className="flex sticky top-0 z-10">
-        <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
-          <span>Filters</span>
+  
+      // ─── 2. Location prefix filter :contentReference[oaicite:7]{index=7}
+      if (name === "location") {
+        if (!value.trim()) {
+          setFilteredLocations([]);
+          setShowLocationsDropdown(false);
+        } else {
+          const matches = locationsList.filter(loc =>
+            loc.toLowerCase().startsWith(value.toLowerCase())
+          );
+          setFilteredLocations(matches);
+          setShowLocationsDropdown(matches.length > 0);
+        }
+      }
+    };
+  
+    // ─── Selection handlers to commit choice and close dropdown :contentReference[oaicite:8]{index=8}
+    const handleRoleSelect = role => {
+      setFilters("jobRole", role);
+      setShowRolesDropdown(false);
+    };
+  
+    const handleSkillsSelect = skill => {
+      const parts = (filters.skills || "").split(",").map(s => s.trim());
+      parts.pop();
+      parts.push(skill);
+      setFilters("skills", parts.join(", "));
+      setShowSkillsDropdown(false);
+    };
+  
+    const handleEducationSelect = edu => {
+      const parts = (filters.education || "").split(",").map(e => e.trim());
+      parts.pop();
+      parts.push(edu);
+      setFilters("education", parts.join(", "));
+      setShowEducationDropdown(false);
+    };
+  
+    const handleLocationSelect = loc => {
+      setFilters("location", loc);
+      setShowLocationsDropdown(false);
+    };
+  
+    return (
+      <div className="relative bg-white shadow rounded-lg max-h-screen">
+        {/* Header */}
+        <div className="flex sticky top-0 z-10 bg-brand-primary text-brand-accent p-4">
+          <h2 className="text-2xl font-bold">Filters</h2>
           <button
             onClick={clearFilters}
-            className="py-1 px-2 bg-red-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
+            className="ml-auto bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
           >
             Clear Filters
           </button>
         </div>
-      </div>
-
-      <div className="space-y-4 overflow-y-auto p-4">
-        {/* Job Role */}
-        <div className="relative">
+  
+        <div className="p-4 space-y-4 overflow-y-auto">
+          {/* Job Role */}
+          <div className="relative">
+            <input
+              type="text"
+              name="jobRole"
+              placeholder="Job Role"
+              value={filters.jobRole || ""}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              autocomplete="off"
+            />
+            {showRolesDropdown && (
+              <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+                {filteredRoles.map(role => (
+                  <li
+                    key={role}
+                    onClick={() => handleRoleSelect(role)}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {role}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+  
+          {/* Skills */}
+          <div className="relative">
+            <input
+              type="text"
+              name="skills"
+              placeholder="Skills (comma-separated)"
+              value={filters.skills || ""}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              autocomplete="off"
+            />
+            {showSkillsDropdown && (
+              <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+                {filteredSkills.map(skill => (
+                  <li
+                    key={skill}
+                    onClick={() => handleSkillsSelect(skill)}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {skill}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+  
+          {/* Company */}
           <input
             type="text"
-            name="jobRole"
-            placeholder="Job Role"
-            value={filters.jobRole || ""}
+            name="company"
+            placeholder="Company"
+            value={filters.company || ""}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded"
+            className="w-full border px-3 py-2 rounded"
+            autocomplete="off"
           />
-          {showDropdown && (
-            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
-              {filteredRoles.map((role) => (
-                <li
-                  key={role}
-                  onClick={() => handleDropdownClick(role)}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                >
-                  {role}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Skills */}
-        <div className="relative">
-          <input
-            type="text"
-            name="skills"
-            placeholder="Skills (comma-separated)"
-            value={filters.skills || ""}
+  
+          {/* Location */}
+          <div className="relative">
+            <input
+              type="text"
+              name="location"
+              placeholder="Location (Hebrew)"
+              value={filters.location || ""}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              autocomplete="off"
+            />
+            {showLocationsDropdown && (
+              <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+                {filteredLocations.map(loc => (
+                  <li
+                    key={loc}
+                    onClick={() => handleLocationSelect(loc)}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {loc}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+  
+          {/* Reusable component for advanced location search */}
+          <LocationSearch />
+  
+          {/* Education */}
+          <div className="relative">
+            <input
+              type="text"
+              name="education"
+              placeholder="Education (comma-separated)"
+              value={filters.education || ""}
+              onChange={handleChange}
+              className="w-full border px-3 py-2 rounded"
+              autocomplete="off"
+            />
+            {showEducationDropdown && (
+              <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
+                {filteredEducation.map(edu => (
+                  <li
+                    key={edu}
+                    onClick={() => handleEducationSelect(edu)}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {edu}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+  
+          {/* Experience Level */}
+          <select
+            name="experienceLevel"
+            value={filters.experienceLevel || ""}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded"
-          />
-          {showSkillsDropdown && (
-            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
-              {filteredSkills.map((skill) => (
-                <li
-                  key={skill}
-                  onClick={() => handleSkillsDropdownClick(skill)}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                >
-                  {skill}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Company */}
-        <input
-          type="text"
-          name="company"
-          placeholder="Company"
-          value={filters.company || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Location */}
-        <input
-          type="text"
-          name="location"
-          placeholder="Location"
-          value={filters.location || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Experience Level */}
-        <select
-          name="experienceLevel"
-          value={filters.experienceLevel || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Experience Level</option>
-          <option value="Entry">Entry</option>
-          <option value="Junior">Junior</option>
-          <option value="Senior">Senior</option>
-          <option value="Internship">Internship</option>
-        </select>
-
-        {/* Company Size */}
-        <select
-          name="companySize"
-          value={filters.companySize || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="" disabled>
-            Select Company Size
-          </option>
-          <option value="0-30">0-30</option>
-          <option value="31-100">31-100</option>
-          <option value="101-300">101-300</option>
-          <option value="301+">301+</option>
-        </select>
-
-        {/* Job Type */}
-        <select
-          name="jobType"
-          value={filters.jobType || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Job Type</option>
-          <option value="Full Time">Full Time</option>
-          <option value="Part Time">Part Time</option>
-          <option value="Contract">Contract</option>
-        </select>
-
-        {/* Remote */}
-        <select
-          name="remote"
-          value={filters.remote || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Remote</option>
-          <option value="Remote">Remote</option>
-          <option value="Hybrid">Hybrid</option>
-          <option value="On Site">On Site</option>
-        </select>
-
-        {/* Security Clearance */}
-        <input
-          type="number"
-          name="securityClearance"
-          placeholder="Security Clearance"
-          value={filters.securityClearance || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-
-        {/* Education */}
-        <div className="relative">
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Choose Experience Level</option>
+            <option value="Entry">Entry</option>
+            <option value="Junior">Junior</option>
+            <option value="Senior">Senior</option>
+            <option value="Internship">Internship</option>
+          </select>
+  
+          {/* Company Size */}
+          <select
+            name="companySize"
+            value={filters.companySize || ""}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Select Company Size</option>
+            <option value="0-30">0-30</option>
+            <option value="31-100">31-100</option>
+            <option value="101-300">101-300</option>
+            <option value="301+">301+</option>
+          </select>
+  
+          {/* Job Type */}
+          <select
+            name="jobType"
+            value={filters.jobType || ""}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Choose Job Type</option>
+            <option value="Full Time">Full Time</option>
+            <option value="Part Time">Part Time</option>
+            <option value="Contract">Contract</option>
+          </select>
+  
+          {/* Remote */}
+          <select
+            name="remote"
+            value={filters.remote || ""}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Choose Remote</option>
+            <option value="Remote">Remote</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="On Site">On Site</option>
+          </select>
+  
+          {/* Security Clearance */}
           <input
-            type="text"
-            name="education"
-            placeholder="Education (comma-separated)"
-            value={filters.education || ""}
-            onChange={handleChange} // Update this to handle education input changes
-            className="w-full px-3 py-2 border rounded"
+            type="number"
+            name="securityClearance"
+            placeholder="Security Clearance"
+            value={filters.securityClearance || ""}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+            autocomplete="off"
           />
-          {showEducationDropdown && (
-            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
-              {filteredEducation.map((edu) => (
-                <li
-                  key={edu}
-                  onClick={() => handleEducationDropdownClick(edu)}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                >
-                  {edu}
-                </li>
-              ))}
-            </ul>
-          )}
+  
+          {/* Work Experience */}
+          <input
+            type="number"
+            name="workExperience"
+            placeholder="Work Experience (years)"
+            value={filters.workExperience || ""}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded"
+            autocomplete="off"
+          />
         </div>
-
-
-        {/* Work Experience */}
-        <input
-          type="number"
-          name="workExperience"
-          placeholder="Work Experience (years)"
-          value={filters.workExperience || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
       </div>
-    </div>
-  );
-};
-
-export default SearchFilters;
+    );
+  };
+  
+  export default SearchFilters;

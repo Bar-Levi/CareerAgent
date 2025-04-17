@@ -22,6 +22,7 @@ const SearchJobs = ({onlineUsers}) => {
   const locationObj = useLocation(); // renamed to avoid conflicts
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
+  const [jobListings, setJobListings] = useState([]);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
 
@@ -258,6 +259,7 @@ const SearchJobs = ({onlineUsers}) => {
             setFilters={handleFilterChange}
             clearFilters={handleClearFilters}
             educationListedOptions={educationListedOptions}
+            jobListings={jobListings}
           />
         </div>
 
@@ -421,6 +423,8 @@ const SearchJobs = ({onlineUsers}) => {
               setShowModal={setShowModal}
               showNotification={showNotification}
               setJobListingsCount={setJobListingsCount}
+              jobListings={jobListings}
+              setJobListings={setJobListings}
               sortingMethod={sortingMethod}
               setEducationListedOptions={setEducationListedOptions}
               setRenderingConversationKey={setRenderingConversationKey}

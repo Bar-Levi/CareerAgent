@@ -11,12 +11,13 @@ const JobListingCardsList = ({
   setShowModal,
   showNotification,
   setJobListingsCount,
+  jobListings,
+  setJobListings,
   sortingMethod,
   setEducationListedOptions,
   setRenderingConversationKey,
   setRenderingConversationData
 }) => {
-  const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
