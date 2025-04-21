@@ -15,7 +15,8 @@ const OptionalDetailsForm = ({ onSubmit }) => {
 
     let cvFile = null;
     let profilePicFile = null;
-    const [isLoading, setIsLoading] = useState(false); // Loading state for button
+    const [isLoading, setIsLoading] = useState(false); // Loading state for form submission
+    const [isProcessingCV, setIsProcessingCV] = useState(false); // Loading state for CV processing
     const [error, setError] = useState(null); // Error state for under-18 logic
 
     useEffect(() => {
@@ -42,65 +43,66 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setFormData({ ...formData, [name]: value });
     };
 
-
-    const processCV = async (cvFile) => {
-        try {
-            const cvContent = await extractTextFromPDF(cvFile); // Extract text from the PDF
-
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    prompt: cvContent,
-                }),
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to generate AI CV.');
-            }
-
-            const jsonResponse = await response.json();
-
-            // Extract and clean the JSON from the response string
-            const jsonRaw = jsonResponse.response;
-
-            // Safeguard for JSON extraction in case the expected format is not met
-            const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
-            if (!match) {
-                throw new Error('Invalid JSON format in response.');
-            }
-
-            const jsonString = match[1]; // Extract JSON between code block markers
-            const prettyJson = JSON.parse(jsonString); // Parse the JSON string
-
-            return prettyJson; // Return the processed JSON
-        } catch (error) {
-            console.error('Error processing CV:', error.message);
-            throw error; // Re-throw the error for further handling
-        }
-    };
-
     const handleFileChange = async (e) => {
         const { name, files } = e.target;
     
-
         try {
-
-            // Update form data state with the parsed JSON
+            // Update form data state with the file
             setFormData((prevFormData) => ({
                 ...prevFormData,
                 [name]: files[0],
             }));
 
+            // If this is a CV file, start the analysis process
+            if (name === 'cv' && files[0]) {
+                setIsProcessingCV(true);
+                try {
+                    const cvContent = await extractTextFromPDF(files[0]);
+                    
+                    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            prompt: cvContent,
+                        }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to generate AI CV analysis');
+                    }
+
+                    const jsonResponse = await response.json();
+                    
+                    // Extract and clean the JSON from the response string
+                    const jsonRaw = jsonResponse.response;
+                    
+                    // Safeguard for JSON extraction in case the expected format is not met
+                    const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
+                    if (!match) {
+                        throw new Error('Invalid JSON format in response');
+                    }
+
+                    const jsonString = match[1]; // Extract JSON between code block markers
+                    const prettyJson = JSON.parse(jsonString); // Parse the JSON string
+                    
+                    // Update form data with the analyzed content
+                    setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        analyzed_cv_content: prettyJson
+                    }));
+                } catch (error) {
+                    console.error('Error analyzing CV:', error.message);
+                } finally {
+                    setIsProcessingCV(false);
+                }
+            }
         } catch (error) {
             console.error('Error handling file change:', error.message);
         }
     };
     
-    
-
     const handleSubmit = async (e) => {
         e.preventDefault();
     
@@ -112,22 +114,17 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setIsLoading(true); // Set loading to true when the request starts
     
         try {
-            let prettyJson = null;
-    
-            if (formData.cv) {
-                prettyJson = await processCV(formData.cv); // Process the updated CV file
-            }
-    
-            // Update the formData with analyzed_cv_content
-            const updatedFormData = {
-                ...formData,
-                analyzed_cv_content: prettyJson,
-            };
-    
-            console.dir(updatedFormData, { depth: null }); // Log updated formData
-            await onSubmit(updatedFormData); // Submit updated form data via the parent handler
+            // The CV is already analyzed when the file is selected
+            // No need to call processCV again
+            console.log("Submitting form data:", JSON.stringify(formData, (key, value) => {
+                if (key === 'cv' || key === 'profilePic') {
+                    return value ? value.name : value;
+                }
+                return value;
+            }, 2));
+            await onSubmit(formData); // Submit the form data via the parent handler
         } catch (error) {
-            console.error('Error analyzing CV:', error.message);
+            console.error('Error submitting form:', error.message);
         } finally {
             setIsLoading(false); // Reset loading to false when the request completes
         }
@@ -251,11 +248,11 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                     type="submit"
                     data-cy="submit-optional-details-job-seeker"
                     className={`w-full py-2 text-white font-bold rounded-lg focus:ring-2 focus:ring-gray-500 transition-all duration-200 ${
-                        isLoading || error
+                        isLoading || isProcessingCV || error
                             ? 'bg-gray-400 cursor-not-allowed'
                             : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:scale-105'
                     }`}
-                    disabled={isLoading || !!error}
+                    disabled={isLoading || isProcessingCV || !!error}
                 >
                     {isLoading ? (
                         <div className="flex justify-center items-center">
@@ -280,6 +277,30 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                                 ></path>
                             </svg>
                             Submitting...
+                        </div>
+                    ) : isProcessingCV ? (
+                        <div className="flex justify-center items-center">
+                            <svg
+                                className="animate-spin h-5 w-5 text-white mr-2"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                ></circle>
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4l-2 2-2-2V4a8 8 0 010 16v-4l2-2 2 2v4a8 8 0 01-8-8z"
+                                ></path>
+                            </svg>
+                            Analyzing CV...
                         </div>
                     ) : (
                         'Submit and Verify Your Email'

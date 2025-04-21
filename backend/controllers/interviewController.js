@@ -12,8 +12,7 @@ const scheduleInterview = async (req, res, next) => {
     const { applicantId, participants, jobListing, scheduledTime, meetingLink } = req.body;
 
     if (!participants || !Array.isArray(participants) || participants.length < 2 || !scheduledTime) {
-      res.status(400);
-      return next(new Error("At least two participants and scheduledTime are required"));
+      return res.status(400).json({ message: "At least two participants and scheduledTime are required" });
     }
     
     const interview = await Interview.create({
@@ -126,9 +125,13 @@ const scheduleInterview = async (req, res, next) => {
       }
     }
 
-    res.status(201).json(interview);
+    res.status(201).json({
+      message: "Interview scheduled successfully",
+      interview
+    });
   } catch (error) {
-    next(error);
+    console.error("Error scheduling interview:", error);
+    res.status(500).json({ message: "Failed to schedule interview", error: error.message });
   }
 };
 
@@ -136,28 +139,27 @@ const scheduleInterview = async (req, res, next) => {
 // Get an interview by ID
 // GET /api/interviews/:id
 // Private
-const getInterviewById = async (req, res, next) => {
+const getInterviewById = async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id);
     if (!interview) {
-      res.status(404);
-      return next(new Error("Interview not found"));
+      return res.status(404).json({ message: "Interview not found" });
     }
-    res.json(interview);
+    res.status(200).json(interview);
   } catch (error) {
-    next(error);
+    console.error("Error fetching interview:", error);
+    res.status(500).json({ message: "Failed to fetch interview", error: error.message });
   }
 };
 
 // Update an interview
 // PUT /api/interviews/:id
 // Private
-const updateInterview = async (req, res, next) => {
+const updateInterview = async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id);
     if (!interview) {
-      res.status(404);
-      return next(new Error("Interview not found"));
+      return res.status(404).json({ message: "Interview not found" });
     }
 
     const { scheduledTime, meetingLink, status } = req.body;
@@ -166,26 +168,26 @@ const updateInterview = async (req, res, next) => {
     if (status) interview.status = status;
 
     const updatedInterview = await interview.save();
-    res.json(updatedInterview);
+    res.status(200).json(updatedInterview);
   } catch (error) {
-    next(error);
+    console.error("Error updating interview:", error);
+    res.status(500).json({ message: "Failed to update interview", error: error.message });
   }
 };
 
 // Delete (or cancel) an interview
 // DELETE /api/interviews/:id
 // Private
-const deleteInterview = async (req, res, next) => {
+const deleteInterview = async (req, res) => {
   try {
-    const interview = await Interview.findById(req.params.id);
+    const interview = await Interview.findByIdAndDelete(req.params.id);
     if (!interview) {
-      res.status(404);
-      return next(new Error("Interview not found"));
+      return res.status(404).json({ message: "Interview not found" });
     }
-    await interview.remove();
-    res.json({ message: "Interview removed" });
+    res.status(200).json({ message: "Interview deleted successfully" });
   } catch (error) {
-    next(error);
+    console.error("Error deleting interview:", error);
+    res.status(500).json({ message: "Failed to delete interview", error: error.message });
   }
 };
 
