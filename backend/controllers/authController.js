@@ -90,12 +90,16 @@ const registerJobSeeker = async (req, res) => {
         
         if (cv) {
             userData.cv = cv;
-            if (userData?.analyzed_cv_content?.education) {
-            userData?.analyzed_cv_content?.education.forEach((edu) => {
-              edu.degree = checkAndInsertIn(edu.degree);
-            });
-            userData.analyzed_cv_content = analyzed_cv_content;
-          }
+            if (analyzed_cv_content) {
+                if (analyzed_cv_content.education && Array.isArray(analyzed_cv_content.education)) {
+                    analyzed_cv_content.education.forEach((edu) => {
+                        if (edu.degree) {
+                            edu.degree = checkAndInsertIn(edu.degree);
+                        }
+                    });
+                }
+                userData.analyzed_cv_content = analyzed_cv_content;
+            }
         }
 
         if (profilePic)

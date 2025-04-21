@@ -1,10 +1,13 @@
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 const request = require('supertest');
-const { app } = require('../../server');
-const JobSeeker = require('../../models/jobSeekerModel');
+const { app, server } = require('../../../server');
+const JobSeeker = require('../../../models/jobSeekerModel');
+const Recruiter = require('../../../models/recruiterModel');
+const BlacklistedToken = require('../../../models/BlacklistedTokenModel');
 const bcrypt = require('bcryptjs');
-const { cleanupTask } = require('../../tasks/cleanupTokens');
+const jwt = require('jsonwebtoken');
+const { cleanupTask } = require('../../../tasks/cleanupTokens');
 const CryptoJS = require('crypto-js');
 
 // Set a default secret key for testing if not already set
@@ -33,7 +36,10 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  if (cleanupTask) cleanupTask.stop(); // Stop the cron task to prevent open handles
+  if (cleanupTask && cleanupTask.stop) {
+    cleanupTask.stop();
+    console.log('Stopped cleanup task for authRoutes tests.');
+  }
   await mongoose.disconnect();
   await mongoServer.stop();
   jest.restoreAllMocks();
