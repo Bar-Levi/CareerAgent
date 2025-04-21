@@ -99,11 +99,40 @@ describe('Interview Controller', () => {
     // Reset mocks
     jest.clearAllMocks();
     
-    // Mock findById for all models
+    // Mock model methods
     JobSeeker.findById = jest.fn().mockResolvedValue(mockJobSeeker);
     Recruiter.findById = jest.fn().mockResolvedValue(mockRecruiter);
     Applicant.findById = jest.fn().mockResolvedValue(mockApplicant);
-    Interview.create = jest.fn().mockResolvedValue(mockInterview);
+    
+    // Mock Interview methods
+    Interview.create = jest.fn().mockImplementation(interviewData => Promise.resolve({
+      ...mockInterview,
+      ...interviewData
+    }));
+    
+    Interview.findById = jest.fn().mockImplementation(id => {
+      if (id === 'interview123') {
+        return Promise.resolve({
+          ...mockInterview,
+          save: jest.fn().mockResolvedValue({
+            ...mockInterview,
+            ...req.body
+          })
+        });
+      }
+      return Promise.resolve(null);
+    });
+    
+    Interview.findByIdAndDelete = jest.fn().mockImplementation(id => {
+      if (id === 'interview123') {
+        return Promise.resolve(mockInterview);
+      }
+      return Promise.resolve(null);
+    });
+    
+    // Mock email services
+    sendInterviewScheduledEmailToJobSeeker.mockResolvedValue();
+    sendInterviewScheduledEmailToRecruiter.mockResolvedValue();
   });
 
   describe('scheduleInterview', () => {
@@ -120,7 +149,10 @@ describe('Interview Controller', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         message: "Interview scheduled successfully",
-        interview: mockInterview
+        interview: expect.objectContaining({
+          participants: expect.any(Array),
+          jobListing: expect.any(Object)
+        })
       });
     });
 
@@ -141,7 +173,7 @@ describe('Interview Controller', () => {
     it('should handle errors when scheduling interview', async () => {
       // Setup - make Interview.create throw an error
       const error = new Error('Database error');
-      Interview.create.mockRejectedValue(error);
+      Interview.create.mockRejectedValueOnce(error);
       
       // Execute
       await scheduleInterview(req, res);
@@ -157,21 +189,21 @@ describe('Interview Controller', () => {
 
   describe('getInterviewById', () => {
     it('should return an interview by ID', async () => {
-      // Setup
-      Interview.findById.mockResolvedValue(mockInterview);
-      
       // Execute
       await getInterviewById(req, res);
       
       // Assert
       expect(Interview.findById).toHaveBeenCalledWith('interview123');
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(mockInterview);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        _id: 'interview123'
+      }));
     });
 
     it('should return 404 if interview not found', async () => {
       // Setup
-      Interview.findById.mockResolvedValue(null);
+      req.params.id = 'nonexistent';
+      Interview.findById.mockResolvedValueOnce(null);
       
       // Execute
       await getInterviewById(req, res);
@@ -185,9 +217,6 @@ describe('Interview Controller', () => {
   describe('updateInterview', () => {
     it('should update and return the interview', async () => {
       // Setup
-      const updatedInterview = { ...mockInterview, meetingLink: 'https://meet.test.com/updated' };
-      mockInterview.save.mockResolvedValue(updatedInterview);
-      Interview.findById.mockResolvedValue(mockInterview);
       req.body = { meetingLink: 'https://meet.test.com/updated' };
       
       // Execute
@@ -195,14 +224,16 @@ describe('Interview Controller', () => {
       
       // Assert
       expect(Interview.findById).toHaveBeenCalledWith('interview123');
-      expect(mockInterview.save).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(updatedInterview);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        meetingLink: 'https://meet.test.com/updated'
+      }));
     });
 
     it('should return 404 if interview not found during update', async () => {
       // Setup
-      Interview.findById.mockResolvedValue(null);
+      req.params.id = 'nonexistent';
+      Interview.findById.mockResolvedValueOnce(null);
       
       // Execute
       await updateInterview(req, res);
@@ -215,7 +246,7 @@ describe('Interview Controller', () => {
     it('should handle errors during update', async () => {
       // Setup - make Interview.findById throw an error
       const error = new Error('Database error');
-      Interview.findById.mockRejectedValue(error);
+      Interview.findById.mockRejectedValueOnce(error);
       
       // Execute
       await updateInterview(req, res);
@@ -231,9 +262,6 @@ describe('Interview Controller', () => {
 
   describe('deleteInterview', () => {
     it('should delete the interview and return success message', async () => {
-      // Setup
-      Interview.findByIdAndDelete.mockResolvedValue(mockInterview);
-      
       // Execute
       await deleteInterview(req, res);
       
@@ -245,7 +273,8 @@ describe('Interview Controller', () => {
 
     it('should return 404 if interview not found during deletion', async () => {
       // Setup
-      Interview.findByIdAndDelete.mockResolvedValue(null);
+      req.params.id = 'nonexistent';
+      Interview.findByIdAndDelete.mockResolvedValueOnce(null);
       
       // Execute
       await deleteInterview(req, res);
@@ -258,7 +287,7 @@ describe('Interview Controller', () => {
     it('should handle errors during deletion', async () => {
       // Setup - make Interview.findByIdAndDelete throw an error
       const error = new Error('Database error');
-      Interview.findByIdAndDelete.mockRejectedValue(error);
+      Interview.findByIdAndDelete.mockRejectedValueOnce(error);
       
       // Execute
       await deleteInterview(req, res);

@@ -1,5 +1,3 @@
-
-
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const fs = require("fs"); // Import the fs module for file system operations
@@ -122,7 +120,7 @@ const sendToBot = async (req, res) => {
 
     res.status(200).json({ response: processedResponseText });
   } catch (error) {
-    console.error("Error generating content:", error);
+    console.error("Error generating content:", error?.message || error);
     res.status(500).json({ error: "Failed to generate response" });
   }
 };
@@ -148,7 +146,7 @@ const generateJsonFromCV = async (req, res) => {
 
     res.status(200).json({ response: responseText });
   } catch (error) {
-    console.error("Error generating content:", error);
+    console.error("Error generating content:", error?.message || error);
     res.status(500).json({ error: "Failed to generate response" });
   }
 };
@@ -157,13 +155,14 @@ const analyzeJobListing = async (req, res) => {
 
   const { prompt } = req.body;
 
-  prompt.replace('.', ',');
-
   if (!prompt) {
     return res.status(400).json({ error: "Prompt and sessionId are required" });
   }
 
-  const input = `${analyzeJobListingPreprompt}. Now tell me - ${prompt}`;
+  // Safety check - only call replace if prompt is a string
+  const processedPrompt = typeof prompt === 'string' ? prompt.replace('.', ',') : prompt;
+
+  const input = `${analyzeJobListingPreprompt}. Now tell me - ${processedPrompt}`;
 
   try {
 
@@ -172,11 +171,9 @@ const analyzeJobListing = async (req, res) => {
 
     const responseText = result.response.text();
 
-
-
     res.status(200).json({ response: responseText });
   } catch (error) {
-    console.error("Error generating content:", error);
+    console.error("Error generating content:", error?.message || error);
     res.status(500).json({ error: "Failed to generate response" });
   }
 };

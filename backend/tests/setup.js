@@ -1,9 +1,6 @@
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
-// Ensure Mongoose uses Jest's fake timers if enabled
-mongoose.set('useJestFakeTimers', true);
-
 // Force test environment
 process.env.NODE_ENV = 'test';
 
