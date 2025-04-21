@@ -222,11 +222,27 @@ const handleEmailUpdates = async (req, res) => {
             }
             await sendHiredEmail(applicant.email, applicant.name, applicant.jobId);
             
-            if (otherApplicants) {
-                for (const applicant of otherApplicants) {
-                    await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
+            // Send rejection emails to all other applicants for this job
+            if (otherApplicants && otherApplicants.length > 0) {
+                for (const otherApplicant of otherApplicants) {
+                    await sendRejectionEmail(otherApplicant.email, otherApplicant.name, otherApplicant.jobId);
                 }
             }
+            
+            // Mark the job listing as closed
+            await JobListing.findByIdAndUpdate(
+                applicant.jobId,
+                { 
+                    status: 'Closed',
+                    closingTime: new Date() // Set closing time to current date/time
+                }
+            );
+            
+            // Notify job seekers who have saved this job that it's now closed
+            await JobSeeker.updateMany(
+                { savedJobListings: applicant.jobId },
+                { $pull: { savedJobListings: applicant.jobId } }
+            );
         }
 
         res.status(200).json({ message: 'Status logic handled successfully' });
@@ -266,3 +282,4 @@ module.exports = {
     getJobSeekerApplicants,
     handleEmailUpdates
 };
+

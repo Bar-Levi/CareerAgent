@@ -34,7 +34,12 @@ export const updateApplicantStatus = async (applicant, status, refetchApplicants
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
-                body: JSON.stringify({ status, interviewId: applicant?.interviewId?._id, otherApplicants, applicant: data.applicant }),
+                body: JSON.stringify({ 
+                    status, 
+                    interviewId: applicant?.interviewId?._id, 
+                    otherApplicants, 
+                    applicant: data.applicant || applicant // Use the updated applicant if available
+                }),
             }
         );
 
