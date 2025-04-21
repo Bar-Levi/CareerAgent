@@ -50,7 +50,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
     const currentCV = user.cv || "No CV uploaded";
     const currentCVDisplay =
       currentCV !== "No CV uploaded"
-        ? `<a href="${currentCV}" target="_blank" class="underline break-words">${currentCV}</a>`
+        ? `<a href="${currentCV}" target="_blank" class="underline text-blue-600">View Current CV</a>`
         : `<span class="text-gray-500">${currentCV}</span>`;
 
     // Show modal with a styled file uploader to update the CV
@@ -59,7 +59,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
       html: `
         <div class="flex flex-col items-center space-y-4">
           <p class="text-lg font-semibold">Current CV:</p>
-          <p class="text-blue-600">${currentCVDisplay}</p>
+          <p>${currentCVDisplay}</p>
           <label for="swal-input-cv" class="cursor-pointer w-full p-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 transition">
             <span id="swal-input-cv-label" class="block text-sm font-medium">Click here to select a PDF file</span>
             <input type="file" id="swal-input-cv" class="hidden" accept="application/pdf" />
