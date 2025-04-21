@@ -64,6 +64,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
             <span id="swal-input-cv-label" class="block text-sm font-medium">Click here to select a PDF file</span>
             <input type="file" id="swal-input-cv" class="hidden" accept="application/pdf" />
           </label>
+          <p class="text-sm text-gray-500">Maximum file size: 2MB</p>
         </div>
       `,
       didOpen: () => {
@@ -72,6 +73,17 @@ const showUpdateCVModal = async (user, navigate, location) => {
         const label = document.getElementById("swal-input-cv-label");
         fileInput.addEventListener("change", () => {
           if (fileInput.files && fileInput.files.length > 0) {
+            // Check file size (2MB limit)
+            const MAX_FILE_SIZE_MB = 2;
+            const fileSizeMB = fileInput.files[0].size / (1024 * 1024);
+            
+            if (fileSizeMB > MAX_FILE_SIZE_MB) {
+              Swal.showValidationMessage(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
+              fileInput.value = null; // Clear the file input
+              label.textContent = "Click here to select a PDF file";
+              return;
+            }
+            
             label.textContent = fileInput.files[0].name;
           } else {
             label.textContent = "Click here to select a PDF file";
@@ -88,9 +100,20 @@ const showUpdateCVModal = async (user, navigate, location) => {
         const cvFile = document.getElementById("swal-input-cv").files[0];
         if (!cvFile) {
           Swal.showValidationMessage("Please select a PDF file");
+          return false;
         } else if (cvFile.type !== "application/pdf") {
           Swal.showValidationMessage("Only PDF files are allowed");
+          return false;
         }
+        
+        // Check file size (2MB limit)
+        const MAX_FILE_SIZE_MB = 2;
+        const fileSizeMB = cvFile.size / (1024 * 1024);
+        if (fileSizeMB > MAX_FILE_SIZE_MB) {
+          Swal.showValidationMessage(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
+          return false;
+        }
+        
         return cvFile;
       },
     });

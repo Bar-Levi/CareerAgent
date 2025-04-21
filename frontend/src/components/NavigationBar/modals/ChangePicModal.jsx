@@ -54,6 +54,7 @@ const showChangePicModal = async (user, navigate, location, picType = "profile")
           <img id="pic-preview" src="${currentPic}" alt="${modalTitle}" class="object-cover w-full h-full" style="cursor: pointer;">
         </div>
         <input type="file" id="pic-input" accept="image/*" class="hidden">
+        <p class="text-sm text-gray-500 mb-2">Maximum file size: 2MB</p>
         <div class="flex space-x-4">
           <button id="change-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded focus:outline-none">Change Picture</button>
           <button id="delete-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded focus:outline-none">Delete Picture</button>
@@ -94,32 +95,41 @@ const showChangePicModal = async (user, navigate, location, picType = "profile")
       if (changeClicked) {
         if (!fileInput || fileInput.files.length === 0) {
           Swal.showValidationMessage("Please select a file.");
-        } else {
-          const formData = new FormData();
-          formData.append("file", fileInput.files[0]);
-          formData.append("email", user.email);
-          formData.append("picType", picType);
-
-          const response = await fetch(baseEndpoint, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            throw new Error(data.message || "Failed to update image");
-          }
-
-          // The backend returns: { message, profilePic, companyLogo }
-          // We'll pick whichever we actually changed
-          const newUrl = isCompanyLogo ? data.companyLogo : data.profilePic;
-
-          return {
-            action: "change",
-            message: data.message,
-            newUrl,
-          };
+          return false;
+        } 
+        
+        // Double-check file size before upload
+        const fileSizeMB = fileInput.files[0].size / (1024 * 1024);
+        const MAX_FILE_SIZE_MB = 2;
+        if (fileSizeMB > MAX_FILE_SIZE_MB) {
+          Swal.showValidationMessage(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
+          return false;
         }
+        
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("email", user.email);
+        formData.append("picType", picType);
+
+        const response = await fetch(baseEndpoint, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update image");
+        }
+
+        // The backend returns: { message, profilePic, companyLogo }
+        // We'll pick whichever we actually changed
+        const newUrl = isCompanyLogo ? data.companyLogo : data.profilePic;
+
+        return {
+          action: "change",
+          message: data.message,
+          newUrl,
+        };
       }
       // If user didn't do either, return null to skip
       return null;
@@ -151,6 +161,16 @@ const showChangePicModal = async (user, navigate, location, picType = "profile")
       if (fileInput && previewImg) {
         fileInput.addEventListener("change", () => {
           if (fileInput.files && fileInput.files[0]) {
+            // Check file size (2MB limit)
+            const fileSizeMB = fileInput.files[0].size / (1024 * 1024);
+            const MAX_FILE_SIZE_MB = 2;
+            
+            if (fileSizeMB > MAX_FILE_SIZE_MB) {
+              Swal.showValidationMessage(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
+              fileInput.value = null; // Clear the file input
+              return;
+            }
+            
             const reader = new FileReader();
             reader.onload = (e) => {
               previewImg.src = e.target.result;

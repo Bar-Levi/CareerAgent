@@ -10,6 +10,9 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
     });
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [profilePicError, setProfilePicError] = useState(null);
+    const [companyLogoError, setCompanyLogoError] = useState(null);
+    const MAX_FILE_SIZE_MB = 2; // 2MB file size limit
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,7 +37,39 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
 
     const handleFileChange = (e) => {
         const { name, files } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: files[0] }));
+        
+        try {
+            // Check file size
+            if (files[0]) {
+                const fileSizeMB = files[0].size / (1024 * 1024); // Convert bytes to MB
+                if (fileSizeMB > MAX_FILE_SIZE_MB) {
+                    const errorMsg = `File size must be less than ${MAX_FILE_SIZE_MB}MB`;
+                    if (name === 'profilePic') {
+                        setProfilePicError(errorMsg);
+                        return;
+                    } else if (name === 'companyLogo') {
+                        setCompanyLogoError(errorMsg);
+                        return;
+                    }
+                } else {
+                    // Clear relevant error
+                    if (name === 'profilePic') {
+                        setProfilePicError(null);
+                    } else if (name === 'companyLogo') {
+                        setCompanyLogoError(null);
+                    }
+                }
+            }
+            
+            setFormData((prev) => ({ ...prev, [name]: files[0] }));
+        } catch (error) {
+            console.error('Error handling file change:', error.message);
+            if (name === 'profilePic') {
+                setProfilePicError('Error handling file. Please try again.');
+            } else if (name === 'companyLogo') {
+                setCompanyLogoError('Error handling file. Please try again.');
+            }
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -85,6 +120,10 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                             className="hidden"
                         />
                     </div>
+                    <p className="text-sm text-gray-500">Maximum file size: {MAX_FILE_SIZE_MB}MB</p>
+                    {profilePicError && (
+                        <p className="text-sm text-red-500">{profilePicError}</p>
+                    )}
                 </div>
 
                 {/* Company Logo Upload */}
@@ -113,6 +152,10 @@ const OptionalDetailsRecruiterForm = ({ onSubmit }) => {
                             className="hidden"
                         />
                     </div>
+                    <p className="text-sm text-gray-500">Maximum file size: {MAX_FILE_SIZE_MB}MB</p>
+                    {companyLogoError && (
+                        <p className="text-sm text-red-500">{companyLogoError}</p>
+                    )}
                 </div>
 
                 {/* Date of Birth Field */}
