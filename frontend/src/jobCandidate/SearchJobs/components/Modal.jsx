@@ -6,6 +6,8 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
   const [isClosing, setIsClosing] = useState(false); // For scale-out animation
   const [file, setFile] = useState(null); // State to store the selected file
   const [loading, setLoading] = useState(false);
+  const [fileError, setFileError] = useState(null); // State to store file validation errors
+  const MAX_FILE_SIZE_MB = 2; // 2MB file size limit
 
   useEffect(() => {
     // Trigger the animation by setting visibility to true after mounting
@@ -23,6 +25,14 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
   const handleConfirm = async () => {
   if (!file) {
     showNotification("error", "Please select a file before uploading.");
+    return;
+  }
+
+  // Check file size before uploading
+  const fileSizeMB = file.size / (1024 * 1024);
+  if (fileSizeMB > MAX_FILE_SIZE_MB) {
+    setFileError(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
+    showNotification("error", `File size must be less than ${MAX_FILE_SIZE_MB}MB`);
     return;
   }
 
@@ -44,7 +54,18 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
 
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]); // Set the selected file
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      // Check file size
+      const fileSizeMB = selectedFile.size / (1024 * 1024);
+      if (fileSizeMB > MAX_FILE_SIZE_MB) {
+        setFileError(`File size must be less than ${MAX_FILE_SIZE_MB}MB`);
+        e.target.value = null; // Clear the file input
+        return;
+      }
+      setFileError(null); // Clear any previous errors
+      setFile(selectedFile); // Set the selected file
+    }
   };
 
   return (
@@ -75,6 +96,8 @@ const Modal = ({ title, message, onClose, onConfirm, showNotification, confirmTe
                 onChange={handleFileChange}
                 className="w-full px-3 py-2 border rounded"
               />
+              <p className="text-sm text-gray-500 mt-1">Maximum file size: {MAX_FILE_SIZE_MB}MB</p>
+              {fileError && <p className="text-sm text-red-500 mt-1">{fileError}</p>}
             </div>
             <div className="flex justify-end space-x-4">
               <button
