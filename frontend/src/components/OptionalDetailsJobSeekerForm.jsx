@@ -18,6 +18,9 @@ const OptionalDetailsForm = ({ onSubmit }) => {
     const [isLoading, setIsLoading] = useState(false); // Loading state for form submission
     const [isProcessingCV, setIsProcessingCV] = useState(false); // Loading state for CV processing
     const [error, setError] = useState(null); // Error state for under-18 logic
+    const [cvError, setCvError] = useState(null); // Separate state for CV errors
+    const [profilePicError, setProfilePicError] = useState(null); // Separate state for profile pic errors
+    const MAX_FILE_SIZE_MB = 2; // 2MB file size limit
 
     useEffect(() => {
         cvFile = formData.cv || null;
@@ -47,17 +50,63 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         const { name, files } = e.target;
     
         try {
+            // Check file size for CV or profile pic
+            if ((name === 'cv' || name === 'profilePic') && files[0]) {
+                const fileSizeMB = files[0].size / (1024 * 1024); // Convert bytes to MB
+                if (fileSizeMB > MAX_FILE_SIZE_MB) {
+                    const errorMsg = `File size must be less than ${MAX_FILE_SIZE_MB}MB`;
+                    if (name === 'cv') {
+                        setCvError(errorMsg);
+                        // Clear the CV file from form data
+                        return;
+                    } else {
+                        setProfilePicError(errorMsg);
+                        // Don't add the file to form data
+                        return;
+                    }
+                } else {
+                    // Clear relevant error
+                    if (name === 'cv') {
+                        setCvError(null);
+                    } else {
+                        setProfilePicError(null);
+                    }
+                }
+            }
+
             // Update form data state with the file
             setFormData((prevFormData) => ({
                 ...prevFormData,
                 [name]: files[0],
             }));
-
-            // If this is a CV file, start the analysis process
-            if (name === 'cv' && files[0]) {
+        } catch (error) {
+            console.error('Error handling file change:', error.message);
+            if (name === 'cv') {
+                setCvError('Error handling file. Please try again.');
+            } else if (name === 'profilePic') {
+                setProfilePicError('Error handling file. Please try again.');
+            } else {
+                setError('Error handling file. Please try again.');
+            }
+        }
+    };
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+    
+        if (error) {
+            // Prevent submission if there's an error
+            return;
+        }
+    
+        setIsLoading(true); // Set loading to true when the request starts
+    
+        try {
+            // Process CV if one is uploaded
+            if (formData.cv) {
                 setIsProcessingCV(true);
                 try {
-                    const cvContent = await extractTextFromPDF(files[0]);
+                    const cvContent = await extractTextFromPDF(formData.cv);
                     
                     const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
                         method: 'POST',
@@ -94,28 +143,12 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                     }));
                 } catch (error) {
                     console.error('Error analyzing CV:', error.message);
+                    setCvError('Error analyzing CV. Please try again.');
                 } finally {
                     setIsProcessingCV(false);
                 }
             }
-        } catch (error) {
-            console.error('Error handling file change:', error.message);
-        }
-    };
-    
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-    
-        if (error) {
-            // Prevent submission if there's an error
-            return;
-        }
-    
-        setIsLoading(true); // Set loading to true when the request starts
-    
-        try {
-            // The CV is already analyzed when the file is selected
-            // No need to call processCV again
+            
             console.log("Submitting form data:", JSON.stringify(formData, (key, value) => {
                 if (key === 'cv' || key === 'profilePic') {
                     return value ? value.name : value;
@@ -165,6 +198,10 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                             className="hidden"
                         />
                     </div>
+                    <p className="text-sm text-gray-500">Maximum file size: {MAX_FILE_SIZE_MB}MB</p>
+                    {profilePicError && (
+                        <p className="text-sm text-red-500">{profilePicError}</p>
+                    )}
                 </div>
 
                 {/* Phone Number */}
@@ -198,7 +235,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 {/* CV Upload */}
                 <div className="relative">
                     <label className="text-gray-700 font-medium">Upload CV (PDF only)</label>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex flex-col space-y-2">
                         <label
                             htmlFor="cv"
                             className="cursor-pointer w-full py-3 text-center bg-gray-100 border border-gray-400 text-gray-800 font-medium rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 transition-all duration-200"
@@ -213,6 +250,10 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                             onChange={handleFileChange}
                             className="hidden"
                         />
+                        <p className="text-sm text-gray-500">Maximum file size: {MAX_FILE_SIZE_MB}MB</p>
+                        {cvError && (
+                            <p className="text-sm text-red-500">{cvError}</p>
+                        )}
                     </div>
                 </div>
 
