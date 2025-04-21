@@ -1,13 +1,15 @@
-const { protect } = require('../../middleware/authMiddleware');
+const { protect } = require('../../../middleware/authMiddleware');
 const jwt = require('jsonwebtoken');
 
 // Mock dependencies
 jest.mock('jsonwebtoken'); // Mock JWT for testing
-jest.mock('../../models/BlacklistedTokenModel', () => ({
+jest.mock('../../../models/BlacklistedTokenModel', () => ({
   findOne: jest.fn(),
 }));
+jest.mock('../../../models/jobSeekerModel');
+jest.mock('../../../models/recruiterModel');
 
-const BlacklistedToken = require('../../models/BlacklistedTokenModel');
+const BlacklistedToken = require('../../../models/BlacklistedTokenModel');
 
 describe('AuthMiddleware - protect', () => {
   beforeEach(() => {

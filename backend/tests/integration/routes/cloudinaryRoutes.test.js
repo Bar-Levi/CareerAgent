@@ -1,8 +1,8 @@
 const path = require('path');
 const request = require('supertest');
-const { app } = require('../../server'); // Your app's entry point
+const { app, server } = require('../../../server'); // Correct path relative to tests/integration/routes
 const mongoose = require('mongoose');
-const { cleanupTask } = require('../../tasks/cleanupTokens'); // Import the cleanup task
+const { cleanupTask } = require('../../../tasks/cleanupTokens'); // Correct path
 
 // Mock the Cloudinary library
 jest.mock('cloudinary', () => ({
@@ -46,4 +46,11 @@ describe('Cloudinary Routes', () => {
     // Ensure the mock function was called
     expect(cloudinary.uploader.upload_stream).toHaveBeenCalled();
   });
+});
+
+afterAll(() => {
+  if (cleanupTask && cleanupTask.stop) {
+    cleanupTask.stop();
+    console.log('Stopped cleanup task for cloudinaryRoutes tests.');
+  }
 });

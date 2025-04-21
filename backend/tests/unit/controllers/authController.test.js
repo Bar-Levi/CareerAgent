@@ -12,19 +12,36 @@ const {
   resetPassword,
   getUserDetails,
   resetLoginAttempts,
-} = require('../../controllers/authController');
-const JobSeeker = require('../../models/jobSeekerModel');
-const Recruiter = require('../../models/recruiterModel');
-const { sendVerificationCode, sendResetPasswordEmail } = require('../../utils/emailService');
+  logout,
+  checkBlacklist,
+  deleteNotification,
+  deleteAllNotifications,
+  markAsReadNotification,
+  checkEmail,
+  deleteUser,
+  // Note: uploadCV might need a separate integration test due to multer
+} = require('../../../controllers/authController');
+const JobSeeker = require('../../../models/jobSeekerModel');
+const Recruiter = require('../../../models/recruiterModel');
+const { sendVerificationCode, sendResetPasswordEmail } = require('../../../utils/emailService');
+const BlacklistedToken = require('../../../models/BlacklistedTokenModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
 
 // Mock dependencies
-jest.mock('../../models/jobSeekerModel');
-jest.mock('../../models/recruiterModel');
-jest.mock('../../utils/emailService');
+jest.mock('../../../models/jobSeekerModel');
+jest.mock('../../../models/recruiterModel');
+jest.mock('../../../utils/emailService');
+jest.mock('../../../models/BlacklistedTokenModel');
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
+jest.mock('nodemailer', () => ({
+  createTransport: jest.fn(() => ({
+    sendMail: jest.fn().mockResolvedValue({ messageId: 'mockMessageId' }),
+    verify: jest.fn((callback) => callback(null, true)) // Mock verify to call callback successfully
+  }))
+}));
 
 describe('AuthController Tests', () => {
   beforeEach(() => {
