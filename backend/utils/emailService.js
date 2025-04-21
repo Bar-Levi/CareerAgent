@@ -2,7 +2,27 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 require('dotenv').config();
 
-const transporter = nodemailer.createTransport({
+// Create a transport based on environment
+let transporter;
+
+// In test environment, use a mock transport that doesn't connect to any server
+if (process.env.NODE_ENV === 'test') {
+  console.log('Test environment detected, using mock transport');
+  
+  // Create a mock transport that doesn't make actual connections
+  transporter = {
+    sendMail: (mailOptions) => {
+      console.log(`[TEST] Email would be sent to: ${mailOptions.to}`);
+      return Promise.resolve({ messageId: 'test-message-id' });
+    },
+    verify: (callback) => {
+      callback(null, true);
+    },
+    close: () => {}
+  };
+} else {
+  // Real SMTP transport for non-test environments
+  transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
     secure: false, // Use TLS
@@ -12,14 +32,15 @@ const transporter = nodemailer.createTransport({
     },
   });
 
-// Verify the SMTP connection configuration
-transporter.verify(function (error, success) {
+  // Verify the SMTP connection configuration
+  transporter.verify(function (error, success) {
     if (error) {
-        console.error('SMTP connection error:', error);
+      console.error('SMTP connection error:', error);
     } else {
-        console.log('SMTP server connection successful');
+      console.log('SMTP server connection successful');
     }
-});
+  });
+}
 
 const sendVerificationCode = async (email, username, code) => {
     const mailOptions = {
