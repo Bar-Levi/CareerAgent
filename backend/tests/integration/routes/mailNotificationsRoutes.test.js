@@ -1,8 +1,15 @@
+const mongoose = require('mongoose');
 const JobSeeker = require('../../../models/jobSeekerModel');
 const Recruiter = require('../../../models/recruiterModel');
 const unsubscribeUser = require('../../../controllers/mailNotificationsController');
 const CryptoJS = require('crypto-js');
 const bcrypt = require('bcryptjs');
+
+// Verify we're in test mode
+if (process.env.NODE_ENV !== 'test') {
+  console.error('WARNING: Tests not running in test environment! This could affect real data.');
+  process.env.NODE_ENV = 'test'; // Force test environment
+}
 
 // Increase timeout for this test suite
 jest.setTimeout(30000);
