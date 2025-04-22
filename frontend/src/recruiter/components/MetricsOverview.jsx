@@ -73,7 +73,7 @@ const MetricsOverview = ({ metrics, darkMode = false }) => {
                     <FiUsers className="w-7 h-7" />
                 </div>
                 <div>
-                    <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Applications</h3>
+                    <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Current Applications</h3>
                     <div className="flex items-baseline space-x-2">
                         <p className={`text-3xl font-bold ${darkMode ? 'text-purple-400' : 'text-purple-600'}`}>
                             {metrics.totalApplications || 0}
