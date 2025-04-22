@@ -6,9 +6,11 @@ import FilterBar from "../components/FilterBar";
 import CandidateTable from "../components/CandidateTable";
 import Sidebar from "../components/Sidebar";
 import { FaDownload } from "react-icons/fa";
+import { FiMoon, FiSun } from "react-icons/fi";
 import { CSVLink } from "react-csv";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { motion } from "framer-motion";
 
 const fetchApplicants = async (user, setAllApplicants) => {
   try {
@@ -48,6 +50,27 @@ const RecruiterApplicantsTracker = () => {
   // 5) Sidebar states
   const [attentionItems, setAttentionItems] = useState([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState([]);
+
+  // 6) Dark mode state
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("recruiterdashboard_darkmode") === "true" || false
+  );
+
+  // Handle dark mode toggle
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("recruiterdashboard_darkmode", newMode.toString());
+  };
+
+  // Apply theme class to body
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-theme");
+    } else {
+      document.body.classList.remove("dark-theme");
+    }
+  }, [darkMode]);
 
   // Add columns configuration
   const columns = [
@@ -102,8 +125,6 @@ const RecruiterApplicantsTracker = () => {
       const selectedDate = new Date(dateRange);
       filtered = filtered.filter((c) => {
         const appliedDate = new Date(c.applicationDate);
-        console.log("appliedData: " + appliedDate);
-        console.log("selectedDate: " + selectedDate);
         return appliedDate >= selectedDate;
       });
     }
@@ -128,7 +149,6 @@ const RecruiterApplicantsTracker = () => {
         return 0;
       });
     }
-    console.log("filtered:", filtered);
     setFilteredApplicants(filtered);
 
     // 5) Sidebar metrics
@@ -190,7 +210,8 @@ const RecruiterApplicantsTracker = () => {
     setDateRange,
     columns,
     visibleColumns,
-    setVisibleColumns
+    setVisibleColumns,
+    darkMode
   };
 
   const refetchApplicants = async () => {
@@ -322,7 +343,7 @@ const RecruiterApplicantsTracker = () => {
   };
 
   return (
-    <div className="h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
+    <div className={`h-screen w-full ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50'} flex flex-col overflow-hidden`}>
       <Botpress />
 
       {/* Navbar */}
@@ -331,16 +352,30 @@ const RecruiterApplicantsTracker = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 overflow-hidden">
+      <motion.div 
+        className="flex-1 p-6 overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
         <div className="h-full grid grid-cols-12 gap-6">
           {/* Left Panel with Table */}
           <div className="col-span-9 flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Header with Title and Export Buttons */}
-            <div className="flex-none h-20 px-10 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
+            <div className={`flex-none h-20 px-10 py-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b flex justify-between items-center`}>
+              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 Applicants Tracker
               </h1>
               <div className="flex space-x-3">
+                <button
+                  onClick={toggleDarkMode}
+                  className={`p-2 rounded-full transition-all duration-300 ${
+                    darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                  aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {darkMode ? <FiSun className="text-yellow-400" /> : <FiMoon className="text-gray-700" />}
+                </button>
                 <div className="group relative">
                   <button
                     onClick={() => exportToPDF(filteredApplicants)}
@@ -368,12 +403,12 @@ const RecruiterApplicantsTracker = () => {
             </div>
 
             {/* Filter Bar */}
-            <div className="flex-none h-24 px-6 py-4 border-b border-gray-200">
+            <div className={`flex-none h-24 px-6 py-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
               <FilterBar {...filterProps} />
             </div>
 
             {/* Table - will scroll */}
-            <div className="flex-1 min-h-0">
+            <div className={`flex-1 min-h-0 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <CandidateTable
                 applicants={filteredApplicants}
                 setApplicants={setFilteredApplicants}
@@ -382,21 +417,23 @@ const RecruiterApplicantsTracker = () => {
                 recruiter={user}
                 refetchApplicants={refetchApplicants}
                 visibleColumns={visibleColumns}
+                darkMode={darkMode}
               />
             </div>
           </div>
 
           {/* Right Sidebar */}
           <div className="col-span-3 h-full">
-            <div className="bg-white rounded-lg shadow-sm h-full p-6 overflow-hidden flex flex-col">
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm h-full p-6 overflow-hidden flex flex-col`}>
               <Sidebar
                 attentionItems={attentionItems}
                 upcomingInterviews={upcomingInterviews}
+                darkMode={darkMode}
               />
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

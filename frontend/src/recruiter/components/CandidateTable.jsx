@@ -37,6 +37,7 @@ const CandidateTable = ({
   recruiter,
   refetchApplicants,
   visibleColumns = DEFAULT_COLUMNS, // Provide default value
+  darkMode = false,
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -82,11 +83,11 @@ const CandidateTable = ({
     if (!SORTABLE_COLUMNS[key]) return null;
 
     if (sortConfig.key !== key) {
-      return <FaSort className="inline-block ml-2 text-gray-300 w-3 h-3" />;
+      return <FaSort className={`inline-block ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-300'} w-3 h-3`} />;
     }
     return sortConfig.direction === "asc"
-      ? <FaSortUp className="inline-block ml-2 text-blue-500 w-3 h-3" />
-      : <FaSortDown className="inline-block ml-2 text-blue-500 w-3 h-3" />;
+      ? <FaSortUp className={`inline-block ml-2 ${darkMode ? 'text-indigo-400' : 'text-blue-500'} w-3 h-3`} />
+      : <FaSortDown className={`inline-block ml-2 ${darkMode ? 'text-indigo-400' : 'text-blue-500'} w-3 h-3`} />;
   };
 
   const patchStatus = async (applicant, status) => {
@@ -171,15 +172,21 @@ const CandidateTable = ({
       {/* Scrollable Table Container */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+          <table className={`min-w-full divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
               <tr>
                 {columns.map(({ key, label }) => 
                   visibleColumns[key] ? (
                     <th
                       key={key}
-                      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap ${
-                        SORTABLE_COLUMNS[key] ? 'cursor-pointer hover:bg-gray-100' : ''
+                      className={`px-4 py-3 text-left text-xs font-medium ${
+                        darkMode ? 'text-gray-300' : 'text-gray-500'
+                      } uppercase tracking-wider whitespace-nowrap ${
+                        SORTABLE_COLUMNS[key] 
+                          ? darkMode 
+                            ? 'cursor-pointer hover:bg-gray-700' 
+                            : 'cursor-pointer hover:bg-gray-100'
+                          : ''
                       }`}
                       onClick={() => handleSort(key)}
                     >
@@ -192,265 +199,248 @@ const CandidateTable = ({
                 )}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {applicants && applicants.map((app) => {
+            <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              {applicants && applicants.length > 0 ? applicants.map((app) => {
                 const statusAction = getStatusAction(app);
+
+                // Get status color for current status
+                const getStatusColor = (status) => {
+                  if (darkMode) {
+                    switch (status) {
+                      case "Applied": return "bg-blue-900/30 text-blue-300";
+                      case "In Review": return "bg-yellow-900/30 text-yellow-300";
+                      case "Interview Scheduled": return "bg-purple-900/30 text-purple-300";
+                      case "Interview Done": return "bg-indigo-900/30 text-indigo-300";
+                      case "Accepted": return "bg-green-900/30 text-green-300";
+                      case "Hired": return "bg-emerald-900/30 text-emerald-300";
+                      case "Rejected": return "bg-red-900/30 text-red-300";
+                      default: return "bg-gray-700 text-gray-300";
+                    }
+                  } else {
+                    switch (status) {
+                      case "Applied": return "bg-blue-100 text-blue-800";
+                      case "In Review": return "bg-yellow-100 text-yellow-800";
+                      case "Interview Scheduled": return "bg-purple-100 text-purple-800";
+                      case "Interview Done": return "bg-indigo-100 text-indigo-800";
+                      case "Accepted": return "bg-green-100 text-green-800";
+                      case "Hired": return "bg-emerald-100 text-emerald-800";
+                      case "Rejected": return "bg-red-100 text-red-800";
+                      default: return "bg-gray-100 text-gray-800";
+                    }
+                  }
+                };
 
                 return (
                   <tr
                     key={app._id}
                     ref={selectedApplicant?._id === app._id ? selectedRowRef : null}
-                    className={`
-                      hover:bg-gray-100 transition-colors duration-200
-                      ${selectedApplicant?._id === app._id ? "bg-blue-50 font-semibold ring-2 ring-blue-300" : ""}
-                    `}
-                    onClick={() => {
-                      setJobListingId(app.jobId);
-                      setSelectedApplicant(app);
-                    }}
+                    className={`${
+                      selectedApplicant?._id === app._id 
+                        ? darkMode 
+                          ? 'bg-gray-700' 
+                          : 'bg-blue-50'
+                        : darkMode 
+                          ? 'hover:bg-gray-700' 
+                          : 'hover:bg-gray-50'
+                    } transition-all duration-150`}
                   >
+                    {/* Candidate Details */}
                     {visibleColumns.name && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col space-y-2">
-                          {/* Name */}
-                          <div className="text-sm font-semibold text-gray-900">
-                            {app.name}
+                      <td className="px-4 py-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                            <img
+                              className="h-full w-full object-cover"
+                              src={app.profilePic || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
+                              alt={app.name}
+                            />
                           </div>
-                          
-                          {/* Contact Info */}
-                          <div className="flex flex-col space-y-1.5">
-                            <div className="text-xs text-gray-500 flex items-center hover:text-gray-700">
-                              <span className="mr-2">📧</span>
-                              <a href={`mailto:${app.email}`} className="hover:underline" onClick={e => e.stopPropagation()}>
-                                {app.email}
-                              </a>
+                          <div>
+                            <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {app.name}
                             </div>
-                            {app.phone && (
-                              <div className="text-xs text-gray-500 flex items-center hover:text-gray-700">
-                                <span className="mr-2">📱</span>
-                                <a href={`tel:${app.phone}`} className="hover:underline" onClick={e => e.stopPropagation()}>
-                                  {app.phone}
-                                </a>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Social Links */}
-                          <div className="flex space-x-3 pt-1">
-                            {app.linkedinUrl && (
-                              <a
-                                href={app.linkedinUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                                </svg>
-                                LinkedIn
-                              </a>
-                            )}
-                            {app.githubUrl && (
-                              <a
-                                href={app.githubUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-600 hover:text-gray-800 text-xs flex items-center"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                                </svg>
-                                GitHub
-                              </a>
-                            )}
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {app.email}
+                            </div>
                           </div>
                         </div>
                       </td>
                     )}
+
+                    {/* Job Title */}
                     {visibleColumns.jobTitle && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-4 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {app.jobTitle}
                       </td>
                     )}
+
+                    {/* Application Date */}
                     {visibleColumns.applicationDate && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {app.applicationDate 
-                          ? new Date(app.applicationDate).toLocaleString() 
-                          : "—"}
+                      <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {app.applicationDate
+                          ? new Date(app.applicationDate).toLocaleDateString()
+                          : "N/A"}
                       </td>
                     )}
+
+                    {/* Status */}
                     {visibleColumns.status && (
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            app.status === "Applied"
-                              ? "bg-blue-100 text-blue-800"
-                              : app.status.includes("Interview")
-                              ? "bg-purple-100 text-purple-800"
-                              : app.status === "Accepted"
-                              ? "bg-green-100 text-green-800"
-                              : app.status === "Rejected"
-                              ? "bg-red-100 text-red-800"
-                              : app.status === "In Review"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
+                      <td className="px-4 py-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
                           {app.status}
                         </span>
                       </td>
                     )}
+
+                    {/* Interview */}
                     {visibleColumns.interview && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {app.interviewId ? (
-                          <div className="flex flex-col">
-                            <span>{new Date(app.interviewId.scheduledTime).toLocaleString()}</span>
-                            {app.interviewId.meetingLink ? (
-                              <a 
-                                href={app.interviewId.meetingLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                              >
-                                Join Meeting
-                              </a>
-                            ) : (
-                              <span className="text-gray-400">No Meeting Link</span>
-                            )}
+                          <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            <div>
+                              {new Date(app.interviewId.scheduledTime).toLocaleString()}
+                            </div>
+                            <a
+                              href={app.interviewId.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
+                            >
+                              Join Meeting
+                            </a>
                           </div>
                         ) : (
-                          "—"
+                          <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Not scheduled</span>
                         )}
                       </td>
                     )}
+
+                    {/* Next Step */}
                     {visibleColumns.nextStep && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {(statusAction && !["Hired", "Rejected"].includes(app.status))
-                          ? statusAction.map((statusAction) => {
-                              return (
-                                <button
-                                  key={statusAction.label}
-                                  className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                                  title={statusAction.label}
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    setJobListingId(app.jobId);
-                                    setSelectedApplicant(app);
-                                    await statusAction.onClick();
-                                  }}
-                                >
-                                  <FaCalendarPlus className="mr-1" />
-                                  {statusAction.label}
-                                </button>
-                              );
-                            })
-                          : "—"
-                        }
-                      </td>
-                    )}
-                    {visibleColumns.actions && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                        {!["Hired", "Rejected"].includes(app.status) ? (
-                          <div className="flex flex-col justify-center space-y-3">
-                            <button
-                              className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
-                              title="View Candidate"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(app.cv, "_blank", "noopener,noreferrer");
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
-                            >
-                              <FaEye className="mr-1" /> View CV
-                            </button>
-                            <button
-                              className="text-red-600 hover:text-red-900 transition-colors flex items-center"
-                              title="Reject Applicant"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRejectClick(app);
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
-                            >
-                              <FaTimes className="mr-1" /> Reject
-                            </button>
-                            <button
-                              className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                              title="Hire Applicant"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleHireClick(app);
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
-                            >
-                              <FaCheck className="mr-1" /> Hire
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedApplicant(app);
-                                setShowNotesModal(true);
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
-                              className="text-gray-600 hover:text-gray-900 transition-colors flex items-center"
-                            >
-                              <FaPencilAlt className="mr-1" />
-                              Notes
-                            </button>
+                      <td className="px-4 py-4">
+                        {statusAction ? (
+                          <div className="flex flex-col space-y-2">
+                            {statusAction.map((action, idx) => (
+                              <button
+                                key={idx}
+                                onClick={action.onClick}
+                                className={`px-2 py-1 text-xs font-medium rounded ${
+                                  darkMode 
+                                    ? 'bg-indigo-700 text-white hover:bg-indigo-600' 
+                                    : 'bg-blue-600 text-white hover:bg-blue-500'
+                                } transition-colors duration-150`}
+                              >
+                                {action.label}
+                              </button>
+                            ))}
                           </div>
                         ) : (
-                          "—"
+                          <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            No actions available
+                          </span>
                         )}
+                      </td>
+                    )}
+
+                    {/* Actions */}
+                    {visibleColumns.actions && (
+                      <td className="px-4 py-4 text-right text-sm font-medium">
+                        <div className="flex space-x-2 justify-center">
+                          <button
+                            onClick={() => {
+                              setSelectedApplicant(app);
+                              setShowNotesModal(true);
+                            }}
+                            className={`p-1 rounded ${
+                              darkMode 
+                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="View/Edit Notes"
+                          >
+                            <FaPencilAlt className="w-4 h-4" />
+                          </button>
+
+                          {/* Additional action - Hire */}
+                          {app.status !== "Hired" && app.status !== "Rejected" && (
+                            <button
+                              onClick={() => handleHireClick(app)}
+                              className={`p-1 rounded ${
+                                darkMode 
+                                  ? 'bg-green-800 text-green-200 hover:bg-green-700' 
+                                  : 'bg-green-100 text-green-600 hover:bg-green-200'
+                              }`}
+                              title="Mark as Hired"
+                            >
+                              <FaCheck className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {/* Additional action - Reject */}
+                          {app.status !== "Rejected" && app.status !== "Hired" && (
+                            <button
+                              onClick={() => handleRejectClick(app)}
+                              className={`p-1 rounded ${
+                                darkMode 
+                                  ? 'bg-red-800 text-red-200 hover:bg-red-700' 
+                                  : 'bg-red-100 text-red-600 hover:bg-red-200'
+                              }`}
+                              title="Reject Candidate"
+                            >
+                              <FaTimes className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
                 );
-              })}
+              }) : (
+                <tr>
+                  <td 
+                    colSpan={Object.values(visibleColumns).filter(Boolean).length} 
+                    className={`px-4 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  >
+                    No candidates found matching your filters.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-
-          {applicants && applicants.length === 0 && (
-            <div className="text-center py-8">
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No applicants
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by adding a new candidate
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
-      {showScheduleModal && selectedApplicant && (
-        <ScheduleInterviewModal
-          isOpen={showScheduleModal}
-          onClose={() => setShowScheduleModal(false)}
-          applicant={selectedApplicant}
-          setApplicants={setApplicants}
-          jobListingId={jobListingId} 
-          recruiter={recruiter}
-          refetchApplicants={async () => {
-            if (refetchApplicants) await refetchApplicants();
-          }}
-        />
+      {/* Schedule Interview Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
+          <ScheduleInterviewModal
+            isOpen={showScheduleModal}
+            onClose={() => setShowScheduleModal(false)}
+            applicant={selectedApplicant}
+            recruiter={recruiter}
+            onSuccess={refetchApplicants}
+            darkMode={darkMode}
+            jobListingId={selectedApplicant?.jobId?._id}
+            setApplicants={setApplicants}
+          />
+        </div>
       )}
 
-      {showNotesModal && selectedApplicant && (
-        <CandidateNotesModal
-          isOpen={showNotesModal}
-          onClose={() => setShowNotesModal(false)}
-          applicant={selectedApplicant}
-          onNotesUpdated={async () => {
-            await refetchApplicants?.();
-          }}
-        />
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
+          <CandidateNotesModal
+            isOpen={showNotesModal}
+            onClose={() => setShowNotesModal(false)}
+            applicant={selectedApplicant}
+            onSuccess={() => {
+              refetchApplicants?.();
+              setShowNotesModal(false);
+            }}
+            darkMode={darkMode}
+            onNotesUpdated={() => refetchApplicants?.()}
+          />
+        </div>
       )}
     </div>
   );
