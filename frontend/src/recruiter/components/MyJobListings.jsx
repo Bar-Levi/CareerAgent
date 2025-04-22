@@ -90,7 +90,9 @@ const MyJobListings = ({
   setMetrics,
   setSelectedConversationId,
   setSelectedCandidate,
-  setViewMode
+  setViewMode,
+  darkMode = false,
+  collapsed = false
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
@@ -223,15 +225,15 @@ const MyJobListings = ({
   
   return (
     <div
-      className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg"
-      style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
+      className={`relative w-full ${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-lg`}
+      style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
     >
       {/* Sticky header */}
-      <div className="sticky top-0 bg-gray-200 dark:bg-gray-700 z-10 shadow-md">
+      <div className={`sticky top-0 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} z-10 shadow-md`}>
         <div className="px-6 py-4">
           {/* Header title & action */}
           <div className="flex flex-col md:flex-row items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-300 mb-2 md:mb-0">
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-gray-200' : 'text-gray-800'} mb-2 md:mb-0`}>
               My Job Listings
             </h2>
             {jobListings.length > 0 && (
@@ -254,7 +256,7 @@ const MyJobListings = ({
                 placeholder="Role / Company"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-[.9vw]"
+                className={`pl-10 pr-4 py-2 w-full ${darkMode ? 'bg-gray-600 text-white border-gray-600' : 'bg-white border-gray-300'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm`}
               />
             </div>
 
@@ -264,7 +266,7 @@ const MyJobListings = ({
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="appearance-none pl-10 pr-0 py-2 w-full bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-[.9vw]"
+                className={`appearance-none pl-10 pr-4 py-2 w-full ${darkMode ? 'bg-gray-600 text-white border-gray-600' : 'bg-white border-gray-300'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm`}
               >
                 <option value="All">All Statuses</option>
                 <option value="Active">Active</option>
@@ -285,7 +287,7 @@ const MyJobListings = ({
                 <select
                   value={sortField}
                   onChange={(e) => setSortField(e.target.value)}
-                  className="appearance-none pl-10 py-2 w-full bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 text-[.9vw]"
+                  className={`appearance-none pl-10 py-2 w-full ${darkMode ? 'bg-gray-600 text-white border-gray-600' : 'bg-white border-gray-300'} border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm`}
                 >
                   <option value="jobRole">Sort by Role</option>
                   <option value="location">Sort by Location</option>
@@ -298,11 +300,11 @@ const MyJobListings = ({
       </div>
 
       {/* Scrollable job listings container */}
-      <div className="bg-white flex-1 overflow-y-auto">
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} flex-1 overflow-y-auto`}>
         {jobListings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
             <svg
-              className="w-16 h-16 text-gray-300 mb-4"
+              className={`w-16 h-16 ${darkMode ? 'text-gray-600' : 'text-gray-300'} mb-4`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -314,32 +316,43 @@ const MyJobListings = ({
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               ></path>
             </svg>
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">
+            <p className={`text-xl ${darkMode ? 'text-gray-300' : 'text-gray-600'} font-medium`}>
               No active job listings
             </p>
-            <p className="text-gray-400 mt-2 text-center">
+            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-400'} mt-2 text-center`}>
               Your job listings will appear here once created
             </p>
           </div>
         ) : (
-          <ul className="bg-gray-100">
+          <ul className={`${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
             {filteredAndSortedListings.map((listing) => (
               <li
                 key={listing._id}
                 ref={selectedJobListing && selectedJobListing._id === listing._id ? selectedJobListingRef : null}
-                className={`relative transition-all duration-200 hover:bg-gray-300 ${
-                  selectedJobListing && selectedJobListing._id === listing._id
-                    ? 'bg-gray-200 border-l-4 border-gray-300'
-                    : ''
+                className={`relative transition-all duration-200 ${
+                  darkMode 
+                    ? selectedJobListing && selectedJobListing._id === listing._id
+                      ? 'bg-gray-700 border-l-4 border-indigo-500' 
+                      : 'hover:bg-gray-700 cursor-pointer'
+                    : selectedJobListing && selectedJobListing._id === listing._id
+                      ? 'bg-indigo-50 border-l-4 border-indigo-500'
+                      : 'hover:bg-gray-200 cursor-pointer'
                 }`}
+                onClick={() => {
+                  // Make entire job listing clickable to select and view applications
+                  setSelectedJobListing(listing);
+                  setViewMode("applications");
+                  setSelectedConversationId(null);
+                  setSelectedCandidate(null);
+                }}
               >
                 <div className="p-4 md:p-5">
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-black mb-2">
+                      <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-black'} mb-2`}>
                         {listing.jobRole}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <div className={`flex flex-wrap items-center gap-3 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         <span className="flex items-center">
                           <svg
                             className="w-4 h-4 mr-1"
@@ -402,7 +415,7 @@ const MyJobListings = ({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 mt-3 md:mt-0">
-                      <div className="relative">
+                      <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <button
                           disabled={listing.status === "Closed"}
                           onClick={() => handleStatusMenuToggle(listing._id)}
@@ -436,15 +449,16 @@ const MyJobListings = ({
                         )}
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedJobListing(listing);
                             setViewMode("messages");
                             setSelectedConversationId(null);
                             setSelectedCandidate(null);
                           }}
-                          className="px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 transition flex items-center"
+                          className={`px-3 py-1.5 ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-600 hover:bg-gray-700'} text-white text-xs font-medium rounded-lg transition flex items-center`}
                         >
                           <svg
                           className="w-3.5 h-3.5 mr-1"
@@ -459,17 +473,18 @@ const MyJobListings = ({
                             d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                           ></path>
                         </svg>
-                         View Messages
+                         Messages
                         </button>
 
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedJobListing(listing);
                             setViewMode("applications");
                             setSelectedConversationId(null);
                             setSelectedCandidate(null);
                           }}
-                          className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition flex items-center"
+                          className={`px-3 py-1.5 ${darkMode ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-indigo-600 hover:bg-indigo-700'} text-white text-xs font-medium rounded-lg transition flex items-center`}
                         >
                           <svg
                             className="w-3.5 h-3.5 mr-1"
@@ -481,27 +496,26 @@ const MyJobListings = ({
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="2"
-                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                             ></path>
                           </svg>
-                           View Applicants
+                           Applicants
                         </button>
                       </div>
 
-
-
-                      <div className="relative">
+                      <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => handleSettingsMenuToggle(listing._id)}
-                          className="p-1.5 text-gray-500 hover:text-gray-600 hover:bg-gray-100 rounded-full"
+                          className={`p-1.5 ${darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-100'} hover:text-gray-600 rounded-full`}
                         >
                           <FaEllipsisV size={14} />
                         </button>
+
                         {settingsMenuOpen === listing._id && (
                           <SettingsMenu
                             onRemove={() => onRemove(listing._id)}
                             onClose={() => setSettingsMenuOpen(null)}
-                            loading={individualLoading[listing._id] || false}
+                            loading={individualLoading[listing._id]}
                           />
                         )}
                       </div>
@@ -514,61 +528,42 @@ const MyJobListings = ({
         )}
       </div>
 
-      {/* Confirmation Dialog */}
+      {/* Confirmation Dialog for Remove All */}
       {showConfirmDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-6">
-                <FaSpinner className="animate-spin text-3xl text-gray-600 mb-4" />
-                <span className="text-gray-700 font-medium">
-                  Removing all job listings...
-                </span>
-                <p className="text-gray-500 text-sm mt-2 text-center">
-                  This may take a moment
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-6 text-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 text-red-600 mb-4">
-                    <svg
-                      className="w-8 h-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      ></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    Confirm Removal
-                  </h3>
-                  <p className="text-gray-600">
-                    Are you sure you want to remove all job listings? This action cannot be undone.
-                  </p>
-                </div>
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={() => setShowConfirmDialog(false)}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-150"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={onRemoveAll}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-150"
-                  >
-                    Yes, Remove All
-                  </button>
-                </div>
-              </>
-            )}
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[1000]"
+          onClick={() => setShowConfirmDialog(false)}
+        >
+          <div
+            className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg p-6 max-w-md mx-4`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold mb-4">Remove All Job Listings?</h3>
+            <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>
+              This action will permanently remove all your job listings. This cannot be
+              undone.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowConfirmDialog(false)}
+                className={`px-4 py-2 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg transition duration-150`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onRemoveAll}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150 flex items-center"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" /> Removing...
+                  </>
+                ) : (
+                  "Remove All"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
