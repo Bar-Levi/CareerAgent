@@ -3,6 +3,7 @@ import { CSVLink } from "react-csv";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; // Add this import
 import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt, FaDownload, FaCog } from "react-icons/fa";
+import { motion } from "framer-motion";
 import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
 import { updateApplicantStatus } from "../../utils/applicantStatus";
 import CandidateNotesModal from "./CandidateNotesModal"; // Adjust import path
@@ -29,6 +30,67 @@ const SORTABLE_COLUMNS = {
   actions: false
 };
 
+// Modern action button component with animations and dynamic styling
+const ActionButton = ({ label, onClick, icon, variant = "primary", darkMode, compactMode = false }) => {
+  // Define color variants - primary, schedule, review
+  const getVariantStyle = () => {
+    if (darkMode) {
+      switch (variant) {
+        case "primary": 
+          return "bg-gradient-to-r from-indigo-700/90 to-indigo-600/90 hover:from-indigo-600/90 hover:to-indigo-500/90 text-white border-indigo-500/30";
+        case "schedule": 
+          return "bg-gradient-to-r from-purple-700/90 to-purple-600/90 hover:from-purple-600/90 hover:to-purple-500/90 text-white border-purple-500/30";
+        case "review": 
+          return "bg-gradient-to-r from-blue-700/90 to-blue-600/90 hover:from-blue-600/90 hover:to-blue-500/90 text-white border-blue-500/30";
+        case "accept": 
+          return "bg-gradient-to-r from-green-700/90 to-green-600/90 hover:from-green-600/90 hover:to-green-500/90 text-white border-green-500/30";
+        default:
+          return "bg-gradient-to-r from-indigo-700/90 to-indigo-600/90 hover:from-indigo-600/90 hover:to-indigo-500/90 text-white border-indigo-500/30";
+      }
+    } else {
+      switch (variant) {
+        case "primary": 
+          return "bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-indigo-300";
+        case "schedule": 
+          return "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-purple-300";
+        case "review": 
+          return "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-blue-300";
+        case "accept": 
+          return "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-green-300";
+        default:
+          return "bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-indigo-300";
+      }
+    }
+  };
+
+  // Super compact mode just shows the icon with tooltip
+  if (compactMode) {
+    return (
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onClick}
+        className={`p-1.5 rounded-md border-[0.5px] transition-all duration-200 ${getVariantStyle()}`}
+        title={label}
+      >
+        {icon}
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={`w-full px-2 py-1 rounded-md text-xs font-medium border-[0.5px] flex items-center justify-start gap-1.5 transition-all duration-200 ${getVariantStyle()}`}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </motion.button>
+  );
+};
+
 const CandidateTable = ({
   applicants,
   setApplicants,
@@ -44,6 +106,7 @@ const CandidateTable = ({
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [jobListingId, setJobListingId] = useState(null);
   const [renderKey, setRenderKey] = useState(0);
+  const [compactView, setCompactView] = useState(true); // Default to compact view
 
   const tableBodyRef = useRef(null);
   const selectedRowRef = useRef(null);
@@ -104,6 +167,11 @@ const CandidateTable = ({
             window.open(applicant.cv, "_blank");
             await patchStatus(applicant, "In Review");
           },
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>,
+          variant: "review"
         }];
       case "In Review":
         return [{
@@ -113,15 +181,27 @@ const CandidateTable = ({
             setShowScheduleModal(true);
             await refetchApplicants?.();
           },
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>,
+          variant: "schedule"
         },
         {
           label: "Mark as Accepted",
           onClick: () => patchStatus(applicant, "Accepted"),
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>,
+          variant: "accept"
         }];
       case "Interview Scheduled":
         return [{
           label: "Mark Interview Done",
           onClick: () => patchStatus(applicant, "Interview Done"),
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>,
+          variant: "primary"
         }];
       case "Interview Done":
         return [
@@ -132,16 +212,28 @@ const CandidateTable = ({
               setShowScheduleModal(true);
               await refetchApplicants?.();
             },
+            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                  </svg>,
+            variant: "schedule"
           },
           {
             label: "Mark as Accepted",
             onClick: () => patchStatus(applicant, "Accepted"),
+            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>,
+            variant: "accept"
           }
         ];
       case "Accepted":
         return [{
           label: "Mark as Hired",
           onClick: () => patchStatus(applicant, "Hired"),
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>,
+          variant: "primary"
         }];
       default:
         return null;
@@ -167,19 +259,30 @@ const CandidateTable = ({
     { key: 'actions', label: 'Actions' }
   ];
 
+  // Column width classes for each column
+  const columnWidthClasses = {
+    name: 'w-[20%]',
+    jobTitle: 'w-[15%]',
+    applicationDate: 'w-[12%]', 
+    status: 'w-[10%]',
+    interview: 'w-[15%]',
+    nextStep: 'w-[15%]',
+    actions: 'w-[8%]'
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Scrollable Table Container */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
-          <table className={`min-w-full divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+          <table className={`min-w-full table-fixed divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
             <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
               <tr>
                 {columns.map(({ key, label }) => 
                   visibleColumns[key] ? (
                     <th
                       key={key}
-                      className={`px-4 py-3 text-left text-xs font-medium ${
+                      className={`px-4 py-3 text-left text-xs font-medium ${columnWidthClasses[key]} ${
                         darkMode ? 'text-gray-300' : 'text-gray-500'
                       } uppercase tracking-wider whitespace-nowrap ${
                         SORTABLE_COLUMNS[key] 
@@ -319,21 +422,36 @@ const CandidateTable = ({
                     {visibleColumns.nextStep && (
                       <td className="px-4 py-4">
                         {statusAction ? (
-                          <div className="flex flex-col space-y-2">
-                            {statusAction.map((action, idx) => (
-                              <button
-                                key={idx}
-                                onClick={action.onClick}
-                                className={`px-2 py-1 text-xs font-medium rounded ${
-                                  darkMode 
-                                    ? 'bg-indigo-700 text-white hover:bg-indigo-600' 
-                                    : 'bg-blue-600 text-white hover:bg-blue-500'
-                                } transition-colors duration-150`}
-                              >
-                                {action.label}
-                              </button>
-                            ))}
-                          </div>
+                          <>
+                            {compactView && statusAction.length > 1 ? (
+                              <div className="flex space-x-1.5">
+                                {statusAction.map((action, idx) => (
+                                  <ActionButton
+                                    key={idx}
+                                    label={action.label}
+                                    onClick={action.onClick}
+                                    icon={action.icon}
+                                    variant={action.variant}
+                                    darkMode={darkMode}
+                                    compactMode={true}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-1 max-w-[150px]">
+                                {statusAction.map((action, idx) => (
+                                  <ActionButton
+                                    key={idx}
+                                    label={action.label}
+                                    onClick={action.onClick}
+                                    icon={action.icon}
+                                    variant={action.variant}
+                                    darkMode={darkMode}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
                             No actions available
@@ -346,49 +464,55 @@ const CandidateTable = ({
                     {visibleColumns.actions && (
                       <td className="px-4 py-4 text-right text-sm font-medium">
                         <div className="flex space-x-2 justify-center">
-                          <button
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
                             onClick={() => {
                               setSelectedApplicant(app);
                               setShowNotesModal(true);
                             }}
-                            className={`p-1 rounded ${
+                            className={`p-2 rounded-full ${
                               darkMode 
-                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
+                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                            } transition-all duration-200`}
                             title="View/Edit Notes"
                           >
                             <FaPencilAlt className="w-4 h-4" />
-                          </button>
+                          </motion.button>
 
                           {/* Additional action - Hire */}
                           {app.status !== "Hired" && app.status !== "Rejected" && (
-                            <button
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
                               onClick={() => handleHireClick(app)}
-                              className={`p-1 rounded ${
+                              className={`p-2 rounded-full ${
                                 darkMode 
-                                  ? 'bg-green-800 text-green-200 hover:bg-green-700' 
+                                  ? 'bg-green-800/80 text-green-200 hover:bg-green-700' 
                                   : 'bg-green-100 text-green-600 hover:bg-green-200'
-                              }`}
+                              } transition-all duration-200`}
                               title="Mark as Hired"
                             >
                               <FaCheck className="w-4 h-4" />
-                            </button>
+                            </motion.button>
                           )}
 
                           {/* Additional action - Reject */}
                           {app.status !== "Rejected" && app.status !== "Hired" && (
-                            <button
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
                               onClick={() => handleRejectClick(app)}
-                              className={`p-1 rounded ${
+                              className={`p-2 rounded-full ${
                                 darkMode 
-                                  ? 'bg-red-800 text-red-200 hover:bg-red-700' 
+                                  ? 'bg-red-800/80 text-red-200 hover:bg-red-700' 
                                   : 'bg-red-100 text-red-600 hover:bg-red-200'
-                              }`}
+                              } transition-all duration-200`}
                               title="Reject Candidate"
                             >
                               <FaTimes className="w-4 h-4" />
-                            </button>
+                            </motion.button>
                           )}
                         </div>
                       </td>
@@ -412,7 +536,7 @@ const CandidateTable = ({
 
       {/* Schedule Interview Modal */}
       {showScheduleModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
           <ScheduleInterviewModal
             isOpen={showScheduleModal}
             onClose={() => setShowScheduleModal(false)}
@@ -428,7 +552,7 @@ const CandidateTable = ({
 
       {/* Notes Modal */}
       {showNotesModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
           <CandidateNotesModal
             isOpen={showNotesModal}
             onClose={() => setShowNotesModal(false)}
