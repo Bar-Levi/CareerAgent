@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
-import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
+import ScheduleInterviewModal from "./ScheduleInterviewModal"; 
 import { updateApplicantStatus } from "../../utils/applicantStatus";
-import CandidateNotesModal from "./CandidateNotesModal"; // Adjust import path
+import CandidateNotesModal from "./CandidateNotesModal";
 
 // Add default columns configuration
 const DEFAULT_COLUMNS = {

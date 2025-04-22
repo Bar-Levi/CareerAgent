@@ -10,7 +10,9 @@ import {
   FiSun, 
   FiX,
   FiChevronLeft,
-  FiChevronRight
+  FiChevronRight,
+  FiExternalLink,
+  FiGlobe
 } from "react-icons/fi";
 import NavigationBar from "../../components/NavigationBar/NavigationBar";
 import Botpress from "../../botpress/Botpress";
@@ -53,6 +55,11 @@ const RecruiterDashboard = ({onlineUsers}) => {
   
   // Mobile responsive state
   const [mobileView, setMobileView] = useState("listings"); // "listings" | "detail"
+
+  // Add state for image preview modal
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageSrc, setPreviewImageSrc] = useState("");
+  const [previewImageAlt, setPreviewImageAlt] = useState("");
 
   // Handle dark mode toggle
   const toggleDarkMode = () => {
@@ -266,6 +273,13 @@ const RecruiterDashboard = ({onlineUsers}) => {
     }
   };
 
+  // Function to open image preview
+  const openImagePreview = (src, alt) => {
+    setPreviewImageSrc(src);
+    setPreviewImageAlt(alt);
+    setShowImagePreview(true);
+  };
+
   // Memorized content for right panel based on view mode
   const rightPanelContent = useMemo(() => {
     if (viewMode === "messages") {
@@ -423,6 +437,82 @@ const RecruiterDashboard = ({onlineUsers}) => {
         </div>
       </div>
 
+      {/* Profile Information */}
+      {(state?.user?.profilePic || state?.user?.companyLogo || state?.user?.companyName || state?.user?.companyWebsite) && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mx-4 mt-4"
+        >
+          <div className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/90'} rounded-xl shadow-lg py-3 px-4 backdrop-blur-md`}>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Profile Section */}
+              {state?.user?.profilePic && (
+                <div className="flex items-center gap-2 border-r pr-4 border-gray-200 dark:border-gray-700">
+                  <div 
+                    className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
+                    onClick={() => openImagePreview(state.user.profilePic, "Profile")}
+                  >
+                    <img 
+                      src={state.user.profilePic} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                    {state?.user?.fullName || "Profile"}
+                  </span>
+                </div>
+              )}
+
+              {/* Company Logo */}
+              {state?.user?.companyLogo && (
+                <div className="flex items-center gap-2 border-r pr-4 border-gray-200 dark:border-gray-700">
+                  <div 
+                    className="w-10 h-10 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                    onClick={() => openImagePreview(state.user.companyLogo, "Company Logo")}
+                  >
+                    <img 
+                      src={state.user.companyLogo} 
+                      alt="Company" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Logo</span>
+                </div>
+              )}
+
+              {/* Company Name */}
+              {state?.user?.companyName && (
+                <div className="flex items-center gap-2 border-r pr-4 border-gray-200 dark:border-gray-700">
+                  <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {state.user.companyName}
+                  </div>
+                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Company</span>
+                </div>
+              )}
+              
+              {/* Company Website */}
+              {state?.user?.companyWebsite && (
+                <div className="flex items-center gap-2">
+                  <a 
+                    href={state.user.companyWebsite.startsWith('http') ? state.user.companyWebsite : `https://${state.user.companyWebsite}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className={`text-sm flex items-center gap-1 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors`}
+                  >
+                    <FiGlobe size={12} />
+                    <span className="truncate">Visit Website</span>
+                  </a>
+                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Comapny Website</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Metrics Row (collapsed on mobile) */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -434,6 +524,39 @@ const RecruiterDashboard = ({onlineUsers}) => {
           <MetricsOverview metrics={metrics} darkMode={darkMode} />
         </div>
       </motion.div>
+
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {showImagePreview && (
+          <motion.div 
+            className="fixed inset-0 flex items-center justify-center bg-black/70 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowImagePreview(false)}
+          >
+            <motion.div 
+              className="relative max-w-2xl max-h-[80vh] rounded-lg overflow-hidden"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              transition={{ type: "spring", damping: 25 }}
+            >
+              <img 
+                src={previewImageSrc} 
+                alt={previewImageAlt} 
+                className="max-w-full max-h-[80vh] object-contain bg-white/10 backdrop-blur-sm"
+              />
+              <button
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+                onClick={() => setShowImagePreview(false)}
+              >
+                <FiX size={24} />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Dashboard – Two-Pane Layout */}
       <div className="flex flex-1 p-4 space-x-0 md:space-x-4 overflow-hidden">
