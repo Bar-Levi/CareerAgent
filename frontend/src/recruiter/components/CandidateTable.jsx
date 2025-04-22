@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { CSVLink } from "react-csv";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // Add this import
-import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt, FaDownload, FaCog } from "react-icons/fa";
+import { FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
 import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
 import { updateApplicantStatus } from "../../utils/applicantStatus";
