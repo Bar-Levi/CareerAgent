@@ -586,6 +586,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                     setSelectedCandidate={setSelectedCandidate}
                     setViewMode={setViewMode}
                     darkMode={darkMode}
+                    applications={applications}
                   />
                 </div>
                 
@@ -655,6 +656,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 setSelectedCandidate={setSelectedCandidate}
                 setViewMode={setViewMode}
                 darkMode={darkMode}
+                applications={applications}
                 collapsed={sidebarCollapsed}
               />
             </motion.div>

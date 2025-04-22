@@ -20,12 +20,29 @@ const Applications = ({
   const navigate = useNavigate();
 
   const selectedCandidateRef = useRef();
+  const containerRef = useRef();
   
-  useEffect(() => {
-      if (selectedCandidateId && applications && selectedCandidateRef.current) {
-        selectedCandidateRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+  // Handle applicant selection
+  const handleApplicantClick = (app) => {
+    setSelectedApplicant(app);
+    
+    // Set a minimal timeout to ensure the DOM has updated before scrolling
+    setTimeout(() => {
+      if (selectedCandidateRef.current) {
+        selectedCandidateRef.current.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "center" 
+        });
       }
-    }, [selectedApplicant, applications]);
+    }, 50);
+  };
+  
+  // Scroll to selected candidate when it changes or on initial load
+  useEffect(() => {
+    if (selectedCandidateId && applications && selectedCandidateRef.current) {
+      selectedCandidateRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedApplicant, applications, selectedCandidateId]);
 
   const getApplicantDataAsJobSeeker = async (application) => {
     const response = await fetch(
@@ -52,7 +69,10 @@ const Applications = ({
     return applicantData;
   };
 
-  const handleChatButtonClick = async (applicant) => {
+  const handleChatButtonClick = async (applicant, event) => {
+    // Prevent the click from bubbling up to parent div
+    event?.stopPropagation();
+    
     try {
       const participants = [
         {
@@ -107,7 +127,10 @@ const Applications = ({
     }
   };
 
-  const trackApplicant = async (applicant) => {
+  const trackApplicant = async (applicant, event) => {
+    // Prevent the click from bubbling up to parent div
+    event?.stopPropagation();
+    
     try {
       localStorage.setItem("stateAddition", JSON.stringify({ applicant }));
       navigate(`/recruiter-candidate-tracker`, { state });
@@ -136,10 +159,19 @@ const Applications = ({
     }
   }, [applications]);
 
+  // Find the current selected applicant in the applications array
+  useEffect(() => {
+    if (selectedCandidateId && applications.length > 0) {
+      const selected = applications.find(app => app.jobSeekerId === selectedCandidateId);
+      if (selected) {
+        setSelectedApplicant(selected);
+      }
+    }
+  }, [selectedCandidateId, applications]);
 
   return (
-    <div className="mx-auto">
-      <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg">
+    <div className="mx-auto h-full flex flex-col">
+      <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg flex-grow flex flex-col overflow-hidden">
         <div className="sticky top-0 z-10 shadow-lg bg-gradient-to-r bg-gray-200 p-6">
           <h2 className="text-2xl font-bold text-gray-800 text-center">
             Applications
@@ -147,29 +179,25 @@ const Applications = ({
         </div>
 
         {applications.length === 0 ? (
-          <div className="flex justify-center items-center p-16 text-gray-500">
+          <div className="flex justify-center items-center p-16 text-gray-500 flex-grow">
             <p className="text-lg font-medium">No recent applications.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 overflow-y-auto flex-grow" ref={containerRef}>
             {applications.map((app) => {
               const applicantData = applicantsData[app._id];
-              const statusColors = {
-                Screening: "bg-yellow-100 text-yellow-800 border-yellow-200",
-                Pending: "bg-gray-100 text-gray-800 border-gray-200",
-                Accepted: "bg-green-100 text-green-800 border-green-200",
-              };
-              const isSelected = app.jobSeekerId === selectedCandidateId;
+              const isSelected = selectedApplicant?._id === app._id || app.jobSeekerId === selectedCandidateId;
 
               return (
                 <div
                   key={app._id}
-                  ref={isSelected? selectedCandidateRef : null}
-                  className={`p-6 transition-colors duration-200 group ${
+                  ref={isSelected ? selectedCandidateRef : null}
+                  className={`p-6 transition-colors duration-200 cursor-pointer ${
                     isSelected 
-                      ? 'bg-gray-200 hover:bg-gray-300' 
-                      : 'hover:bg-gray-50'
+                      ? 'bg-indigo-50 border-l-4 border-indigo-500' 
+                      : 'hover:bg-gray-50 group'
                   }`}
+                  onClick={() => handleApplicantClick(app)}
                 >
                   <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
                     {/* Profile Picture */}
@@ -223,7 +251,7 @@ const Applications = ({
                       </div>
 
                       {/* Links Section */}
-                      <div className="mt-3 flex flex-wrap gap-3">
+                      <div className="mt-3 flex flex-wrap gap-3" onClick={(e) => e.stopPropagation()}>
                         <a
                           href={app.cv}
                           target="_blank"
@@ -287,16 +315,16 @@ const Applications = ({
                       </div>
 
                       {/* Buttons Section */}
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          onClick={() => handleChatButtonClick(app)}
+                          onClick={(e) => handleChatButtonClick(app, e)}
                         >
                           Chat with Applicant
                         </button>
                         <button
                           className="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                          onClick={() => trackApplicant(app)}
+                          onClick={(e) => trackApplicant(app, e)}
                         >
                           Track Applicant
                         </button>
