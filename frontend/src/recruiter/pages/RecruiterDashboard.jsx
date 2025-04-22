@@ -30,7 +30,11 @@ const RecruiterDashboard = ({onlineUsers}) => {
   // Core state
   const [jobListings, setJobListings] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [metrics, setMetrics] = useState({});
+  const [metrics, setMetrics] = useState({
+    activeListings: 0,
+    totalApplications: 0,
+    totalHired: 0,  // Initialize totalHired with 0
+  });
   const [notification, setNotification] = useState(null);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState("messages"); // "messages" | "applications"
@@ -118,6 +122,20 @@ const RecruiterDashboard = ({onlineUsers}) => {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  // Calculate metrics including totalHired from current application data
+  const updateMetricsFromApplications = (apps) => {
+    // Calculate total hired applicants
+    const hiredCount = apps.filter(app => 
+      app.status === "Hired" || app.status === "Accepted"
+    ).length;
+    
+    // Update metrics with calculated values
+    setMetrics(prevMetrics => ({
+      ...prevMetrics,
+      totalHired: hiredCount
+    }));
+  };
+
   // Fetch functions
   const fetchJobListings = async () => {
     try {
@@ -165,18 +183,12 @@ const RecruiterDashboard = ({onlineUsers}) => {
         }
         throw new Error("Failed to fetch recruiter's job listings.");
       }
-      setApplications(data.applications);
       
-      // Calculate total hired applicants
-      const hiredCount = data.applications.filter(app => 
-        app.status === "Hired" || app.status === "Accepted"
-      ).length;
+      const applications = data.applications;
+      setApplications(applications);
       
       // Update metrics with total hired count
-      setMetrics(prevMetrics => ({
-        ...prevMetrics,
-        totalHired: hiredCount
-      }));
+      updateMetricsFromApplications(applications);
     } catch (error) {
       console.error("Error fetching recent applications:", error.message);
     }
@@ -201,12 +213,24 @@ const RecruiterDashboard = ({onlineUsers}) => {
       }
       const data = await response.json();
       const dashboardMetrics = data.metrics;
-      setMetrics(dashboardMetrics);
+      
+      // Preserve the totalHired value we calculated from applications
+      setMetrics(prevMetrics => ({
+        ...dashboardMetrics,
+        totalHired: prevMetrics.totalHired
+      }));
     } catch (error) {
       console.error("Failed to fetch metrics:", error.message);
       showNotification("error", "Failed to fetch metrics. Please try again later.");
     }
   };
+
+  // Update metrics whenever applications change
+  useEffect(() => {
+    if (applications.length > 0) {
+      updateMetricsFromApplications(applications);
+    }
+  }, [applications]);
 
   useEffect(() => {
     fetchJobListings();
