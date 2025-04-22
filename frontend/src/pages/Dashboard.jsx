@@ -84,6 +84,17 @@ const Dashboard = ({ onlineUsers }) => {
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Initialize totalHired if it doesn't exist for recruiters
+        if (data.role === "Recruiter" && data.totalHired === undefined) {
+          data.totalHired = 0;
+        }
+        
+        // Update state.user with the fetched data
+        if (state && state.user) {
+          Object.assign(state.user, data);
+        }
+        
         return data;
       }
     } catch (error) {

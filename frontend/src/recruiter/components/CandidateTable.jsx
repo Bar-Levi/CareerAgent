@@ -100,6 +100,8 @@ const CandidateTable = ({
   refetchApplicants,
   visibleColumns = DEFAULT_COLUMNS, // Provide default value
   darkMode = false,
+  user, // Add user prop
+  updateTotalHired, // Add function to update totalHired count
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -155,6 +157,12 @@ const CandidateTable = ({
 
   const patchStatus = async (applicant, status) => {
     await updateApplicantStatus(applicant, status, refetchApplicants);
+    
+    // When status is changed to Hired, increment totalHired counter
+    if (status === "Hired" && updateTotalHired) {
+      updateTotalHired();
+    }
+    
     await refetchApplicants?.();
   };
 

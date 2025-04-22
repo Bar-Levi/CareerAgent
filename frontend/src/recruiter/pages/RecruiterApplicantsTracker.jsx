@@ -56,6 +56,23 @@ const RecruiterApplicantsTracker = () => {
     localStorage.getItem("recruiterdashboard_darkmode") === "true" || false
   );
 
+  // Function to update totalHired count when a candidate is marked as hired
+  const updateTotalHired = () => {
+    // Update user.totalHired in location.state
+    if (state && state.user) {
+      // Initialize totalHired if it doesn't exist
+      if (state.user.totalHired === undefined) {
+        state.user.totalHired = 0;
+      }
+      
+      // Increment totalHired
+      state.user.totalHired += 1;
+      
+      // Force a re-render by updating a state variable
+      setSortConfig({ ...sortConfig });
+    }
+  };
+
   // Handle dark mode toggle
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -418,6 +435,8 @@ const RecruiterApplicantsTracker = () => {
                 refetchApplicants={refetchApplicants}
                 visibleColumns={visibleColumns}
                 darkMode={darkMode}
+                user={user}
+                updateTotalHired={updateTotalHired}
               />
             </div>
           </div>
