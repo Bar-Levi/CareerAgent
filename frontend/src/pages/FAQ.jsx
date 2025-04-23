@@ -81,14 +81,14 @@ const FAQ = () => {
   const [searchQuery, setSearchQuery] = useState("");
   // 4) Dark mode state
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("faq_darkmode") === "true" || false
+    localStorage.getItem("careeragent_darkmode") === "true" || false
   );
 
   // Handle dark mode toggle
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    localStorage.setItem("faq_darkmode", newMode.toString());
+    localStorage.setItem("careeragent_darkmode", newMode.toString());
   };
 
   // Apply dark mode class to body

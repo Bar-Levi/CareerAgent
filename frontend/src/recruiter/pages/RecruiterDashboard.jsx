@@ -41,7 +41,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState("messages"); // "messages" | "applications"
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("recruiterdashboard_darkmode") === "true" || false
+    localStorage.getItem("careeragent_darkmode") === "true" || false
   );
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     localStorage.getItem("recruiterdashboard_sidebarCollapsed") === "true" || false
@@ -65,7 +65,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    localStorage.setItem("recruiterdashboard_darkmode", newMode.toString());
+    localStorage.setItem("careeragent_darkmode", newMode.toString());
   };
 
   // Handle sidebar collapse toggle

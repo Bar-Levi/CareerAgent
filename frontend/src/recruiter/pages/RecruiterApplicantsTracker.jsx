@@ -53,7 +53,7 @@ const RecruiterApplicantsTracker = () => {
 
   // 6) Dark mode state
   const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("recruiterdashboard_darkmode") === "true" || false
+    localStorage.getItem("careeragent_darkmode") === "true" || false
   );
 
   // Function to update totalHired count when a candidate is marked as hired
@@ -74,7 +74,7 @@ const RecruiterApplicantsTracker = () => {
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
-    localStorage.setItem("recruiterdashboard_darkmode", newMode.toString());
+    localStorage.setItem("careeragent_darkmode", newMode.toString());
   };
 
   // Apply theme class to body
