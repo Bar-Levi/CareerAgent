@@ -185,10 +185,32 @@ const Applications = ({
   return (
     <div className="mx-auto h-full flex flex-col">
       <div className={`relative w-full ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} rounded-lg border shadow-lg flex-grow flex flex-col overflow-hidden`}>
-        <div className={`sticky top-0 z-10 shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} p-6`}>
-          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} text-center`}>
-            Applications
-          </h2>
+        <div className={`sticky top-0 z-10 shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} p-6 flex justify-between items-center`}>
+          <div className="flex items-center">
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              Applications
+            </h2>
+            <div className={`ml-4 px-3 py-1 rounded-full text-sm ${
+              darkMode 
+                ? 'bg-gray-800 text-gray-300' 
+                : 'bg-white text-gray-700'
+            } font-medium flex items-center shadow-sm`}>
+              <span className="mr-1.5">{applications.length}</span>
+              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {applications.length === 1 ? 'applicant' : 'applicants'}
+              </span>
+            </div>
+          </div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>
+            {applications.length > 0 && 
+              <div className="flex gap-2 items-center">
+                <div className={`w-2 h-2 rounded-full ${darkMode ? 'bg-indigo-400' : 'bg-indigo-500'}`}></div>
+                <span>Latest: {new Date(
+                  Math.max(...applications.map(app => new Date(app.applicationDate || app.date)))
+                ).toLocaleDateString()}</span>
+              </div>
+            }
+          </div>
         </div>
 
         {applications.length === 0 ? (
