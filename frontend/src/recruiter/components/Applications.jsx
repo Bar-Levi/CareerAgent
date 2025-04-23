@@ -11,7 +11,8 @@ const Applications = ({
   setSelectedCandidate,
   setTitle,
   setViewMode,
-  selectedCandidateId,  
+  selectedCandidateId,
+  darkMode,  
 }) => {
   const { state } = useLocation();
   const user = state?.user;
@@ -183,19 +184,19 @@ const Applications = ({
 
   return (
     <div className="mx-auto h-full flex flex-col">
-      <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg flex-grow flex flex-col overflow-hidden">
-        <div className="sticky top-0 z-10 shadow-lg bg-gradient-to-r bg-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-gray-800 text-center">
+      <div className={`relative w-full ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} rounded-lg border shadow-lg flex-grow flex flex-col overflow-hidden`}>
+        <div className={`sticky top-0 z-10 shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} p-6`}>
+          <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} text-center`}>
             Applications
           </h2>
         </div>
 
         {applications.length === 0 ? (
           <div className="flex justify-center items-center p-16 text-gray-500 flex-grow">
-            <p className="text-lg font-medium">No recent applications.</p>
+            <p className={`text-lg font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No recent applications.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200 overflow-y-auto flex-grow" ref={containerRef}>
+          <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} overflow-y-auto flex-grow`} ref={containerRef}>
             {applications.map((app) => {
               const applicantData = applicantsData[app._id];
               const isSelected = selectedApplicant?._id === app._id;
@@ -206,8 +207,8 @@ const Applications = ({
                   ref={isSelected ? selectedCandidateRef : null}
                   className={`p-6 transition-colors duration-200 cursor-pointer relative ${
                     isSelected 
-                      ? 'bg-indigo-50 border-l-4 border-indigo-500' 
-                      : 'hover:bg-indigo-50 hover:border-l-4 hover:border-indigo-500'
+                      ? darkMode ? 'bg-indigo-900/30 border-l-4 border-indigo-500' : 'bg-indigo-50 border-l-4 border-indigo-500'
+                      : darkMode ? 'hover:bg-indigo-900/20 hover:border-l-4 hover:border-indigo-500' : 'hover:bg-indigo-50 hover:border-l-4 hover:border-indigo-500'
                   }`}
                   onClick={() => handleApplicantClick(app)}
                 >
@@ -216,7 +217,7 @@ const Applications = ({
                   
                   <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
                     {/* Profile Picture */}
-                    <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 ring-4 ring-blue-50 shadow-md">
+                    <div className={`w-20 h-20 rounded-full overflow-hidden flex-shrink-0 ring-4 ${darkMode ? 'ring-gray-700' : 'ring-blue-50'} shadow-md`}>
                       <img
                         src={
                           applicantData?.profilePic ||
@@ -231,16 +232,16 @@ const Applications = ({
                     <div className="flex-grow">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                          <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>
                             {app.name}
                           </h3>
-                          <p className="text-sm text-gray-500 mb-2">
+                          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'} mb-2`}>
                             Applied for:{" "}
-                            <span className="font-medium text-blue-600">
+                            <span className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                               {app.jobTitle}
                             </span>
                           </p>
-                          <p className="text-xs text-gray-400 mb-3">
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-400'} mb-3`}>
                             Applied on:{" "}
                             {new Date(app.applicationDate || app.date).toLocaleDateString()}
                           </p>
@@ -271,7 +272,7 @@ const Applications = ({
                           href={app.cv}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                          className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} transition-colors flex items-center space-x-1`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <svg
@@ -296,7 +297,7 @@ const Applications = ({
                             href={app.linkedinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                            className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} transition-colors flex items-center space-x-1`}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <svg
@@ -316,7 +317,7 @@ const Applications = ({
                             href={app.githubUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                            className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} transition-colors flex items-center space-x-1`}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <svg
@@ -335,7 +336,7 @@ const Applications = ({
                       {/* Buttons Section */}
                       <div className="mt-4 flex flex-wrap gap-3 relative z-20" onClick={(e) => e.stopPropagation()}>
                         <button
-                          className="px-4 py-2.5 bg-stone-800 text-white text-sm font-medium rounded-md shadow-sm border border-stone-700/20 transition-all duration-200 hover:bg-stone-700 hover:shadow-md hover:translate-y-[-1px] focus:outline-none focus:ring-2 focus:ring-stone-500/30 focus:ring-offset-1 flex items-center space-x-1.5"
+                          className={`px-4 py-2.5 ${darkMode ? 'bg-stone-800 border-stone-700/20 hover:bg-stone-700' : 'bg-stone-800 border-stone-700/20 hover:bg-stone-700'} text-white text-sm font-medium rounded-md shadow-sm border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] focus:outline-none focus:ring-2 focus:ring-stone-500/30 focus:ring-offset-1 flex items-center space-x-1.5`}
                           onClick={(e) => handleChatButtonClick(app, e)}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -345,7 +346,7 @@ const Applications = ({
                           <span className="sm:hidden">Chat</span>
                         </button>
                         <button
-                          className="px-4 py-2.5 bg-stone-100 text-stone-800 text-sm font-medium rounded-md shadow-sm border border-stone-200 transition-all duration-200 hover:bg-stone-50 hover:shadow-md hover:translate-y-[-1px] focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-1 flex items-center space-x-1.5"
+                          className={`px-4 py-2.5 ${darkMode ? 'bg-stone-100 border-stone-200 text-stone-800 hover:bg-stone-50' : 'bg-stone-100 border-stone-200 text-stone-800 hover:bg-stone-50'} text-sm font-medium rounded-md shadow-sm border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-1 flex items-center space-x-1.5`}
                           onClick={(e) => trackApplicant(app, e)}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">

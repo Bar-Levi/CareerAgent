@@ -13,7 +13,8 @@ const CandidateMessages = ({
   selectedCandidate,
   setSelectedCandidate,
   title,
-  setTitle
+  setTitle,
+  darkMode
 }) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -115,39 +116,39 @@ const CandidateMessages = ({
         currentOpenConversationId={selectedConversationId}
       />
     ) : (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className={`flex items-center justify-center h-full ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
         Select a candidate to view chat.
       </div>
     );
-  }, [selectedConversationId, jobListing, user, selectedCandidate]);
+  }, [selectedConversationId, jobListing, user, selectedCandidate, darkMode]);
 
   return (
     <div className="w-full h-full flex flex-col">
       {!jobListing ? (
-        <div className="text-center text-gray-500">
+        <div className={`text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'} p-8`}>
           Please select a job listing to view candidate messages.
         </div>
       ) : loading ? (
         <div className="flex justify-center items-center h-full">
-          <FaSpinner className="animate-spin text-2xl text-gray-700" />
+          <FaSpinner className={`animate-spin text-2xl ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
         </div>
       ) : (
         <>
           {/* Top Section: Job Title */}
-          <div className="bg-gray-200 z-10 flex justify-center items-center shadow-xl p-3">
-            <h3 className="text-xl font-bold text-gray-800 text-center">
+          <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-200'} z-10 flex justify-center items-center shadow-xl p-3`}>
+            <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} text-center`}>
               {jobListing.jobRole}
             </h3>
           </div>
           {/* Main Section: Candidate List and Chat Window */}
           <div className="flex flex-1 overflow-hidden">
             {/* Left Pane: Candidate List (30% width) */}
-            <div className="w-1/3 border-r border-gray-300 p-4 overflow-y-auto">
-              <h4 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+            <div className={`w-1/3 border-r ${darkMode ? 'border-gray-700' : 'border-gray-300'} p-4 overflow-y-auto`}>
+              <h4 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-4 text-center`}>
                 Candidates
               </h4>
               {conversations.length === 0 ? (
-                <p className="text-gray-500">No messages for this job listing.</p>
+                <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No messages for this job listing.</p>
               ) : (
                 <ul>
                   {conversations.map((conversation) => {
@@ -166,7 +167,9 @@ const CandidateMessages = ({
                         key={conversation._id}
                         onClick={() => handleCandidateSelect(conversation)}
                         className={`py-2 px-2 cursor-pointer rounded mb-2 transition-colors duration-200 ${
-                          isSelected ? "bg-gray-200" : "hover:bg-gray-100"
+                          isSelected 
+                            ? darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                            : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                         } ${isOnline ? "border border-green-500 shadow-lg" : "border border-transparent"}`}
                       >
                         <div className="flex items-center space-x-3">
@@ -183,7 +186,7 @@ const CandidateMessages = ({
                               <span className="absolute bottom-0 right-0 block w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                             )}
                           </div>
-                          <span className="text-gray-800 font-semibold">
+                          <span className={`${darkMode ? 'text-white' : 'text-gray-800'} font-semibold`}>
                             {candidateInfo?.name || "Candidate"}
                           </span>
                         </div>
@@ -194,7 +197,13 @@ const CandidateMessages = ({
               )}
             </div>
             {/* Right Pane: Chat Window (70% width) */}
-            <div className="w-2/3 p-4 overflow-y-auto">{memoizedChatWindow}</div>
+            <div className="w-2/3 p-4 overflow-y-auto">
+              {memoizedChatWindow || (
+                <div className={`flex items-center justify-center h-full ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Select a candidate to view chat.
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

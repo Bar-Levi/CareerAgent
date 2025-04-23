@@ -296,6 +296,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
           setTitle={setTitle}
           setSelectedCandidate={setSelectedCandidate}
           onlineUsers={onlineUsers}
+          darkMode={darkMode}
         />
       );
     } else {
@@ -310,10 +311,11 @@ const RecruiterDashboard = ({onlineUsers}) => {
           selectedCandidateId={selectedCandidate?.senderId}
           user={user}
           updateTotalHired={updateTotalHired}
+          darkMode={darkMode}
         />
       );
     }
-  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user]);
+  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode]);
 
   return (
     <div 
