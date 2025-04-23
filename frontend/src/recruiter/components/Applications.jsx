@@ -192,14 +192,17 @@ const Applications = ({
                 <div
                   key={app._id}
                   ref={isSelected ? selectedCandidateRef : null}
-                  className={`p-6 transition-colors duration-200 cursor-pointer ${
+                  className={`p-6 transition-colors duration-200 cursor-pointer relative ${
                     isSelected 
                       ? 'bg-indigo-50 border-l-4 border-indigo-500' 
-                      : 'hover:bg-gray-50 group'
+                      : 'hover:bg-indigo-50 hover:border-l-4 hover:border-indigo-500'
                   }`}
                   onClick={() => handleApplicantClick(app)}
                 >
-                  <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+                  {/* Create a full clickable area overlay */}
+                  <div className="absolute inset-0" onClick={() => handleApplicantClick(app)}></div>
+                  
+                  <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
                     {/* Profile Picture */}
                     <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 ring-4 ring-blue-50 shadow-md">
                       <img
@@ -251,12 +254,13 @@ const Applications = ({
                       </div>
 
                       {/* Links Section */}
-                      <div className="mt-3 flex flex-wrap gap-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="mt-3 flex flex-wrap gap-3 relative z-20" onClick={(e) => e.stopPropagation()}>
                         <a
                           href={app.cv}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -281,6 +285,7 @@ const Applications = ({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -300,6 +305,7 @@ const Applications = ({
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -315,7 +321,7 @@ const Applications = ({
                       </div>
 
                       {/* Buttons Section */}
-                      <div className="mt-4 flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="mt-4 flex flex-wrap gap-2 relative z-20" onClick={(e) => e.stopPropagation()}>
                         <button
                           className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           onClick={(e) => handleChatButtonClick(app, e)}
