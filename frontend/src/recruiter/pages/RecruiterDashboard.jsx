@@ -479,7 +479,8 @@ const RecruiterDashboard = ({onlineUsers}) => {
           className="mx-4 mt-4"
         >
           <div className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/90'} rounded-xl shadow-lg p-4 backdrop-blur-md`}>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Mobile (stacked) view */}
+            <div className="flex flex-col lg:hidden space-y-4">
               {/* Profile Information */}
               <div className="flex flex-wrap items-center gap-4">
                 {/* Profile Section */}
@@ -542,8 +543,80 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 )}
               </div>
               
-              {/* Metrics Overview */}
-              <div className="w-full sm:w-auto ml-0 mt-2 sm:mt-0 sm:-ml-28">
+              {/* Mobile metrics - full width */}
+              <div className="w-full overflow-x-auto pb-2">
+                <div className="min-w-[400px]">
+                  <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop (side-by-side) view */}
+            <div className="hidden lg:flex lg:flex-row items-center justify-between gap-4">
+              {/* Profile Information */}
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Profile Section */}
+                {state?.user?.profilePic && (
+                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                    <div 
+                      className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
+                      onClick={() => openImagePreview(state.user.profilePic, "Profile")}
+                    >
+                      <img 
+                        src={state.user.profilePic} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      {state?.user?.fullName || "Profile"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Company Logo */}
+                {state?.user?.companyLogo && (
+                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                    <div 
+                      className="w-8 h-8 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                      onClick={() => openImagePreview(state.user.companyLogo, "Company Logo")}
+                    >
+                      <img 
+                        src={state.user.companyLogo} 
+                        alt="Company" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Company Name */}
+                {state?.user?.companyName && (
+                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                    <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {state.user.companyName}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Company Website */}
+                {state?.user?.companyWebsite && (
+                  <div className="flex items-center gap-2 h-8">
+                    <a 
+                      href={state.user.companyWebsite.startsWith('http') ? state.user.companyWebsite : `https://${state.user.companyWebsite}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={`text-sm flex items-center gap-1 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors`}
+                    >
+                      <FiGlobe size={14} />
+                      <span className="truncate">Visit Website</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+              
+              {/* Desktop metrics - shifted to the left */}
+              <div className="w-auto">
                 <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
               </div>
             </div>
