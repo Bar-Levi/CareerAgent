@@ -478,85 +478,78 @@ const RecruiterDashboard = ({onlineUsers}) => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="mx-4 mt-4"
         >
-          <div className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/90'} rounded-xl shadow-lg py-3 px-4 backdrop-blur-md`}>
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Profile Section */}
-              {state?.user?.profilePic && (
-                <div className="flex items-center gap-2 border-r pr-4 border-gray-200 dark:border-gray-700">
-                  <div 
-                    className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
-                    onClick={() => openImagePreview(state.user.profilePic, "Profile")}
-                  >
-                    <img 
-                      src={state.user.profilePic} 
-                      alt="Profile" 
-                      className="w-full h-full object-cover"
-                    />
+          <div className={`${darkMode ? 'bg-gray-800/80' : 'bg-white/90'} rounded-xl shadow-lg p-4 backdrop-blur-md`}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              {/* Profile Information */}
+              <div className="flex flex-wrap items-center gap-4">
+                {/* Profile Section */}
+                {state?.user?.profilePic && (
+                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                    <div 
+                      className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
+                      onClick={() => openImagePreview(state.user.profilePic, "Profile")}
+                    >
+                      <img 
+                        src={state.user.profilePic} 
+                        alt="Profile" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      {state?.user?.fullName || "Profile"}
+                    </span>
                   </div>
-                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                    {state?.user?.fullName || "Profile"}
-                  </span>
-                </div>
-              )}
+                )}
 
-              {/* Company Logo */}
-              {state?.user?.companyLogo && (
-                <div className="flex items-center gap-2 border-r pr-4 border-gray-200 dark:border-gray-700">
-                  <div 
-                    className="w-10 h-10 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
-                    onClick={() => openImagePreview(state.user.companyLogo, "Company Logo")}
-                  >
-                    <img 
-                      src={state.user.companyLogo} 
-                      alt="Company" 
-                      className="w-full h-full object-contain"
-                    />
+                {/* Company Logo */}
+                {state?.user?.companyLogo && (
+                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                    <div 
+                      className="w-8 h-8 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                      onClick={() => openImagePreview(state.user.companyLogo, "Company Logo")}
+                    >
+                      <img 
+                        src={state.user.companyLogo} 
+                        alt="Company" 
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   </div>
-                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Logo</span>
-                </div>
-              )}
+                )}
 
-              {/* Company Name */}
-              {state?.user?.companyName && (
-                <div className="flex items-center gap-2 border-r pr-4 border-gray-200 dark:border-gray-700">
-                  <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                    {state.user.companyName}
+                {/* Company Name */}
+                {state?.user?.companyName && (
+                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                    <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {state.user.companyName}
+                    </div>
                   </div>
-                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Company</span>
-                </div>
-              )}
+                )}
+                
+                {/* Company Website */}
+                {state?.user?.companyWebsite && (
+                  <div className="flex items-center gap-2 h-8">
+                    <a 
+                      href={state.user.companyWebsite.startsWith('http') ? state.user.companyWebsite : `https://${state.user.companyWebsite}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className={`text-sm flex items-center gap-1 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors`}
+                    >
+                      <FiGlobe size={14} />
+                      <span className="truncate">Visit Website</span>
+                    </a>
+                  </div>
+                )}
+              </div>
               
-              {/* Company Website */}
-              {state?.user?.companyWebsite && (
-                <div className="flex items-center gap-2">
-                  <a 
-                    href={state.user.companyWebsite.startsWith('http') ? state.user.companyWebsite : `https://${state.user.companyWebsite}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className={`text-sm flex items-center gap-1 ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'} transition-colors`}
-                  >
-                    <FiGlobe size={12} />
-                    <span className="truncate">Visit Website</span>
-                  </a>
-                  <span className={`text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Comapny Website</span>
-                </div>
-              )}
+              {/* Metrics Overview */}
+              <div className="w-full sm:w-auto ml-0 mt-2 sm:mt-0 sm:-ml-28">
+                <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
+              </div>
             </div>
           </div>
         </motion.div>
       )}
-
-      {/* Metrics Row (collapsed on mobile) */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="mx-4 mt-4 overflow-hidden"
-      >
-        <div className={`hidden sm:block ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-4 backdrop-blur-md bg-opacity-80`}>
-          <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
-        </div>
-      </motion.div>
 
       {/* Image Preview Modal */}
       <AnimatePresence>
@@ -621,22 +614,6 @@ const RecruiterDashboard = ({onlineUsers}) => {
                     darkMode={darkMode}
                     applications={applications}
                   />
-                </div>
-                
-                {/* Mini Metrics Cards for Mobile */}
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-3 rounded-lg shadow-md text-center`}>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Active Jobs</p>
-                    <p className={`text-xl font-bold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{metrics.activeListings || 0}</p>
-                  </div>
-                  <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-3 rounded-lg shadow-md text-center`}>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Applications</p>
-                    <p className={`text-xl font-bold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>{metrics.totalApplications || 0}</p>
-                  </div>
-                  <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-3 rounded-lg shadow-md text-center`}>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Total Hired</p>
-                    <p className={`text-xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{totalHired || 0}</p>
-                  </div>
                 </div>
               </motion.div>
             ) : (
