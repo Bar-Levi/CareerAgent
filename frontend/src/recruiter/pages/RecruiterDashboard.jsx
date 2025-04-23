@@ -149,6 +149,15 @@ const RecruiterDashboard = ({onlineUsers}) => {
     }
   };
 
+  // Update metrics when jobListings change
+  useEffect(() => {
+    // Update activeListings count based on current job listings
+    setMetrics(prevMetrics => ({
+      ...prevMetrics,
+      activeListings: jobListings.filter(job => job.status === "Active").length || 0
+    }));
+  }, [jobListings]);
+
   // Fetch functions
   const fetchJobListings = async () => {
     try {
@@ -170,7 +179,15 @@ const RecruiterDashboard = ({onlineUsers}) => {
         }
         throw new Error("Failed to fetch recruiter's job listings.");
       }
-      setJobListings(data.jobListings);
+      const fetchedListings = data.jobListings;
+      setJobListings(fetchedListings);
+      
+      // Update active listings count in metrics
+      const activeCount = fetchedListings.filter(job => job.status === "Active").length || 0;
+      setMetrics(prevMetrics => ({
+        ...prevMetrics,
+        activeListings: activeCount
+      }));
     } catch (error) {
       console.error("Error fetching job listings:", error.message);
     }
@@ -243,10 +260,10 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
   const handlePostSuccess = () => {
     showNotification("success", "Job listing posted successfully!");
-    setMetrics((prevMetrics) => ({
-      ...prevMetrics,
-      activeListings: prevMetrics.activeListings + 1,
-    }));
+    
+    // No need to manually update metrics here as it will be updated via the useEffect
+    // that watches jobListings array
+    
     fetchJobListings();
   };
 
