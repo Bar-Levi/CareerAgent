@@ -485,9 +485,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
               <div className="flex flex-wrap items-center gap-4">
                 {/* Profile Section */}
                 {state?.user?.profilePic && (
-                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                  <div className="flex items-center gap-3 border-r border-gray-200 dark:border-gray-700 h-12 pr-4 mr-4">
                     <div 
-                      className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
+                      className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
                       onClick={() => openImagePreview(state.user.profilePic, "Profile")}
                     >
                       <img 
@@ -504,9 +504,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
                 {/* Company Logo */}
                 {state?.user?.companyLogo && (
-                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                  <div className="flex items-center gap-3 border-r border-gray-200 dark:border-gray-700 h-12 pr-4 mr-4 -ml-2">
                     <div 
-                      className="w-8 h-8 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                      className="w-12 h-12 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
                       onClick={() => openImagePreview(state.user.companyLogo, "Company Logo")}
                     >
                       <img 
@@ -520,7 +520,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
                 {/* Company Name */}
                 {state?.user?.companyName && (
-                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                  <div className="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 h-12 pr-4 mr-2 -ml-2">
                     <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {state.user.companyName}
                     </div>
@@ -529,7 +529,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 
                 {/* Company Website */}
                 {state?.user?.companyWebsite && (
-                  <div className="flex items-center gap-2 h-8">
+                  <div className="flex items-center gap-2 h-12 -ml-2">
                     <a 
                       href={state.user.companyWebsite.startsWith('http') ? state.user.companyWebsite : `https://${state.user.companyWebsite}`} 
                       target="_blank" 
@@ -557,9 +557,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
               <div className="flex flex-wrap items-center gap-4">
                 {/* Profile Section */}
                 {state?.user?.profilePic && (
-                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                  <div className="flex items-center gap-3 border-r border-gray-200 dark:border-gray-700 h-12 pr-4 mr-4">
                     <div 
-                      className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
+                      className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 cursor-pointer hover:ring-indigo-500 transition-all"
                       onClick={() => openImagePreview(state.user.profilePic, "Profile")}
                     >
                       <img 
@@ -576,9 +576,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
                 {/* Company Logo */}
                 {state?.user?.companyLogo && (
-                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                  <div className="flex items-center gap-3 border-r border-gray-200 dark:border-gray-700 h-12 pr-4 mr-2 -ml-2">
                     <div 
-                      className="w-8 h-8 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
+                      className="w-12 h-12 rounded-full overflow-hidden bg-white p-1 shadow-sm cursor-pointer hover:shadow-md transition-all"
                       onClick={() => openImagePreview(state.user.companyLogo, "Company Logo")}
                     >
                       <img 
@@ -592,7 +592,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
                 {/* Company Name */}
                 {state?.user?.companyName && (
-                  <div className="flex items-center gap-2 border-r pr-6 mr-2 border-gray-200 dark:border-gray-700 h-8">
+                  <div className="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 h-12 pr-4 mr-2 -ml-2">
                     <div className={`text-sm font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       {state.user.companyName}
                     </div>
@@ -601,7 +601,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 
                 {/* Company Website */}
                 {state?.user?.companyWebsite && (
-                  <div className="flex items-center gap-2 h-8">
+                  <div className="flex items-center gap-2 h-12 -ml-2">
                     <a 
                       href={state.user.companyWebsite.startsWith('http') ? state.user.companyWebsite : `https://${state.user.companyWebsite}`} 
                       target="_blank" 
