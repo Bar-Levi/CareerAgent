@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
 import ScheduleInterviewModal from "./ScheduleInterviewModal"; 
 import { updateApplicantStatus } from "../../utils/applicantStatus";
 import CandidateNotesModal from "./CandidateNotesModal";
@@ -107,6 +108,9 @@ const CandidateTable = ({
   const [renderKey, setRenderKey] = useState(0);
   const [compactView, setCompactView] = useState(true); // Default to compact view
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const tableBodyRef = useRef(null);
   const selectedRowRef = useRef(null);
 
@@ -157,7 +161,20 @@ const CandidateTable = ({
     
     // When status is changed to Hired, increment totalHired counter
     if (status === "Hired" && updateTotalHired) {
+      // Call the updateTotalHired function from props
       updateTotalHired();
+      
+      // Update the location state with the incremented totalHired count
+      if (location.state && location.state.user) {
+        // Navigate to the same page with updated state to force a full refresh
+        navigate(location.pathname, { 
+          state: {
+            ...location.state,
+            refreshToken: Date.now() // Force component to re-render
+          },
+          replace: true 
+        });
+      }
     }
     
     await refetchApplicants?.();

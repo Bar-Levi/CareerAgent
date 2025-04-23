@@ -65,11 +65,8 @@ const RecruiterApplicantsTracker = () => {
         state.user.totalHired = 0;
       }
       
-      // Increment totalHired
+      // Increment totalHired in the state object directly
       state.user.totalHired += 1;
-      
-      // Force a re-render by updating a state variable
-      setSortConfig({ ...sortConfig });
     }
   };
 

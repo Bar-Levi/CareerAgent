@@ -32,10 +32,10 @@ const RecruiterDashboard = ({onlineUsers}) => {
   // Core state
   const [jobListings, setJobListings] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [totalHired, setTotalHired] = useState(state?.user?.totalHired || 0); // Separate state for totalHired
   const [metrics, setMetrics] = useState({
     activeListings: 0,
     totalApplications: 0,
-    totalHired: user?.totalHired || 0,  // Always get totalHired from user
   });
   const [notification, setNotification] = useState(null);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
@@ -141,11 +141,8 @@ const RecruiterDashboard = ({onlineUsers}) => {
       // Increment totalHired
       state.user.totalHired += 1;
       
-      // Update metrics state
-      setMetrics(prevMetrics => ({
-        ...prevMetrics,
-        totalHired: state.user.totalHired
-      }));
+      // Update totalHired state
+      setTotalHired(state.user.totalHired);
     }
   };
 
@@ -154,9 +151,18 @@ const RecruiterDashboard = ({onlineUsers}) => {
     // Update activeListings count based on current job listings
     setMetrics(prevMetrics => ({
       ...prevMetrics,
-      activeListings: jobListings.filter(job => job.status === "Active").length || 0
+      activeListings: jobListings.filter(job => job.status === "Active").length || 0,
     }));
   }, [jobListings]);
+
+  // Update metrics when applications change
+  useEffect(() => {
+    // Update totalApplications count based on current applications
+    setMetrics(prevMetrics => ({
+      ...prevMetrics,
+      totalApplications: applications.length || 0,
+    }));
+  }, [applications]);
 
   // Fetch functions
   const fetchJobListings = async () => {
@@ -186,7 +192,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const activeCount = fetchedListings.filter(job => job.status === "Active").length || 0;
       setMetrics(prevMetrics => ({
         ...prevMetrics,
-        activeListings: activeCount
+        activeListings: activeCount,
       }));
     } catch (error) {
       console.error("Error fetching job listings:", error.message);
@@ -214,8 +220,14 @@ const RecruiterDashboard = ({onlineUsers}) => {
         throw new Error("Failed to fetch recruiter's job listings.");
       }
       
-      const applications = data.applications;
-      setApplications(applications);
+      const fetchedApplications = data.applications;
+      setApplications(fetchedApplications);
+      
+      // Update totalApplications count in metrics
+      setMetrics(prevMetrics => ({
+        ...prevMetrics,
+        totalApplications: fetchedApplications.length || 0,
+      }));
     } catch (error) {
       console.error("Error fetching recent applications:", error.message);
     }
@@ -241,11 +253,13 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const data = await response.json();
       const dashboardMetrics = data.metrics;
       
-      // Always use the totalHired value from the user object in state
-      setMetrics(prevMetrics => ({
-        ...dashboardMetrics,
-        totalHired: state?.user?.totalHired || 0
-      }));
+      // Update metrics but don't change totalHired
+      setMetrics(dashboardMetrics);
+      
+      // Separately update totalHired from the user object in state
+      if (state?.user?.totalHired !== undefined) {
+        setTotalHired(state.user.totalHired);
+      }
     } catch (error) {
       console.error("Failed to fetch metrics:", error.message);
       showNotification("error", "Failed to fetch metrics. Please try again later.");
@@ -540,7 +554,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
         className="mx-4 mt-4 overflow-hidden"
       >
         <div className={`hidden sm:block ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-4 backdrop-blur-md bg-opacity-80`}>
-          <MetricsOverview metrics={metrics} darkMode={darkMode} />
+          <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
         </div>
       </motion.div>
 
@@ -621,7 +635,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                   </div>
                   <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} p-3 rounded-lg shadow-md text-center`}>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Total Hired</p>
-                    <p className={`text-xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{metrics.totalHired || 0}</p>
+                    <p className={`text-xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>{totalHired || 0}</p>
                   </div>
                 </div>
               </motion.div>
@@ -634,25 +648,17 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 exit={{ opacity: 0, x: 20 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="relative">
-                  <button
-                    onClick={handleMobileBack}
-                    className={`absolute left-2 top-2 z-10 p-2 rounded-full ${
-                      darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    <FiChevronLeft />
-                  </button>
-                  <div className={`h-full ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg`}>
-                    {rightPanelContent}
-                  </div>
+                <div 
+                  className={`h-full ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg overflow-hidden`}
+                >
+                  {rightPanelContent}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         )}
 
-        {/* Desktop Two-Column Layout */}
+        {/* Desktop View Controller */}
         {window.innerWidth >= 768 && (
           <>
             {/* Left Pane: My Job Listings */}

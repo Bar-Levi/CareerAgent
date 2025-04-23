@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { FiBriefcase, FiUsers, FiCheckCircle } from "react-icons/fi";
 
-const MetricsOverview = ({ metrics, darkMode = false }) => {
+const MetricsOverview = ({ metrics, totalHired = 0, darkMode = false }) => {
     // Animation variants for staggered children
     const container = {
         hidden: { opacity: 0 },
@@ -96,15 +96,15 @@ const MetricsOverview = ({ metrics, darkMode = false }) => {
                     <h3 className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Hired</h3>
                     <div className="flex items-baseline space-x-2">
                         <p className={`text-3xl font-bold ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                            {metrics.totalHired || 0}
+                            {totalHired || 0}
                         </p>
-                        {metrics.totalHired > 0 && metrics.previousTotalHired !== undefined && (
+                        {totalHired > 0 && metrics.previousTotalHired !== undefined && (
                             <span className={`text-xs font-medium ${
-                                metrics.totalHired > metrics.previousTotalHired
+                                totalHired > metrics.previousTotalHired
                                     ? 'text-green-500'
                                     : darkMode ? 'text-gray-400' : 'text-gray-500'
                             }`}>
-                                {metrics.totalHired > metrics.previousTotalHired ? '↑' : '→'} 
+                                {totalHired > metrics.previousTotalHired ? '↑' : '→'} 
                                 all time
                             </span>
                         )}
