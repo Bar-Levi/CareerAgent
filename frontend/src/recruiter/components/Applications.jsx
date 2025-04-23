@@ -24,25 +24,47 @@ const Applications = ({
   
   // Handle applicant selection
   const handleApplicantClick = (app) => {
-    setSelectedApplicant(app);
+    // Check if this app is currently selected
+    const isCurrentlySelected = selectedApplicant && selectedApplicant._id === app._id;
     
-    // Set a minimal timeout to ensure the DOM has updated before scrolling
-    setTimeout(() => {
-      if (selectedCandidateRef.current) {
-        selectedCandidateRef.current.scrollIntoView({ 
-          behavior: "smooth", 
-          block: "center" 
-        });
-      }
-    }, 50);
+    // Toggle selection - if clicking the same applicant, deselect it
+    if (isCurrentlySelected) {
+      setSelectedApplicant(null);
+    } else {
+      setSelectedApplicant(app);
+      
+      // Only scroll if we're selecting a new applicant
+      setTimeout(() => {
+        if (selectedCandidateRef.current) {
+          selectedCandidateRef.current.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "center" 
+          });
+        }
+      }, 50);
+    }
   };
   
-  // Scroll to selected candidate when it changes or on initial load
+  // Initialize selectedApplicant from selectedCandidateId when component mounts or selectedCandidateId changes
   useEffect(() => {
-    if (selectedCandidateId && applications && selectedCandidateRef.current) {
-      selectedCandidateRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (selectedCandidateId && applications.length > 0) {
+      const selected = applications.find(app => app.jobSeekerId === selectedCandidateId);
+      if (selected) {
+        // Update the selected applicant to match the one from the notification
+        setSelectedApplicant(selected);
+      }
     }
-  }, [selectedApplicant, applications, selectedCandidateId]);
+  }, [selectedCandidateId, applications]);
+
+  // Scroll to selected candidate when needed
+  useEffect(() => {
+    if (selectedApplicant && selectedCandidateRef.current) {
+      selectedCandidateRef.current.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "center" 
+      });
+    }
+  }, [selectedApplicant]);
 
   const getApplicantDataAsJobSeeker = async (application) => {
     const response = await fetch(
@@ -159,16 +181,6 @@ const Applications = ({
     }
   }, [applications]);
 
-  // Find the current selected applicant in the applications array
-  useEffect(() => {
-    if (selectedCandidateId && applications.length > 0) {
-      const selected = applications.find(app => app.jobSeekerId === selectedCandidateId);
-      if (selected) {
-        setSelectedApplicant(selected);
-      }
-    }
-  }, [selectedCandidateId, applications]);
-
   return (
     <div className="mx-auto h-full flex flex-col">
       <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg flex-grow flex flex-col overflow-hidden">
@@ -186,7 +198,7 @@ const Applications = ({
           <div className="divide-y divide-gray-200 overflow-y-auto flex-grow" ref={containerRef}>
             {applications.map((app) => {
               const applicantData = applicantsData[app._id];
-              const isSelected = selectedApplicant?._id === app._id || app.jobSeekerId === selectedCandidateId;
+              const isSelected = selectedApplicant?._id === app._id;
 
               return (
                 <div
