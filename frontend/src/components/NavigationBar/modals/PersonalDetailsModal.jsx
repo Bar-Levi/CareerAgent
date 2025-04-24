@@ -83,7 +83,7 @@ const handleEditPersonalDetail = async (user, type, label, navigate, location) =
       type === "dob"
         ? `<input type="date" id="swal-input-new" class="swal2-input personal-input" />`
         : type === "phone"
-        ? `<input id="swal-input-new" class="swal2-input personal-input" placeholder="Enter new ${label}" type="tel" pattern="[0-9]{10}" />`
+        ? `<input id="swal-input-new" class="swal2-input personal-input" placeholder="Enter new ${label}" type="tel" />`
         : `<input id="swal-input-new" class="swal2-input personal-input" placeholder="Enter new ${label}" />`;
     
     // Show a SweetAlert modal with the current value and an input field to update it
@@ -111,11 +111,53 @@ const handleEditPersonalDetail = async (user, type, label, navigate, location) =
         cancelButton: 'personal-btn-cancel',
       },
       buttonsStyling: false,
+      didOpen: () => {
+        // For phone number input, add validation to allow only numbers and + at beginning
+        if (type === "phone") {
+          const phoneInput = document.getElementById("swal-input-new");
+          if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) {
+              const curValue = e.target.value;
+              
+              // Only allow + at the beginning and digits elsewhere
+              let newValue = '';
+              
+              // Check each character
+              for (let i = 0; i < curValue.length; i++) {
+                // Allow + only at the beginning
+                if (curValue[i] === '+' && i === 0) {
+                  newValue += '+';
+                } 
+                // Allow digits anywhere
+                else if (/\d/.test(curValue[i])) {
+                  newValue += curValue[i];
+                }
+              }
+              
+              // Update input value if it changed
+              if (curValue !== newValue) {
+                e.target.value = newValue;
+              }
+            });
+          }
+        }
+      },
       preConfirm: () => {
         const inputValue = document.getElementById("swal-input-new")?.value;
         if (!inputValue) {
           Swal.showValidationMessage(`Please enter a new ${label}`);
         }
+        
+        // Additional validation for phone numbers
+        if (type === "phone" && inputValue) {
+          // Ensure it contains only digits and possibly a + at the start
+          const phoneRegex = /^\+?\d+$/;
+          if (!phoneRegex.test(inputValue)) {
+            Swal.showValidationMessage(`Phone number must contain only digits, with an optional + at the beginning`);
+            return false;
+          }
+        }
+        
         return inputValue;
       },
     });
