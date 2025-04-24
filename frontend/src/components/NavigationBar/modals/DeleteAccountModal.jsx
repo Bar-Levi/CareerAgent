@@ -73,6 +73,7 @@ const DeleteAccountModal = ({ onConfirm, onClose }) => {
         gap: 12px;
         width: 100%;
         justify-content: center;
+        flex-wrap: wrap;
       }
       
       .delete-btn-cancel {
@@ -86,6 +87,7 @@ const DeleteAccountModal = ({ onConfirm, onClose }) => {
         transition: all 0.2s ease;
         border: none;
         min-width: 120px;
+        margin-bottom: 8px;
       }
       
       .delete-btn-cancel:hover {
@@ -136,6 +138,16 @@ const DeleteAccountModal = ({ onConfirm, onClose }) => {
         .delete-btn-delete {
           padding: 10px 16px;
           font-size: 14px;
+          min-width: 100px;
+        }
+        
+        .delete-btn-group {
+          gap: 8px;
+        }
+        
+        .delete-modal-popup {
+          max-width: 90%;
+          padding: 20px;
         }
       }
     `;
@@ -308,6 +320,7 @@ export const showDeleteAccountSweetAlert = (onConfirm) => {
         font-size: 15px;
         transition: all 0.2s ease;
         border: none;
+        margin: 0 5px 5px;
       }
       
       .delete-btn-delete:hover {
@@ -326,12 +339,27 @@ export const showDeleteAccountSweetAlert = (onConfirm) => {
         font-size: 15px;
         transition: all 0.2s ease;
         border: none;
+        margin: 0 5px 5px;
       }
       
       .delete-btn-cancel:hover {
         background: #f8f9fa;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      /* Responsive styles for SweetAlert */
+      @media screen and (max-width: 480px) {
+        .delete-btn-cancel, 
+        .delete-btn-delete {
+          padding: 10px 16px;
+          font-size: 14px;
+          min-width: auto;
+        }
+        .delete-modal-popup {
+          max-width: 90%;
+          padding: 20px;
+        }
       }
     `;
     document.head.appendChild(styleElement);

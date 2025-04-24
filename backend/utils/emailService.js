@@ -37,7 +37,7 @@ if (process.env.NODE_ENV === 'test') {
     if (error) {
       console.error('SMTP connection error:', error);
     } else {
-      console.log('SMTP server connection successful');
+      console.log('- SMTP server connection successful');
     }
   });
 }
