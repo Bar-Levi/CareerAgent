@@ -69,10 +69,18 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
         const { name, value } = e.target;
 
         if (name === 'companySize') {
-            const parsedValue = parseInt(value, 10);
+            // Only allow positive integers - strip any non-digit characters
+            const cleanValue = value.replace(/[^0-9]/g, '');
+            
+            if (cleanValue !== value) {
+                // If we had to clean the value, update the input directly
+                e.target.value = cleanValue;
+            }
+            
+            const parsedValue = parseInt(cleanValue, 10);
             if (!isNaN(parsedValue)) {
                 setFormData({ ...formData, companySize: parsedValue });
-            } else if (value === '') {
+            } else if (cleanValue === '') {
                 setFormData({ ...formData, companySize: '' });
             }
             return;
@@ -403,6 +411,15 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                                     placeholder="Company Size *"
                                     value={formData.companySize}
                                     onChange={handleChange}
+                                    min="1"
+                                    step="1"
+                                    pattern="\d+"
+                                    onKeyDown={(e) => {
+                                        // Prevent entering negative sign
+                                        if (e.key === '-' || e.key === 'e' || e.key === '.') {
+                                            e.preventDefault();
+                                        }
+                                    }}
                                     className="w-full px-4 py-2.5 bg-gray-50 text-gray-800 rounded-lg border border-gray-400 placeholder-gray-500 focus:ring-2 focus:ring-gray-500 focus:outline-none transition-all duration-300"
                                     required
                                 />

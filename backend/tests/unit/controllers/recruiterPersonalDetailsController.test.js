@@ -220,7 +220,7 @@ describe('Recruiter Personal Details Controller', () => {
       // Verify
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ 
-        message: 'Invalid detail type. Valid types: dob, companyWebsite.' 
+        message: 'Invalid detail type. Valid types: dob, companyWebsite, companySize.' 
       });
     });
 
@@ -340,7 +340,7 @@ describe('Recruiter Personal Details Controller', () => {
       // Verify
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ 
-        message: 'Invalid detail type. Valid types: dob, companyWebsite.' 
+        message: 'Invalid detail type. Valid types: dob, companyWebsite, companySize.' 
       });
     });
 
