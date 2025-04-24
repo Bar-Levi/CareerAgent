@@ -180,6 +180,12 @@ const updateApplicant = async (req, res) => {
             
             await Interview.findByIdAndDelete(interviewId);
         } else if (status === "Hired") {
+            // Increment the recruiter's totalHired counter
+            await Recruiter.findByIdAndUpdate(
+                updatedApplicant.recruiterId,
+                { $inc: { totalHired: 1 } }
+            );
+
             otherApplicants = await Applicant.find({
                 jobId: updatedApplicant.jobId,
                 _id: { $ne: id },

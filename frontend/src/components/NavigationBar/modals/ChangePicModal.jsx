@@ -106,31 +106,74 @@ const showChangePicModal = async (user, navigate, location, picType = "profile")
           return false;
         }
         
+        // Show upload status message for all files
+        Swal.showLoading();
+        // Create upload status message
+        const uploadStatusId = 'swal-upload-status';
+        const existingStatus = document.getElementById(uploadStatusId);
+        
+        if (!existingStatus) {
+          // Create a new status element if it doesn't exist
+          const statusElement = document.createElement('div');
+          statusElement.id = uploadStatusId;
+          statusElement.className = 'mt-3 text-blue-500 text-sm';
+          statusElement.textContent = `Uploading file (${fileSizeMB.toFixed(2)}MB)... Please wait`;
+          
+          // Append to SweetAlert container
+          const container = document.querySelector('.swal2-html-container');
+          if (container) {
+            container.appendChild(statusElement);
+          }
+        }
+        
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
         formData.append("email", user.email);
         formData.append("picType", picType);
 
-        const response = await fetch(baseEndpoint, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to update image");
+        try {
+          // Set a timeout for the fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+          
+          const response = await fetch(baseEndpoint, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || `Server responded with status: ${response.status}`);
+          }
+          
+          const data = await response.json().catch(() => {
+            throw new Error("Failed to parse server response");
+          });
+
+          // The backend returns: { message, profilePic, companyLogo }
+          // We'll pick whichever we actually changed
+          const newUrl = isCompanyLogo ? data.companyLogo : data.profilePic;
+
+          return {
+            action: "change",
+            message: data.message,
+            newUrl,
+          };
+        } catch (error) {
+          console.error("Image upload error:", error);
+          if (error.name === 'AbortError') {
+            Swal.showValidationMessage("Upload timed out. Please try a smaller image or check your connection.");
+          } else {
+            Swal.showValidationMessage(`Upload failed: ${error.message}`);
+          }
+          return false;
         }
-
-        // The backend returns: { message, profilePic, companyLogo }
-        // We'll pick whichever we actually changed
-        const newUrl = isCompanyLogo ? data.companyLogo : data.profilePic;
-
-        return {
-          action: "change",
-          message: data.message,
-          newUrl,
-        };
       }
+      
       // If user didn't do either, return null to skip
       return null;
     },

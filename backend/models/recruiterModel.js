@@ -114,6 +114,10 @@ const recruiterSchema = new mongoose.Schema({
         type: Boolean,
         default: true,
     },
+    totalHired: {
+        type: Number,
+        default: 0,
+    },
     notifications: [notificationSchema],
 });
 

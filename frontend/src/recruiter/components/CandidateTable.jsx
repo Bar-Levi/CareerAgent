@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { CSVLink } from "react-csv";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // Add this import
-import { FaEye, FaCalendarPlus, FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt, FaDownload, FaCog } from "react-icons/fa";
-import ScheduleInterviewModal from "./ScheduleInterviewModal"; // Adjust import path
+import { FaSort, FaSortUp, FaSortDown, FaTimes, FaCheck, FaPencilAlt } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { useNavigate, useLocation } from "react-router-dom";
+import ScheduleInterviewModal from "./ScheduleInterviewModal"; 
 import { updateApplicantStatus } from "../../utils/applicantStatus";
-import CandidateNotesModal from "./CandidateNotesModal"; // Adjust import path
+import CandidateNotesModal from "./CandidateNotesModal";
 
 // Add default columns configuration
 const DEFAULT_COLUMNS = {
@@ -29,6 +28,67 @@ const SORTABLE_COLUMNS = {
   actions: false
 };
 
+// Modern action button component with animations and dynamic styling
+const ActionButton = ({ label, onClick, icon, variant = "primary", darkMode, compactMode = false }) => {
+  // Define color variants - primary, schedule, review
+  const getVariantStyle = () => {
+    if (darkMode) {
+      switch (variant) {
+        case "primary": 
+          return "bg-gradient-to-r from-indigo-700/90 to-indigo-600/90 hover:from-indigo-600/90 hover:to-indigo-500/90 text-white border-indigo-500/30";
+        case "schedule": 
+          return "bg-gradient-to-r from-purple-700/90 to-purple-600/90 hover:from-purple-600/90 hover:to-purple-500/90 text-white border-purple-500/30";
+        case "review": 
+          return "bg-gradient-to-r from-blue-700/90 to-blue-600/90 hover:from-blue-600/90 hover:to-blue-500/90 text-white border-blue-500/30";
+        case "accept": 
+          return "bg-gradient-to-r from-green-700/90 to-green-600/90 hover:from-green-600/90 hover:to-green-500/90 text-white border-green-500/30";
+        default:
+          return "bg-gradient-to-r from-indigo-700/90 to-indigo-600/90 hover:from-indigo-600/90 hover:to-indigo-500/90 text-white border-indigo-500/30";
+      }
+    } else {
+      switch (variant) {
+        case "primary": 
+          return "bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-indigo-300";
+        case "schedule": 
+          return "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-purple-300";
+        case "review": 
+          return "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-blue-300";
+        case "accept": 
+          return "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-green-300";
+        default:
+          return "bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-indigo-300";
+      }
+    }
+  };
+
+  // Super compact mode just shows the icon with tooltip
+  if (compactMode) {
+    return (
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={onClick}
+        className={`p-1.5 rounded-md border-[0.5px] transition-all duration-200 ${getVariantStyle()}`}
+        title={label}
+      >
+        {icon}
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={`w-full px-2 py-1 rounded-md text-xs font-medium border-[0.5px] flex items-center justify-start gap-1.5 transition-all duration-200 ${getVariantStyle()}`}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </motion.button>
+  );
+};
+
 const CandidateTable = ({
   applicants,
   setApplicants,
@@ -37,13 +97,20 @@ const CandidateTable = ({
   recruiter,
   refetchApplicants,
   visibleColumns = DEFAULT_COLUMNS, // Provide default value
+  darkMode = false,
+  user, // Add user prop
+  updateTotalHired, // Add function to update totalHired count
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [jobListingId, setJobListingId] = useState(null);
   const [renderKey, setRenderKey] = useState(0);
+  const [compactView, setCompactView] = useState(true); // Default to compact view
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const tableBodyRef = useRef(null);
   const selectedRowRef = useRef(null);
 
@@ -82,15 +149,34 @@ const CandidateTable = ({
     if (!SORTABLE_COLUMNS[key]) return null;
 
     if (sortConfig.key !== key) {
-      return <FaSort className="inline-block ml-2 text-gray-300 w-3 h-3" />;
+      return <FaSort className={`inline-block ml-2 ${darkMode ? 'text-gray-500' : 'text-gray-300'} w-3 h-3`} />;
     }
     return sortConfig.direction === "asc"
-      ? <FaSortUp className="inline-block ml-2 text-blue-500 w-3 h-3" />
-      : <FaSortDown className="inline-block ml-2 text-blue-500 w-3 h-3" />;
+      ? <FaSortUp className={`inline-block ml-2 ${darkMode ? 'text-indigo-400' : 'text-blue-500'} w-3 h-3`} />
+      : <FaSortDown className={`inline-block ml-2 ${darkMode ? 'text-indigo-400' : 'text-blue-500'} w-3 h-3`} />;
   };
 
   const patchStatus = async (applicant, status) => {
     await updateApplicantStatus(applicant, status, refetchApplicants);
+    
+    // When status is changed to Hired, increment totalHired counter
+    if (status === "Hired" && updateTotalHired) {
+      // Call the updateTotalHired function from props
+      updateTotalHired();
+      
+      // Update the location state with the incremented totalHired count
+      if (location.state && location.state.user) {
+        // Navigate to the same page with updated state to force a full refresh
+        navigate(location.pathname, { 
+          state: {
+            ...location.state,
+            refreshToken: Date.now() // Force component to re-render
+          },
+          replace: true 
+        });
+      }
+    }
+    
     await refetchApplicants?.();
   };
 
@@ -103,6 +189,11 @@ const CandidateTable = ({
             window.open(applicant.cv, "_blank");
             await patchStatus(applicant, "In Review");
           },
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                  <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                </svg>,
+          variant: "review"
         }];
       case "In Review":
         return [{
@@ -112,15 +203,27 @@ const CandidateTable = ({
             setShowScheduleModal(true);
             await refetchApplicants?.();
           },
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                </svg>,
+          variant: "schedule"
         },
         {
           label: "Mark as Accepted",
           onClick: () => patchStatus(applicant, "Accepted"),
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>,
+          variant: "accept"
         }];
       case "Interview Scheduled":
         return [{
           label: "Mark Interview Done",
           onClick: () => patchStatus(applicant, "Interview Done"),
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>,
+          variant: "primary"
         }];
       case "Interview Done":
         return [
@@ -131,16 +234,28 @@ const CandidateTable = ({
               setShowScheduleModal(true);
               await refetchApplicants?.();
             },
+            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                  </svg>,
+            variant: "schedule"
           },
           {
             label: "Mark as Accepted",
             onClick: () => patchStatus(applicant, "Accepted"),
+            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>,
+            variant: "accept"
           }
         ];
       case "Accepted":
         return [{
           label: "Mark as Hired",
           onClick: () => patchStatus(applicant, "Hired"),
+          icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>,
+          variant: "primary"
         }];
       default:
         return null;
@@ -166,20 +281,37 @@ const CandidateTable = ({
     { key: 'actions', label: 'Actions' }
   ];
 
+  // Column width classes for each column
+  const columnWidthClasses = {
+    name: 'w-[20%]',
+    jobTitle: 'w-[15%]',
+    applicationDate: 'w-[12%]', 
+    status: 'w-[10%]',
+    interview: 'w-[15%]',
+    nextStep: 'w-[15%]',
+    actions: 'w-[8%]'
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Scrollable Table Container */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+          <table className={`min-w-full table-fixed divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
               <tr>
                 {columns.map(({ key, label }) => 
                   visibleColumns[key] ? (
                     <th
                       key={key}
-                      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap ${
-                        SORTABLE_COLUMNS[key] ? 'cursor-pointer hover:bg-gray-100' : ''
+                      className={`px-4 py-3 text-left text-xs font-medium ${columnWidthClasses[key]} ${
+                        darkMode ? 'text-gray-300' : 'text-gray-500'
+                      } uppercase tracking-wider whitespace-nowrap ${
+                        SORTABLE_COLUMNS[key] 
+                          ? darkMode 
+                            ? 'cursor-pointer hover:bg-gray-700' 
+                            : 'cursor-pointer hover:bg-gray-100'
+                          : ''
                       }`}
                       onClick={() => handleSort(key)}
                     >
@@ -192,265 +324,269 @@ const CandidateTable = ({
                 )}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {applicants && applicants.map((app) => {
+            <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              {applicants && applicants.length > 0 ? applicants.map((app) => {
                 const statusAction = getStatusAction(app);
+
+                // Get status color for current status
+                const getStatusColor = (status) => {
+                  if (darkMode) {
+                    switch (status) {
+                      case "Applied": return "bg-blue-900/30 text-blue-300";
+                      case "In Review": return "bg-yellow-900/30 text-yellow-300";
+                      case "Interview Scheduled": return "bg-purple-900/30 text-purple-300";
+                      case "Interview Done": return "bg-indigo-900/30 text-indigo-300";
+                      case "Accepted": return "bg-green-900/30 text-green-300";
+                      case "Hired": return "bg-emerald-900/30 text-emerald-300";
+                      case "Rejected": return "bg-red-900/30 text-red-300";
+                      default: return "bg-gray-700 text-gray-300";
+                    }
+                  } else {
+                    switch (status) {
+                      case "Applied": return "bg-blue-100 text-blue-800";
+                      case "In Review": return "bg-yellow-100 text-yellow-800";
+                      case "Interview Scheduled": return "bg-purple-100 text-purple-800";
+                      case "Interview Done": return "bg-indigo-100 text-indigo-800";
+                      case "Accepted": return "bg-green-100 text-green-800";
+                      case "Hired": return "bg-emerald-100 text-emerald-800";
+                      case "Rejected": return "bg-red-100 text-red-800";
+                      default: return "bg-gray-100 text-gray-800";
+                    }
+                  }
+                };
 
                 return (
                   <tr
                     key={app._id}
                     ref={selectedApplicant?._id === app._id ? selectedRowRef : null}
-                    className={`
-                      hover:bg-gray-100 transition-colors duration-200
-                      ${selectedApplicant?._id === app._id ? "bg-blue-50 font-semibold ring-2 ring-blue-300" : ""}
-                    `}
-                    onClick={() => {
-                      setJobListingId(app.jobId);
-                      setSelectedApplicant(app);
-                    }}
+                    className={`${
+                      selectedApplicant?._id === app._id 
+                        ? darkMode 
+                          ? 'bg-gray-700' 
+                          : 'bg-blue-50'
+                        : darkMode 
+                          ? 'hover:bg-gray-700' 
+                          : 'hover:bg-gray-50'
+                    } transition-all duration-150`}
                   >
+                    {/* Candidate Details */}
                     {visibleColumns.name && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col space-y-2">
-                          {/* Name */}
-                          <div className="text-sm font-semibold text-gray-900">
-                            {app.name}
+                      <td className="px-4 py-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                            <img
+                              className="h-full w-full object-cover"
+                              src={app.profilePic || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
+                              alt={app.name}
+                            />
                           </div>
-                          
-                          {/* Contact Info */}
-                          <div className="flex flex-col space-y-1.5">
-                            <div className="text-xs text-gray-500 flex items-center hover:text-gray-700">
-                              <span className="mr-2">📧</span>
-                              <a href={`mailto:${app.email}`} className="hover:underline" onClick={e => e.stopPropagation()}>
-                                {app.email}
-                              </a>
+                          <div>
+                            <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                              {app.name}
                             </div>
-                            {app.phone && (
-                              <div className="text-xs text-gray-500 flex items-center hover:text-gray-700">
-                                <span className="mr-2">📱</span>
-                                <a href={`tel:${app.phone}`} className="hover:underline" onClick={e => e.stopPropagation()}>
-                                  {app.phone}
-                                </a>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Social Links */}
-                          <div className="flex space-x-3 pt-1">
-                            {app.linkedinUrl && (
-                              <a
-                                href={app.linkedinUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-800 text-xs flex items-center"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                                </svg>
-                                LinkedIn
-                              </a>
-                            )}
-                            {app.githubUrl && (
-                              <a
-                                href={app.githubUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-gray-600 hover:text-gray-800 text-xs flex items-center"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                                </svg>
-                                GitHub
-                              </a>
-                            )}
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {app.email}
+                            </div>
                           </div>
                         </div>
                       </td>
                     )}
+
+                    {/* Job Title */}
                     {visibleColumns.jobTitle && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-4 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {app.jobTitle}
                       </td>
                     )}
+
+                    {/* Application Date */}
                     {visibleColumns.applicationDate && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {app.applicationDate 
-                          ? new Date(app.applicationDate).toLocaleString() 
-                          : "—"}
+                      <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {app.applicationDate
+                          ? new Date(app.applicationDate).toLocaleDateString()
+                          : "N/A"}
                       </td>
                     )}
+
+                    {/* Status */}
                     {visibleColumns.status && (
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            app.status === "Applied"
-                              ? "bg-blue-100 text-blue-800"
-                              : app.status.includes("Interview")
-                              ? "bg-purple-100 text-purple-800"
-                              : app.status === "Accepted"
-                              ? "bg-green-100 text-green-800"
-                              : app.status === "Rejected"
-                              ? "bg-red-100 text-red-800"
-                              : app.status === "In Review"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
+                      <td className="px-4 py-4">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
                           {app.status}
                         </span>
                       </td>
                     )}
+
+                    {/* Interview */}
                     {visibleColumns.interview && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                         {app.interviewId ? (
-                          <div className="flex flex-col">
-                            <span>{new Date(app.interviewId.scheduledTime).toLocaleString()}</span>
-                            {app.interviewId.meetingLink ? (
-                              <a 
-                                href={app.interviewId.meetingLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                              >
-                                Join Meeting
-                              </a>
-                            ) : (
-                              <span className="text-gray-400">No Meeting Link</span>
-                            )}
+                          <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                            <div>
+                              {new Date(app.interviewId.scheduledTime).toLocaleString()}
+                            </div>
+                            <a
+                              href={app.interviewId.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
+                            >
+                              Join Meeting
+                            </a>
                           </div>
                         ) : (
-                          "—"
+                          <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Not scheduled</span>
                         )}
                       </td>
                     )}
+
+                    {/* Next Step */}
                     {visibleColumns.nextStep && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {(statusAction && !["Hired", "Rejected"].includes(app.status))
-                          ? statusAction.map((statusAction) => {
-                              return (
-                                <button
-                                  key={statusAction.label}
-                                  className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                                  title={statusAction.label}
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    setJobListingId(app.jobId);
-                                    setSelectedApplicant(app);
-                                    await statusAction.onClick();
-                                  }}
-                                >
-                                  <FaCalendarPlus className="mr-1" />
-                                  {statusAction.label}
-                                </button>
-                              );
-                            })
-                          : "—"
-                        }
+                      <td className="px-4 py-4">
+                        {statusAction ? (
+                          <>
+                            {compactView && statusAction.length > 1 ? (
+                              <div className="flex space-x-1.5">
+                                {statusAction.map((action, idx) => (
+                                  <ActionButton
+                                    key={idx}
+                                    label={action.label}
+                                    onClick={action.onClick}
+                                    icon={action.icon}
+                                    variant={action.variant}
+                                    darkMode={darkMode}
+                                    compactMode={true}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-1 max-w-[150px]">
+                                {statusAction.map((action, idx) => (
+                                  <ActionButton
+                                    key={idx}
+                                    label={action.label}
+                                    onClick={action.onClick}
+                                    icon={action.icon}
+                                    variant={action.variant}
+                                    darkMode={darkMode}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                            No actions available
+                          </span>
+                        )}
                       </td>
                     )}
+
+                    {/* Actions */}
                     {visibleColumns.actions && (
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                        {!["Hired", "Rejected"].includes(app.status) ? (
-                          <div className="flex flex-col justify-center space-y-3">
-                            <button
-                              className="text-blue-600 hover:text-blue-900 transition-colors flex items-center"
-                              title="View Candidate"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(app.cv, "_blank", "noopener,noreferrer");
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
+                      <td className="px-4 py-4 text-right text-sm font-medium">
+                        <div className="flex space-x-2 justify-center">
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => {
+                              setSelectedApplicant(app);
+                              setShowNotesModal(true);
+                            }}
+                            className={`p-2 rounded-full ${
+                              darkMode 
+                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                            } transition-all duration-200`}
+                            title="View/Edit Notes"
+                          >
+                            <FaPencilAlt className="w-4 h-4" />
+                          </motion.button>
+
+                          {/* Additional action - Hire */}
+                          {app.status !== "Hired" && app.status !== "Rejected" && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleHireClick(app)}
+                              className={`p-2 rounded-full ${
+                                darkMode 
+                                  ? 'bg-green-800/80 text-green-200 hover:bg-green-700' 
+                                  : 'bg-green-100 text-green-600 hover:bg-green-200'
+                              } transition-all duration-200`}
+                              title="Mark as Hired"
                             >
-                              <FaEye className="mr-1" /> View CV
-                            </button>
-                            <button
-                              className="text-red-600 hover:text-red-900 transition-colors flex items-center"
-                              title="Reject Applicant"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRejectClick(app);
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
+                              <FaCheck className="w-4 h-4" />
+                            </motion.button>
+                          )}
+
+                          {/* Additional action - Reject */}
+                          {app.status !== "Rejected" && app.status !== "Hired" && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => handleRejectClick(app)}
+                              className={`p-2 rounded-full ${
+                                darkMode 
+                                  ? 'bg-red-800/80 text-red-200 hover:bg-red-700' 
+                                  : 'bg-red-100 text-red-600 hover:bg-red-200'
+                              } transition-all duration-200`}
+                              title="Reject Candidate"
                             >
-                              <FaTimes className="mr-1" /> Reject
-                            </button>
-                            <button
-                              className="text-green-600 hover:text-green-900 transition-colors flex items-center"
-                              title="Hire Applicant"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleHireClick(app);
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
-                            >
-                              <FaCheck className="mr-1" /> Hire
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedApplicant(app);
-                                setShowNotesModal(true);
-                                setJobListingId(app.jobId);
-                                setSelectedApplicant(app);
-                              }}
-                              className="text-gray-600 hover:text-gray-900 transition-colors flex items-center"
-                            >
-                              <FaPencilAlt className="mr-1" />
-                              Notes
-                            </button>
-                          </div>
-                        ) : (
-                          "—"
-                        )}
+                              <FaTimes className="w-4 h-4" />
+                            </motion.button>
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
                 );
-              })}
+              }) : (
+                <tr>
+                  <td 
+                    colSpan={Object.values(visibleColumns).filter(Boolean).length} 
+                    className={`px-4 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  >
+                    No candidates found matching your filters.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-
-          {applicants && applicants.length === 0 && (
-            <div className="text-center py-8">
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                No applicants
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Get started by adding a new candidate
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
-      {showScheduleModal && selectedApplicant && (
-        <ScheduleInterviewModal
-          isOpen={showScheduleModal}
-          onClose={() => setShowScheduleModal(false)}
-          applicant={selectedApplicant}
-          setApplicants={setApplicants}
-          jobListingId={jobListingId} 
-          recruiter={recruiter}
-          refetchApplicants={async () => {
-            if (refetchApplicants) await refetchApplicants();
-          }}
-        />
+      {/* Schedule Interview Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <ScheduleInterviewModal
+            isOpen={showScheduleModal}
+            onClose={() => setShowScheduleModal(false)}
+            applicant={selectedApplicant}
+            recruiter={recruiter}
+            onSuccess={refetchApplicants}
+            darkMode={darkMode}
+            jobListingId={selectedApplicant?.jobId?._id}
+            setApplicants={setApplicants}
+          />
+        </div>
       )}
 
-      {showNotesModal && selectedApplicant && (
-        <CandidateNotesModal
-          isOpen={showNotesModal}
-          onClose={() => setShowNotesModal(false)}
-          applicant={selectedApplicant}
-          onNotesUpdated={async () => {
-            await refetchApplicants?.();
-          }}
-        />
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <CandidateNotesModal
+            isOpen={showNotesModal}
+            onClose={() => setShowNotesModal(false)}
+            applicant={selectedApplicant}
+            onSuccess={() => {
+              refetchApplicants?.();
+              setShowNotesModal(false);
+            }}
+            darkMode={darkMode}
+            onNotesUpdated={() => refetchApplicants?.()}
+          />
+        </div>
       )}
     </div>
   );
