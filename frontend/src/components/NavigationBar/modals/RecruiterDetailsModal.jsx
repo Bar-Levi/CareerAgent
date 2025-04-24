@@ -37,6 +37,9 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
       } else {
         currentValue = "Not set";
       }
+    } else if (type.toLowerCase() === "companysize") {
+      // For company size, display the value directly
+      currentValue = user.companySize || "Not set";
     }
 
     // Add styles for the detail edit modal
@@ -120,6 +123,18 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
           color: #4a5568;
         }
         
+        .recruiter-edit-input[type="number"] {
+          appearance: none;
+          -webkit-appearance: none;
+          color: #4a5568;
+        }
+        
+        .recruiter-edit-input[type="number"]::-webkit-inner-spin-button,
+        .recruiter-edit-input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
         .recruiter-btn-update, 
         .recruiter-btn-reset, 
         .recruiter-btn-cancel {
@@ -198,10 +213,16 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
       document.head.appendChild(styleElement);
     };
 
-    // Choose an input field type based on the detail type (date input for dob, text input for company website)
-    const inputField = type.toLowerCase() === "dob" 
-      ? `<input type="date" id="swal-input-new" class="recruiter-edit-input" />`
-      : `<input id="swal-input-new" class="recruiter-edit-input" placeholder="Enter new ${label}" />`;
+    // Choose an input field type based on the detail type
+    let inputField = "";
+    if (type.toLowerCase() === "dob") {
+      inputField = `<input type="date" id="swal-input-new" class="recruiter-edit-input" />`;
+    } else if (type.toLowerCase() === "companywebsite") {
+      inputField = `<input id="swal-input-new" class="recruiter-edit-input" placeholder="Enter new ${label}" />`;
+    } else if (type.toLowerCase() === "companysize") {
+      // For company size, restrict input to digits only using pattern attribute
+      inputField = `<input type="number" min="1" pattern="\\d*" id="swal-input-new" class="recruiter-edit-input" placeholder="Enter new ${label}" />`;
+    }
 
     // Display a SweetAlert modal for updating or resetting the detail
     const { isConfirmed, isDenied, value: newValue } = await Swal.fire({
@@ -225,7 +246,7 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
         <div class="recruiter-edit-form">
           <div class="recruiter-current-value">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="${type.toLowerCase() === 'dob' ? 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' : 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9'}" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="${type.toLowerCase() === 'dob' ? 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' : type.toLowerCase() === 'companywebsite' ? 'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9' : 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'}" />
             </svg>
             <span>
               <span class="recruiter-current-value-label">Current:</span>
@@ -237,7 +258,7 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
       `,
       focusConfirm: false,
       showCancelButton: true,
-      showDenyButton: true,
+      showDenyButton: type.toLowerCase() !== "companysize",
       confirmButtonText: "Update",
       denyButtonText: "Reset",
       didOpen: () => {
@@ -254,11 +275,27 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
             console.error("Error setting date:", error);
           }
         }
+        
+        // For company size, add input event listener to prevent non-numeric input
+        if (type.toLowerCase() === "companysize") {
+          const inputElement = document.getElementById("swal-input-new");
+          if (inputElement) {
+            // Restrict input to only digits
+            inputElement.addEventListener('input', function(e) {
+              // Replace any non-digit with empty string
+              const curValue = e.target.value;
+              const newValue = curValue.replace(/[^0-9]/g, '');
+              if (curValue !== newValue) {
+                e.target.value = newValue;
+              }
+            });
+          }
+        }
       },
       preConfirm: () => {
         const inputValue = document.getElementById("swal-input-new")?.value;
-        if (!inputValue && isConfirmed) {
-          Swal.showValidationMessage(`Please enter a new ${label}`);
+        if (!inputValue) {
+          Swal.showValidationMessage(`Please enter a valid ${label}`);
           return false;
         }
         
@@ -271,6 +308,17 @@ const handleEditRecruiterPersonalDetail = async (user, type, label, navigate, lo
             Swal.showValidationMessage(
               `Please enter a valid URL starting with "https://" and containing a domain (example: https://example.com)`
             );
+            return false;
+          }
+        }
+        
+        // Company size validation
+        if (type.toLowerCase() === "companysize" && inputValue) {
+          // Basic checking for numbers only - pattern attribute and input event handler already restrict this
+          const size = parseInt(inputValue);
+          
+          if (isNaN(size) || size < 1) {
+            Swal.showValidationMessage(`Company size must be at least 1`);
             return false;
           }
         }
@@ -554,6 +602,17 @@ export const showRecruiterDetailsModal = (user, navigate, location) => {
             <span class="recruiter-option-desc">Update your company's website URL</span>
           </div>
         </button>
+        <button id="recruiter-change-company-size" class="recruiter-option-btn">
+          <div class="recruiter-option-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <div class="recruiter-option-content">
+            <span class="recruiter-option-title">Company Size</span>
+            <span class="recruiter-option-desc">Update your company's employee count</span>
+          </div>
+        </button>
       </div>
     `,
     showCancelButton: false,
@@ -574,6 +633,12 @@ export const showRecruiterDetailsModal = (user, navigate, location) => {
         if (changeCompany) {
           changeCompany.addEventListener("click", () => {
             showEditRecruiterDetail("companywebsite", "Company Website", user, navigate, location);
+          });
+        }
+        const changeCompanySize = document.getElementById("recruiter-change-company-size");
+        if (changeCompanySize) {
+          changeCompanySize.addEventListener("click", () => {
+            showEditRecruiterDetail("companysize", "Company Size", user, navigate, location);
           });
         }
       }, 100);

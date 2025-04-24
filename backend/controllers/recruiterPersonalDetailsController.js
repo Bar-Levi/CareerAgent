@@ -36,9 +36,22 @@ const updateRecruiterPersonalDetails = async (req, res) => {
         }
         recruiter.companyWebsite = value.trim();
         break;
+        
+      case "companysize":
+        // Validate that company size is a positive number
+        const size = parseInt(value);
+        if (isNaN(size) || size < 1) {
+          return res.status(400).json({ message: "Company size must be a positive number." });
+        }
+        // Ensure the value is a valid integer without any non-numeric characters
+        if (!(/^\d+$/.test(value))) {
+          return res.status(400).json({ message: "Company size must be a whole number with no text or special characters." });
+        }
+        recruiter.companySize = size.toString();
+        break;
 
       default:
-        return res.status(400).json({ message: "Invalid detail type. Valid types: dob, companyWebsite." });
+        return res.status(400).json({ message: "Invalid detail type. Valid types: dob, companyWebsite, companySize." });
     }
 
     // Save changes to the database.
@@ -50,6 +63,8 @@ const updateRecruiterPersonalDetails = async (req, res) => {
       message = "Date of birth updated successfully.";
     } else if (type.toLowerCase() === "companywebsite") {
       message = "Company website updated successfully.";
+    } else if (type.toLowerCase() === "companysize") {
+      message = "Company size updated successfully.";
     }
 
     // Return the success message along with the updated recruiter details.
@@ -79,8 +94,12 @@ const resetRecruiterPersonalDetails = async (req, res) => {
       case "companywebsite":
         recruiter.companyWebsite = "";
         break;
+      case "companysize":
+        // For company size, set to a default value of "1" since it's required
+        recruiter.companySize = "1";
+        break;
       default:
-        return res.status(400).json({ message: "Invalid detail type. Valid types: dob, companyWebsite." });
+        return res.status(400).json({ message: "Invalid detail type. Valid types: dob, companyWebsite, companySize." });
     }
     await recruiter.save();
     let message = "";
@@ -88,6 +107,8 @@ const resetRecruiterPersonalDetails = async (req, res) => {
       message = "Date of birth reset successfully.";
     } else if (type.toLowerCase() === "companywebsite") {
       message = "Company website reset successfully.";
+    } else if (type.toLowerCase() === "companysize") {
+      message = "Company size reset to default (1).";
     }
     // Return the success message along with the updated recruiter document.
     return res.status(200).json({ message, updatedUser: recruiter });
