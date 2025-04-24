@@ -195,6 +195,7 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
         font-size: 15px;
         transition: all 0.2s ease;
         border: none;
+        margin: 0 5px 5px;
       }
       
       .relevance-btn-save:hover {
@@ -213,6 +214,7 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
         font-size: 15px;
         transition: all 0.2s ease;
         border: none;
+        margin: 0 5px 5px;
       }
       
       .relevance-btn-cancel:hover {
@@ -221,16 +223,30 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
       
+      .relevance-modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      
       /* Responsive styles */
       @media screen and (max-width: 480px) {
         .relevance-modal-popup {
           padding: 20px;
+          max-width: 90%;
         }
         
         .relevance-btn-save, 
         .relevance-btn-cancel {
           padding: 10px 16px;
           font-size: 14px;
+          min-width: 100px;
+        }
+        
+        .swal2-actions {
+          flex-wrap: wrap;
+          gap: 8px;
         }
       }
     `;
@@ -370,6 +386,7 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
       title: 'relevance-modal-title',
       confirmButton: 'relevance-btn-save',
       cancelButton: 'relevance-btn-cancel',
+      actions: 'relevance-modal-actions',
     },
     buttonsStyling: false,
     showClass: {
@@ -508,6 +525,7 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
         popup: 'relevance-modal-popup',
         title: 'relevance-modal-title',
         confirmButton: 'relevance-btn-save',
+        actions: 'relevance-modal-actions',
       },
       buttonsStyling: false
     });
