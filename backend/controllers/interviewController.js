@@ -2,6 +2,7 @@ const Interview = require("../models/interviewModel");
 const JobSeeker = require("../models/jobSeekerModel");
 const Applicant = require("../models/applicantModel");
 const Recruiter = require("../models/recruiterModel");
+const JobListing = require("../models/jobListingModel");
 const { sendInterviewScheduledEmailToJobSeeker, sendInterviewScheduledEmailToRecruiter } = require("../utils/emailService");
 
 // Schedule a new interview
@@ -9,7 +10,7 @@ const { sendInterviewScheduledEmailToJobSeeker, sendInterviewScheduledEmailToRec
 // Private
 const scheduleInterview = async (req, res, next) => {
   try {
-    const { applicantId, participants, jobListing, scheduledTime, meetingLink } = req.body;
+    const { applicantId, participants, jobListing, scheduledTime, meetingLink, jobDetails } = req.body;
 
     if (!participants || !Array.isArray(participants) || participants.length < 2 || !scheduledTime) {
       return res.status(400).json({ message: "At least two participants and scheduledTime are required" });
@@ -37,11 +38,50 @@ const scheduleInterview = async (req, res, next) => {
         console.warn("Recruiter not found:", recruiterParticipant.userId);
       } else {
         const applicant = await Applicant.findById(applicantId);
+        
+        // Get job information either from jobDetails passed in the request
+        // or from existing jobListing or applicant data
+        let jobInfo = {
+          jobRole: "Position",
+          company: "Company",
+          location: "Remote"
+        };
+        
+        // If jobDetails was provided in the request, use it
+        if (jobDetails) {
+          jobInfo = {
+            ...jobInfo,
+            ...jobDetails
+          };
+        } 
+        // Try to get job data from job listing reference if it exists
+        else if (jobListing && typeof jobListing === 'string') {
+          try {
+            const jobListingDoc = await JobListing.findById(jobListing);
+            if (jobListingDoc) {
+              jobInfo = {
+                jobRole: jobListingDoc.jobRole || jobInfo.jobRole,
+                company: jobListingDoc.company || jobInfo.company,
+                location: jobListingDoc.location || jobInfo.location
+              };
+            }
+          } catch (err) {
+            console.warn("Error fetching job listing:", err.message);
+          }
+        }
+        // If no specific job data, try to get from applicant
+        else if (applicant) {
+          jobInfo = {
+            jobRole: applicant.jobTitle || jobInfo.jobRole,
+            company: applicant.jobId?.company || jobInfo.company,
+            location: applicant.jobId?.location || jobInfo.location
+          };
+        }
 
         // Create the notification
         const newNotification = {
           type: "interview",
-          message: `A new interview for ${jobListing.jobRole} at ${jobListing.company} was scheduled by ${recruiter.fullName} on ${new Date(scheduledTime).toLocaleDateString()}.`,
+          message: `A new interview for ${jobInfo.jobRole} at ${jobInfo.company} was scheduled by ${recruiter.fullName} on ${new Date(scheduledTime).toLocaleDateString()}.`,
           extraData: {
             goToRoute: '/dashboard',
             stateAddition: {
@@ -74,7 +114,7 @@ const scheduleInterview = async (req, res, next) => {
               await sendInterviewScheduledEmailToJobSeeker(
                 jobSeeker.email,
                 jobSeeker.fullName,
-                jobListing,
+                jobInfo, // Use our prepared job info object
                 recruiter.fullName,
                 scheduledTime,
                 meetingLink
@@ -85,7 +125,7 @@ const scheduleInterview = async (req, res, next) => {
               await sendInterviewScheduledEmailToJobSeeker(
                 jobSeeker.email,
                 jobSeeker.fullName,
-                jobListing,
+                jobInfo, // Use our prepared job info object
                 recruiter.fullName,
                 scheduledTime,
                 meetingLink
@@ -96,7 +136,7 @@ const scheduleInterview = async (req, res, next) => {
                 recruiter.email,
                 recruiter.fullName,
                 jobSeeker.fullName,
-                jobListing,
+                jobInfo, // Use our prepared job info object
                 scheduledTime,
                 meetingLink
               );

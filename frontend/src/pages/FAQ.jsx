@@ -2,17 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import NavigationBar from "../components/NavigationBar/NavigationBar";
 import Botpress from "../botpress/Botpress";
+import { FiMoon, FiSun } from "react-icons/fi";
 
 // Sub-component for individual FAQ item
-const FAQItem = ({ faq, onToggle }) => (
-  <div className="border border-gray-300 rounded bg-white p-4 mb-4">
+const FAQItem = ({ faq, onToggle, darkMode }) => (
+  <div className={`border rounded p-4 mb-4 ${darkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-300 bg-white'}`}>
     <h3
       onClick={onToggle}
-      className="text-lg font-semibold cursor-pointer text-blue-600"
+      className={`text-lg font-semibold cursor-pointer ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}
     >
       {faq.question}
     </h3>
-    {faq.open && <p className="mt-2 text-gray-700">{faq.answer}</p>}
+    {faq.open && <p className={`mt-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{faq.answer}</p>}
   </div>
 );
 
@@ -33,9 +34,9 @@ const FAQ_DATA = {
   ],
   "Job Search": [
     { question: "Can I filter jobs on the platform?", answer: "Yes, you can filter jobs by location, industry, specific roles, or a combination of these to refine your search results.", open: false },
-    { question: "What if I don’t find any jobs matching my filters?", answer: "You’ll receive a notification if no matching jobs are found. You can modify your search criteria or update your profile for better recommendations.", open: false },
+    { question: "What if I don't find any jobs matching my filters?", answer: "You'll receive a notification if no matching jobs are found. You can modify your search criteria or update your profile for better recommendations.", open: false },
     { question: "How are job results sorted?", answer: "Job results are sorted from the most relevant to the least relevant, based on your filters and resume details.", open: false },
-    { question: "Can I save jobs that I’m interested in?", answer: "Yes, you can save jobs by clicking the 'Save Job' button on the job post. Saved jobs will appear in your dashboard.", open: false },
+    { question: "Can I save jobs that I'm interested in?", answer: "Yes, you can save jobs by clicking the 'Save Job' button on the job post. Saved jobs will appear in your dashboard.", open: false },
     { question: "How do I apply for a job?", answer: "You can apply for a job by clicking the 'Apply' button on the job post and submitting your application.", open: false },
     { question: "Can I upload a new resume for job applications?", answer: "Yes, you can upload a new resume by visiting your dashboard and selecting the 'Upload Resume' option.", open: false },
   ],
@@ -46,7 +47,7 @@ const FAQ_DATA = {
     { question: "How do I start a conversation with a chatbot?", answer: "Click on the respective chatbot's button on the chatbot page to initiate a conversation.", open: false },
     { question: "Can the chatbots help me with specific job applications?", answer: "Yes, the Interview Preparation Chatbot can access the job details and help you prepare for the interview, while the Career Path Advisor Chatbot can guide you on the subjects you need to learn before the interview based on your profile and interests. Free users will need to manually enter the job details when starting a chatbot session. Premium users will have a convenient 'Start a Chat with a Career Advisor' & 'Start a Chat with an Interviewer' buttons on each job post, which automatically provides the job details to the chatbot and initiates the conversation.", open: false },
     { question: "What happens if I lose internet connection during a chatbot session?", answer: "Your session will be saved automatically, and you can resume the conversation once the connection is restored.", open: false },
-    { question: "Are the chatbots’ responses tailored to my profile?", answer: "On the premium version, chatbots provide personalized responses by automatically accessing your profile using the 'Sync Profile' toggle. Free users, however, need to manually input their details during each chatbot session.", open: false },
+    { question: "Are the chatbots' responses tailored to my profile?", answer: "On the premium version, chatbots provide personalized responses by automatically accessing your profile using the 'Sync Profile' toggle. Free users, however, need to manually input their details during each chatbot session.", open: false },
   ],
   "Security": [
     { question: "What happens if I exceed login attempts?", answer: "You are limited to 7 login attempts. After that, you will be required to verify your identity using a 6-digit PIN provided during registration.", open: false },
@@ -78,6 +79,26 @@ const FAQ = () => {
   const [filteredFaqs, setFilteredFaqs] = useState({});
   // 3) Search input
   const [searchQuery, setSearchQuery] = useState("");
+  // 4) Dark mode state
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("careeragent_darkmode") === "true" || false
+  );
+
+  // Handle dark mode toggle
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("careeragent_darkmode", newMode.toString());
+  };
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  }, [darkMode]);
 
   // On mount, transform the data to add a unique ID to each FAQ item
   useEffect(() => {
@@ -136,17 +157,28 @@ const FAQ = () => {
   }, [searchQuery, faqs]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
+    <div className={`min-h-screen font-sans ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
       {/* Optional Navigation & Botpress */}
       <NavigationBar userType={state?.user?.role} />
       <Botpress />
   
       {/* Page Header */}
-      <header className="my-6 text-center">
-        <div className="bg-white text-gray-900 py-6 rounded-lg shadow-lg">
+      <header className="my-6 text-center relative">
+        <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} py-6 rounded-lg shadow-lg`}>
           <h1 className="text-3xl font-bold tracking-wide">
             Frequently Asked Questions
           </h1>
+          
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className={`absolute right-4 top-4 p-2 rounded-full transition-all duration-300 ${
+              darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {darkMode ? <FiSun className="text-yellow-400" /> : <FiMoon className="text-gray-700" />}
+          </button>
         </div>
         {/* Search Bar */}
         <div className="mt-6 flex justify-center">
@@ -155,7 +187,11 @@ const FAQ = () => {
             placeholder="Search FAQs..."
             value={searchQuery}
             onChange={handleSearch}
-            className="w-11/12 max-w-lg px-6 py-3 text-lg text-gray-800 bg-white rounded-full border border-gray-300 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            className={`w-11/12 max-w-lg px-6 py-3 text-lg rounded-full shadow-md focus:outline-none focus:ring-2 transition ${
+              darkMode 
+                ? 'bg-gray-800 border-gray-700 text-white focus:ring-blue-400 placeholder-gray-400'
+                : 'bg-white border border-gray-300 text-gray-800 focus:ring-blue-500'
+            }`}
           />
         </div>
       </header>
@@ -165,22 +201,35 @@ const FAQ = () => {
         {Object.keys(filteredFaqs).map((subject) => (
           <div key={subject} className="mb-8">
             {/* Subject Title */}
-            <h2 className="text-xl font-bold text-blue-600 mb-4 sticky top-0 bg-gray-50 py-2 z-10 text-center">
-              <span className="bg-blue-100 text-blue-800 px-3 py-3 rounded-md">
+            <h2 className={`text-xl font-bold mb-4 sticky top-0 py-2 z-10 text-center ${
+              darkMode ? 'bg-gray-900 text-blue-400' : 'bg-gray-50 text-blue-600'
+            }`}>
+              <span className={`px-3 py-3 rounded-md ${
+                darkMode ? 'bg-blue-900/40 text-blue-300' : 'bg-blue-100 text-blue-800'
+              }`}>
                 {subject}
               </span>
             </h2>
   
-            {/* Render each FAQItem */}
+            {/* Render each FAQItem with darkMode prop */}
             {filteredFaqs[subject].map((faq) => (
               <FAQItem
-                key={faq.id} // use the unique ID
+                key={faq.id}
                 faq={faq}
                 onToggle={() => toggleAnswer(faq.id)}
+                darkMode={darkMode}
               />
             ))}
           </div>
         ))}
+        
+        {/* No results message */}
+        {Object.keys(filteredFaqs).length === 0 && searchQuery && (
+          <div className={`p-8 text-center ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow`}>
+            <p className="text-xl font-semibold">No results found for "{searchQuery}"</p>
+            <p className="mt-2">Please try a different search term or browse the categories.</p>
+          </div>
+        )}
       </div>
     </div>
   );

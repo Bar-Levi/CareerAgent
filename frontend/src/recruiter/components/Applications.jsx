@@ -11,7 +11,8 @@ const Applications = ({
   setSelectedCandidate,
   setTitle,
   setViewMode,
-  selectedCandidateId,  
+  selectedCandidateId,
+  darkMode,  
 }) => {
   const { state } = useLocation();
   const user = state?.user;
@@ -20,12 +21,51 @@ const Applications = ({
   const navigate = useNavigate();
 
   const selectedCandidateRef = useRef();
+  const containerRef = useRef();
   
+  // Handle applicant selection
+  const handleApplicantClick = (app) => {
+    // Check if this app is currently selected
+    const isCurrentlySelected = selectedApplicant && selectedApplicant._id === app._id;
+    
+    // Toggle selection - if clicking the same applicant, deselect it
+    if (isCurrentlySelected) {
+      setSelectedApplicant(null);
+    } else {
+      setSelectedApplicant(app);
+      
+      // Only scroll if we're selecting a new applicant
+      setTimeout(() => {
+        if (selectedCandidateRef.current) {
+          selectedCandidateRef.current.scrollIntoView({ 
+            behavior: "smooth", 
+            block: "center" 
+          });
+        }
+      }, 50);
+    }
+  };
+  
+  // Initialize selectedApplicant from selectedCandidateId when component mounts or selectedCandidateId changes
   useEffect(() => {
-      if (selectedCandidateId && applications && selectedCandidateRef.current) {
-        selectedCandidateRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (selectedCandidateId && applications.length > 0) {
+      const selected = applications.find(app => app.jobSeekerId === selectedCandidateId);
+      if (selected) {
+        // Update the selected applicant to match the one from the notification
+        setSelectedApplicant(selected);
       }
-    }, [selectedApplicant, applications]);
+    }
+  }, [selectedCandidateId, applications]);
+
+  // Scroll to selected candidate when needed
+  useEffect(() => {
+    if (selectedApplicant && selectedCandidateRef.current) {
+      selectedCandidateRef.current.scrollIntoView({ 
+        behavior: "smooth", 
+        block: "center" 
+      });
+    }
+  }, [selectedApplicant]);
 
   const getApplicantDataAsJobSeeker = async (application) => {
     const response = await fetch(
@@ -52,7 +92,10 @@ const Applications = ({
     return applicantData;
   };
 
-  const handleChatButtonClick = async (applicant) => {
+  const handleChatButtonClick = async (applicant, event) => {
+    // Prevent the click from bubbling up to parent div
+    event?.stopPropagation();
+    
     try {
       const participants = [
         {
@@ -107,7 +150,10 @@ const Applications = ({
     }
   };
 
-  const trackApplicant = async (applicant) => {
+  const trackApplicant = async (applicant, event) => {
+    // Prevent the click from bubbling up to parent div
+    event?.stopPropagation();
+    
     try {
       localStorage.setItem("stateAddition", JSON.stringify({ applicant }));
       navigate(`/recruiter-candidate-tracker`, { state });
@@ -136,44 +182,64 @@ const Applications = ({
     }
   }, [applications]);
 
-
   return (
-    <div className="mx-auto">
-      <div className="relative w-full bg-white rounded-lg border border-gray-300 shadow-lg">
-        <div className="sticky top-0 z-10 shadow-lg bg-gradient-to-r bg-gray-200 p-6">
-          <h2 className="text-2xl font-bold text-gray-800 text-center">
-            Applications
-          </h2>
+    <div className="mx-auto h-full flex flex-col">
+      <div className={`relative w-full ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} rounded-lg border shadow-lg flex-grow flex flex-col overflow-hidden`}>
+        <div className={`sticky top-0 z-10 shadow-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} p-6 flex justify-between items-center`}>
+          <div className="flex items-center">
+            <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              Applications
+            </h2>
+            <div className={`ml-4 px-3 py-1 rounded-full text-sm ${
+              darkMode 
+                ? 'bg-gray-800 text-gray-300' 
+                : 'bg-white text-gray-700'
+            } font-medium flex items-center shadow-sm`}>
+              <span className="mr-1.5">{applications.length}</span>
+              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {applications.length === 1 ? 'applicant' : 'applicants'}
+              </span>
+            </div>
+          </div>
+          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>
+            {applications.length > 0 && 
+              <div className="flex gap-2 items-center">
+                <div className={`w-2 h-2 rounded-full ${darkMode ? 'bg-indigo-400' : 'bg-indigo-500'}`}></div>
+                <span>Latest: {new Date(
+                  Math.max(...applications.map(app => new Date(app.applicationDate || app.date)))
+                ).toLocaleDateString()}</span>
+              </div>
+            }
+          </div>
         </div>
 
         {applications.length === 0 ? (
-          <div className="flex justify-center items-center p-16 text-gray-500">
-            <p className="text-lg font-medium">No recent applications.</p>
+          <div className="flex justify-center items-center p-16 text-gray-500 flex-grow">
+            <p className={`text-lg font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No recent applications.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} overflow-y-auto flex-grow`} ref={containerRef}>
             {applications.map((app) => {
               const applicantData = applicantsData[app._id];
-              const statusColors = {
-                Screening: "bg-yellow-100 text-yellow-800 border-yellow-200",
-                Pending: "bg-gray-100 text-gray-800 border-gray-200",
-                Accepted: "bg-green-100 text-green-800 border-green-200",
-              };
-              const isSelected = app.jobSeekerId === selectedCandidateId;
+              const isSelected = selectedApplicant?._id === app._id;
 
               return (
                 <div
                   key={app._id}
-                  ref={isSelected? selectedCandidateRef : null}
-                  className={`p-6 transition-colors duration-200 group ${
+                  ref={isSelected ? selectedCandidateRef : null}
+                  className={`p-6 transition-colors duration-200 cursor-pointer relative ${
                     isSelected 
-                      ? 'bg-gray-200 hover:bg-gray-300' 
-                      : 'hover:bg-gray-50'
+                      ? darkMode ? 'bg-indigo-900/30 border-l-4 border-indigo-500' : 'bg-indigo-50 border-l-4 border-indigo-500'
+                      : darkMode ? 'hover:bg-indigo-900/20 hover:border-l-4 hover:border-indigo-500' : 'hover:bg-indigo-50 hover:border-l-4 hover:border-indigo-500'
                   }`}
+                  onClick={() => handleApplicantClick(app)}
                 >
-                  <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+                  {/* Create a full clickable area overlay */}
+                  <div className="absolute inset-0" onClick={() => handleApplicantClick(app)}></div>
+                  
+                  <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
                     {/* Profile Picture */}
-                    <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 ring-4 ring-blue-50 shadow-md">
+                    <div className={`w-20 h-20 rounded-full overflow-hidden flex-shrink-0 ring-4 ${darkMode ? 'ring-gray-700' : 'ring-blue-50'} shadow-md`}>
                       <img
                         src={
                           applicantData?.profilePic ||
@@ -188,16 +254,16 @@ const Applications = ({
                     <div className="flex-grow">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-xl font-semibold text-gray-800 mb-1">
+                          <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} mb-1`}>
                             {app.name}
                           </h3>
-                          <p className="text-sm text-gray-500 mb-2">
+                          <p className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-500'} mb-2`}>
                             Applied for:{" "}
-                            <span className="font-medium text-blue-600">
+                            <span className={`font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                               {app.jobTitle}
                             </span>
                           </p>
-                          <p className="text-xs text-gray-400 mb-3">
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-400'} mb-3`}>
                             Applied on:{" "}
                             {new Date(app.applicationDate || app.date).toLocaleDateString()}
                           </p>
@@ -223,12 +289,13 @@ const Applications = ({
                       </div>
 
                       {/* Links Section */}
-                      <div className="mt-3 flex flex-wrap gap-3">
+                      <div className="mt-3 flex flex-wrap gap-3 relative z-20" onClick={(e) => e.stopPropagation()}>
                         <a
                           href={app.cv}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                          className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} transition-colors flex items-center space-x-1`}
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -252,7 +319,8 @@ const Applications = ({
                             href={app.linkedinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                            className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} transition-colors flex items-center space-x-1`}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -271,7 +339,8 @@ const Applications = ({
                             href={app.githubUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:text-blue-800 transition-colors flex items-center space-x-1"
+                            className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} transition-colors flex items-center space-x-1`}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -287,18 +356,27 @@ const Applications = ({
                       </div>
 
                       {/* Buttons Section */}
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="mt-4 flex flex-wrap gap-3 relative z-20" onClick={(e) => e.stopPropagation()}>
                         <button
-                          className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                          onClick={() => handleChatButtonClick(app)}
+                          className={`px-4 py-2.5 ${darkMode ? 'bg-stone-800 border-stone-700/20 hover:bg-stone-700' : 'bg-stone-800 border-stone-700/20 hover:bg-stone-700'} text-white text-sm font-medium rounded-md shadow-sm border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] focus:outline-none focus:ring-2 focus:ring-stone-500/30 focus:ring-offset-1 flex items-center space-x-1.5`}
+                          onClick={(e) => handleChatButtonClick(app, e)}
                         >
-                          Chat with Applicant
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                            <path fillRule="evenodd" d="M10 2c-2.236 0-4.43.18-6.57.524C1.993 2.755 1 4.014 1 5.426v5.148c0 1.413.993 2.67 2.43 2.902 1.168.188 2.352.327 3.55.414.28.02.521.18.642.413l1.713 3.293a.75.75 0 001.33 0l1.713-3.293a.783.783 0 01.642-.413 41.102 41.102 0 003.55-.414c1.437-.231 2.43-1.49 2.43-2.902V5.426c0-1.413-.993-2.67-2.43-2.902A41.289 41.289 0 0010 2zM6.75 6a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 2.5a.75.75 0 000 1.5h3.5a.75.75 0 000-1.5h-3.5z" clipRule="evenodd" />
+                          </svg>
+                          <span className="hidden sm:inline">Chat with Applicant</span>
+                          <span className="sm:hidden">Chat</span>
                         </button>
                         <button
-                          className="px-6 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-full shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                          onClick={() => trackApplicant(app)}
+                          className={`px-4 py-2.5 ${darkMode ? 'bg-stone-100 border-stone-200 text-stone-800 hover:bg-stone-50' : 'bg-stone-100 border-stone-200 text-stone-800 hover:bg-stone-50'} text-sm font-medium rounded-md shadow-sm border transition-all duration-200 hover:shadow-md hover:translate-y-[-1px] focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-1 flex items-center space-x-1.5`}
+                          onClick={(e) => trackApplicant(app, e)}
                         >
-                          Track Applicant
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                            <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                            <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                          </svg>
+                          <span className="hidden sm:inline">Track Applicant</span>
+                          <span className="sm:hidden">Track</span>
                         </button>
                       </div>
                     </div>
