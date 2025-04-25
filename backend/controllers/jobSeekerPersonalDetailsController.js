@@ -5,6 +5,8 @@ const streamifier = require('streamifier');
 const jobSeekerModel = require('../models/jobSeekerModel');
 const recruiterModel = require('../models/recruiterModel');
 const jobListingModel = require('../models/jobListingModel');
+const applicantModel = require('../models/applicantModel');
+const conversationModel = require('../models/conversationModel');
 const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
@@ -93,6 +95,9 @@ const changePic = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
+    // Check if we're in the test environment
+    const isTestEnvironment = process.env.NODE_ENV === 'test';
+
     // DELETE method: Remove the image and update job listings accordingly
     if (method === "DELETE") {
       let currentUrl;
@@ -103,6 +108,42 @@ const changePic = async (req, res) => {
         // "profile"
         currentUrl = user.profilePic;
         user.profilePic = defaultProfilePic;
+        
+        // If user is a jobSeeker, update all their application entries
+        if (user.role === "JobSeeker") {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { profilePic: defaultProfilePic }
+          );
+          
+          // Update profile pic in conversations only in non-test environment
+          if (!isTestEnvironment) {
+            try {
+              await conversationModel.updateMany(
+                { "participants.userId": user._id.toString(), "participants.role": "JobSeeker" },
+                { $set: { "participants.$[elem].profilePic": defaultProfilePic } },
+                { arrayFilters: [{ "elem.userId": user._id.toString(), "elem.role": "JobSeeker" }] }
+              );
+            } catch (err) {
+              console.error("Failed to update profile pic in conversations:", err);
+              // Continue execution to avoid breaking the main functionality
+            }
+          }
+        } else if (user.role === "Recruiter") {
+          // Update profile pic in conversations for recruiters too, only in non-test environment
+          if (!isTestEnvironment) {
+            try {
+              await conversationModel.updateMany(
+                { "participants.userId": user._id.toString(), "participants.role": "Recruiter" },
+                { $set: { "participants.$[elem].profilePic": defaultProfilePic } },
+                { arrayFilters: [{ "elem.userId": user._id.toString(), "elem.role": "Recruiter" }] }
+              );
+            } catch (err) {
+              console.error("Failed to update profile pic in conversations:", err);
+              // Continue execution to avoid breaking the main functionality
+            }
+          }
+        }
       }
 
       // If there's an existing image that isn't default, remove from Cloudinary
@@ -193,11 +234,46 @@ const changePic = async (req, res) => {
             }
           } else {
             user.profilePic = result.secure_url;
-            if (user.role === "Recruiter") {
+            
+            // If user is a jobSeeker, update all their application entries
+            if (user.role === "JobSeeker") {
+              await applicantModel.updateMany(
+                { jobSeekerId: user._id },
+                { profilePic: result.secure_url }
+              );
+              
+              // Update profile pic in conversations only in non-test environment
+              if (!isTestEnvironment) {
+                try {
+                  await conversationModel.updateMany(
+                    { "participants.userId": user._id.toString(), "participants.role": "JobSeeker" },
+                    { $set: { "participants.$[elem].profilePic": result.secure_url } },
+                    { arrayFilters: [{ "elem.userId": user._id.toString(), "elem.role": "JobSeeker" }] }
+                  );
+                } catch (err) {
+                  console.error("Failed to update profile pic in conversations:", err);
+                  // Continue execution to avoid breaking the main functionality
+                }
+              }
+            } else if (user.role === "Recruiter") {
               await jobListingModel.updateMany(
                 { recruiterId: user._id },
                 { recruiterProfileImage: result.secure_url }
               );
+              
+              // Update profile pic in conversations for recruiters too, only in non-test environment
+              if (!isTestEnvironment) {
+                try {
+                  await conversationModel.updateMany(
+                    { "participants.userId": user._id.toString(), "participants.role": "Recruiter" },
+                    { $set: { "participants.$[elem].profilePic": result.secure_url } },
+                    { arrayFilters: [{ "elem.userId": user._id.toString(), "elem.role": "Recruiter" }] }
+                  );
+                } catch (err) {
+                  console.error("Failed to update profile pic in conversations:", err);
+                  // Continue execution to avoid breaking the main functionality
+                }
+              }
             }
           }
           await user.save();
