@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import JobListingCard from "./JobListingCard";
-import { FaSpinner, FaSearch, FaBookmark, FaFolderOpen, FaExclamationTriangle } from "react-icons/fa";
+import { FaSpinner, FaSearch, FaBookmark, FaExclamationTriangle, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import calculateWorkExperienceMatch from "../utils/calculateWorkExperienceMatch";
 
 const JobListingCardsList = ({
@@ -20,6 +20,9 @@ const JobListingCardsList = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCalculatingRelevance, setIsCalculatingRelevance] = useState(false);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   const defaultRelevancePoints = {
     matchedJobRolePoints: 10,
@@ -30,6 +33,9 @@ const JobListingCardsList = ({
   };
 
   const [relevancePoints, setRelevancePoints] = useState(defaultRelevancePoints);
+
+  // Reference to the job listings container
+  const listingsContainerRef = useRef(null);
 
   // Load relevance points on mount
   useEffect(() => {
@@ -56,6 +62,11 @@ const JobListingCardsList = ({
       : jobListings;
     setJobListingsCount(currentFilteredListings.length);
   }, [jobListings, sortingMethod, user.savedJobListings, setJobListingsCount]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, sortingMethod]);
 
   // Fetch job listings and sort them
   useEffect(() => {
@@ -295,6 +306,86 @@ const JobListingCardsList = ({
       ? jobListings.filter(job => savedIds.has(job._id.toString()))
       : jobListings;
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredListings.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
+
+  // Change page handler
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+  
+  // Page navigation handlers
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5; // Show at most 5 page numbers
+    
+    if (totalPages <= maxPagesToShow) {
+      // If we have less than maxPagesToShow pages, show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Complex pagination logic for many pages
+      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+      let endPage = startPage + maxPagesToShow - 1;
+      
+      if (endPage > totalPages) {
+        endPage = totalPages;
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      // Add first page if not included
+      if (startPage > 1) {
+        pageNumbers.unshift(1);
+        if (startPage > 2) pageNumbers.splice(1, 0, '...');
+      }
+      
+      // Add last page if not included
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
+  };
+
+  // Add this effect to handle scrolling when page changes
+  useEffect(() => {
+    // If we have a container reference and it's not the initial render
+    if (listingsContainerRef.current) {
+      // Get the element that should be at the top of the view
+      const element = document.getElementById('job-listings-top');
+      if (element) {
+        // Scroll to the element with a small offset
+        window.scrollTo({
+          top: element.offsetTop - 80, // 80px offset to account for headers/nav
+          behavior: 'instant' // Use 'instant' instead of 'smooth' to prevent animation
+        });
+      }
+    }
+  }, [currentPage]); // Only run when the page changes
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 py-16">
@@ -351,25 +442,100 @@ const JobListingCardsList = ({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-4 md:p-6">
-      {filteredListings.map((jobListing) => (
-        <div
-          key={jobListing._id}
-          className="transform transition-transform duration-200 hover:scale-[1.01]"
-        >
-          <JobListingCard
-            onJobSelect={onJobSelect}
-            jobListing={jobListing}
-            user={user}
-            setUser={setUser}
-            setShowModal={setShowModal}
-            showNotification={showNotification}
-            setRenderingConversationKey={setRenderingConversationKey}
-            setRenderingConversationData={setRenderingConversationData}
-          />
+    <>
+      {/* Position marker for scrolling */}
+      <div id="job-listings-top"></div>
+      
+      {/* Pagination Controls - Only at the top */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center my-4">
+          <nav className="flex justify-center items-center space-x-3 bg-white px-4 py-2 rounded-full shadow-md border border-gray-100" aria-label="Pagination">
+            {/* Previous page button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                goToPreviousPage();
+              }}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-full transition-all duration-300 ${
+                currentPage === 1 
+                  ? 'text-gray-300 cursor-not-allowed' 
+                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+              }`}
+              aria-label="Previous page"
+            >
+              <FaArrowLeft size={14} className="transform transition-transform group-hover:translate-x-[-2px]" />
+            </button>
+            
+            {/* Page numbers */}
+            <div className="flex items-center space-x-1 mx-1">
+              {getPageNumbers().map((number, index) => (
+                number === '...' 
+                  ? <span key={`ellipsis-${index}`} className="px-1 text-gray-400 font-light">•••</span>
+                  : (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        paginate(number);
+                      }}
+                      className={`w-8 h-8 flex items-center justify-center rounded-full text-sm transition-all duration-300 ${
+                        currentPage === number
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium scale-110 shadow-sm'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                      aria-current={currentPage === number ? "page" : undefined}
+                    >
+                      {number}
+                    </button>
+                  )
+              ))}
+            </div>
+            
+            {/* Next page button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                goToNextPage();
+              }}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-full transition-all duration-300 ${
+                currentPage === totalPages 
+                  ? 'text-gray-300 cursor-not-allowed' 
+                  : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+              }`}
+              aria-label="Next page"
+            >
+              <FaArrowRight size={14} className="transform transition-transform group-hover:translate-x-[2px]" />
+            </button>
+          </nav>
         </div>
-      ))}
-    </div>
+      )}
+
+      {/* Job listings */}
+      <div 
+        ref={listingsContainerRef}
+        className="grid grid-cols-1 gap-4 p-4 md:p-6"
+      >
+        {currentItems.map((jobListing) => (
+          <div
+            key={jobListing._id}
+            className="transform transition-transform duration-200 hover:scale-[1.01]"
+          >
+            <JobListingCard
+              onJobSelect={onJobSelect}
+              jobListing={jobListing}
+              user={user}
+              setUser={setUser}
+              setShowModal={setShowModal}
+              showNotification={showNotification}
+              setRenderingConversationKey={setRenderingConversationKey}
+              setRenderingConversationData={setRenderingConversationData}
+            />
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
 
