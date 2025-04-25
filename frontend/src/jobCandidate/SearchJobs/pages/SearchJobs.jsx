@@ -11,6 +11,7 @@ import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
 import JobListingDescription from "../components/JobListingDescription";
 import MessagingBar from "../components/MessagingBar";
+import { FaFilter, FaSort, FaChevronDown, FaChevronUp, FaTimes, FaInfoCircle } from "react-icons/fa";
 
 const SearchJobs = ({onlineUsers}) => {
   // Get state from location and initialize our user state
@@ -21,6 +22,8 @@ const SearchJobs = ({onlineUsers}) => {
   const [notification, setNotification] = useState(null);
   const [jobListingsCount, setJobListingsCount] = useState(0);
   const [educationListedOptions, setEducationListedOptions] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSortOptions, setShowSortOptions] = useState(false);
 
   // Initialize conversation and job listing states from notification (if any)
   const [selectedJob, setSelectedJob] = useState(null);
@@ -34,6 +37,7 @@ const SearchJobs = ({onlineUsers}) => {
   });
 
   const descriptionRef = useRef(null);
+  const sortingOptionsRef = useRef(null);
 
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
@@ -123,7 +127,6 @@ const SearchJobs = ({onlineUsers}) => {
   };
 
   const handleSelectJob = (job) => {
-    console.log("handleSelectJob");
     setSelectedJob(job);
   };
 
@@ -133,7 +136,25 @@ const SearchJobs = ({onlineUsers}) => {
 
   const handleSortChange = (e) => {
     setSortingMethod(e.target.value);
+    setShowSortOptions(false);
   };
+
+  // Count active filters
+  const activeFiltersCount = Object.values(filters).filter(val => val !== "").length;
+
+  // Handle click outside for sorting dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortingOptionsRef.current && !sortingOptionsRef.current.contains(event.target)) {
+        setShowSortOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // This function is used to handle CV upload.
   // The email is passed via query string.
@@ -237,7 +258,7 @@ const SearchJobs = ({onlineUsers}) => {
   }, []);
 
   return (
-    <div key={state.refreshToken} className="bg-gray-100 h-screen flex flex-col">
+    <div key={state.refreshToken} className="bg-gray-50 min-h-screen flex flex-col">
       <NavigationBar userType={state?.user?.role}/>
       <Botpress />
       {notification && (
@@ -247,9 +268,103 @@ const SearchJobs = ({onlineUsers}) => {
           onClose={() => setNotification(null)}
         />
       )}
-      <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-6 max-w-7xl mx-auto overflow-hidden">
-        {/* Left Area */}
-        <div className="bg-white rounded shadow lg:col-span-1 h-full overflow-y-auto">
+
+      <div className="flex-grow lg:grid lg:grid-cols-4 gap-6 p-4 md:p-6 max-w-7xl mx-auto w-full relative">
+        {/* Mobile Filter Toggle */}
+        <div className="lg:hidden sticky top-0 z-20 flex justify-between items-center mb-4 bg-white rounded-xl shadow-sm p-3">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-gray-700 font-medium"
+          >
+            <FaFilter className={activeFiltersCount > 0 ? "text-blue-500" : ""} />
+            Filters
+            {activeFiltersCount > 0 && (
+              <span className="bg-blue-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-xs">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+          
+          {/* Mobile Sorting Dropdown */}
+          <div className="relative" ref={sortingOptionsRef}>
+            <button 
+              onClick={() => setShowSortOptions(!showSortOptions)}
+              className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-gray-700 font-medium"
+            >
+              <FaSort />
+              Sort
+              {showSortOptions ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+            </button>
+            
+            {showSortOptions && (
+              <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg p-2 z-20 w-48 border border-gray-100">
+                <div className="flex flex-col">
+                  <label className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="sort-mobile" 
+                      value="relevance" 
+                      checked={sortingMethod === "relevance"}
+                      onChange={handleSortChange}
+                      disabled={!user.analyzed_cv_content}
+                      className="mr-2" 
+                    />
+                    Most Relevant
+                  </label>
+                  <label className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="sort-mobile" 
+                      value="saved" 
+                      checked={sortingMethod === "saved"}
+                      onChange={handleSortChange}
+                      className="mr-2" 
+                    />
+                    Saved Jobs
+                  </label>
+                  <label className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="sort-mobile" 
+                      value="newest" 
+                      checked={sortingMethod === "newest"}
+                      onChange={handleSortChange}
+                      className="mr-2" 
+                    />
+                    Newest First
+                  </label>
+                  <label className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="sort-mobile" 
+                      value="oldest" 
+                      checked={sortingMethod === "oldest"}
+                      onChange={handleSortChange}
+                      className="mr-2" 
+                    />
+                    Oldest First
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="rounded-lg bg-green-100 text-green-800 text-sm font-semibold py-2 px-3">
+            {jobListingsCount} jobs
+          </div>
+        </div>
+
+        {/* Filters - Left Sidebar */}
+        <div className={`lg:col-span-1 ${showFilters ? 'block' : 'hidden'} lg:block fixed lg:sticky top-0 lg:top-6 left-0 right-0 z-30 lg:z-0 h-screen lg:h-auto overflow-auto lg:overflow-visible bg-white lg:bg-transparent p-4 lg:p-0`}>
+          <div className="flex justify-between items-center mb-4 lg:mb-2">
+            <h2 className="text-xl font-bold text-gray-800">Filters</h2>
+            <button 
+              onClick={() => setShowFilters(false)} 
+              className="lg:hidden text-gray-500 hover:text-gray-700"
+            >
+              <FaTimes />
+            </button>
+          </div>
           <SearchFilters
             filters={filters}
             setFilters={handleFilterChange}
@@ -258,162 +373,174 @@ const SearchJobs = ({onlineUsers}) => {
           />
         </div>
 
-        {/* Central Area */}
-        <div className="relative bg-white rounded shadow lg:col-span-2 h-full overflow-y-auto">
-          <MessagingBar
-            user={user}
-            onlineUsers={onlineUsers}
-            renderingConversationData={renderingConversationData}
-            renderingConversationKey={renderingConversationKey}
-            />
-          <div className="flex sticky top-0 z-10">
-            <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
-              <h1>Search Results</h1>
-              <div className="relative flex">
-                {/* Sorting Dropdown */}
-                <select
-                  value={sortingMethod}
-                  onChange={handleSortChange}
-                  className="text-sm px-2 py-1 w-fit border rounded text-gray-700 bg-white shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option disabled={!user.analyzed_cv_content} value="relevance">
-                    Most Relevant First
-                  </option>
-                  <option value="saved">Saved</option>
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                </select>
+        {/* Central Area - Job Listings */}
+        <div className="lg:col-span-2 h-full z-10">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="sticky top-0 z-20">
+              <MessagingBar
+                user={user}
+                onlineUsers={onlineUsers}
+                renderingConversationData={renderingConversationData}
+                renderingConversationKey={renderingConversationKey}
+              />
 
-                <div className="relative group cursor-help">
-                  {/* Custom Tooltip */}
-                  <span className="text-white text-lg">
-                    <i className="ml-1 fa fa-info-circle" />
+              {/* Desktop Header with sorting */}
+              <div className="hidden lg:flex items-center justify-between p-4 bg-white border-b">
+                <h1 className="text-xl font-bold text-gray-800">Job Listings</h1>
+                
+                <div className="flex items-center gap-4">
+                  {/* Result count */}
+                  <span className="py-1.5 px-3 bg-green-100 text-green-800 text-sm font-semibold rounded-lg">
+                    {jobListingsCount} results
                   </span>
-                  {user.analyzed_cv_content ? (
-                    <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                      <p className="text-lg font-bold mb-3 border-b pb-2">
-                        Analyzed CV Content
-                      </p>
-                      <ul className="list-none pl-0 space-y-1">
-                        {/* Job Roles */}
-                        <li>
-                          <strong className="block text-blue-600">Job Roles:</strong>
-                          <span>
-                            {Array.isArray(user.analyzed_cv_content.job_role) &&
-                            user.analyzed_cv_content.job_role.length > 0
-                              ? user.analyzed_cv_content.job_role.join(", ")
-                              : "None"}
-                          </span>
-                        </li>
-                        {/* Security Clearance */}
-                        <li>
-                          <strong className="block text-blue-600">
-                            Security Clearance:
-                          </strong>
-                          <span>
-                            {user.analyzed_cv_content.security_clearance ||
-                              "None"}
-                          </span>
-                        </li>
-                        {/* Education */}
-                        <li>
-                          <strong className="block text-blue-600">Education:</strong>
-                          {Array.isArray(user.analyzed_cv_content.education) &&
-                          user.analyzed_cv_content.education.length > 0 ? (
-                            user.analyzed_cv_content.education.map((edu, index) => (
-                              <span key={index} className="block">
-                                {edu.degree} from{" "}
-                                <span className="font-medium">
-                                  {edu.institution}
-                                </span>
-                              </span>
-                            ))
-                          ) : (
-                            <span>None</span>
-                          )}
-                        </li>
-                        {/* Work Experience */}
-                        <li>
-                          <strong className="block text-blue-600">
-                            Work Experience:
-                          </strong>
-                          {Array.isArray(user.analyzed_cv_content.work_experience) &&
-                          user.analyzed_cv_content.work_experience.length > 0 ? (
-                            user.analyzed_cv_content.work_experience.map(
-                              (exp, index) => {
-                                const yearsOfExperience =
-                                  (exp.end_year || new Date().getFullYear()) -
-                                  exp.start_year;
-                                return (
-                                  <span key={index} className="block">
-                                    {exp.job_title}{" "}
-                                    <span className="font-medium">
-                                      at {exp.company} ({exp.start_year} -{" "}
-                                      {exp.end_year || "Present"}) -{" "}
-                                      {yearsOfExperience} year(s)
-                                    </span>
-                                  </span>
-                                );
-                              }
-                            )
-                          ) : (
-                            <span>None</span>
-                          )}
-                        </li>
-                        {/* Skills */}
-                        <li>
-                          <strong className="block text-blue-600">Skills:</strong>
-                          <span>
-                            {Array.isArray(user.analyzed_cv_content.skills) &&
-                            user.analyzed_cv_content.skills.length > 0
-                              ? user.analyzed_cv_content.skills.length > 5
-                                ? user.analyzed_cv_content.skills
-                                    .slice(0, -1)
-                                    .join(", ") + ", " + user.analyzed_cv_content.skills[user.analyzed_cv_content.skills.length - 1]
-                                : user.analyzed_cv_content.skills.join(", ")
-                              : "None"}
-                          </span>
-                        </li>
-                      </ul>
+                  
+                  {/* Sorting dropdown */}
+                  <div className="relative" ref={sortingOptionsRef}>
+                    <select
+                      value={sortingMethod}
+                      onChange={handleSortChange}
+                      className="appearance-none bg-gray-100 text-gray-700 py-2 pl-4 pr-8 rounded-lg border-0 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+                    >
+                      <option disabled={!user.analyzed_cv_content} value="relevance">
+                        Most Relevant First
+                      </option>
+                      <option value="saved">Saved Jobs</option>
+                      <option value="newest">Newest First</option>
+                      <option value="oldest">Oldest First</option>
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                      <FaChevronDown size={12} />
                     </div>
-                  ) : (
-                    <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-4 w-64 border border-gray-300">
-                      <p className="text-sm text-gray-500">
-                        No analyzed CV content found.
-                      </p>
+                  </div>
+                  
+                  {/* CV info button */}
+                  {user.analyzed_cv_content && (
+                    <div className="relative group">
+                      <button className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <FaInfoCircle />
+                      </button>
+                      <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-xl p-4 w-72 border border-gray-200 z-30">
+                        <p className="text-lg font-bold mb-3 border-b pb-2">Your CV Profile</p>
+                        <ul className="list-none space-y-3">
+                          {/* Job Roles */}
+                          <li>
+                            <strong className="block text-blue-600 text-sm">Job Roles:</strong>
+                            <span className="text-sm">
+                              {Array.isArray(user.analyzed_cv_content.job_role) &&
+                              user.analyzed_cv_content.job_role.length > 0
+                                ? user.analyzed_cv_content.job_role.join(", ")
+                                : "None"}
+                            </span>
+                          </li>
+                          
+                          {/* Security Clearance */}
+                          <li>
+                            <strong className="block text-blue-600 text-sm">Security Clearance:</strong>
+                            <span className="text-sm">
+                              {user.analyzed_cv_content.security_clearance || "None"}
+                            </span>
+                          </li>
+                          
+                          {/* Education */}
+                          <li>
+                            <strong className="block text-blue-600 text-sm">Education:</strong>
+                            {Array.isArray(user.analyzed_cv_content.education) &&
+                            user.analyzed_cv_content.education.length > 0 ? (
+                              user.analyzed_cv_content.education.map((edu, index) => (
+                                <span key={index} className="block text-sm">
+                                  {edu.degree} from {edu.institution}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-sm">None</span>
+                            )}
+                          </li>
+                          
+                          {/* Skills */}
+                          <li>
+                            <strong className="block text-blue-600 text-sm">Skills:</strong>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {Array.isArray(user.analyzed_cv_content.skills) &&
+                              user.analyzed_cv_content.skills.length > 0
+                                ? user.analyzed_cv_content.skills.slice(0, 10).map((skill, index) => (
+                                    <span key={index} className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                                      {skill}
+                                    </span>
+                                  ))
+                                : <span className="text-sm">None</span>}
+                              {user.analyzed_cv_content.skills?.length > 10 && (
+                                <span className="text-xs px-2 py-0.5 bg-gray-100 rounded-full">
+                                  +{user.analyzed_cv_content.skills.length - 10} more
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
-              <span className="py-1 px-2 bg-green-500 text-white text-sm font-semibold rounded transition-all">
-                Found {jobListingsCount} results
-              </span>
+            </div>
+            
+            {/* Job Listings */}
+            <JobListingCardsList
+              key={`${user.cv}-${JSON.stringify(filters)}`}
+              filters={filters}
+              onJobSelect={setSelectedJob}
+              user={user}
+              setUser={setUser}
+              setShowModal={setShowModal}
+              showNotification={showNotification}
+              setJobListingsCount={setJobListingsCount}
+              sortingMethod={sortingMethod}
+              setEducationListedOptions={setEducationListedOptions}
+              setRenderingConversationKey={setRenderingConversationKey}
+              setRenderingConversationData={setRenderingConversationData}
+            />
+          </div>
+        </div>
+
+        {/* Right Area - Job Description */}
+        <div className="lg:col-span-1 hidden lg:block">
+          <div className="sticky top-6 bg-white rounded-xl shadow-sm p-0 overflow-hidden">
+            <div ref={descriptionRef} className="max-h-[calc(100vh-8rem)] overflow-auto">
+              {selectedJob ? (
+                <JobListingDescription jobListing={selectedJob} />
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 h-64 text-center">
+                  <div className="bg-gray-50 rounded-full p-6 mb-4">
+                    <FaInfoCircle className="text-3xl text-gray-300" />
+                  </div>
+                  <p className="text-gray-500 font-medium">
+                    Select a job to view details
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-          <JobListingCardsList
-            key={`${user.cv}-${JSON.stringify(filters)}`}
-            filters={filters}
-            onJobSelect={setSelectedJob}
-            user={user}
-            setUser={setUser}
-            setShowModal={setShowModal}
-            showNotification={showNotification}
-            setJobListingsCount={setJobListingsCount}
-            sortingMethod={sortingMethod}
-            setEducationListedOptions={setEducationListedOptions}
-            setRenderingConversationKey={setRenderingConversationKey}
-            setRenderingConversationData={setRenderingConversationData}
-            />
         </div>
+      </div>
 
-        {/* Right Area */}
-        <div className="bg-white p-4 rounded shadow lg:col-span-1 h-full overflow-y-auto hidden lg:block">
-          <div ref={descriptionRef}>
-            {selectedJob && <JobListingDescription jobListing={selectedJob} />}
+      {/* Mobile Job Description Modal */}
+      {selectedJob && (
+        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end">
+          <div className="bg-white rounded-t-xl w-full max-h-[80vh] overflow-auto animate-slide-up">
+            <div className="flex justify-between items-center p-4 border-b sticky top-0 bg-white">
+              <h3 className="font-bold text-lg">Job Details</h3>
+              <button 
+                onClick={() => setSelectedJob(null)}
+                className="p-2 text-gray-500 hover:text-gray-700"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="p-4">
+              <JobListingDescription jobListing={selectedJob} />
+            </div>
           </div>
         </div>
-
-      </div>
+      )}
 
       {showModal && (
         <Modal

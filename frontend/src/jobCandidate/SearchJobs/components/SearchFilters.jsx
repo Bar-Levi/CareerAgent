@@ -1,16 +1,49 @@
 // File: SearchFilters.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMediaQuery } from "react-responsive";
+import { 
+  ChevronDown, 
+  X, 
+  Filter, 
+  Search, 
+  Briefcase, 
+  Building, 
+  MapPin, 
+  Star, 
+  Clock, 
+  Globe, 
+  Layers, 
+  Award, 
+  Book, 
+  Code,
+  Calendar,
+  Sliders,
+  Share2,
+  Users,
+  ChevronUp,
+  ChevronsUpDown,
+  PlusCircle
+} from "lucide-react";
 
-const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptions }) => {
-  const [filteredRoles, setFilteredRoles] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [filteredSkills, setFilteredSkills] = useState([]);
-  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
-  const [filteredEducation, setFilteredEducation] = useState([]);
-  const [showEducationDropdown, setShowEducationDropdown] = useState(false);
+const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptions = [] }) => {
+  // Track open sections with a Set to allow multiple open sections - initialize with empty set
+  const [openSections, setOpenSections] = useState(new Set());
+  const [filterCount, setFilterCount] = useState(0);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const filterRef = useRef(null);
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const [expandAll, setExpandAll] = useState(false);
+  
+  // Autocomplete states
+  const [suggestions, setSuggestions] = useState({
+    jobRole: [],
+    skills: [],
+    education: []
+  });
 
-
+  // Reference data
   const jobRoles = [
     "Student",
     "Software Developer",
@@ -288,8 +321,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
     "Multi-Threaded Systems Developer",
     "Embedded Linux Developer",
     "Firmware Security Specialist"
-];
-
+  ];
 
   const skillsList = [
     "React",
@@ -470,281 +502,600 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
     "Blockchain Technology",
   ];
 
-  
-  
+  // Calculate active filter count
+  useEffect(() => {
+    const count = Object.values(filters).filter(value => value && value.trim() !== '').length;
+    setFilterCount(count);
+  }, [filters]);
+
+  // Update expandAll state when all sections are manually opened or closed
+  useEffect(() => {
+    const totalSections = filterSections.length;
+    setExpandAll(openSections.size === totalSections);
+  }, [openSections]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterRef.current && !filterRef.current.contains(event.target)) {
+        setSuggestions({
+          jobRole: [],
+          skills: [],
+          education: []
+        });
+      }
+    };
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Handle input changes for filters
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(name, value); // Update specific filter key
-
-    if (name === "jobRole") {
-      if (value.trim() === "") {
-        setFilteredRoles([]);
-        setShowDropdown(false);
-      } else {
-        const matches = jobRoles.filter((role) =>
-          role.toLowerCase().includes(value.toLowerCase())
-        );
-        setFilteredRoles(matches);
-        setShowDropdown(matches.length > 0);
-      }
-    }
-
-    if (name === "skills") {
-      const enteredSkills = value.split(",").map((skill) => skill.trim());
+  const handleChange = (name, value) => {
+    setFilters(name, value);
+    
+    // Handle autocomplete based on filter type
+    if (name === "jobRole" && value.trim() !== "") {
+      const matches = jobRoles.filter(role => 
+        role.toLowerCase().includes(value.toLowerCase())
+      ).slice(0, 5);
+      setSuggestions(prev => ({ ...prev, jobRole: matches }));
+    } else if (name === "skills" && value.trim() !== "") {
+      const enteredSkills = value.split(",").map(skill => skill.trim());
       const lastSkill = enteredSkills[enteredSkills.length - 1];
-
-      if (lastSkill.trim() === "") {
-        setFilteredSkills([]);
-        setShowSkillsDropdown(false);
-      } else {
-        const matches = skillsList.filter((skill) =>
+      
+      if (lastSkill) {
+        const matches = skillsList.filter(skill =>
           skill.toLowerCase().startsWith(lastSkill.toLowerCase())
-        );
-        setFilteredSkills(matches);
-        setShowSkillsDropdown(matches.length > 0);
+        ).slice(0, 5);
+        setSuggestions(prev => ({ ...prev, skills: matches }));
+      }
+    } else if (name === "education" && value.trim() !== "") {
+      const enteredEducation = value.split(",").map(edu => edu.trim());
+      const lastEdu = enteredEducation[enteredEducation.length - 1];
+      
+      if (lastEdu && educationListedOptions) {
+        const matches = educationListedOptions
+          .filter(edu => edu != null) // Filter out null or undefined values
+          .filter(edu => edu.toLowerCase().startsWith(lastEdu.toLowerCase()))
+          .slice(0, 5);
+        setSuggestions(prev => ({ ...prev, education: matches }));
       }
     }
+  };
 
-    if (name === "education") {
-      const enteredEducation = value.split(",").map((edu) => edu.trim());
-      const lastEducation = enteredEducation[enteredEducation.length - 1];
+  // Toggle all sections
+  const toggleAllSections = () => {
+    const newExpandState = !expandAll;
+    setExpandAll(newExpandState);
+    
+    if (newExpandState) {
+      // Open all sections
+      const allSections = filterSections.map(section => section.id);
+      setOpenSections(new Set(allSections));
+    } else {
+      // Close all sections
+      setOpenSections(new Set());
+    }
+  };
 
-      if (lastEducation.trim() === "") {
-        setFilteredEducation([]);
-        setShowEducationDropdown(false);
+  // Handle selection from autocomplete dropdown
+  const handleSuggestionSelect = (type, value) => {
+    if (type === "jobRole") {
+      setFilters(type, value);
+      setSuggestions(prev => ({ ...prev, jobRole: [] }));
+    } else if (type === "skills" || type === "education") {
+      const currentValues = filters[type] ? filters[type].split(",").map(item => item.trim()) : [];
+      currentValues.pop(); // Remove the last partial entry
+      const newValue = [...currentValues, value].join(", ");
+      setFilters(type, newValue);
+      setSuggestions(prev => ({ ...prev, [type]: [] }));
+    }
+  };
+
+  // Toggle filter section (allows multiple open sections)
+  const toggleSection = (sectionId) => {
+    setOpenSections(prev => {
+      const newOpenSections = new Set(prev);
+      if (newOpenSections.has(sectionId)) {
+        newOpenSections.delete(sectionId);
       } else {
-        const matches = educationListedOptions.filter((skill) =>
-          skill.toLowerCase().startsWith(lastEducation.toLowerCase())
-        );
-        setFilteredEducation(matches);
-        setShowEducationDropdown(matches.length > 0);
+        newOpenSections.add(sectionId);
       }
+      return newOpenSections;
+    });
+  };
+
+  // Filter pills display
+  const renderFilterPills = () => {
+    const activePills = [];
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value.trim() !== "") {
+        if (key === "skills" || key === "education") {
+          value.split(",").forEach(item => {
+            if (item.trim()) {
+              activePills.push({
+                key: `${key}-${item.trim()}`,
+                label: item.trim(),
+                type: key
+              });
+            }
+          });
+        } else {
+          activePills.push({
+            key,
+            label: value,
+            type: key
+          });
+        }
+      }
+    });
+    
+    if (activePills.length === 0) return null;
+    
+    return (
+      <div className="flex flex-wrap gap-2 mt-2 px-4 pb-3">
+        <span className="text-sm text-gray-500 font-medium flex items-center">
+          <Sliders size={14} className="mr-1" />
+          Active filters:
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {activePills.slice(0, 3).map(pill => (
+            <motion.span
+              key={pill.key}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-brand-primary/10 text-brand-primary"
+            >
+              {pill.label}
+              <button
+                onClick={() => removeFilter(pill.type, pill.label)}
+                className="ml-1 rounded-full p-0.5 hover:bg-brand-primary/20 transition-colors"
+              >
+                <X size={12} />
+              </button>
+            </motion.span>
+          ))}
+          {activePills.length > 3 && (
+            <motion.span
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-200 text-gray-700"
+            >
+              +{activePills.length - 3} more
+            </motion.span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Remove individual filter
+  const removeFilter = (type, value) => {
+    if (type === "skills" || type === "education") {
+      const values = filters[type].split(",").map(v => v.trim());
+      const filtered = values.filter(v => v !== value).join(", ");
+      setFilters(type, filtered);
+    } else {
+      setFilters(type, "");
     }
   };
 
-  // Handle dropdown item click for jobRole
-  const handleDropdownClick = (role) => {
-    setFilters("jobRole", role);
-    setFilteredRoles([]);
-    setShowDropdown(false);
+  // Filter section icons
+  const sectionIcons = {
+    jobDetails: <Briefcase size={18} />,
+    company: <Building size={18} />,
+    qualifications: <Award size={18} />
   };
 
-  // Handle dropdown item click for skills
-  const handleSkillsDropdownClick = (skill) => {
-    const currentSkills = filters.skills ? filters.skills.split(",").map((s) => s.trim()) : [];
-    currentSkills.pop(); // Remove the last partial skill
-    currentSkills.push(skill); // Add the selected skill
+  // Grouped filter sections
+  const filterSections = [
+    {
+      id: "jobDetails",
+      title: "Job Details",
+      icon: sectionIcons.jobDetails,
+      fields: [
+        {
+          name: "jobRole",
+          label: "Job Role",
+          type: "autocomplete",
+          placeholder: "Search job roles...",
+          suggestions: "jobRole",
+          icon: <Briefcase size={16} />
+        },
+        {
+          name: "jobType",
+          label: "Job Type",
+          type: "select",
+          options: ["Full Time", "Part Time", "Contract"],
+          icon: <Clock size={16} />
+        },
+        {
+          name: "remote",
+          label: "Work Mode",
+          type: "select",
+          options: ["Remote", "Hybrid", "On Site"],
+          icon: <Globe size={16} />
+        },
+        {
+          name: "experienceLevel",
+          label: "Experience Level",
+          type: "select",
+          options: ["Entry", "Junior", "Senior", "Internship"],
+          icon: <Layers size={16} />
+        }
+      ]
+    },
+    {
+      id: "company",
+      title: "Company",
+      icon: sectionIcons.company,
+      fields: [
+        {
+          name: "company",
+          label: "Company Name",
+          type: "text",
+          placeholder: "Enter company name",
+          icon: <Building size={16} />
+        },
+        {
+          name: "location",
+          label: "Location",
+          type: "text",
+          placeholder: "City, state, or country",
+          icon: <MapPin size={16} />
+        },
+        {
+          name: "companySize",
+          label: "Company Size",
+          type: "select",
+          options: ["0-30", "31-100", "101-300", "301+"],
+          icon: <Users size={16} />
+        },
+        {
+          name: "securityClearance",
+          label: "Security Clearance",
+          type: "number",
+          placeholder: "Required clearance level",
+          icon: <Share2 size={16} />
+        }
+      ]
+    },
+    {
+      id: "qualifications",
+      title: "Qualifications",
+      icon: sectionIcons.qualifications,
+      fields: [
+        {
+          name: "skills",
+          label: "Skills",
+          type: "autocomplete",
+          placeholder: "Add skills...",
+          info: "Separate multiple skills with commas",
+          suggestions: "skills",
+          icon: <Code size={16} />
+        },
+        {
+          name: "education",
+          label: "Education",
+          type: "autocomplete",
+          placeholder: "Add education...",
+          info: "Separate multiple entries with commas",
+          suggestions: "education",
+          icon: <Book size={16} />
+        },
+        {
+          name: "workExperience",
+          label: "Work Experience",
+          type: "number",
+          placeholder: "Years of experience",
+          icon: <Calendar size={16} />
+        }
+      ]
+    }
+  ];
 
-    setFilters("skills", currentSkills.join(", "));
-    setFilteredSkills([]);
-    setShowSkillsDropdown(false);
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(filters).some(val => val && val.trim() !== '');
+
+  // Render filter field based on type
+  const renderField = (field) => {
+    switch (field.type) {
+      case "text":
+        return (
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {field.icon}
+            </div>
+            <input
+              type="text"
+              name={field.name}
+              placeholder={field.placeholder}
+              value={filters[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200"
+            />
+          </div>
+        );
+      case "number":
+        return (
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {field.icon}
+            </div>
+            <input
+              type="number"
+              name={field.name}
+              placeholder={field.placeholder}
+              value={filters[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200"
+            />
+          </div>
+        );
+      case "select":
+        return (
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              {field.icon}
+            </div>
+            <select
+              name={field.name}
+              value={filters[field.name] || ""}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg appearance-none focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200"
+            >
+              <option value="">{`Select ${field.label}`}</option>
+              {field.options.map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+          </div>
+        );
+      case "autocomplete":
+        return (
+          <div className="relative">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                {field.icon}
+              </div>
+              <input
+                type="text"
+                name={field.name}
+                placeholder={field.placeholder}
+                value={filters[field.name] || ""}
+                onChange={(e) => handleChange(field.name, e.target.value)}
+                className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200 placeholder:text-ellipsis placeholder:overflow-hidden"
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <PlusCircle size={16} />
+              </div>
+            </div>
+            
+            {field.info && (
+              <p className="text-xs text-gray-500 mt-1 ml-1 italic">
+                {field.info}
+              </p>
+            )}
+            
+            <AnimatePresence>
+              {suggestions[field.suggestions]?.length > 0 && (
+                <motion.ul
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto"
+                >
+                  {suggestions[field.suggestions].map(item => (
+                    <li
+                      key={item}
+                      onClick={() => handleSuggestionSelect(field.name, item)}
+                      className="px-4 py-1.5 cursor-pointer hover:bg-gray-50 flex items-center gap-2 transition-colors text-sm"
+                    >
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </motion.ul>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
-
-  // Handle dropdown item click for education
-  const handleEducationDropdownClick = (education) => {
-    const currentEducation = filters.education
-      ? filters.education.split(",").map((e) => e.trim())
-      : [];
-    currentEducation.pop(); // Remove the last partial education entry
-    currentEducation.push(education); // Add the selected education level
-
-    setFilters("education", currentEducation.join(", "));
-    setFilteredEducation([]); // Clear the filtered list
-    setShowEducationDropdown(false); // Close the dropdown
-  };
-
 
   return (
-    <div className="relative bg-white shadow rounded-lg max-h-screen">
-      <div className="flex sticky top-0 z-10">
-        <div className="w-full flex sticky top-0 items-center justify-between p-4 bg-brand-primary text-brand-accent text-2xl font-bold">
-          <span>Filters</span>
+    <>
+      {/* Mobile Filter Toggle */}
+      {isMobile && (
+        <div className="sticky top-0 z-20 bg-white p-3 shadow-sm border-b">
           <button
-            onClick={clearFilters}
-            className="py-1 px-2 bg-red-500 text-white text-sm font-semibold rounded hover:bg-red-600 transition-all"
+            onClick={() => setShowMobileFilters(true)}
+            className="flex items-center justify-center w-full gap-2 py-2 px-4 bg-brand-primary text-white rounded-lg font-medium text-sm"
           >
-            Clear Filters
+            <Filter size={16} />
+            <span>Filters</span>
+            {filterCount > 0 && (
+              <span className="ml-1 bg-white text-brand-primary text-xs font-bold rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                {filterCount}
+              </span>
+            )}
           </button>
+          {renderFilterPills()}
         </div>
-      </div>
+      )}
 
-      <div className="space-y-4 overflow-y-auto p-4">
-        {/* Job Role */}
-        <div className="relative">
-          <input
-            type="text"
-            name="jobRole"
-            placeholder="Job Role"
-            value={filters.jobRole || ""}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded"
-          />
-          {showDropdown && (
-            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
-              {filteredRoles.map((role) => (
-                <li
-                  key={role}
-                  onClick={() => handleDropdownClick(role)}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+      {/* Filter Container - Desktop or Mobile View */}
+      <AnimatePresence>
+        {(!isMobile || showMobileFilters) && (
+          <motion.div
+            ref={filterRef}
+            initial={isMobile ? { x: "100%" } : { opacity: 1 }}
+            animate={isMobile ? { x: 0 } : { opacity: 1 }}
+            exit={isMobile ? { x: "100%" } : { opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className={`
+              bg-white shadow-lg rounded-lg overflow-hidden
+              ${isMobile ? 
+                "fixed top-0 right-0 bottom-0 z-30 w-full max-w-md flex flex-col" : 
+                "auto-height sticky top-3 overflow-y-auto"
+              }
+            `}
+            style={{ 
+              maxHeight: isMobile ? 'none' : 'calc(100vh - 7rem)'
+            }}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-brand-primary text-white p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter size={18} />
+                <h2 className="text-lg font-medium">Filters</h2>
+                {filterCount > 0 && (
+                  <span className="ml-1 bg-white text-brand-primary text-xs font-bold rounded-full h-5 flex items-center justify-center px-1.5">
+                    {filterCount}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleAllSections}
+                  className="py-1 px-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-md transition-colors flex items-center gap-1"
+                  title={expandAll ? "Collapse all sections" : "Expand all sections"}
                 >
-                  {role}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Skills */}
-        <div className="relative">
-          <input
-            type="text"
-            name="skills"
-            placeholder="Skills (comma-separated)"
-            value={filters.skills || ""}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border rounded"
-          />
-          {showSkillsDropdown && (
-            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
-              {filteredSkills.map((skill) => (
-                <li
-                  key={skill}
-                  onClick={() => handleSkillsDropdownClick(skill)}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                  {expandAll ? (
+                    <>
+                      <ChevronUp size={14} />
+                      <span>Collapse</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={14} />
+                      <span>Expand</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={clearFilters}
+                  className="py-1 px-2 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-md transition-colors"
+                  disabled={!hasActiveFilters}
+                  style={{ opacity: hasActiveFilters ? 1 : 0.5 }}
+                  title="Clear all filters"
                 >
-                  {skill}
-                </li>
+                  Clear All
+                </button>
+                {isMobile && (
+                  <button
+                    onClick={() => setShowMobileFilters(false)}
+                    className="p-1 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Active Filter Pills - Desktop */}
+            {!isMobile && renderFilterPills()}
+            
+            {/* Filter Sections - Accordion Style */}
+            <div className={`overflow-y-auto ${isMobile ? "flex-1" : ""}`}>
+              {filterSections.map(section => (
+                <div key={section.id} className="border-b border-gray-200 last:border-0">
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    className="flex items-center justify-between w-full p-3 text-left focus:outline-none hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-brand-primary">{section.icon}</span>
+                      <h3 className="text-sm font-medium text-gray-700">{section.title}</h3>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: openSections.has(section.id) ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown size={18} className="text-gray-500" />
+                    </motion.div>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {openSections.has(section.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-3 space-y-3 bg-gray-50">
+                          {section.fields.map(field => (
+                            <div key={field.name} className="space-y-1">
+                              <label className="block text-xs font-medium text-gray-700">
+                                {field.label}
+                              </label>
+                              {renderField(field)}
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               ))}
-            </ul>
-          )}
-        </div>
 
-        {/* Company */}
-        <input
-          type="text"
-          name="company"
-          placeholder="Company"
-          value={filters.company || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
+              {/* Empty space notice when all sections are collapsed */}
+              {!isMobile && openSections.size === 0 && !hasActiveFilters && (
+                <div className="p-6 text-center text-gray-500 italic text-sm">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <ChevronsUpDown size={24} />
+                    <p>Expand a section to see filter options</p>
+                    <button
+                      onClick={toggleAllSections}
+                      className="mt-1 py-1.5 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <ChevronDown size={14} />
+                      <span>Expand All Sections</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
-        {/* Location */}
-        <input
-          type="text"
-          name="location"
-          placeholder="Location"
-          value={filters.location || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-        {/* Experience Level */}
-        <select
-          name="experienceLevel"
-          value={filters.experienceLevel || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Experience Level</option>
-          <option value="Entry">Entry</option>
-          <option value="Junior">Junior</option>
-          <option value="Senior">Senior</option>
-          <option value="Internship">Internship</option>
-        </select>
-
-        {/* Company Size */}
-        <select
-          name="companySize"
-          value={filters.companySize || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="" disabled>
-            Select Company Size
-          </option>
-          <option value="0-30">0-30</option>
-          <option value="31-100">31-100</option>
-          <option value="101-300">101-300</option>
-          <option value="301+">301+</option>
-        </select>
-
-        {/* Job Type */}
-        <select
-          name="jobType"
-          value={filters.jobType || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Job Type</option>
-          <option value="Full Time">Full Time</option>
-          <option value="Part Time">Part Time</option>
-          <option value="Contract">Contract</option>
-        </select>
-
-        {/* Remote */}
-        <select
-          name="remote"
-          value={filters.remote || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        >
-          <option value="">Choose Remote</option>
-          <option value="Remote">Remote</option>
-          <option value="Hybrid">Hybrid</option>
-          <option value="On Site">On Site</option>
-        </select>
-
-        {/* Security Clearance */}
-        <input
-          type="number"
-          name="securityClearance"
-          placeholder="Security Clearance"
-          value={filters.securityClearance || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-
-
-        {/* Education */}
-        <div className="relative">
-          <input
-            type="text"
-            name="education"
-            placeholder="Education (comma-separated)"
-            value={filters.education || ""}
-            onChange={handleChange} // Update this to handle education input changes
-            className="w-full px-3 py-2 border rounded"
-          />
-          {showEducationDropdown && (
-            <ul className="absolute z-10 w-full bg-white border rounded shadow-md max-h-48 overflow-y-auto">
-              {filteredEducation.map((edu) => (
-                <li
-                  key={edu}
-                  onClick={() => handleEducationDropdownClick(edu)}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+            {/* "No active filters" notice when sections are open but no filters set */}
+            {!isMobile && openSections.size > 0 && !hasActiveFilters && (
+              <div className="p-3 border-t text-center text-xs text-gray-500">
+                No active filters
+              </div>
+            )}
+            
+            {/* Apply Filter Button - Mobile Only */}
+            {isMobile && (
+              <div className="sticky bottom-0 p-3 bg-white border-t border-gray-200">
+                <button
+                  onClick={() => setShowMobileFilters(false)}
+                  className="w-full py-2 px-4 bg-brand-primary text-white rounded-lg font-medium text-sm"
                 >
-                  {edu}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                  Apply Filters {filterCount > 0 && `(${filterCount})`}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-
-        {/* Work Experience */}
-        <input
-          type="number"
-          name="workExperience"
-          placeholder="Work Experience (years)"
-          value={filters.workExperience || ""}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border rounded"
-        />
-      </div>
-    </div>
+      {/* Add CSS for dynamic height */}
+      <style jsx>{`
+        .auto-height {
+          height: auto;
+          min-height: auto;
+          max-height: calc(100vh - 7rem);
+        }
+      `}</style>
+    </>
   );
 };
 
