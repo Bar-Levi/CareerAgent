@@ -815,6 +815,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
               placeholder={field.placeholder}
               value={filters[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
+              autoComplete="off"
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200"
             />
           </div>
@@ -831,6 +832,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
               placeholder={field.placeholder}
               value={filters[field.name] || ""}
               onChange={(e) => handleChange(field.name, e.target.value)}
+              autoComplete="off"
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200"
             />
           </div>
@@ -868,6 +870,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
                 placeholder={field.placeholder}
                 value={filters[field.name] || ""}
                 onChange={(e) => handleChange(field.name, e.target.value)}
+                autoComplete="off"
                 className="w-full pl-10 pr-8 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent text-sm transition-shadow duration-200 placeholder:text-ellipsis placeholder:overflow-hidden"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
