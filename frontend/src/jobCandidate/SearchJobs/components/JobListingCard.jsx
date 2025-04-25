@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { FaCheck, FaBookmark, FaRegBookmark, FaComments, FaRobot, FaBriefcase, FaCode, FaTimes, FaStar } from "react-icons/fa";
+import { FaCheck, FaBookmark, FaRegBookmark, FaComments, FaRobot, FaBriefcase, FaCode, FaTimes, FaStar, FaMapMarkerAlt, FaBuilding, FaGraduationCap, FaCalendarAlt, FaUsers } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const JobListingCard = ({ 
@@ -288,37 +288,59 @@ const JobListingCard = ({
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onJobSelect(jobListing)}
     >
-      {/* Score badge if available - better positioned and with clear interaction */}
-      {score !== undefined && (
-        <button 
-          data-points-badge="true"
-          type="button"
-          className="absolute top-0 right-14 m-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white 
-                    px-3 py-1 rounded-full flex items-center gap-1 z-10 shadow-md hover:shadow-lg 
-                    transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          onClick={handlePointsClick}
-          aria-label="Show match details"
-        >
-          <FaStar size={12} className="text-yellow-200" />
-          <span className="font-semibold">{score}</span>
-          <span className="text-xs">points</span>
-        </button>
-      )}
+      {/* Top Header - Date and Actions */}
+      <div className="absolute top-0 right-0 left-0 flex justify-between items-center p-4 z-10">
+        {/* Posted date and recruiter info */}
+        <div className="flex items-center text-gray-500 text-xs">
+          <FaCalendarAlt className="mr-1 text-gray-400" size={12} />
+          <span>{formattedDate}</span>
+          <span className="mx-1">•</span>
+          <span>by {recruiterName || "Unknown Recruiter"}</span>
+        </div>
+        
+        {/* Save and Score Badge */}
+        <div className="flex gap-2">
+          {score !== undefined && (
+            <button 
+              data-points-badge="true"
+              type="button"
+              className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white 
+                        px-3 py-1 rounded-full flex items-center gap-1 shadow-md hover:shadow-lg 
+                        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onClick={handlePointsClick}
+              aria-label="Show match details"
+            >
+              <FaStar size={12} className="text-yellow-200" />
+              <span className="font-semibold">{score}</span>
+              <span className="text-xs">points</span>
+            </button>
+          )}
+          
+          <button 
+            onClick={toggleSave} 
+            className={`p-2 rounded-full transition-all duration-300 ${
+              isSaved ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'
+            }`}
+            aria-label={isSaved ? "Remove from saved jobs" : "Save this job"}
+          >
+            {isSaved ? <FaBookmark size={20}/> : <FaRegBookmark size={20}/>}
+          </button>
+        </div>
+      </div>
 
-      {/* Main content */}
-      <div className="p-6">
-        {/* Header section with company & recruiter info */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+      <div className="p-6 pt-12"> {/* Increase top padding to accommodate the header */}
+        {/* SECTION: Header with company info */}
+        <div className="flex items-start mb-5 border-b border-gray-100 pb-4">
+          <div className="flex-shrink-0 mr-4">
             <div className="relative">
-              <div className="h-14 w-14 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
+              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
                 <img
                   src={companyLogo || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
                   alt={company}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full overflow-hidden border-2 border-white">
+              <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full overflow-hidden border-2 border-white shadow-sm">
                 <img
                   src={recruiterProfileImage || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
                   alt={recruiterName}
@@ -326,123 +348,154 @@ const JobListingCard = ({
                 />
               </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Posted by {recruiterName || "Unknown Recruiter"}</p>
-              <p className="text-xs text-gray-400">{formattedDate}</p>
-            </div>
           </div>
           
-          <button 
-            onClick={toggleSave} 
-            className={`p-2 rounded-full transition-all duration-300 ${
-              isSaved ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'
-            }`}
-          >
-            {isSaved ? <FaBookmark size={20}/> : <FaRegBookmark size={20}/>}
-          </button>
+          <div className="flex-grow">
+            {/* Job Title and Company */}
+            <h2 className="text-xl font-bold text-gray-800 mb-1">{jobRole || "Unknown Role"}</h2>
+            <div className="flex items-center text-gray-600 text-sm mb-1">
+              <FaBuilding className="mr-1.5 text-gray-500" size={14} />
+              <span className="font-medium">{company}</span>
+            </div>
+            
+            {/* Location */}
+            {location && (
+              <div className="flex items-center text-gray-500 text-sm mb-1">
+                <FaMapMarkerAlt className="mr-1.5 text-gray-400" size={14} />
+                <span>{location}</span>
+              </div>
+            )}
+            
+            {/* Company Size if available */}
+            {companySize && (
+              <div className="flex items-center text-gray-500 text-sm">
+                <FaUsers className="mr-1.5 text-gray-400" size={14} />
+                <span>{companySize}</span>
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Job details */}
-        <div className="mb-5">
-          <h2 className="text-xl font-bold text-gray-800 mb-1">{jobRole || "Unknown Role"}</h2>
-          <p className="text-gray-600 text-sm">
-            {company} {location && `• ${location}`}
-          </p>
-          
-          {/* Job type badges */}
-          <div className="flex flex-wrap gap-2 mt-3">
+        
+        {/* SECTION: Job Categories/Types */}
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 uppercase mb-2 border-b border-gray-100 pb-1">Job Details</h3>
+          <div className="flex flex-wrap gap-2 mb-3">
             {experienceLevel && (
-              <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+              <span className="text-xs px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full flex items-center">
+                <FaCode className="mr-1.5" size={12} />
                 {experienceLevel}
               </span>
             )}
             {jobType?.map((type, index) => (
-              <span key={index} className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded-full">
+              <span key={index} className="text-xs px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full">
                 {type}
               </span>
             ))}
             {remote && (
-              <span className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">
+              <span className="text-xs px-3 py-1.5 bg-green-50 text-green-700 rounded-full">
                 {remote}
               </span>
             )}
           </div>
-
-          {/* Skills */}
-          {skills?.length > 0 && (
-            <div className="mt-3">
-              <p className="text-sm font-medium text-gray-700 flex items-center mb-1.5">
-                <FaCode className="mr-1.5 text-gray-500" size={14} />
-                Skills
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {skills.slice(0, 4).map((skill, index) => (
-                  <span key={index} className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                    {skill}
+          
+          {/* Education as separate section */}
+          {education && (
+            <div className="flex flex-wrap gap-2">
+              {Array.isArray(education) ? (
+                education.map((edu, index) => (
+                  <span key={index} className="text-xs px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full flex items-center">
+                    <FaGraduationCap className="mr-1.5" size={12} />
+                    {edu}
                   </span>
-                ))}
-                {skills.length > 4 && (
-                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                    +{skills.length - 4} more
-                  </span>
-                )}
-              </div>
+                ))
+              ) : (
+                <span className="text-xs px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full flex items-center">
+                  <FaGraduationCap className="mr-1.5" size={12} />
+                  {education}
+                </span>
+              )}
             </div>
           )}
         </div>
 
-        {/* Action buttons and stats */}
-        <div className="flex flex-wrap items-center gap-2 mt-2">
-          <button
-            className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all duration-300 ${
-              applyButtonEnabled
-                ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:from-green-600 hover:to-emerald-700"
-                : "bg-gray-100 text-gray-600 flex items-center justify-center"
-            }`}
-            onClick={handleApplyNow}
-            disabled={!applyButtonEnabled}
-          >
-            {applyButtonEnabled ? (
+        {/* SECTION: Skills */}
+        {skills?.length > 0 && (
+          <div className="mb-5 bg-gray-50 p-3 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 flex items-center mb-2">
+              <FaCode className="mr-1.5 text-blue-500" size={14} />
+              Required Skills
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {skills.slice(0, 6).map((skill, index) => (
+                <span key={index} className="text-xs px-2.5 py-1.5 bg-white text-gray-700 rounded-full border border-gray-200 shadow-sm">
+                  {skill}
+                </span>
+              ))}
+              {skills.length > 6 && (
+                <span className="text-xs px-3 py-1.5 bg-gray-200 text-gray-700 rounded-full font-medium">
+                  +{skills.length - 6} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* SECTION: Application and Action buttons */}
+        <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+          {/* Left side: Action buttons */}
+          <div className="flex-grow flex gap-2">
+            <button
+              className={`flex-1 max-w-[150px] py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transition-all duration-300 ${
+                applyButtonEnabled
+                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:from-green-600 hover:to-emerald-700"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+              onClick={handleApplyNow}
+              disabled={!applyButtonEnabled}
+            >
+              {applyButtonEnabled ? (
+                <>
+                  <FaBriefcase />
+                  Apply Now
+                </>
+              ) : (
+                <>
+                  <FaCheck className="text-green-600" />
+                  Applied
+                </>
+              )}
+            </button>
+
+            {!showOnlyApply && (
               <>
-                <FaBriefcase />
-                Apply Now
-              </>
-            ) : (
-              <>
-                <FaCheck className="text-green-600" />
-                Applied
+                <button
+                  className="flex-1 max-w-[120px] py-2.5 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center gap-1.5"
+                  onClick={handleChatButtonClick}
+                >
+                  <FaComments />
+                  Chat
+                </button>
+                
+                <button
+                  className="flex-1 max-w-[120px] py-2.5 rounded-lg text-sm font-semibold bg-orange-50 text-orange-600 hover:bg-orange-100 flex items-center justify-center gap-1.5"
+                  onClick={handleInterviewChatClick}
+                >
+                  <FaRobot />
+                  Practice
+                </button>
               </>
             )}
-          </button>
+          </div>
 
-          {!showOnlyApply && (
-            <>
-              <button
-                className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center gap-1.5"
-                onClick={handleChatButtonClick}
-              >
-                <FaComments />
-                Chat
-              </button>
-              
-              <button
-                className="px-4 py-2 rounded-lg text-sm font-semibold bg-orange-50 text-orange-600 hover:bg-orange-100 flex items-center gap-1.5"
-                onClick={handleInterviewChatClick}
-              >
-                <FaRobot />
-                Practice
-              </button>
-            </>
-          )}
-
-          {/* Applied counter */}
-          <div className="ml-auto px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-            {appliedCounter || 0} applied
+          {/* Right side: Application counter */}
+          <div className="px-3 py-1.5 rounded-full text-xs bg-gray-100 text-gray-700 flex items-center gap-1">
+            <FaUsers className="text-gray-500" size={12} />
+            <span>{appliedCounter || 0} applied</span>
           </div>
         </div>
       </div>
 
-      {/* Matched criteria tooltip - improved positioning and interaction */}
+      {/* Match details modal */}
       {score !== undefined && score !== 0 && matchedData && showMatchDetails && (
         <div 
           ref={matchDetailsRef}
@@ -454,8 +507,16 @@ const JobListingCard = ({
             onClick={handleCloseDetails}
           ></div>
           <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-80 max-w-[90vw] max-h-[80vh] overflow-auto z-50">
-            <div className="flex justify-between items-center mb-3 border-b pb-2">
-              <p className="font-bold text-gray-800">Match Score: {score} points</p>
+            <div className="flex justify-between items-center mb-4 border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <FaStar className="text-blue-600" size={16} />
+                </div>
+                <div>
+                  <p className="font-bold text-gray-800">Match Details</p>
+                  <p className="text-sm text-blue-600 font-medium">Score: {score} points</p>
+                </div>
+              </div>
               <button 
                 onClick={handleCloseDetails} 
                 className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
@@ -466,41 +527,45 @@ const JobListingCard = ({
             <div>
               <ul className="list-none pl-0 space-y-3">
                 {matchedData?.jobRole?.length > 0 && (
-                  <li>
-                    <strong className="block text-blue-600 text-sm">Job Role:</strong>
+                  <li className="p-2 bg-blue-50 rounded-lg">
+                    <strong className="block text-blue-800 text-sm mb-1">Job Role</strong>
                     <span className="block text-sm text-gray-700">{matchedData.jobRole.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.jobType?.length > 0 && (
-                  <li>
-                    <strong className="block text-blue-600 text-sm">Job Type:</strong>
+                  <li className="p-2 bg-purple-50 rounded-lg">
+                    <strong className="block text-purple-800 text-sm mb-1">Job Type</strong>
                     <span className="block text-sm text-gray-700">{matchedData.jobType.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.securityClearance !== null && (
-                  <li>
-                    <strong className="block text-blue-600 text-sm">Security Clearance:</strong>
+                  <li className="p-2 bg-amber-50 rounded-lg">
+                    <strong className="block text-amber-800 text-sm mb-1">Security Clearance</strong>
                     <span className="block text-sm text-gray-700">{matchedData.securityClearance}</span>
                   </li>
                 )}
                 {matchedData?.education?.length > 0 && (
-                  <li>
-                    <strong className="block text-blue-600 text-sm">Education:</strong>
+                  <li className="p-2 bg-green-50 rounded-lg">
+                    <strong className="block text-green-800 text-sm mb-1">Education</strong>
                     <span className="block text-sm text-gray-700">{matchedData.education.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.workExperience?.length > 0 && (
-                  <li>
-                    <strong className="block text-blue-600 text-sm">Work Experience:</strong>
+                  <li className="p-2 bg-indigo-50 rounded-lg">
+                    <strong className="block text-indigo-800 text-sm mb-1">Work Experience</strong>
                     <span className="block text-sm text-gray-700">{matchedData.workExperience.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.skills?.length > 0 && (
-                  <li>
-                    <strong className="block text-blue-600 text-sm">Skills:</strong>
-                    <span className="block text-sm text-gray-700">
-                      {matchedData.skills.join(", ")}
-                    </span>
+                  <li className="p-2 bg-gray-50 rounded-lg">
+                    <strong className="block text-gray-800 text-sm mb-1">Skills</strong>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {matchedData.skills.map((skill, idx) => (
+                        <span key={idx} className="text-xs px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-700">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </li>
                 )}
               </ul>
