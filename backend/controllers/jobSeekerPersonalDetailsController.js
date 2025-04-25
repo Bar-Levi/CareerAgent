@@ -6,6 +6,7 @@ const jobSeekerModel = require('../models/jobSeekerModel');
 const recruiterModel = require('../models/recruiterModel');
 const jobListingModel = require('../models/jobListingModel');
 const applicantModel = require('../models/applicantModel');
+const conversationModel = require('../models/conversationModel');
 const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
@@ -105,11 +106,23 @@ const changePic = async (req, res) => {
         currentUrl = user.profilePic;
         user.profilePic = defaultProfilePic;
         
-        // If user is a jobSeeker and the profile pic is updated, update all applicant entries
+        // If user is a jobSeeker, update all their application entries
         if (user.role === "JobSeeker") {
           await applicantModel.updateMany(
             { jobSeekerId: user._id },
             { profilePic: defaultProfilePic }
+          );
+          
+          // Update profile pic in conversations
+          await conversationModel.updateMany(
+            { "participants.userId": user._id, "participants.role": "JobSeeker" },
+            { "participants.$.profilePic": defaultProfilePic }
+          );
+        } else if (user.role === "Recruiter") {
+          // Update profile pic in conversations for recruiters too
+          await conversationModel.updateMany(
+            { "participants.userId": user._id, "participants.role": "Recruiter" },
+            { "participants.$.profilePic": defaultProfilePic }
           );
         }
       }
@@ -209,12 +222,22 @@ const changePic = async (req, res) => {
                 { jobSeekerId: user._id },
                 { profilePic: result.secure_url }
               );
-            }
-            
-            if (user.role === "Recruiter") {
+              
+              // Update profile pic in conversations
+              await conversationModel.updateMany(
+                { "participants.userId": user._id, "participants.role": "JobSeeker" },
+                { "participants.$.profilePic": result.secure_url }
+              );
+            } else if (user.role === "Recruiter") {
               await jobListingModel.updateMany(
                 { recruiterId: user._id },
                 { recruiterProfileImage: result.secure_url }
+              );
+              
+              // Update profile pic in conversations for recruiters too
+              await conversationModel.updateMany(
+                { "participants.userId": user._id, "participants.role": "Recruiter" },
+                { "participants.$.profilePic": result.secure_url }
               );
             }
           }
