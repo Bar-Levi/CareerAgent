@@ -5,6 +5,7 @@ const streamifier = require('streamifier');
 const jobSeekerModel = require('../models/jobSeekerModel');
 const recruiterModel = require('../models/recruiterModel');
 const jobListingModel = require('../models/jobListingModel');
+const applicantModel = require('../models/applicantModel');
 const multer = require('multer');
 const path = require('path');
 const { checkAndInsertIn }  = require("../utils/checkAndInsertIn");
@@ -103,6 +104,14 @@ const changePic = async (req, res) => {
         // "profile"
         currentUrl = user.profilePic;
         user.profilePic = defaultProfilePic;
+        
+        // If user is a jobSeeker and the profile pic is updated, update all applicant entries
+        if (user.role === "JobSeeker") {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { profilePic: defaultProfilePic }
+          );
+        }
       }
 
       // If there's an existing image that isn't default, remove from Cloudinary
@@ -193,6 +202,15 @@ const changePic = async (req, res) => {
             }
           } else {
             user.profilePic = result.secure_url;
+            
+            // If user is a jobSeeker, update all their application entries
+            if (user.role === "JobSeeker") {
+              await applicantModel.updateMany(
+                { jobSeekerId: user._id },
+                { profilePic: result.secure_url }
+              );
+            }
+            
             if (user.role === "Recruiter") {
               await jobListingModel.updateMany(
                 { recruiterId: user._id },
