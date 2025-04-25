@@ -61,7 +61,8 @@ const showUpdateCVModal = async (user, navigate, location) => {
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05);
         padding: 28px;
         border: 1px solid rgba(230, 230, 250, 0.4);
-        max-width: 420px;
+        max-width: 520px;
+        width: 100%;
       }
       
       .cv-modal-title {
@@ -214,11 +215,14 @@ const showUpdateCVModal = async (user, navigate, location) => {
       .cv-btn-cancel {
         border-radius: 14px;
         font-weight: 500;
-        padding: 12px 24px;
+        padding: 12px 16px;
         font-size: 15px;
         transition: all 0.2s ease;
         border: none;
         outline: none;
+        white-space: nowrap;
+        min-width: 0;
+        flex: 1;
       }
       
       .cv-btn {
@@ -262,7 +266,41 @@ const showUpdateCVModal = async (user, navigate, location) => {
         .cv-btn, 
         .cv-btn-delete,
         .cv-btn-cancel {
-          padding: 10px 16px;
+          padding: 10px 12px;
+          font-size: 13px;
+        }
+        
+        .swal2-actions {
+          flex-direction: column;
+          gap: 10px;
+          width: 100%;
+        }
+        
+        .swal2-actions button {
+          margin: 0 !important;
+          width: 100%;
+        }
+      }
+      
+      /* Additional global button spacing fixes */
+      .swal2-actions {
+        gap: 10px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        width: 100%;
+      }
+      
+      .swal2-actions button {
+        margin: 0 5px !important;
+      }
+      
+      /* Media query for tablets */
+      @media screen and (min-width: 481px) and (max-width: 768px) {
+        .cv-btn, 
+        .cv-btn-delete,
+        .cv-btn-cancel {
+          padding: 10px 14px;
           font-size: 14px;
         }
       }
@@ -370,7 +408,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
       showCancelButton: true,
       showDenyButton: true,
       confirmButtonText: "Upload",
-      denyButtonText: "Delete Resume",
+      denyButtonText: "Delete",
       cancelButtonText: "Cancel",
       preConfirm: () => {
         // Get the selected file from the file input
