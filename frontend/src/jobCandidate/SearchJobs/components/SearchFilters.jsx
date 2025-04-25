@@ -27,7 +27,7 @@ import {
   PlusCircle
 } from "lucide-react";
 
-const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptions }) => {
+const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptions = [] }) => {
   // Track open sections with a Set to allow multiple open sections - initialize with empty set
   const [openSections, setOpenSections] = useState(new Set());
   const [filterCount, setFilterCount] = useState(0);
@@ -554,10 +554,11 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
       const enteredEducation = value.split(",").map(edu => edu.trim());
       const lastEdu = enteredEducation[enteredEducation.length - 1];
       
-      if (lastEdu) {
-        const matches = educationListedOptions.filter(edu =>
-          edu.toLowerCase().startsWith(lastEdu.toLowerCase())
-        ).slice(0, 5);
+      if (lastEdu && educationListedOptions) {
+        const matches = educationListedOptions
+          .filter(edu => edu != null) // Filter out null or undefined values
+          .filter(edu => edu.toLowerCase().startsWith(lastEdu.toLowerCase()))
+          .slice(0, 5);
         setSuggestions(prev => ({ ...prev, education: matches }));
       }
     }
