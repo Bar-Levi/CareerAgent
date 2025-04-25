@@ -5,7 +5,7 @@ import { FaMapMarkerAlt, FaBriefcase, FaGraduationCap, FaLaptopCode,
   FaUserTie, FaClock, FaMedal, FaArchive } from "react-icons/fa";
 
 /**
- * Displays job listing information to a candidate with a modern 2025 design.
+ * Displays job listing information to a candidate with a modern design.
  * Fully responsive for all screen sizes.
  * 
  * @param {Object} props
@@ -35,6 +35,7 @@ const JobListingDescription = ({ jobListing }) => {
     location,
     company,
     companyWebsite,
+    companySize,
     experienceLevel,
     jobType,
     remote,
@@ -92,13 +93,14 @@ const JobListingDescription = ({ jobListing }) => {
           )}
           <div className="ml-3 flex-1 min-w-0">
             <h1 className="text-lg md:text-xl font-bold text-white truncate">{jobRole}</h1>
-            <div className="flex flex-wrap items-center gap-2 text-indigo-100 text-sm">
-              <span className="font-medium truncate">{company}</span>
+            <div className="flex flex-wrap items-center text-indigo-100 text-sm">
+              <span className="font-medium truncate max-w-[200px]">{company}</span>
               {location && (
                 <>
-                  <span className="w-1 h-1 bg-indigo-200 rounded-full hidden sm:block"></span>
-                  <span className="flex items-center">
-                    <FaMapMarkerAlt className="mr-1" size={12} /> {location}
+                  <span className="w-1 h-1 bg-indigo-200 rounded-full mx-2 hidden sm:block"></span>
+                  <span className="flex items-center max-w-full truncate">
+                    <FaMapMarkerAlt className="flex-shrink-0 mr-1" size={12} /> 
+                    <span className="truncate">{location}</span>
                   </span>
                 </>
               )}
@@ -167,6 +169,18 @@ const JobListingDescription = ({ jobListing }) => {
               <div className="ml-2">
                 <h3 className="text-xs font-medium text-gray-500 uppercase">Closing</h3>
                 <p className="text-sm font-medium text-gray-900">{formattedClosingDate}</p>
+              </div>
+            </div>
+          )}
+          
+          {companySize && (
+            <div className="flex items-start">
+              <div className="flex-shrink-0 h-8 w-8 rounded-md bg-amber-100 text-amber-600 flex items-center justify-center">
+                <FaBuilding size={14} />
+              </div>
+              <div className="ml-2">
+                <h3 className="text-xs font-medium text-gray-500 uppercase">Company Size</h3>
+                <p className="text-sm font-medium text-gray-900">{companySize}</p>
               </div>
             </div>
           )}
