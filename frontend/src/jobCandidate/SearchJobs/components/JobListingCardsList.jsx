@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import JobListingCard from "./JobListingCard";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaSearch, FaBookmark, FaFolderOpen, FaExclamationTriangle } from "react-icons/fa";
 import calculateWorkExperienceMatch from "../utils/calculateWorkExperienceMatch";
 
 const JobListingCardsList = ({
@@ -19,6 +19,7 @@ const JobListingCardsList = ({
   const [jobListings, setJobListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isCalculatingRelevance, setIsCalculatingRelevance] = useState(false);
 
   const defaultRelevancePoints = {
     matchedJobRolePoints: 10,
@@ -95,7 +96,7 @@ const JobListingCardsList = ({
             (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
           );
         } else if (sortingMethod === "relevance") {
-          console.log("Relevance points: ", relevancePoints);
+          setIsCalculatingRelevance(true);
           const localStorageKey = `relevance_data_${user.id || user._id}`;
 
           // Force recalculation by clearing stored relevance data whenever relevancePoints change.
@@ -105,7 +106,6 @@ const JobListingCardsList = ({
           // Create a map for quick lookup
           const relevanceMap = new Map(storedRelevanceData.map(item => [item.jobId, item]));
       
-
           // Calculate relevance scores for each job listing
           const relevanceList = await Promise.all(
             sortedListings.map(async (jobListing) => {
@@ -113,12 +113,8 @@ const JobListingCardsList = ({
               let score, matchedData;
               if (relevanceMap.has(jobId)) {
                 ({ score, matchedData } = relevanceMap.get(jobId));
-            
-            
               } else {
                 ({ score, matchedData } = await calculateRelevanceScore(jobListing, user, relevancePoints));
-            
-            
                 relevanceMap.set(jobId, { jobId, score, matchedData });
               }
               return {
@@ -140,6 +136,8 @@ const JobListingCardsList = ({
               score: item.relevanceScore,
               matchedData: item.matchedData,
             }));
+            
+          setIsCalculatingRelevance(false);
         }
 
         setJobListings(sortedListings);
@@ -150,6 +148,7 @@ const JobListingCardsList = ({
       }
     };
 
+    setLoading(true);
     setTimeout(() => {
       fetchAndSortJobListings(3);
     }, 100);
@@ -170,22 +169,9 @@ const JobListingCardsList = ({
     }
   }, [jobListings, setEducationListedOptions]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <FaSpinner className="animate-spin text-4xl text-blue-500" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <p className="text-red-600">{error}</p>;
-  }
-
   // Fetch relevance points function
   async function fetchRelevancePoints(userEmail) {
     try {
-  
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/personal/relevance-points?email=${encodeURIComponent(userEmail)}`,
         {
@@ -309,76 +295,80 @@ const JobListingCardsList = ({
       ? jobListings.filter(job => savedIds.has(job._id.toString()))
       : jobListings;
 
-  return (
-    <div className="space-y-4 p-4">
-      {filteredListings.length === 0 && sortingMethod === 'saved' ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4">
-          <svg
-            className="w-16 h-16 text-gray-300 mb-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-          <p className="text-xl text-gray-600 font-medium">
-            No saved job listings yet
-          </p>
-          <p className="text-gray-400 mt-2 text-center">
-            Click the bookmark icon on any job listing to save it for later
-          </p>
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 py-16">
+        <FaSpinner className="animate-spin text-4xl text-blue-500 mb-3" />
+        <p className="text-gray-500 font-medium">
+          {sortingMethod === "relevance" && isCalculatingRelevance
+            ? "Calculating job matches based on your CV..."
+            : "Loading jobs..."}
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 py-16 px-4">
+        <FaExclamationTriangle className="text-5xl text-amber-500 mb-4" />
+        <p className="text-lg text-gray-700 font-medium">Something went wrong</p>
+        <p className="text-gray-500 mt-2 text-center">{error}</p>
+      </div>
+    );
+  }
+
+  if (filteredListings.length === 0 && sortingMethod === 'saved') {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 py-16 px-4">
+        <div className="bg-gray-50 rounded-full p-8 mb-6">
+          <FaBookmark className="text-5xl text-gray-300" />
         </div>
-      ) : filteredListings.length === 0 ?
-      (
-        <div className="flex flex-col items-center justify-center py-16 px-4">
-            <svg
-              className="w-16 h-16 text-gray-300 mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              ></path>
-            </svg>
-            <p className="text-xl text-gray-600 dark:text-gray-400 font-medium">
-              No active job listings
-            </p>
-            <p className="text-gray-400 mt-2 text-center">
-              New job listings will appear here once created
-            </p>
-          </div>
-      ):
-      (
-        filteredListings.map((jobListing) => (
-          <div
-            key={jobListing._id}
-            onClick={() => {
-              onJobSelect(jobListing);
-            }}
-            className="cursor-pointer"
-          >
-            <JobListingCard
-              onJobSelect={onJobSelect}
-              jobListing={jobListing}
-              user={user}
-              setUser={setUser}
-              setShowModal={setShowModal}
-              showNotification={showNotification}
-              setRenderingConversationKey={setRenderingConversationKey}
-              setRenderingConversationData={setRenderingConversationData}
-            />
-          </div>
-        ))
-      )}
+        <p className="text-xl text-gray-600 font-medium">
+          No saved job listings yet
+        </p>
+        <p className="text-gray-400 mt-2 text-center">
+          Click the bookmark icon on any job listing to save it for later
+        </p>
+      </div>
+    );
+  } 
+  
+  if (filteredListings.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 py-16 px-4">
+        <div className="bg-gray-50 rounded-full p-8 mb-6">
+          <FaSearch className="text-5xl text-gray-300" />
+        </div>
+        <p className="text-xl text-gray-600 font-medium">
+          No matching job listings found
+        </p>
+        <p className="text-gray-400 mt-2 text-center">
+          Try adjusting your filters to see more results
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-4 p-4 md:p-6">
+      {filteredListings.map((jobListing) => (
+        <div
+          key={jobListing._id}
+          className="transform transition-transform duration-200 hover:scale-[1.01]"
+        >
+          <JobListingCard
+            onJobSelect={onJobSelect}
+            jobListing={jobListing}
+            user={user}
+            setUser={setUser}
+            setShowModal={setShowModal}
+            showNotification={showNotification}
+            setRenderingConversationKey={setRenderingConversationKey}
+            setRenderingConversationData={setRenderingConversationData}
+          />
+        </div>
+      ))}
     </div>
   );
 };

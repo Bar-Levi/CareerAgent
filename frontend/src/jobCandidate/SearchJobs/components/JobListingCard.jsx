@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { FaCheck, FaBookmark, FaRegBookmark } from "react-icons/fa";
+import React, { useEffect, useState, useRef } from "react";
+import { FaCheck, FaBookmark, FaRegBookmark, FaComments, FaRobot, FaBriefcase, FaCode, FaTimes, FaStar } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const JobListingCard = ({ 
@@ -11,7 +11,7 @@ const JobListingCard = ({
   setRenderingConversationKey,
   setRenderingConversationData,
   showOnlyApply = false,
-  setUser,
+  setUser
 }) => {
   const {
     jobRole,
@@ -38,6 +38,8 @@ const JobListingCard = ({
   const { state } = useLocation();
   const user = state?.user ?? userProp;
   const navigate = useNavigate();
+  const cardRef = useRef(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
@@ -45,8 +47,12 @@ const JobListingCard = ({
     user.savedJobListings?.map(id => id.toString()).includes(jobId.toString())
   );  
   const token = localStorage.getItem('token');
+  const [isHovered, setIsHovered] = useState(false);
+  const [showMatchDetails, setShowMatchDetails] = useState(false);
+  const matchDetailsRef = useRef(null);
 
-  const toggleSave = async () => {
+  const toggleSave = async (e) => {
+    e.stopPropagation();
     const method = isSaved ? "DELETE" : "POST";
     const url = `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/${user._id}/saved/${jobId}`;
   
@@ -73,7 +79,47 @@ const JobListingCard = ({
     }
   };  
 
-  const handleChatButtonClick = async () => {
+  // Handle opening match details from points badge
+  const handlePointsClick = (e) => {
+    e.stopPropagation();
+    
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        top: rect.top + window.scrollY + 10,
+        left: rect.right + window.scrollX - 80,
+      });
+      
+      setShowMatchDetails(true);
+    }
+  };
+
+  // Handle closing match details
+  const handleCloseDetails = (e) => {
+    if (e) e.stopPropagation();
+    setShowMatchDetails(false);
+  };
+
+  // Click outside to close match details
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMatchDetails && 
+          matchDetailsRef.current && 
+          !matchDetailsRef.current.contains(event.target) &&
+          // Ensure clicks on the points badge are handled by the badge itself
+          !(event.target.closest('[data-points-badge="true"]'))) {
+        setShowMatchDetails(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMatchDetails]);
+
+  const handleChatButtonClick = async (e) => {
+    e.stopPropagation();
     try {
       const participants = [
         {
@@ -108,7 +154,6 @@ const JobListingCard = ({
       }
 
       const { conversation } = await response.json();
-      console.log("New conversation created:", conversation);
       onJobSelect(jobListing);
 
       setRenderingConversationData({
@@ -121,12 +166,13 @@ const JobListingCard = ({
 
     } catch (error) {
       console.error('Error creating conversation:', error);
-      alert("Failed to create chat. Please try again later.");
+      showNotification("error", "Failed to create chat. Please try again later.");
     }
   };
 
   // When the user clicks "Talk with Chatbot", navigate to /chats with job data in state.
-  const handleInterviewChatClick = () => {
+  const handleInterviewChatClick = (e) => {
+    e.stopPropagation();
     navigate("/chats", { 
       state: { 
         ...state, 
@@ -136,7 +182,8 @@ const JobListingCard = ({
     });
   };
 
-  const handleApplyNow = async () => {
+  const handleApplyNow = async (e) => {
+    e.stopPropagation();
     if (!user.cv || user.cv === "") {
       setShowModal(true); // Show modal if CV is missing
       return;
@@ -168,8 +215,6 @@ const JobListingCard = ({
       );
       const applicantData = await applicantResponse.json();
       if (applicantResponse.ok) {
-        console.log("Applicant created successfully:", applicantData);
-
         const updateJobResponse = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/${jobId}`,
           {
@@ -224,172 +269,245 @@ const JobListingCard = ({
     }
   }, [applicants, user._id]);
 
+  // Format date in a more modern way
+  const formattedDate = createdAt 
+    ? new Date(createdAt).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }) 
+    : "N/A";
+
   return (
-    <div className="flex flex-col border border-gray-300 rounded-lg shadow-lg bg-gradient-to-r from-white to-gray-200 p-6 max-w-xl hover:shadow-xl transition-shadow duration-300 job-listing-card">
-      {/* Top Section: Recruiter Info */}
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex-shrink-0">
-          <img
-            src={recruiterProfileImage || 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png'}
-            alt="Recruiter"
-            className="w-16 h-16 object-cover border-2 border-black rounded-full p-1"
-          />
-        </div>
-        <div className="flex-grow">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold text-gray-900">
-              Recruited by {recruiterName || "Unknown Recruiter"}
-            </span>
-            <br />
-            <span className="text-xs text-gray-500">
-              Posted on {createdAt ? new Date(createdAt).toLocaleDateString() : "N/A"}
-            </span>
-          </p>
-        </div>
-        {!showOnlyApply && (
-        <div>
-          <button
-            className="px-4 py-2 bg-gradient-to-tr from-blue-300 to-blue-600 text-white font-semibold rounded hover:from-blue-400 hover:to-blue-700 hover:shadow-lg transition-all duration-300"
-            onClick={handleChatButtonClick}
+    <div 
+      ref={cardRef}
+      className="relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 
+                border border-gray-300 bg-white hover:shadow-2xl hover:border-blue-200
+                group cursor-pointer mb-4" 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onJobSelect(jobListing)}
+    >
+      {/* Score badge if available - better positioned and with clear interaction */}
+      {score !== undefined && (
+        <button 
+          data-points-badge="true"
+          type="button"
+          className="absolute top-0 right-14 m-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white 
+                    px-3 py-1 rounded-full flex items-center gap-1 z-10 shadow-md hover:shadow-lg 
+                    transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          onClick={handlePointsClick}
+          aria-label="Show match details"
+        >
+          <FaStar size={12} className="text-yellow-200" />
+          <span className="font-semibold">{score}</span>
+          <span className="text-xs">points</span>
+        </button>
+      )}
+
+      {/* Main content */}
+      <div className="p-6">
+        {/* Header section with company & recruiter info */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="h-14 w-14 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center border border-gray-200">
+                <img
+                  src={companyLogo || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
+                  alt={company}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-2 -right-2 h-7 w-7 rounded-full overflow-hidden border-2 border-white">
+                <img
+                  src={recruiterProfileImage || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
+                  alt={recruiterName}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Posted by {recruiterName || "Unknown Recruiter"}</p>
+              <p className="text-xs text-gray-400">{formattedDate}</p>
+            </div>
+          </div>
+          
+          <button 
+            onClick={toggleSave} 
+            className={`p-2 rounded-full transition-all duration-300 ${
+              isSaved ? 'text-yellow-500 bg-yellow-50' : 'text-gray-400 hover:text-yellow-500 hover:bg-yellow-50'
+            }`}
           >
-            Chat with Recruiter
+            {isSaved ? <FaBookmark size={20}/> : <FaRegBookmark size={20}/>}
           </button>
         </div>
-        )}
-      </div>
 
-      <hr className="border-gray-300 my-4" />
-
-      {/* Middle Section: Job Details */}
-      <div className="flex items-start space-x-4">
-        <div className="w-16 h-16 flex-shrink-0 bg-gradient-to-tr from-gray-200 to-gray-300 rounded-md flex items-center justify-center">
-          <img
-            src={companyLogo || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
-            alt="Company Logo"
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <div className="flex-grow">
-          <h3 className="text-xl font-bold text-gray-800">{jobRole || "Unknown Role"}</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            {company && location
-              ? `${company} - ${location}`
-              : company || location || "Unknown Company/Location"}
+        {/* Job details */}
+        <div className="mb-5">
+          <h2 className="text-xl font-bold text-gray-800 mb-1">{jobRole || "Unknown Role"}</h2>
+          <p className="text-gray-600 text-sm">
+            {company} {location && `• ${location}`}
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            {experienceLevel && `Experience: ${experienceLevel}`}
-            {jobType?.length > 0 && ` | Type: ${jobType.join(", ")}`}
-            {remote && ` | Remote: ${remote}`}
-          </p>
-          {skills?.length > 0 && (
-            <p className="text-sm text-gray-500 mt-2">Skills: {skills.join(", ")}</p>
-          )}
-        </div>
-      </div>
-
-
-      <hr className="border-gray-300 my-4" />
-
-      {/* Bottom Section: Action Buttons and Stats */}
-      <div className="flex items-center gap-3">
-        <button
-          className={`px-3 py-2 text-base font-semibold rounded transition-all duration-300 whitespace-nowrap ${
-            applyButtonEnabled
-              ? "bg-gradient-to-tr from-green-300 to-green-600 text-white hover:from-green-400 hover:to-green-700 hover:shadow-lg"
-              : "bg-gray-200 text-gray-700 flex items-center justify-center"
-          }`}
-          onClick={handleApplyNow}
-          disabled={!applyButtonEnabled}
-        >
-          {applyButtonEnabled ? (
-            "Apply Now"
-          ) : (
-            <span className="flex items-center whitespace-nowrap">
-              <FaCheck className="mr-2 text-green-600" />
-              Applied
-            </span>
-          )}
-        </button>
-      
-        <button onClick={toggleSave} className="p-2 rounded hover:bg-gray-200">
-          {isSaved ? <FaBookmark size={18}/> : <FaRegBookmark size={18}/>}
-        </button>
-
-        {/* Talk with Chatbot button */}
-        {!showOnlyApply && (
-        <button
-          className="px-4 py-2 text-base font-semibold rounded bg-gradient-to-tr from-orange-300 to-orange-600 text-white hover:from-orange-400 hover:to-orange-700 hover:shadow-lg whitespace-nowrap"
-          onClick={handleInterviewChatClick}
-        >
-          Talk with Chatbot
-        </button>
-        )}
-
-        <div className="flex items-center gap-4 ml-auto whitespace-nowrap">
-          <span className="text-gray-800 text-base">
-            Applied: {appliedCounter || 0}
-          </span>
-
-          {/* Score Display with Tooltip */}
-          {score !== undefined && (
-            <div className="flex items-center gap-1 -ml-2">
-              <span className="text-gray-800 text-base">
-                Score: {score}
+          
+          {/* Job type badges */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {experienceLevel && (
+              <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">
+                {experienceLevel}
               </span>
-              {score !== 0 && matchedData && (
-                <div className="relative group cursor-help">
-                  <span className="text-gray-800 text-base">
-                    <i className="fa fa-info-circle" />
+            )}
+            {jobType?.map((type, index) => (
+              <span key={index} className="text-xs px-2 py-1 bg-purple-50 text-purple-700 rounded-full">
+                {type}
+              </span>
+            ))}
+            {remote && (
+              <span className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">
+                {remote}
+              </span>
+            )}
+          </div>
+
+          {/* Skills */}
+          {skills?.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm font-medium text-gray-700 flex items-center mb-1.5">
+                <FaCode className="mr-1.5 text-gray-500" size={14} />
+                Skills
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {skills.slice(0, 4).map((skill, index) => (
+                  <span key={index} className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
+                    {skill}
                   </span>
-                  <div className="absolute right-0 top-full mt-2 hidden group-hover:block bg-white text-gray-700 text-sm rounded-lg shadow-lg p-3 w-56 border border-gray-300 z-10">
-                    <p className="text-base font-bold mb-2 border-b pb-1">Matched Criteria</p>
-                    <ul className="list-none pl-0 space-y-1">
-                      {matchedData?.jobRole?.length > 0 && (
-                        <li className="overflow-hidden">
-                          <strong className="block text-blue-600 text-sm">Job Role:</strong>
-                          <span className="block truncate">{matchedData.jobRole.join(", ")}</span>
-                        </li>
-                      )}
-                      {matchedData?.jobType?.length > 0 && (
-                        <li className="overflow-hidden">
-                          <strong className="block text-blue-600 text-sm">Job Type:</strong>
-                          <span className="block truncate">{matchedData.jobType.join(", ")}</span>
-                        </li>
-                      )}
-                      {matchedData?.securityClearance !== null && (
-                        <li className="overflow-hidden">
-                          <strong className="block text-blue-600 text-sm">Security Clearance:</strong>
-                          <span className="block truncate">{matchedData.securityClearance}</span>
-                        </li>
-                      )}
-                      {matchedData?.education?.length > 0 && (
-                        <li className="overflow-hidden">
-                          <strong className="block text-blue-600 text-sm">Education:</strong>
-                          <span className="block truncate">{matchedData.education.join(", ")}</span>
-                        </li>
-                      )}
-                      {matchedData?.workExperience?.length > 0 && (
-                        <li className="overflow-hidden">
-                          <strong className="block text-blue-600 text-sm">Work Experience:</strong>
-                          <span className="block truncate">{matchedData.workExperience.join(", ")}</span>
-                        </li>
-                      )}
-                      {matchedData?.skills?.length > 0 && (
-                        <li className="overflow-hidden">
-                          <strong className="block text-blue-600 text-sm">Skills:</strong>
-                          <span className="block truncate">
-                            {matchedData.skills.join(", ")}
-                          </span>
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                </div>
-              )}
+                ))}
+                {skills.length > 4 && (
+                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
+                    +{skills.length - 4} more
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
+
+        {/* Action buttons and stats */}
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          <button
+            className={`px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all duration-300 ${
+              applyButtonEnabled
+                ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:from-green-600 hover:to-emerald-700"
+                : "bg-gray-100 text-gray-600 flex items-center justify-center"
+            }`}
+            onClick={handleApplyNow}
+            disabled={!applyButtonEnabled}
+          >
+            {applyButtonEnabled ? (
+              <>
+                <FaBriefcase />
+                Apply Now
+              </>
+            ) : (
+              <>
+                <FaCheck className="text-green-600" />
+                Applied
+              </>
+            )}
+          </button>
+
+          {!showOnlyApply && (
+            <>
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center gap-1.5"
+                onClick={handleChatButtonClick}
+              >
+                <FaComments />
+                Chat
+              </button>
+              
+              <button
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-orange-50 text-orange-600 hover:bg-orange-100 flex items-center gap-1.5"
+                onClick={handleInterviewChatClick}
+              >
+                <FaRobot />
+                Practice
+              </button>
+            </>
+          )}
+
+          {/* Applied counter */}
+          <div className="ml-auto px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+            {appliedCounter || 0} applied
+          </div>
+        </div>
       </div>
+
+      {/* Matched criteria tooltip - improved positioning and interaction */}
+      {score !== undefined && score !== 0 && matchedData && showMatchDetails && (
+        <div 
+          ref={matchDetailsRef}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-30" 
+            onClick={handleCloseDetails}
+          ></div>
+          <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 p-5 w-80 max-w-[90vw] max-h-[80vh] overflow-auto z-50">
+            <div className="flex justify-between items-center mb-3 border-b pb-2">
+              <p className="font-bold text-gray-800">Match Score: {score} points</p>
+              <button 
+                onClick={handleCloseDetails} 
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+              >
+                <FaTimes size={16} />
+              </button>
+            </div>
+            <div>
+              <ul className="list-none pl-0 space-y-3">
+                {matchedData?.jobRole?.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600 text-sm">Job Role:</strong>
+                    <span className="block text-sm text-gray-700">{matchedData.jobRole.join(", ")}</span>
+                  </li>
+                )}
+                {matchedData?.jobType?.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600 text-sm">Job Type:</strong>
+                    <span className="block text-sm text-gray-700">{matchedData.jobType.join(", ")}</span>
+                  </li>
+                )}
+                {matchedData?.securityClearance !== null && (
+                  <li>
+                    <strong className="block text-blue-600 text-sm">Security Clearance:</strong>
+                    <span className="block text-sm text-gray-700">{matchedData.securityClearance}</span>
+                  </li>
+                )}
+                {matchedData?.education?.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600 text-sm">Education:</strong>
+                    <span className="block text-sm text-gray-700">{matchedData.education.join(", ")}</span>
+                  </li>
+                )}
+                {matchedData?.workExperience?.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600 text-sm">Work Experience:</strong>
+                    <span className="block text-sm text-gray-700">{matchedData.workExperience.join(", ")}</span>
+                  </li>
+                )}
+                {matchedData?.skills?.length > 0 && (
+                  <li>
+                    <strong className="block text-blue-600 text-sm">Skills:</strong>
+                    <span className="block text-sm text-gray-700">
+                      {matchedData.skills.join(", ")}
+                    </span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
