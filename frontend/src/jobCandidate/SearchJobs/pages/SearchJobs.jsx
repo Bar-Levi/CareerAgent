@@ -248,8 +248,8 @@ const SearchJobs = ({onlineUsers}) => {
         />
       )}
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-4 gap-4 p-6 max-w-7xl mx-auto overflow-hidden">
-        {/* Left Area */}
-        <div className="bg-white rounded shadow lg:col-span-1 h-full overflow-y-auto">
+        {/* Left Area - SearchFilters */}
+        <div className="lg:col-span-1">
           <SearchFilters
             filters={filters}
             setFilters={handleFilterChange}
