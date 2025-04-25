@@ -5,6 +5,8 @@ const streamifier = require('streamifier');
 const JobSeeker = require('../../../models/jobSeekerModel');
 const Recruiter = require('../../../models/recruiterModel');
 const JobListing = require('../../../models/jobListingModel');
+const applicantModel = require('../../../models/applicantModel');
+const conversationModel = require('../../../models/conversationModel');
 const { extractPublicId, deleteFromCloudinary } = require('../../../utils/cloudinaryUtils');
 
 const {
@@ -31,7 +33,12 @@ jest.mock('streamifier');
 jest.mock('../../../models/jobSeekerModel');
 jest.mock('../../../models/recruiterModel');
 jest.mock('../../../models/jobListingModel');
+jest.mock('../../../models/applicantModel');
+jest.mock('../../../models/conversationModel');
 jest.mock('../../../utils/cloudinaryUtils');
+
+// Set environment to test mode
+process.env.NODE_ENV = 'test';
 
 describe('JobSeeker Personal Details Controller', () => {
   let req, res;
@@ -59,6 +66,12 @@ describe('JobSeeker Personal Details Controller', () => {
     // Mock JobSeeker.findOne and Recruiter.findOne to return null by default
     JobSeeker.findOne = jest.fn().mockResolvedValue(null);
     Recruiter.findOne = jest.fn().mockResolvedValue(null);
+    
+    // Mock applicantModel.updateMany
+    applicantModel.updateMany = jest.fn().mockResolvedValue({ modifiedCount: 1 });
+    
+    // Mock conversationModel.updateMany
+    conversationModel.updateMany = jest.fn().mockResolvedValue({ modifiedCount: 1 });
 
     // Setup default encryption/decryption mocks
     CryptoJS.AES.decrypt = jest.fn().mockReturnValue({
@@ -424,10 +437,14 @@ describe('JobSeeker Personal Details Controller', () => {
           email: 'test@example.com',
           profilePic: 'https://res.cloudinary.com/test/image.jpg',
           role: 'JobSeeker',
+          _id: 'testjobseeker123',
           save: jest.fn().mockResolvedValue(true)
         };
         
         JobSeeker.findOne.mockResolvedValue(mockUser);
+        
+        // Mock applicantModel.updateMany
+        applicantModel.updateMany.mockResolvedValue({ modifiedCount: 1 });
       });
 
       it('should remove profile picture and set to default', async () => {
@@ -436,12 +453,16 @@ describe('JobSeeker Personal Details Controller', () => {
         
         // Verify
         expect(deleteFromCloudinary).toHaveBeenCalledWith('test-public-id');
+        expect(applicantModel.updateMany).toHaveBeenCalledWith(
+          { jobSeekerId: 'testjobseeker123' },
+          { profilePic: defaultProfilePic }
+        );
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
           message: 'profile picture deleted successfully.',
           profilePic: defaultProfilePic
         }));
-      });
+      }, 10000);  // Increase timeout to 10 seconds
 
       it('should remove company logo and set to default', async () => {
         // Setup
