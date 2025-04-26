@@ -27,6 +27,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         profilePicFile = formData.profilePic || null;
         
     }, [formData]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -79,6 +80,11 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 ...prevFormData,
                 [name]: files[0],
             }));
+            
+            // Process CV file immediately to extract content
+            if (name === 'cv' && files[0]) {
+                await processCVFile(files[0]);
+            }
         } catch (error) {
             console.error('Error handling file change:', error.message);
             if (name === 'cv') {
@@ -88,6 +94,59 @@ const OptionalDetailsForm = ({ onSubmit }) => {
             } else {
                 setError('Error handling file. Please try again.');
             }
+        }
+    };
+    
+    // New function to process the CV file
+    const processCVFile = async (file) => {
+        try {
+            setIsProcessingCV(true);
+            setCvError(null);
+            
+            // Extract text content from the PDF file
+            const cvContent = await extractTextFromPDF(file);
+            
+            // Send the extracted text to the AI endpoint
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    prompt: cvContent,
+                }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate AI CV analysis');
+            }
+
+            const jsonResponse = await response.json();
+            
+            // Extract and clean the JSON from the response string
+            const jsonRaw = jsonResponse.response;
+            
+            // Safeguard for JSON extraction in case the expected format is not met
+            const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
+            if (!match) {
+                throw new Error('Invalid JSON format in response');
+            }
+
+            const jsonString = match[1]; // Extract JSON between code block markers
+            const prettyJson = JSON.parse(jsonString); // Parse the JSON string
+            
+            console.log("Successfully processed CV and got analyzed content:", prettyJson);
+            
+            // Update form data with the analyzed content
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                analyzed_cv_content: prettyJson
+            }));
+        } catch (error) {
+            console.error('Error analyzing CV:', error.message);
+            setCvError('Error analyzing CV. Please try again.');
+        } finally {
+            setIsProcessingCV(false);
         }
     };
     
@@ -102,52 +161,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setIsLoading(true); // Set loading to true when the request starts
     
         try {
-            // Process CV if one is uploaded
-            if (formData.cv) {
-                setIsProcessingCV(true);
-                try {
-                    const cvContent = await extractTextFromPDF(formData.cv);
-                    
-                    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            prompt: cvContent,
-                        }),
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to generate AI CV analysis');
-                    }
-
-                    const jsonResponse = await response.json();
-                    
-                    // Extract and clean the JSON from the response string
-                    const jsonRaw = jsonResponse.response;
-                    
-                    // Safeguard for JSON extraction in case the expected format is not met
-                    const match = jsonRaw.match(/```json\n([\s\S]+?)\n```/);
-                    if (!match) {
-                        throw new Error('Invalid JSON format in response');
-                    }
-
-                    const jsonString = match[1]; // Extract JSON between code block markers
-                    const prettyJson = JSON.parse(jsonString); // Parse the JSON string
-                    
-                    // Update form data with the analyzed content
-                    setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        analyzed_cv_content: prettyJson
-                    }));
-                } catch (error) {
-                    console.error('Error analyzing CV:', error.message);
-                    setCvError('Error analyzing CV. Please try again.');
-                } finally {
-                    setIsProcessingCV(false);
-                }
-            }
+            // No need to process CV here since we do it immediately on file selection
             
             console.log("Submitting form data:", JSON.stringify(formData, (key, value) => {
                 if (key === 'cv' || key === 'profilePic') {
@@ -253,6 +267,12 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                         <p className="text-sm text-gray-500">Maximum file size: {MAX_FILE_SIZE_MB}MB</p>
                         {cvError && (
                             <p className="text-sm text-red-500">{cvError}</p>
+                        )}
+                        {isProcessingCV && (
+                            <p className="text-sm text-blue-500">Processing CV with AI...</p>
+                        )}
+                        {formData.analyzed_cv_content && Object.keys(formData.analyzed_cv_content).length > 0 && !isProcessingCV && !cvError && (
+                            <p className="text-sm text-green-500">CV successfully analyzed!</p>
                         )}
                     </div>
                 </div>
