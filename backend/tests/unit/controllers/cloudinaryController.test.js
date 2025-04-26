@@ -2,6 +2,9 @@ const { uploadFileToCloudinary } = require('../../../controllers/cloudinaryContr
 const cloudinary = require('../../../config/cloudinary');
 const streamifier = require('streamifier');
 
+// Mock timers to handle any timeouts in the tests
+jest.useFakeTimers();
+
 // Mock Cloudinary config and streamifier
 jest.mock('../../../config/cloudinary', () => ({
     uploader: {
@@ -18,6 +21,12 @@ jest.mock('streamifier', () => ({
 }));
 
 describe('CloudinaryController - uploadFileToCloudinary', () => {
+    // Clear all mocks and timers after each test
+    afterEach(() => {
+        jest.clearAllMocks();
+        jest.clearAllTimers();
+    });
+    
     it('should upload a file to Cloudinary successfully', async () => {
         // Mock request and response with all required properties
         const req = {
@@ -53,6 +62,9 @@ describe('CloudinaryController - uploadFileToCloudinary', () => {
 
         // Call the controller
         await uploadFileToCloudinary(req, res);
+        
+        // Run any pending timers to clear timeouts
+        jest.runAllTimers();
 
         // Assertions
         expect(res.status).toHaveBeenCalledWith(200);
@@ -64,7 +76,7 @@ describe('CloudinaryController - uploadFileToCloudinary', () => {
             size: 1024,
             original_filename: 'test-file.jpg'
         });
-    }, 10000);
+    });
 
     it('should handle errors during Cloudinary upload', async () => {
         const req = {
@@ -94,6 +106,9 @@ describe('CloudinaryController - uploadFileToCloudinary', () => {
 
         // Call the controller
         await uploadFileToCloudinary(req, res);
+        
+        // Run any pending timers to clear timeouts
+        jest.runAllTimers();
 
         // Assertions
         expect(res.status).toHaveBeenCalledWith(500);
@@ -101,5 +116,5 @@ describe('CloudinaryController - uploadFileToCloudinary', () => {
             error: 'Server error', 
             message: 'Failed to upload file to Cloudinary. Please try again later.'
         });
-    }, 10000);
+    });
 });
