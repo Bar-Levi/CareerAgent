@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { parseJobDescription } from '../../../utils/parseJobDescription';
 import { FaMapMarkerAlt, FaBriefcase, FaGraduationCap, FaLaptopCode, 
   FaLanguage, FaLock, FaCalendarAlt, FaBuilding, FaGlobe, 
-  FaUserTie, FaClock, FaMedal, FaArchive } from "react-icons/fa";
+  FaUserTie, FaClock, FaMedal, FaArchive, FaTimes } from "react-icons/fa";
 
 /**
  * Displays job listing information to a candidate with a modern design.
@@ -15,6 +16,135 @@ import { FaMapMarkerAlt, FaBriefcase, FaGraduationCap, FaLaptopCode,
  *   <JobListingDescription jobListing={jobListingData} />
  */
 const JobListingDescription = ({ jobListing }) => {
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const modalRef = useRef(null);
+  const savedHandler = useRef(null);
+  
+  // Hack: Find and disable the mousedown event listener from SearchJobs while modal is open
+  useEffect(() => {
+    if (showProfileModal) {
+      // Capture original mousedown handler
+      const originalMouseDown = (e) => {
+        // If we're clicking in the modal, swallow the event
+        if (e.target.closest('.job-description-modal')) {
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          return;
+        }
+      };
+
+      // Higher priority event listener that runs before the one in SearchJobs
+      document.addEventListener('mousedown', originalMouseDown, true);
+      savedHandler.current = originalMouseDown;
+
+      return () => {
+        document.removeEventListener('mousedown', originalMouseDown, true);
+      };
+    }
+  }, [showProfileModal]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (savedHandler.current) {
+        document.removeEventListener('mousedown', savedHandler.current, true);
+      }
+    };
+  }, []);
+
+  // Image click handler
+  const handleImageClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowProfileModal(true);
+  };
+
+  // Close modal handler
+  const handleCloseModal = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.nativeEvent.stopImmediatePropagation();
+    }
+    setShowProfileModal(false);
+  };
+
+  // Profile image modal component
+  const ProfileImageModal = () => {
+    if (!showProfileModal || !recruiterProfileImage) return null;
+    
+    // Apply fade-in animation using CSS keyframes
+    const modalStyles = `
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes scaleIn {
+        from { transform: scale(0.95) translateY(10px); opacity: 0; }
+        to { transform: scale(1) translateY(0); opacity: 1; }
+      }
+      .modal-overlay {
+        animation: fadeIn 0.3s ease forwards;
+      }
+      .modal-content {
+        animation: scaleIn 0.3s ease forwards;
+      }
+    `;
+    
+    const modalContent = (
+      <div 
+        className="fixed inset-0 flex items-center justify-center modal-overlay job-description-modal"
+        style={{ 
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 999999,
+        }}
+        onClick={handleCloseModal}
+        data-modal="true"
+      >
+        <style>{modalStyles}</style>
+        <div 
+          className="relative bg-white rounded-lg max-w-lg w-full max-h-[90vh] overflow-hidden shadow-2xl modal-content"
+          style={{ 
+            position: 'relative',
+            zIndex: 1000000 
+          }}
+          onClick={(e) => {
+            e.stopPropagation(); 
+            e.nativeEvent.stopImmediatePropagation();
+          }}
+          data-modal="true"
+        >
+          <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg font-medium">{recruiterName || "Recruiter"}</h3>
+            <button 
+              onClick={handleCloseModal}
+              className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              aria-label="Close modal"
+              data-modal="true"
+            >
+              <FaTimes size={20} />
+            </button>
+          </div>
+          <div className="p-4 flex items-center justify-center">
+            <img
+              src={recruiterProfileImage}
+              alt={recruiterName || "Recruiter"}
+              className="max-h-[70vh] max-w-full object-contain"
+              data-modal="true"
+            />
+          </div>
+        </div>
+      </div>
+    );
+    
+    return createPortal(modalContent, document.body);
+  };
+
   if (!jobListing) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-gray-50 rounded-lg">
@@ -63,7 +193,10 @@ const JobListingDescription = ({ jobListing }) => {
     : null;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-xl overflow-hidden job-listing-description-container">
+      {/* Profile Image Modal */}
+      <ProfileImageModal />
+      
       {/* Header with company and job info */}
       <div className="relative bg-gradient-to-r from-blue-600 to-indigo-700 p-4">
         <div className="flex flex-wrap justify-between mb-2">
@@ -81,11 +214,17 @@ const JobListingDescription = ({ jobListing }) => {
         
         <div className="flex items-center mb-2">
           {recruiterProfileImage ? (
-            <img
-              src={recruiterProfileImage}
-              alt={recruiterName || "Recruiter"}
-              className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
-            />
+            <div 
+              onClick={handleImageClick} 
+              className="cursor-pointer transition-transform hover:scale-105 focus:outline-none"
+              title="Click to view profile image"
+            >
+              <img
+                src={recruiterProfileImage}
+                alt={recruiterName || "Recruiter"}
+                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+              />
+            </div>
           ) : (
             <div className="w-12 h-12 rounded-full bg-indigo-800 flex items-center justify-center text-white text-lg font-bold">
               {company?.charAt(0) || "C"}
@@ -229,11 +368,17 @@ const JobListingDescription = ({ jobListing }) => {
             </h2>
             <div className="flex items-center">
               {recruiterProfileImage && (
-                <img
-                  src={recruiterProfileImage}
-                  alt={recruiterName}
-                  className="w-8 h-8 rounded-full object-cover mr-2"
-                />
+                <div 
+                  onClick={handleImageClick} 
+                  className="cursor-pointer transition-transform hover:scale-105 focus:outline-none"
+                  title="Click to view profile image"
+                >
+                  <img
+                    src={recruiterProfileImage}
+                    alt={recruiterName}
+                    className="w-8 h-8 rounded-full object-cover mr-2"
+                  />
+                </div>
               )}
               <div>
                 <p className="text-sm font-medium text-gray-900">{recruiterName}</p>
