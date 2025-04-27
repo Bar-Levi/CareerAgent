@@ -229,7 +229,7 @@ const loginUser = async (req, res) => {
         }
 
         if (!user.isVerified) {
-            const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
             return res.status(403).json({ message: 'Please verify your email before logging in.', token, user});
         }
 
@@ -237,7 +237,7 @@ const loginUser = async (req, res) => {
         user.resetLoginAttemptsToken = undefined;
         await user.save();
 
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '2h' });
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.status(200).json({ message: 'Login successful.', token, user});
     } catch (error) {
         console.error(`[Login] Error occurred: ${error.message}`);
