@@ -543,12 +543,17 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 )}
               </div>
               
-              {/* Mobile metrics - full width */}
-              <div className="w-full overflow-x-auto pb-2">
-                <div className="min-w-[400px]">
-                  <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
-                </div>
-              </div>
+              {/* Metrics Row (collapsed on mobile) */}
+              <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="mx-4 mt-4 overflow-hidden"
+                >
+                  <div className={`hidden sm:block ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-4 backdrop-blur-md bg-opacity-80`}>
+                    <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
+                  </div>
+              </motion.div>
             </div>
 
             {/* Desktop (side-by-side) view */}

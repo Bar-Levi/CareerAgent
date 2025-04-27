@@ -201,9 +201,9 @@ describe('AuthController Tests', () => {
       await loginUser(req, res);
 
       expect(jwt.sign).toHaveBeenCalledWith(
-        { id: mockUser._id, role: mockUser.role },
+        { id: mockUser._id },
         process.env.JWT_SECRET,
-        { expiresIn: '2h' }
+        { expiresIn: '7d' }
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
