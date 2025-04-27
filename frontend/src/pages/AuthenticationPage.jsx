@@ -29,6 +29,12 @@ const AuthenticationPage = () => {
     // Check for existing token and verify it
     useEffect(() => {
         const checkExistingToken = async () => {
+            // Skip token checking if coming from logout
+            if (state?.fromLogout) {
+                setIsCheckingToken(false);
+                return;
+            }
+            
             setIsCheckingToken(true);
             
             const token = localStorage.getItem('token');
@@ -107,7 +113,7 @@ const AuthenticationPage = () => {
         };
         
         checkExistingToken();
-    }, [navigate]);
+    }, [navigate, state?.fromLogout]);
 
     useEffect(() => {
         if (notificationSource) {

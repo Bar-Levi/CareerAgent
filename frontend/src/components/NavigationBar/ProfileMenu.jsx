@@ -77,7 +77,10 @@ const ProfileMenu = ({ userType, user }) => {
       });
       localStorage.clear();
       sessionStorage.clear();
-      navigate("/", { replace: true });
+      navigate("/authentication", { 
+        replace: true,
+        state: { fromLogout: true }
+      });
     } catch (error) {
       console.error("Error during logout:", error);
       alert("Failed to log out. Please try again.");
