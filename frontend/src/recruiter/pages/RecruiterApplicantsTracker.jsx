@@ -367,62 +367,56 @@ const RecruiterApplicantsTracker = () => {
 
       {/* Main Content */}
       <motion.div 
-        className="flex-1 p-6 overflow-hidden"
+        className="flex-1 p-4 md:p-6 overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="h-full grid grid-cols-12 gap-6">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
           {/* Left Panel with Table */}
-          <div className="col-span-9 flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="lg:col-span-9 flex flex-col h-full bg-white rounded-lg shadow-sm overflow-hidden">
             {/* Header with Title and Export Buttons */}
-            <div className={`flex-none h-20 px-10 py-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b flex justify-between items-center`}>
-              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <div className={`flex-none px-3 py-3 md:px-4 md:py-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0`}>
+              <h1 className={`text-xl md:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 Applicants Tracker
               </h1>
-              <div className="flex space-x-3">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={toggleDarkMode}
-                  className={`p-2 rounded-full transition-all duration-300 ${
+                  className={`p-1.5 rounded-full transition-all duration-300 ${
                     darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                   aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
                 >
-                  {darkMode ? <FiSun className="text-yellow-400" /> : <FiMoon className="text-gray-700" />}
+                  {darkMode ? <FiSun className="text-yellow-400 w-4 h-4" /> : <FiMoon className="text-gray-700 w-4 h-4" />}
                 </button>
                 <div className="group relative">
                   <button
                     onClick={() => exportToPDF(filteredApplicants)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                    className="flex items-center space-x-1 px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
                   >
-                    <FaDownload className="w-4 h-4" />
-                    <span>PDF</span>
+                    <FaDownload className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline text-sm">PDF</span>
                   </button>
-                  
-                  <div className="absolute left-1/2 top-full transform -translate-x-1/2 mt-2 px-3 py-2 text-xs text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                    For best results, hide unnecessary columns before export
-                    {/* Arrow pointing up */}
-                    <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-full border-8 border-transparent border-b-gray-900"></div>
-                  </div>
                 </div>
                 <CSVLink
                   data={getCSVData(filteredApplicants)}
                   filename="candidates.csv"
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                  className="flex items-center space-x-1 px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
                 >
-                  <FaDownload className="w-4 h-4" />
-                  <span>CSV</span>
+                  <FaDownload className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-sm">CSV</span>
                 </CSVLink>
               </div>
             </div>
 
             {/* Filter Bar */}
-            <div className={`flex-none h-24 px-6 py-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
+            <div className={`flex-none px-3 py-3 md:px-4 md:py-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
               <FilterBar {...filterProps} />
             </div>
 
             {/* Table - will scroll */}
-            <div className={`flex-1 min-h-0 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`flex-1 min-h-0 ${darkMode ? 'bg-gray-800' : 'bg-white'} overflow-auto`}>
               <CandidateTable
                 applicants={filteredApplicants}
                 setApplicants={setFilteredApplicants}
@@ -439,8 +433,8 @@ const RecruiterApplicantsTracker = () => {
           </div>
 
           {/* Right Sidebar */}
-          <div className="col-span-3 h-full">
-            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm h-full p-6 overflow-hidden flex flex-col`}>
+          <div className="lg:col-span-3 h-full">
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-sm h-full p-3 md:p-4 overflow-hidden flex flex-col`}>
               <Sidebar
                 attentionItems={attentionItems}
                 upcomingInterviews={upcomingInterviews}
