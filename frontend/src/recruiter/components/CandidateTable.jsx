@@ -81,10 +81,10 @@ const ActionButton = ({ label, onClick, icon, variant = "primary", darkMode, com
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className={`w-full px-2 py-1 rounded-md text-xs font-medium border-[0.5px] flex items-center justify-start gap-1.5 transition-all duration-200 ${getVariantStyle()}`}
+      className={`w-max px-2 py-1 rounded-md text-xs font-medium border-[0.5px] flex items-center justify-start gap-1.5 transition-all duration-200 ${getVariantStyle()}`}
     >
       {icon}
-      <span className="truncate">{label}</span>
+      <span>{label}</span>
     </motion.button>
   );
 };
@@ -283,277 +283,275 @@ const CandidateTable = ({
 
   // Column width classes for each column
   const columnWidthClasses = {
-    name: 'w-[20%]',
-    jobTitle: 'w-[15%]',
-    applicationDate: 'w-[12%]', 
-    status: 'w-[10%]',
-    interview: 'w-[15%]',
-    nextStep: 'w-[15%]',
-    actions: 'w-[8%]'
+    name: 'min-w-[180px]',
+    jobTitle: 'min-w-[150px]',
+    applicationDate: 'min-w-[130px]', 
+    status: 'min-w-[140px]',
+    interview: 'min-w-[200px]',
+    nextStep: 'min-w-[170px]',
+    actions: 'min-w-[100px]'
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Scrollable Table Container */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto">
-          <table className={`min-w-full table-fixed divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-            <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
-              <tr>
-                {columns.map(({ key, label }) => 
-                  visibleColumns[key] ? (
-                    <th
-                      key={key}
-                      className={`px-4 py-3 text-left text-xs font-medium ${columnWidthClasses[key]} ${
-                        darkMode ? 'text-gray-300' : 'text-gray-500'
-                      } uppercase tracking-wider whitespace-nowrap ${
-                        SORTABLE_COLUMNS[key] 
-                          ? darkMode 
-                            ? 'cursor-pointer hover:bg-gray-700' 
-                            : 'cursor-pointer hover:bg-gray-100'
-                          : ''
-                      }`}
-                      onClick={() => handleSort(key)}
-                    >
-                      <div className="flex items-center">
-                        {label}
-                        {renderSortIcon(key)}
-                      </div>
-                    </th>
-                  ) : null
-                )}
-              </tr>
-            </thead>
-            <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-              {applicants && applicants.length > 0 ? applicants.map((app) => {
-                const statusAction = getStatusAction(app);
-
-                // Get status color for current status
-                const getStatusColor = (status) => {
-                  if (darkMode) {
-                    switch (status) {
-                      case "Applied": return "bg-blue-900/30 text-blue-300";
-                      case "In Review": return "bg-yellow-900/30 text-yellow-300";
-                      case "Interview Scheduled": return "bg-purple-900/30 text-purple-300";
-                      case "Interview Done": return "bg-indigo-900/30 text-indigo-300";
-                      case "Accepted": return "bg-green-900/30 text-green-300";
-                      case "Hired": return "bg-emerald-900/30 text-emerald-300";
-                      case "Rejected": return "bg-red-900/30 text-red-300";
-                      default: return "bg-gray-700 text-gray-300";
-                    }
-                  } else {
-                    switch (status) {
-                      case "Applied": return "bg-blue-100 text-blue-800";
-                      case "In Review": return "bg-yellow-100 text-yellow-800";
-                      case "Interview Scheduled": return "bg-purple-100 text-purple-800";
-                      case "Interview Done": return "bg-indigo-100 text-indigo-800";
-                      case "Accepted": return "bg-green-100 text-green-800";
-                      case "Hired": return "bg-emerald-100 text-emerald-800";
-                      case "Rejected": return "bg-red-100 text-red-800";
-                      default: return "bg-gray-100 text-gray-800";
-                    }
-                  }
-                };
-
-                return (
-                  <tr
-                    key={app._id}
-                    ref={selectedApplicant?._id === app._id ? selectedRowRef : null}
-                    className={`${
-                      selectedApplicant?._id === app._id 
+      <div className="flex-1 overflow-auto">
+        <table className={`w-max divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+          <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
+            <tr>
+              {columns.map(({ key, label }) => 
+                visibleColumns[key] ? (
+                  <th
+                    key={key}
+                    className={`px-4 py-3 text-left text-xs font-medium ${columnWidthClasses[key]} ${
+                      darkMode ? 'text-gray-300' : 'text-gray-500'
+                    } uppercase tracking-wider whitespace-nowrap ${
+                      SORTABLE_COLUMNS[key] 
                         ? darkMode 
-                          ? 'bg-gray-700' 
-                          : 'bg-blue-50'
-                        : darkMode 
-                          ? 'hover:bg-gray-700' 
-                          : 'hover:bg-gray-50'
-                    } transition-all duration-150`}
+                          ? 'cursor-pointer hover:bg-gray-700' 
+                          : 'cursor-pointer hover:bg-gray-100'
+                        : ''
+                    }`}
+                    onClick={() => handleSort(key)}
                   >
-                    {/* Candidate Details */}
-                    {visibleColumns.name && (
-                      <td className="px-4 py-4">
-                        <div className="flex items-start space-x-3">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
-                            <img
-                              className="h-full w-full object-cover"
-                              src={app.profilePic || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
-                              alt={app.name}
-                            />
+                    <div className="flex items-center">
+                      {label}
+                      {renderSortIcon(key)}
+                    </div>
+                  </th>
+                ) : null
+              )}
+            </tr>
+          </thead>
+          <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+            {applicants && applicants.length > 0 ? applicants.map((app) => {
+              const statusAction = getStatusAction(app);
+
+              // Get status color for current status
+              const getStatusColor = (status) => {
+                if (darkMode) {
+                  switch (status) {
+                    case "Applied": return "bg-blue-900/30 text-blue-300";
+                    case "In Review": return "bg-yellow-900/30 text-yellow-300";
+                    case "Interview Scheduled": return "bg-purple-900/30 text-purple-300";
+                    case "Interview Done": return "bg-indigo-900/30 text-indigo-300";
+                    case "Accepted": return "bg-green-900/30 text-green-300";
+                    case "Hired": return "bg-emerald-900/30 text-emerald-300";
+                    case "Rejected": return "bg-red-900/30 text-red-300";
+                    default: return "bg-gray-700 text-gray-300";
+                  }
+                } else {
+                  switch (status) {
+                    case "Applied": return "bg-blue-100 text-blue-800";
+                    case "In Review": return "bg-yellow-100 text-yellow-800";
+                    case "Interview Scheduled": return "bg-purple-100 text-purple-800";
+                    case "Interview Done": return "bg-indigo-100 text-indigo-800";
+                    case "Accepted": return "bg-green-100 text-green-800";
+                    case "Hired": return "bg-emerald-100 text-emerald-800";
+                    case "Rejected": return "bg-red-100 text-red-800";
+                    default: return "bg-gray-100 text-gray-800";
+                  }
+                }
+              };
+
+              return (
+                <tr
+                  key={app._id}
+                  ref={selectedApplicant?._id === app._id ? selectedRowRef : null}
+                  className={`${
+                    selectedApplicant?._id === app._id 
+                      ? darkMode 
+                        ? 'bg-gray-700' 
+                        : 'bg-blue-50'
+                      : darkMode 
+                        ? 'hover:bg-gray-700' 
+                        : 'hover:bg-gray-50'
+                  } transition-all duration-150`}
+                >
+                  {/* Candidate Details */}
+                  {visibleColumns.name && (
+                    <td className="px-4 py-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
+                          <img
+                            className="h-full w-full object-cover"
+                            src={app.profilePic || "https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png"}
+                            alt={app.name}
+                          />
+                        </div>
+                        <div>
+                          <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            {app.name}
                           </div>
-                          <div>
-                            <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                              {app.name}
-                            </div>
-                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {app.email}
-                            </div>
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {app.email}
                           </div>
                         </div>
-                      </td>
-                    )}
+                      </div>
+                    </td>
+                  )}
 
-                    {/* Job Title */}
-                    {visibleColumns.jobTitle && (
-                      <td className={`px-4 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {app.jobTitle}
-                      </td>
-                    )}
+                  {/* Job Title */}
+                  {visibleColumns.jobTitle && (
+                    <td className={`px-4 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {app.jobTitle}
+                    </td>
+                  )}
 
-                    {/* Application Date */}
-                    {visibleColumns.applicationDate && (
-                      <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {app.applicationDate
-                          ? new Date(app.applicationDate).toLocaleDateString()
-                          : "N/A"}
-                      </td>
-                    )}
+                  {/* Application Date */}
+                  {visibleColumns.applicationDate && (
+                    <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {app.applicationDate
+                        ? new Date(app.applicationDate).toLocaleDateString()
+                        : "N/A"}
+                    </td>
+                  )}
 
-                    {/* Status */}
-                    {visibleColumns.status && (
-                      <td className="px-4 py-4">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
-                          {app.status}
-                        </span>
-                      </td>
-                    )}
+                  {/* Status */}
+                  {visibleColumns.status && (
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
+                        {app.status}
+                      </span>
+                    </td>
+                  )}
 
-                    {/* Interview */}
-                    {visibleColumns.interview && (
-                      <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        {app.interviewId ? (
-                          <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            <div>
-                              {new Date(app.interviewId.scheduledTime).toLocaleString()}
-                            </div>
-                            <a
-                              href={app.interviewId.meetingLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
-                            >
-                              Join Meeting
-                            </a>
+                  {/* Interview */}
+                  {visibleColumns.interview && (
+                    <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {app.interviewId ? (
+                        <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          <div>
+                            {new Date(app.interviewId.scheduledTime).toLocaleString()}
                           </div>
-                        ) : (
-                          <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Not scheduled</span>
-                        )}
-                      </td>
-                    )}
+                          <a
+                            href={app.interviewId.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
+                          >
+                            Join Meeting
+                          </a>
+                        </div>
+                      ) : (
+                        <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Not scheduled</span>
+                      )}
+                    </td>
+                  )}
 
-                    {/* Next Step */}
-                    {visibleColumns.nextStep && (
-                      <td className="px-4 py-4">
-                        {statusAction ? (
-                          <>
-                            {compactView && statusAction.length > 1 ? (
-                              <div className="flex space-x-1.5">
-                                {statusAction.map((action, idx) => (
-                                  <ActionButton
-                                    key={idx}
-                                    label={action.label}
-                                    onClick={action.onClick}
-                                    icon={action.icon}
-                                    variant={action.variant}
-                                    darkMode={darkMode}
-                                    compactMode={true}
-                                  />
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="flex flex-col space-y-1 max-w-[150px]">
-                                {statusAction.map((action, idx) => (
-                                  <ActionButton
-                                    key={idx}
-                                    label={action.label}
-                                    onClick={action.onClick}
-                                    icon={action.icon}
-                                    variant={action.variant}
-                                    darkMode={darkMode}
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-                            No actions available
-                          </span>
-                        )}
-                      </td>
-                    )}
+                  {/* Next Step */}
+                  {visibleColumns.nextStep && (
+                    <td className="px-4 py-4">
+                      {statusAction ? (
+                        <>
+                          {compactView ? (
+                            <div className="flex space-x-2">
+                              {statusAction.map((action, idx) => (
+                                <ActionButton
+                                  key={idx}
+                                  label={action.label}
+                                  onClick={action.onClick}
+                                  icon={action.icon}
+                                  variant={action.variant}
+                                  darkMode={darkMode}
+                                  compactMode={true}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col space-y-1">
+                              {statusAction.map((action, idx) => (
+                                <ActionButton
+                                  key={idx}
+                                  label={action.label}
+                                  onClick={action.onClick}
+                                  icon={action.icon}
+                                  variant={action.variant}
+                                  darkMode={darkMode}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                          No actions
+                        </span>
+                      )}
+                    </td>
+                  )}
 
-                    {/* Actions */}
-                    {visibleColumns.actions && (
-                      <td className="px-4 py-4 text-right text-sm font-medium">
-                        <div className="flex space-x-2 justify-center">
+                  {/* Actions */}
+                  {visibleColumns.actions && (
+                    <td className="px-4 py-4 text-right text-sm font-medium">
+                      <div className="flex space-x-2 justify-center">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => {
+                            setSelectedApplicant(app);
+                            setShowNotesModal(true);
+                          }}
+                          className={`p-2 rounded-full ${
+                            darkMode 
+                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white' 
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                          } transition-all duration-200`}
+                          title="View/Edit Notes"
+                        >
+                          <FaPencilAlt className="w-4 h-4" />
+                        </motion.button>
+
+                        {/* Additional action - Hire */}
+                        {app.status !== "Hired" && app.status !== "Rejected" && (
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => {
-                              setSelectedApplicant(app);
-                              setShowNotesModal(true);
-                            }}
+                            onClick={() => handleHireClick(app)}
                             className={`p-2 rounded-full ${
                               darkMode 
-                                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                ? 'bg-green-800/80 text-green-200 hover:bg-green-700' 
+                                : 'bg-green-100 text-green-600 hover:bg-green-200'
                             } transition-all duration-200`}
-                            title="View/Edit Notes"
+                            title="Mark as Hired"
                           >
-                            <FaPencilAlt className="w-4 h-4" />
+                            <FaCheck className="w-4 h-4" />
                           </motion.button>
+                        )}
 
-                          {/* Additional action - Hire */}
-                          {app.status !== "Hired" && app.status !== "Rejected" && (
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleHireClick(app)}
-                              className={`p-2 rounded-full ${
-                                darkMode 
-                                  ? 'bg-green-800/80 text-green-200 hover:bg-green-700' 
-                                  : 'bg-green-100 text-green-600 hover:bg-green-200'
-                              } transition-all duration-200`}
-                              title="Mark as Hired"
-                            >
-                              <FaCheck className="w-4 h-4" />
-                            </motion.button>
-                          )}
-
-                          {/* Additional action - Reject */}
-                          {app.status !== "Rejected" && app.status !== "Hired" && (
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => handleRejectClick(app)}
-                              className={`p-2 rounded-full ${
-                                darkMode 
-                                  ? 'bg-red-800/80 text-red-200 hover:bg-red-700' 
-                                  : 'bg-red-100 text-red-600 hover:bg-red-200'
-                              } transition-all duration-200`}
-                              title="Reject Candidate"
-                            >
-                              <FaTimes className="w-4 h-4" />
-                            </motion.button>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                );
-              }) : (
-                <tr>
-                  <td 
-                    colSpan={Object.values(visibleColumns).filter(Boolean).length} 
-                    className={`px-4 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
-                  >
-                    No candidates found matching your filters.
-                  </td>
+                        {/* Additional action - Reject */}
+                        {app.status !== "Rejected" && app.status !== "Hired" && (
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleRejectClick(app)}
+                            className={`p-2 rounded-full ${
+                              darkMode 
+                                ? 'bg-red-800/80 text-red-200 hover:bg-red-700' 
+                                : 'bg-red-100 text-red-600 hover:bg-red-200'
+                            } transition-all duration-200`}
+                            title="Reject Candidate"
+                          >
+                            <FaTimes className="w-4 h-4" />
+                          </motion.button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              );
+            }) : (
+              <tr>
+                <td 
+                  colSpan={Object.values(visibleColumns).filter(Boolean).length} 
+                  className={`px-4 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                >
+                  No candidates found matching your filters.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Schedule Interview Modal */}
