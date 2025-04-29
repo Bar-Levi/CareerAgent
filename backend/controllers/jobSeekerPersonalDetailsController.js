@@ -345,18 +345,45 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
           return res.status(400).json({ message: "Invalid GitHub URL." });
         }
         user.githubUrl = value.trim();
+        // Update githubUrl in all applicant entries
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { githubUrl: value.trim() }
+          );
+        } catch (err) {
+          console.error("Error updating GitHub URL in applicant entries:", err);
+        }
         break;
       case "linkedin":
         if (!/^https:\/\/(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/.test(value.trim())) {
           return res.status(400).json({ message: "Invalid LinkedIn URL." });
         }
         user.linkedinUrl = value.trim();
+        // Update linkedinUrl in all applicant entries
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { linkedinUrl: value.trim() }
+          );
+        } catch (err) {
+          console.error("Error updating LinkedIn URL in applicant entries:", err);
+        }
         break;
       case "phone":
         if (!/^\+?[0-9]{7,15}$/.test(value.trim())) {
           return res.status(400).json({ message: "Invalid phone number." });
         }
         user.phone = value.trim();
+        // Update phone in all applicant entries
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { phone: value.trim() }
+          );
+        } catch (err) {
+          console.error("Error updating phone in applicant entries:", err);
+        }
         break;
       case "dob":
         const parsedDate = Date.parse(value);
@@ -401,12 +428,39 @@ const resetJobSeekerPersonalDetails = async (req, res) => {
     switch (type.toLowerCase()) {
       case "github":
         user.githubUrl = "";
+        // Reset githubUrl in all applicant entries
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { $unset: { githubUrl: 1 } }
+          );
+        } catch (err) {
+          console.error("Error resetting GitHub URL in applicant entries:", err);
+        }
         break;
       case "linkedin":
         user.linkedinUrl = "";
+        // Reset linkedinUrl in all applicant entries
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { $unset: { linkedinUrl: 1 } }
+          );
+        } catch (err) {
+          console.error("Error resetting LinkedIn URL in applicant entries:", err);
+        }
         break;
       case "phone":
         user.phone = "";
+        // Reset phone in all applicant entries
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: user._id },
+            { $unset: { phone: 1 } }
+          );
+        } catch (err) {
+          console.error("Error resetting phone in applicant entries:", err);
+        }
         break;
       case "dob":
         user.dateOfBirth = "";
@@ -547,7 +601,20 @@ const updateCV = async (req, res) => {
           }
         }
         
+        // Save the updated jobSeeker document
         await jobSeeker.save();
+
+        // Update CV in all applicant entries for this job seeker
+        try {
+          await applicantModel.updateMany(
+            { jobSeekerId: jobSeeker._id },
+            { cv: cvUrl }
+          );
+        } catch (err) {
+          console.error("Error updating CV in applicant entries:", err);
+          // Don't return error here as the main CV update was successful
+        }
+
         return res.status(200).json({ message: "CV updated successfully", cv: jobSeeker.cv });
       }
     );
@@ -571,6 +638,18 @@ const deleteCV = async (req, res) => {
     }
     // Remove the cv and analyzed_cv_content fields using $unset
     await jobSeekerModel.updateOne({ email }, { $unset: { cv: 1, analyzed_cv_content: 1 } });
+
+    // Remove CV from all applicant entries for this job seeker
+    try {
+      await applicantModel.updateMany(
+        { jobSeekerId: jobSeeker._id },
+        { $unset: { cv: 1 } }
+      );
+    } catch (err) {
+      console.error("Error removing CV from applicant entries:", err);
+      // Don't return error here as the main CV deletion was successful
+    }
+
     return res.status(200).json({ message: "CV deleted successfully." });
   } catch (error) {
     console.error("Error deleting CV:", error);
