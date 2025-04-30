@@ -5,7 +5,7 @@ const path = require("path");
 
 // Initialize the AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 let analyzeCvPreprompt;
 let careerAdvisorPreprompt;
@@ -16,32 +16,32 @@ let currentSessionId = null;
 let sessionHistory = []; // Initialize an array to store session history
 
 async function loadSessionHistory(convId, token) {
-    if (currentSessionId !== convId) {
-      sessionHistory = [];
-      currentSessionId = convId;
+  if (currentSessionId !== convId) {
+    sessionHistory = [];
+    currentSessionId = convId;
+  }
+  try {
+    // Call the API endpoint exposed by getMessagesByConvId
+    const response = await fetch(`${process.env.BACKEND_URL}/api/bot-conversations/getMessagesByConvId?convId=${convId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    try {
-        // Call the API endpoint exposed by getMessagesByConvId
-        const response = await fetch(`${process.env.BACKEND_URL}/api/bot-conversations/getMessagesByConvId?convId=${convId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+    const data = await response.json();
 
-        const data = await response.json();
+    // Append fetched messages to the sessionHistory
+    sessionHistory = sessionHistory.concat(data) || [];
 
-        // Append fetched messages to the sessionHistory
-        sessionHistory = sessionHistory.concat(data) || [];
-
-    } catch (error) {
-        console.error("Error loading session history:", error);
-    }
+  } catch (error) {
+    console.error("Error loading session history:", error);
+  }
 }
 
 
@@ -74,7 +74,7 @@ try {
 
 const sendToBot = async (req, res) => {
   let preprompt = null;
-  const { prompt, sessionId, type} = req.body;
+  const { prompt, sessionId, type } = req.body;
   const authHeader = req.header('Authorization');
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -93,9 +93,9 @@ const sendToBot = async (req, res) => {
 
   // Construct the input with history, filtering out any null or invalid entries.
   const formattedHistory = sessionHistory
-  .filter(entry => entry && entry.sender && entry.text)
-  .map(entry => `${entry.sender}: ${entry.text}`)
-  .join("\n");
+    .filter(entry => entry && entry.sender && entry.text)
+    .map(entry => `${entry.sender}: ${entry.text}`)
+    .join("\n");
 
 
   const input = `${preprompt}, ${formattedHistory}. Now tell me - ${prompt}`;
@@ -114,9 +114,9 @@ const sendToBot = async (req, res) => {
     let matchedPrefix = prefixToRemove.find(prefix => lowerCaseResponseText.startsWith(prefix));
 
     // Remove the matched prefix, or keep the text as is
-    let processedResponseText = matchedPrefix 
-        ? responseText.slice(matchedPrefix.length).trim() // Remove prefix and trim whitespace
-        : responseText; // Keep unchanged if no prefix matched
+    let processedResponseText = matchedPrefix
+      ? responseText.slice(matchedPrefix.length).trim() // Remove prefix and trim whitespace
+      : responseText; // Keep unchanged if no prefix matched
 
     // Append the new exchange to the history
     sessionHistory.push({ role: "user", content: prompt });
@@ -204,7 +204,7 @@ const improveCV = async (req, res) => {
   }
 };
 
-module.exports = { 
+module.exports = {
   generateJsonFromCV,
   sendToBot,
   analyzeJobListing,
