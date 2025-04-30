@@ -210,7 +210,7 @@ const RegistrationForm = ({ toggleForm, setUserType }) => {
                     ? `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerJobSeeker`
                     : `${process.env.REACT_APP_BACKEND_URL}/api/auth/registerRecruiter`;
 
-            // Send data to our backend
+            
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

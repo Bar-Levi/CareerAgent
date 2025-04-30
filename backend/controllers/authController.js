@@ -100,6 +100,11 @@ const registerJobSeeker = async (req, res) => {
                 }
                 userData.analyzed_cv_content = analyzed_cv_content;
             }
+            
+            // Save the raw CV content if it's provided
+            if (req.body.cvContent) {
+                userData.cvContent = req.body.cvContent;
+            }
         }
 
         if (profilePic)

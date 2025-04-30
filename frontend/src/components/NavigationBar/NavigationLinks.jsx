@@ -5,6 +5,7 @@ import {
   FaBriefcase,
   FaRobot,
   FaQuestionCircle,
+  FaFileAlt
 } from "react-icons/fa";
 import NotificationBell from "./NotificationBell";
 
@@ -56,6 +57,15 @@ const NavigationLinks = ({
           onClick={() => handleNavClick("/searchjobs")}
         >
           <FaBriefcase className="mr-2" /> Search Jobs
+        </button>
+
+        <button
+          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+            "/improve-cv"
+          )}`}
+          onClick={() => handleNavClick("/improve-cv")}
+        >
+          <FaFileAlt className="mr-2" /> Improve CV
         </button>
 
       <button

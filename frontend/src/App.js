@@ -13,11 +13,8 @@ import UnsubscribePage from './pages/Unsubscribe';
 import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
+import ImproveCV from './jobCandidate/ImproveCV/pages/ImproveCV';
 import socket from "./socket";
-
-
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import RecruiterApplicantsTracker from './recruiter/pages/RecruiterApplicantsTracker';
 
 function App() {
@@ -45,7 +42,6 @@ function App() {
   
     return (
         <>
-        <ToastContainer position="top-right" autoClose={5000} />
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />
@@ -73,6 +69,11 @@ function App() {
                 <Route path="/searchjobs" element={
                     <ProtectedRoute>
                         <SearchJobs onlineUsers={onlineUsers}/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/improve-cv" element={
+                    <ProtectedRoute>
+                        <ImproveCV />
                     </ProtectedRoute>
                 }/>
                 <Route path="/recruiter-candidate-tracker" element={

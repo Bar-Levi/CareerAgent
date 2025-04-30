@@ -589,6 +589,12 @@ const updateCV = async (req, res) => {
           cvUrl = cvUrl.replace("/raw/upload/", "/image/upload/");
         }
         jobSeeker.cv = cvUrl;
+        
+        // Save the raw CV content if provided
+        if (req.body.cvContent) {
+          jobSeeker.cvContent = req.body.cvContent;
+        }
+        
         // Update analyzed_cv_content using the value sent in req.body (expects a JSON string)
         if (req.body.analyzed_cv_content) {
           try {
@@ -636,8 +642,8 @@ const deleteCV = async (req, res) => {
     if (publicId) {
       await deleteFromCloudinary(publicId);
     }
-    // Remove the cv and analyzed_cv_content fields using $unset
-    await jobSeekerModel.updateOne({ email }, { $unset: { cv: 1, analyzed_cv_content: 1 } });
+    // Remove the cv, cvContent, and analyzed_cv_content fields using $unset
+    await jobSeekerModel.updateOne({ email }, { $unset: { cv: 1, cvContent: 1, analyzed_cv_content: 1 } });
 
     // Remove CV from all applicant entries for this job seeker
     try {
@@ -721,6 +727,39 @@ const getJobSeekerStatistics = async (req, res) => {
   }
 };
 
+// Get CV content for a job seeker
+const getCVContent = async (req, res) => {
+  const { email } = req.query;
+  
+  try {
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    
+    const jobSeeker = await jobSeekerModel.findOne({ email });
+    
+    if (!jobSeeker) {
+      return res.status(404).json({ message: "Job seeker not found" });
+    }
+    
+    if (!jobSeeker.cv) {
+      return res.status(404).json({ message: "No CV found for this user" });
+    }
+    
+    // If cvContent exists, return it
+    if (jobSeeker.cvContent) {
+      return res.status(200).json({ cvContent: jobSeeker.cvContent });
+    }
+    
+    // If no cvContent but CV URL exists, return just a flag to upload
+    return res.status(200).json({ needsUpload: true });
+    
+  } catch (error) {
+    console.error("Error fetching CV content:", error);
+    res.status(500).json({ message: "Failed to fetch CV content" });
+  }
+};
+
 module.exports = {
   changePassword,
   changePic,
@@ -736,4 +775,5 @@ module.exports = {
   uploadCVMiddleware: uploadCV.single("cv"),
   subscribeOrUnsubscribe,
   getJobSeekerStatistics,
+  getCVContent,
 };
