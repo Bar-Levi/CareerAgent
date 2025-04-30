@@ -7,6 +7,32 @@ const path = require("path");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
+// Helper function to try multiple models with fallback
+async function generateWithModelFallback(input) {
+  const modelOptions = [
+    "gemini-2.0-flash",
+    "gemini-2.5-flash-preview-04-17",
+    "gemini-1.5-flash"
+  ];
+  
+  let lastError = null;
+  
+  for (const modelName of modelOptions) {
+    try {
+      const currentModel = genAI.getGenerativeModel({ model: modelName });
+      const result = await currentModel.generateContent(input);
+      return result;
+    } catch (error) {
+      console.error(`Error with model ${modelName}:`, error?.message || error);
+      lastError = error;
+      // Continue to next model
+    }
+  }
+  
+  // If we get here, all models failed
+  throw lastError;
+}
+
 let analyzeCvPreprompt;
 let careerAdvisorPreprompt;
 let interviewerPreprompt;
@@ -101,9 +127,8 @@ const sendToBot = async (req, res) => {
   const input = `${preprompt}, ${formattedHistory}. Now tell me - ${prompt}`;
 
   try {
-
-    // Correct the request format for the model
-    const result = await model.generateContent(input);
+    // Use the fallback mechanism instead of direct model call
+    const result = await generateWithModelFallback(input);
 
     const responseText = result.response.text();
     let prefixToRemove = ['bot:', 'assistant:']; // List of possible prefixes
@@ -141,9 +166,8 @@ const generateJsonFromCV = async (req, res) => {
   const input = `${analyzeCvPreprompt}. Now tell me - ${prompt}`;
 
   try {
-
-    // Correct the request format for the model
-    const result = await model.generateContent(input);
+    // Use the fallback mechanism instead of direct model call
+    const result = await generateWithModelFallback(input);
 
     const responseText = result.response.text();
 
@@ -170,9 +194,8 @@ const analyzeJobListing = async (req, res) => {
   const input = `${analyzeJobListingPreprompt}. Now tell me - ${processedPrompt}`;
 
   try {
-
-    // Correct the request format for the model
-    const result = await model.generateContent(input);
+    // Use the fallback mechanism instead of direct model call
+    const result = await generateWithModelFallback(input);
 
     const responseText = result.response.text();
 
@@ -193,8 +216,9 @@ const improveCV = async (req, res) => {
   const prompt = `${improveCvPreprompt} Here's the CV content: ${cvContent}`;
 
   try {
-    // Generate the improvement suggestions
-    const result = await model.generateContent(prompt);
+    // Use the fallback mechanism instead of direct model call
+    const result = await generateWithModelFallback(prompt);
+    
     const responseText = result.response.text();
 
     res.status(200).json({ response: responseText });
