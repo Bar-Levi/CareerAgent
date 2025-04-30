@@ -1,12 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaBirthdayCake, FaLinkedin, FaGithub, FaFileAlt, FaTimes } from "react-icons/fa";
 
 const ProfilePicModal = ({ imageUrl, onClose }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    // Trigger animation after component mounts
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 10);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="relative max-w-3xl w-full bg-white rounded-lg shadow-xl p-2" onClick={e => e.stopPropagation()}>
+    <div 
+      className={`fixed inset-0 bg-black z-50 flex items-center justify-center p-4 transition-opacity duration-500 ease-in-out ${isVisible ? 'bg-opacity-70' : 'bg-opacity-0'}`} 
+      onClick={onClose}
+    >
+      <div 
+        className={`relative max-w-3xl w-full bg-white rounded-lg shadow-xl p-2 transition-all duration-700 ease-out ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'}`} 
+        onClick={e => e.stopPropagation()}
+      >
         <button
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-2 rounded-full bg-white shadow-md"
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 p-2 rounded-full bg-white shadow-md transition-transform duration-300 hover:scale-105"
           onClick={onClose}
         >
           <FaTimes className="w-6 h-6" />
