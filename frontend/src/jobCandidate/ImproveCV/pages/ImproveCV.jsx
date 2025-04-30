@@ -495,7 +495,7 @@ const ImproveCV = () => {
                   className="px-6 py-3 bg-white text-blue-600 border border-blue-600 font-medium rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-sm flex items-center justify-center"
                 >
                   <UploadIcon />
-                  Update CV
+                  Change Current CV
                 </motion.button>
               </>
             ) : (
@@ -506,7 +506,7 @@ const ImproveCV = () => {
                 className="px-8 py-4 bg-blue-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:bg-blue-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-base flex items-center justify-center"
               >
                 <UploadIcon />
-                Upload Your CV
+                Update Your CV
               </motion.button>
             )}
           </div>
