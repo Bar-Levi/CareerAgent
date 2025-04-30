@@ -2,42 +2,15 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 require("dotenv").config();
 const fs = require("fs"); // Import the fs module for file system operations
 const path = require("path");
+const { generateWithModelFallback } = require("../utils/modelUtils");
 
-// Initialize the AI client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-// Helper function to try multiple models with fallback
-async function generateWithModelFallback(input) {
-  const modelOptions = [
-    "gemini-2.0-flash",
-    "gemini-2.5-flash-preview-04-17",
-    "gemini-1.5-flash"
-  ];
-  
-  let lastError = null;
-  
-  for (const modelName of modelOptions) {
-    try {
-      const currentModel = genAI.getGenerativeModel({ model: modelName });
-      const result = await currentModel.generateContent(input);
-      return result;
-    } catch (error) {
-      console.error(`Error with model ${modelName}:`, error?.message || error);
-      lastError = error;
-      // Continue to next model
-    }
-  }
-  
-  // If we get here, all models failed
-  throw lastError;
-}
-
+// Initialize preprompts
 let analyzeCvPreprompt;
 let careerAdvisorPreprompt;
 let interviewerPreprompt;
 let analyzeJobListingPreprompt;
 let improveCvPreprompt;
+
 let currentSessionId = null;
 let sessionHistory = []; // Initialize an array to store session history
 
