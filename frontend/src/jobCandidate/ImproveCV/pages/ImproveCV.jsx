@@ -133,7 +133,9 @@ const ImproveCV = () => {
       if (data.cvContent) {
         const updatedUser = {
           ...currentUser,
-          cvContent: data.cvContent
+          cv: data.cv || currentUser?.cv,
+          cvContent: data.cvContent,
+          analyzed_cv_content: data.analyzed_cv_content || currentUser?.analyzed_cv_content
         };
         
         setCurrentUser(updatedUser);
@@ -155,13 +157,17 @@ const ImproveCV = () => {
   };
 
   const handleCVUploadSuccess = (cvData) => {
+    // Ensure all three required properties are present in the updatedUser
     const updatedUser = {
       ...currentUser,
-      ...cvData
+      cv: cvData.cv || currentUser?.cv,
+      cvContent: cvData.cvContent || currentUser?.cvContent,
+      analyzed_cv_content: cvData.analyzed_cv_content || currentUser?.analyzed_cv_content
     };
     
     setCurrentUser(updatedUser);
     
+    // Update location state with all three properties
     navigate(location.pathname, {
       state: {
         ...location.state,
@@ -217,6 +223,53 @@ const ImproveCV = () => {
       
       const data = await response.json();
       setImprovements(data.response);
+      
+      // Update the analyzed_cv_content in the backend
+      if (data.analyzed_cv_content) {
+        try {
+          const email = currentUser?.email;
+          if (!email) {
+            throw new Error("User email not found");
+          }
+          
+          // Create form data for updating analyzed_cv_content
+          const formData = new FormData();
+          formData.append("cv", currentUser.cv);
+          formData.append("cvContent", currentUser.cvContent);
+          formData.append("analyzed_cv_content", JSON.stringify(data.analyzed_cv_content));
+          
+          const updateResponse = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/personal/jobseeker/cv/update?email=${encodeURIComponent(email)}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            }
+          );
+          
+          if (updateResponse.ok) {
+            // Update local state and navigation state with the new analyzed_cv_content
+            const updatedUser = {
+              ...currentUser,
+              analyzed_cv_content: data.analyzed_cv_content
+            };
+            
+            setCurrentUser(updatedUser);
+            
+            navigate(location.pathname, {
+              state: {
+                ...location.state,
+                user: updatedUser
+              },
+              replace: true
+            });
+          }
+        } catch (updateError) {
+          console.error("Error updating analyzed CV content:", updateError);
+        }
+      }
       
       // Trigger confetti effect on successful improvement
       setTimeout(() => {

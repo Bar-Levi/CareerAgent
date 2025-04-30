@@ -77,11 +77,6 @@ const CVUploadModal = ({ onClose, onSuccess, userEmail }) => {
       // Extract text from PDF
       const cvContent = await extractTextFromPDF(file);
       
-      // Create form data for upload
-      const formData = new FormData();
-      formData.append("cv", file);
-      formData.append("cvContent", cvContent);
-      
       // Send the extracted text to the AI endpoint to process and analyze CV
       const aiResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/ai/generateJsonFromCV`, {
         method: "POST",
@@ -118,6 +113,12 @@ const CVUploadModal = ({ onClose, onSuccess, userEmail }) => {
         throw new Error("User email not found");
       }
       
+      // Create form data for upload
+      const formData = new FormData();
+      formData.append("cv", file);
+      formData.append("cvContent", cvContent);
+      formData.append("analyzed_cv_content", JSON.stringify(analyzed_cv_content));
+      
       // Upload CV to server
       const token = localStorage.getItem("token");
       
@@ -138,7 +139,7 @@ const CVUploadModal = ({ onClose, onSuccess, userEmail }) => {
 
       const uploadData = await uploadResponse.json();
       
-      // Ensure cvContent is explicitly included in the success data
+      // Ensure all three properties are explicitly included in the success data
       onSuccess({
         cv: uploadData.cv,
         cvContent: cvContent,
