@@ -50,10 +50,6 @@ const ImproveCV = () => {
   const responseModalRef = useRef(null);
   const confettiRef = useRef(null);
   
-  // Responsive design breakpoints
-  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1024px)' });
-  const isMobile = useMediaQuery({ query: '(max-width: 640px)' });
-  
   // Check if the user has CV content
   useEffect(() => {
     if (currentUser?.cv && !currentUser?.cvContent) {
