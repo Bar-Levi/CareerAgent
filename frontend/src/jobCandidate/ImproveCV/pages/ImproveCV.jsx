@@ -282,11 +282,31 @@ const ImproveCV = () => {
     }
   };
 
+  // Add global no-scroll style when component mounts
+  useEffect(() => {
+    // Add style to prevent scrolling on body
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    
+    return () => {
+      // Cleanup when component unmounts
+      document.body.style.overflow = 'auto';
+      document.documentElement.style.overflow = 'auto';
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-white to-blue-50 text-gray-900 overflow-hidden">
       <NavigationBar userType={currentUser?.role || "JobSeeker"} />
       
-      <div ref={confettiRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 relative">
+      <div ref={confettiRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-6 relative overflow-y-auto h-[calc(100vh-64px)]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {/* Hide scrollbar for Chrome, Safari and Opera */}
+        <style jsx>{`
+          div::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        
         {/* Success animation */}
         <AnimatePresence>
           {showSuccess && (
@@ -306,17 +326,17 @@ const ImproveCV = () => {
         </AnimatePresence>
         
         {/* Hero Section */}
-        <div className="text-center max-w-4xl mx-auto pt-8 md:pt-16">
+        <div className="text-center max-w-4xl mx-auto pt-2 md:pt-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-700 text-sm font-medium tracking-wide mb-8">
+            <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-700 text-sm font-medium tracking-wide mb-4">
               AI-POWERED CV IMPROVEMENT
             </span>
             
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-8 leading-tight text-gray-900">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-gray-900">
               Enhance Your <span className="text-blue-600 relative">
                 <span className="relative z-10">Professional Profile</span>
                 <svg className="absolute -bottom-2 left-0 w-full h-3 text-blue-200 z-0" viewBox="0 0 200 9">
@@ -325,7 +345,7 @@ const ImproveCV = () => {
               </span>
             </h1>
             
-            <p className="text-xl text-gray-600 mb-12 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
               Our AI analyzes your CV and provides targeted improvements to help you stand out to employers and ATS systems.
             </p>
           </motion.div>
