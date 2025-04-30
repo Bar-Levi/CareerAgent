@@ -8,7 +8,6 @@ import CVUploadModal from "../components/CVUploadModal";
 import { ThreeDots } from "react-loader-spinner";
 import confetti from "canvas-confetti";
 import SimpleMarkdown from "../components/SimpleMarkdown";
-import { useMediaQuery } from "react-responsive";
 import { Tilt } from "react-tilt";
 
 // Icons for UI elements
