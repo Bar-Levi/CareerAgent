@@ -5,9 +5,9 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
 import CVUploadModal from "../components/CVUploadModal";
-import SimpleMarkdown from "./SimpleMarkdown";
 import { ThreeDots } from "react-loader-spinner";
 import confetti from "canvas-confetti";
+import SimpleMarkdown from "../components/SimpleMarkdown";
 import { useMediaQuery } from "react-responsive";
 import { Tilt } from "react-tilt";
 
