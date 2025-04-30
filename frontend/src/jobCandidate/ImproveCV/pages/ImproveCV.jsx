@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
 import CVUploadModal from "../components/CVUploadModal";
@@ -187,12 +187,16 @@ const ImproveCV = () => {
       }
     }, 2000);
     
-    toast.success("CV uploaded successfully!");
+    toast.success("CV uploaded successfully!", {
+      toastId: "cv-upload-success",
+    });
   };
 
   const handleImproveCVClick = async () => {
     if (!currentUser?.cvContent) {
-      toast.error("Please upload your CV first");
+      toast.error("Please upload your CV first", {
+        toastId: "cv-missing-error",
+      });
       setShowUploadModal(true);
       return;
     }
@@ -276,7 +280,9 @@ const ImproveCV = () => {
       }, 500);
     } catch (error) {
       console.error("Error improving CV:", error);
-      toast.error(error.message || "Failed to generate improvements");
+      toast.error(error.message || "Failed to generate improvements", {
+        toastId: "improve-error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -320,12 +326,16 @@ const ImproveCV = () => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         setIsDownloading(false);
-        toast.success("Suggestions downloaded successfully!");
+        toast.success("Suggestions downloaded successfully!", {
+          toastId: "download-success",
+        });
       }, 100);
       
     } catch (error) {
       console.error("Error downloading suggestions:", error);
-      toast.error("Failed to download suggestions");
+      toast.error("Failed to download suggestions", {
+        toastId: "download-error",
+      });
       setIsDownloading(false);
     }
   };
@@ -634,11 +644,6 @@ const ImproveCV = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      
-      <ToastContainer 
-        position="top-right"
-        theme="light"
-      />
     </div>
   );
 };
