@@ -169,8 +169,8 @@ const CVUploadModal = ({ onClose, onSuccess, userEmail }) => {
         {/* Header with close button */}
         <div className="flex items-center justify-between p-5 border-b border-gray-200 bg-gray-50">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Upload Your CV</h2>
-            <p className="text-sm text-gray-600 mt-1">Let our AI enhance your professional profile</p>
+            <h2 className="text-xl font-semibold text-gray-900">Update Your Current CV</h2>
+            <p className="text-sm text-gray-600 mt-1">Let our AI enhance your new professional CV</p>
           </div>
           <button 
             onClick={onClose}
