@@ -11,6 +11,7 @@ let analyzeCvPreprompt;
 let careerAdvisorPreprompt;
 let interviewerPreprompt;
 let analyzeJobListingPreprompt;
+let improveCvPreprompt;
 let currentSessionId = null;
 let sessionHistory = []; // Initialize an array to store session history
 
@@ -57,6 +58,9 @@ try {
 
   const analyzeJobListingPrepromptFilePath = path.resolve(__dirname, "../prompts/analyzeJobListingPreprompt.txt");
   analyzeJobListingPreprompt = fs.readFileSync(analyzeJobListingPrepromptFilePath, "utf-8");
+
+  const improveCvPrepromptFilePath = path.resolve(__dirname, "../prompts/improveCvPreprompt.txt");
+  improveCvPreprompt = fs.readFileSync(improveCvPrepromptFilePath, "utf-8");
 } catch (e) {
   // On CI/CD it will throw an error because preprompts aren't included in the repository.
   console.error("Error reading prompts:", e);
@@ -64,6 +68,7 @@ try {
   careerAdvisorPreprompt = "";
   interviewerPreprompt = "";
   analyzeJobListingPreprompt = "";
+  improveCvPreprompt = "";
 };
 
 
@@ -178,8 +183,30 @@ const analyzeJobListing = async (req, res) => {
   }
 };
 
+const improveCV = async (req, res) => {
+  const { cvContent } = req.body;
+
+  if (!cvContent) {
+    return res.status(400).json({ error: "CV content is required" });
+  }
+
+  const prompt = `As an expert in CV optimization for ATS and job applications, I need you to analyze the following CV and provide detailed suggestions to improve it. Focus on addressing weaknesses, enhancing structure, optimizing for ATS systems, and making it more compelling for employers. Divide your suggestions into clear sections (Summary, Experience, Skills, Education, etc.) with specific bullet points highlighting exactly what to change. Here's the CV content: ${cvContent}`;
+
+  try {
+    // Generate the improvement suggestions
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
+    res.status(200).json({ response: responseText });
+  } catch (error) {
+    console.error("Error generating CV improvement suggestions:", error?.message || error);
+    res.status(500).json({ error: "Failed to generate CV improvement suggestions" });
+  }
+};
+
 module.exports = { 
   generateJsonFromCV,
   sendToBot,
-  analyzeJobListing
+  analyzeJobListing,
+  improveCV
 };

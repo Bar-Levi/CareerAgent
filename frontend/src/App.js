@@ -13,6 +13,7 @@ import UnsubscribePage from './pages/Unsubscribe';
 import LandingPage from './landingPage/LandingPage';
 import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
+import ImproveCV from './jobCandidate/ImproveCV/pages/ImproveCV';
 import socket from "./socket";
 
 
@@ -73,6 +74,11 @@ function App() {
                 <Route path="/searchjobs" element={
                     <ProtectedRoute>
                         <SearchJobs onlineUsers={onlineUsers}/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/improve-cv" element={
+                    <ProtectedRoute>
+                        <ImproveCV />
                     </ProtectedRoute>
                 }/>
                 <Route path="/recruiter-candidate-tracker" element={
