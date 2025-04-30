@@ -15,10 +15,6 @@ import FAQ from './pages/FAQ';
 import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
 import ImproveCV from './jobCandidate/ImproveCV/pages/ImproveCV';
 import socket from "./socket";
-
-
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import RecruiterApplicantsTracker from './recruiter/pages/RecruiterApplicantsTracker';
 
 function App() {
@@ -46,20 +42,6 @@ function App() {
   
     return (
         <>
-        <ToastContainer 
-          position="top-right" 
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          closeButton={true}
-          limit={3}
-        />
         <Router>
             <Routes>
                 <Route path="/" element={<LandingPage />} />

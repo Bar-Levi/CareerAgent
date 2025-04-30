@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
 import CVUploadModal from "../components/CVUploadModal";
@@ -189,6 +189,12 @@ const ImproveCV = () => {
     
     toast.success("CV uploaded successfully!", {
       toastId: "cv-upload-success",
+      containerId: "toasts-container",
+      onClose: () => {},
+      isLoading: false,
+      autoClose: 4000,
+      closeOnClick: true,
+      pauseOnHover: false,
     });
   };
 
@@ -196,6 +202,12 @@ const ImproveCV = () => {
     if (!currentUser?.cvContent) {
       toast.error("Please upload your CV first", {
         toastId: "cv-missing-error",
+        containerId: "toasts-container",
+        onClose: () => {},
+        isLoading: false,
+        autoClose: 4000,
+        closeOnClick: true,
+        pauseOnHover: false,
       });
       setShowUploadModal(true);
       return;
@@ -282,6 +294,12 @@ const ImproveCV = () => {
       console.error("Error improving CV:", error);
       toast.error(error.message || "Failed to generate improvements", {
         toastId: "improve-error",
+        containerId: "toasts-container",
+        onClose: () => {},
+        isLoading: false,
+        autoClose: 4000,
+        closeOnClick: true,
+        pauseOnHover: false,
       });
     } finally {
       setIsLoading(false);
@@ -328,6 +346,12 @@ const ImproveCV = () => {
         setIsDownloading(false);
         toast.success("Suggestions downloaded successfully!", {
           toastId: "download-success",
+          containerId: "toasts-container",
+          onClose: () => {},
+          isLoading: false,
+          autoClose: 4000,
+          closeOnClick: true,
+          pauseOnHover: false,
         });
       }, 100);
       
@@ -335,6 +359,12 @@ const ImproveCV = () => {
       console.error("Error downloading suggestions:", error);
       toast.error("Failed to download suggestions", {
         toastId: "download-error",
+        containerId: "toasts-container",
+        onClose: () => {},
+        isLoading: false,
+        autoClose: 4000,
+        closeOnClick: true,
+        pauseOnHover: false,
       });
       setIsDownloading(false);
     }
@@ -644,6 +674,24 @@ const ImproveCV = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ToastContainer 
+        position="top-right"
+        theme="light"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover={false}
+        closeButton={true}
+        limit={1}
+        containerId="toasts-container"
+        stacked
+        style={{ zIndex: 9999 }}
+      />
     </div>
   );
 };
