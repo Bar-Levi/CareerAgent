@@ -13,6 +13,7 @@ const {
     setMinPointsForUpdate,
     subscribeOrUnsubscribe,
     getJobSeekerStatistics,
+    getCVContent,
  } = require('../controllers/jobSeekerPersonalDetailsController');
 const { protect } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
@@ -21,6 +22,7 @@ const upload = require('../middleware/upload');
 // CV Endpoints for jobseeker
 router.post("/jobseeker/cv/update", protect, uploadCVMiddleware, updateCV);
 router.delete("/jobseeker/cv/delete", protect, deleteCV);
+router.get("/jobseeker/cv-content", protect, getCVContent);
 
 // Route to change password
 router.post('/change-password', protect, changePassword);

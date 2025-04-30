@@ -7,7 +7,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import { extractTextFromPDF } from "../../../utils/pdfUtils";
-import ChatWindow from "../../../components/ChatWindow";
 import convertMongoObject from "../../../utils/convertMongoObject";
 import JobListingDescription from "../components/JobListingDescription";
 import MessagingBar from "../components/MessagingBar";

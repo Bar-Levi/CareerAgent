@@ -137,10 +137,11 @@ const OptionalDetailsForm = ({ onSubmit }) => {
             
             console.log("Successfully processed CV and got analyzed content:", prettyJson);
             
-            // Update form data with the analyzed content
+            // Update form data with the analyzed content and raw CV text
             setFormData((prevFormData) => ({
                 ...prevFormData,
-                analyzed_cv_content: prettyJson
+                analyzed_cv_content: prettyJson,
+                cvContent: cvContent
             }));
         } catch (error) {
             console.error('Error analyzing CV:', error.message);

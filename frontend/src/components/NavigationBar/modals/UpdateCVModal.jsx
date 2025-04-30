@@ -36,7 +36,7 @@ const processCV = async (cvFile) => {
     }
     const jsonString = match[1];
     const prettyJson = JSON.parse(jsonString);
-    return prettyJson;
+    return { analyzedContent: prettyJson, rawContent: cvContent };
   } catch (error) {
     console.error("Error processing CV:", error.message);
     throw error;
@@ -490,6 +490,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
             // Update the user state by removing the CV and its analyzed content
             const updatedUser = { ...user };
             delete updatedUser.cv;
+            delete updatedUser.cvContent;
             delete updatedUser.analyzed_cv_content;
             // Create a new state object with updated user info
             const newState = {
@@ -558,7 +559,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
       
       try {
         // Process the CV file to extract and analyze its content using AI
-        const analyzedContent = await processCV(file);
+        const { analyzedContent, rawContent } = await processCV(file);
         
         // Update progress bar to 85%
         const progressBar = document.querySelector('.progress-bar');
@@ -570,6 +571,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
         const formData = new FormData();
         formData.append("cv", file);
         formData.append("analyzed_cv_content", JSON.stringify(analyzedContent));
+        formData.append("cvContent", rawContent);
         
         // Call the update CV endpoint using user's email
         const uploadResponse = await fetch(
@@ -603,6 +605,7 @@ const showUpdateCVModal = async (user, navigate, location) => {
               ...user,
               cv: uploadData.cv,
               analyzed_cv_content: analyzedContent,
+              cvContent: rawContent
             };
             // Build the new state object
             const newState = {

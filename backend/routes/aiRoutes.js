@@ -3,7 +3,8 @@ const express = require("express");
 const { 
     generateJsonFromCV,
     sendToBot,
-    analyzeJobListing
+    analyzeJobListing,
+    improveCV
  } = require("../controllers/aiController");
 
 const {
@@ -15,6 +16,7 @@ const router = express.Router();
 router.post("/generateJsonFromCV", generateJsonFromCV);
 router.post("/sendToBot", protect, sendToBot);
 router.post("/analyzeJobListing", protect, analyzeJobListing);
+router.post("/improveCV", protect, improveCV);
 
 
 

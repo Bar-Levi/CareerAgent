@@ -58,6 +58,10 @@ const jobSeekerSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
+    cvContent: {
+        type: String,
+        required: false,
+    },
     profilePic: {
         type: String,
         required: false,
