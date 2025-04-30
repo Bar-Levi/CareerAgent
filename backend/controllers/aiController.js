@@ -190,7 +190,7 @@ const improveCV = async (req, res) => {
     return res.status(400).json({ error: "CV content is required" });
   }
 
-  const prompt = `As an expert in CV optimization for ATS and job applications, I need you to analyze the following CV and provide detailed suggestions to improve it. Focus on addressing weaknesses, enhancing structure, optimizing for ATS systems, and making it more compelling for employers. Divide your suggestions into clear sections (Summary, Experience, Skills, Education, etc.) with specific bullet points highlighting exactly what to change. Here's the CV content: ${cvContent}`;
+  const prompt = `${improveCvPreprompt} Here's the CV content: ${cvContent}`;
 
   try {
     // Generate the improvement suggestions
