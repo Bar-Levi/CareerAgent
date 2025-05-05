@@ -424,16 +424,16 @@ const ImproveCV = () => {
               AI-POWERED CV IMPROVEMENT
             </span>
             
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-gray-900">
-              Enhance Your <span className="text-blue-600 relative">
-                <span className="relative z-10">Professional Profile</span>
-                <svg className="absolute -bottom-2 left-0 w-full h-3 text-blue-200 z-0" viewBox="0 0 200 9">
-                  <path d="M0,7 C50,12 80,4 200,8 L200,9 L0,9 Z" fill="currentColor"></path>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 leading-tight text-gray-900">
+              <span className="inline-flex flex-nowrap">Enhance Your <span className="text-blue-600 relative ml-2">
+                <span className="relative z-10 whitespace-nowrap">Professional Profile</span>
+                <svg className="absolute -bottom-3 sm:-bottom-4 lg:-bottom-5 left-0 w-full h-4 sm:h-5 lg:h-6 text-blue-200 z-0" viewBox="0 0 200 12" preserveAspectRatio="none">
+                  <path d="M0,8 C50,16 80,4 200,10 L200,12 L0,12 Z" fill="currentColor"></path>
                 </svg>
-              </span>
+              </span></span>
             </h1>
             
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto mt-12">
               Our AI analyzes your CV and provides targeted improvements to help you stand out to employers and ATS systems.
             </p>
           </motion.div>
