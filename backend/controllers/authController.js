@@ -600,55 +600,93 @@ const checkEmail = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
+    if (process.env.NODE_ENV !== 'production') console.log('Starting delete user process...');
     const { userId, userType } = req.params;
+    if (process.env.NODE_ENV !== 'production') console.log(`Deleting ${userType} with ID: ${userId}`);
+    
     const Schema = getSchemaByRole(userType);
+    if (process.env.NODE_ENV !== 'production') console.log(`Using schema: ${Schema.modelName}`);
+    
     const user = await Schema.findById(userId);
+    if (process.env.NODE_ENV !== 'production') console.log('User found:', user ? 'Yes' : 'No');
 
     if (!user) {
+      if (process.env.NODE_ENV !== 'production') console.log('User not found, returning 404');
       return res.status(404).json({ message: 'User not found.' });
     }
 
+    if (process.env.NODE_ENV !== 'production') console.log('Checking profile picture...');
     // Delete profile picture from Cloudinary if not default
     const defaultProfilePic = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
     if (user.profilePic && user.profilePic !== defaultProfilePic) {
+      if (process.env.NODE_ENV !== 'production') console.log('Non-default profile pic found:', user.profilePic);
       const profilePicPublicId = extractPublicId(user.profilePic);
+      if (process.env.NODE_ENV !== 'production') console.log('Profile pic public ID:', profilePicPublicId);
       if (profilePicPublicId) {
-        await deleteFromCloudinary(profilePicPublicId);
+        if (process.env.NODE_ENV !== 'production') console.log('Attempting to delete profile pic from Cloudinary...');
+        try {
+          await deleteFromCloudinary(profilePicPublicId);
+          if (process.env.NODE_ENV !== 'production') console.log('Profile pic deleted successfully');
+        } catch (cloudinaryError) {
+          if (process.env.NODE_ENV !== 'production') console.error('Error deleting profile pic from Cloudinary:', cloudinaryError);
+        }
       }
     }
 
     // For recruiters, delete company logo and job listings
     if (userType === 'Recruiter') {
+      if (process.env.NODE_ENV !== 'production') console.log('Processing Recruiter-specific deletions...');
       const defaultCompanyLogo = 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png';
       if (user.companyLogo && user.companyLogo !== defaultCompanyLogo) {
+        if (process.env.NODE_ENV !== 'production') console.log('Non-default company logo found:', user.companyLogo);
         const companyLogoPublicId = extractPublicId(user.companyLogo);
+        if (process.env.NODE_ENV !== 'production') console.log('Company logo public ID:', companyLogoPublicId);
         if (companyLogoPublicId) {
-          await deleteFromCloudinary(companyLogoPublicId);
+          if (process.env.NODE_ENV !== 'production') console.log('Attempting to delete company logo from Cloudinary...');
+          try {
+            await deleteFromCloudinary(companyLogoPublicId);
+            if (process.env.NODE_ENV !== 'production') console.log('Company logo deleted successfully');
+          } catch (cloudinaryError) {
+            if (process.env.NODE_ENV !== 'production') console.error('Error deleting company logo from Cloudinary:', cloudinaryError);
+          }
         }
       }
 
       // Find all job listings with applicants before deleting them
+      if (process.env.NODE_ENV !== 'production') console.log('Finding job listings for recruiter...');
       const jobListings = await JobListing.find({ recruiterId: userId });
+      if (process.env.NODE_ENV !== 'production') console.log(`Found ${jobListings.length} job listings`);
       
       // Notify all job seekers who applied to any of the recruiter's job listings
+      if (process.env.NODE_ENV !== 'production') console.log('Processing notifications for applicants...');
       const notifiedJobSeekers = new Set(); // To avoid duplicate notifications
       
       for (const jobListing of jobListings) {
+        if (process.env.NODE_ENV !== 'production') console.log(`Processing job listing: ${jobListing._id}, applicants: ${jobListing.applicants?.length || 0}`);
         if (jobListing.applicants && jobListing.applicants.length > 0) {
           for (const applicant of jobListing.applicants) {
+            if (process.env.NODE_ENV !== 'production') console.log(`Processing applicant: ${applicant.jobSeekerId}`);
             if (!notifiedJobSeekers.has(applicant.jobSeekerId.toString())) {
+              if (process.env.NODE_ENV !== 'production') console.log(`Finding JobSeeker: ${applicant.jobSeekerId}`);
               const jobSeeker = await JobSeeker.findById(applicant.jobSeekerId);
+              if (process.env.NODE_ENV !== 'production') console.log('JobSeeker found:', jobSeeker ? 'Yes' : 'No');
               if (jobSeeker) {
-                await sendJobNotificationEmail(
-                  jobSeeker.email,
-                  {
-                    jobRole: jobListing.jobRole,
-                    company: jobListing.company,
-                    location: jobListing.location
-                  },
-                  "jobListingDeleted"
-                );
-                notifiedJobSeekers.add(applicant.jobSeekerId.toString());
+                if (process.env.NODE_ENV !== 'production') console.log(`Sending notification email to: ${jobSeeker.email}`);
+                try {
+                  await sendJobNotificationEmail(
+                    jobSeeker.email,
+                    {
+                      jobRole: jobListing.jobRole,
+                      company: jobListing.company,
+                      location: jobListing.location
+                    },
+                    "jobListingDeleted"
+                  );
+                  if (process.env.NODE_ENV !== 'production') console.log('Notification email sent successfully');
+                  notifiedJobSeekers.add(applicant.jobSeekerId.toString());
+                } catch (emailError) {
+                  if (process.env.NODE_ENV !== 'production') console.error('Error sending notification email:', emailError);
+                }
               }
             }
           }
@@ -656,13 +694,21 @@ const deleteUser = async (req, res) => {
       }
 
       // Delete all job listings posted by this recruiter
-      await JobListing.deleteMany({ recruiterId: userId });
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting all job listings for recruiter...');
+      try {
+        const result = await JobListing.deleteMany({ recruiterId: userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${result.deletedCount} job listings`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting job listings:', deleteError);
+      }
     }
 
     // Delete user from applicants array in JobListing model
     if (userType === 'JobSeeker') {
+      if (process.env.NODE_ENV !== 'production') console.log('Processing JobSeeker-specific deletions...');
       // Delete CV from Cloudinary if it exists
       if (user.cv) {
+        if (process.env.NODE_ENV !== 'production') console.log('CV found:', user.cv);
         // CV deletion logic remains unchanged
         const cvPublicId = (() => {
           const parts = user.cv.split('/upload/');
@@ -670,47 +716,125 @@ const deleteUser = async (req, res) => {
           const withoutVersion = parts[1].replace(/^v\d+\//, '');
           return withoutVersion.split('.')[0];
         })();
+        if (process.env.NODE_ENV !== 'production') console.log('CV public ID:', cvPublicId);
         if (cvPublicId) {
-          await cloudinary.uploader.destroy(cvPublicId, { resource_type: 'raw' });
+          if (process.env.NODE_ENV !== 'production') console.log('Attempting to delete CV from Cloudinary...');
+          try {
+            await cloudinary.uploader.destroy(cvPublicId, { resource_type: 'raw' });
+            if (process.env.NODE_ENV !== 'production') console.log('CV deleted successfully');
+          } catch (cloudinaryError) {
+            if (process.env.NODE_ENV !== 'production') console.error('Error deleting CV from Cloudinary:', cloudinaryError);
+          }
         }
       }
 
       // Find all job listings where this job seeker is an applicant
+      if (process.env.NODE_ENV !== 'production') console.log('Finding job listings where user is an applicant...');
       const jobListings = await JobListing.find({ 'applicants.jobSeekerId': userId });
+      if (process.env.NODE_ENV !== 'production') console.log(`Found ${jobListings.length} job listings with user as applicant`);
       
       // For each job listing, remove the job seeker from applicants array
       for (const jobListing of jobListings) {
+        if (process.env.NODE_ENV !== 'production') console.log(`Processing job listing: ${jobListing._id}`);
+        const originalLength = jobListing.applicants.length;
         jobListing.applicants = jobListing.applicants.filter(
           applicant => applicant.jobSeekerId.toString() !== userId
         );
-        await jobListing.save();
+        if (process.env.NODE_ENV !== 'production') console.log(`Removed ${originalLength - jobListing.applicants.length} applicant entries`);
+        try {
+          await jobListing.save();
+          if (process.env.NODE_ENV !== 'production') console.log('Job listing updated successfully');
+        } catch (saveError) {
+          if (process.env.NODE_ENV !== 'production') console.error('Error saving job listing:', saveError);
+        }
       }
 
       // Delete entries from ApplicantModel
-      await Applicant.deleteMany({ jobSeekerId: userId });
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from Applicant model...');
+      try {
+        const applicantResult = await Applicant.deleteMany({ jobSeekerId: userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${applicantResult.deletedCount} applicant records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from Applicant model:', deleteError);
+      }
 
       // Delete entries from InterviewModel
-      await Interview.deleteMany({ 'participants.0.userId': userId });
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from Interview model...');
+      try {
+        const interviewResult = await Interview.deleteMany({ 'participants.0.userId': userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${interviewResult.deletedCount} interview records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from Interview model:', deleteError);
+      }
 
       // Delete entries from ConversationModel
-      await Conversation.deleteMany({ 'participants.0.userId': userId });
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from Conversation model...');
+      try {
+        const conversationResult = await Conversation.deleteMany({ 'participants.0.userId': userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${conversationResult.deletedCount} conversation records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from Conversation model:', deleteError);
+      }
 
       // Delete entries from BotConversationModel
-      await BotConversation.deleteMany({ email: user.email });
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from BotConversation model...');
+      try {
+        const botConvResult = await BotConversation.deleteMany({ email: user.email });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${botConvResult.deletedCount} bot conversation records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from BotConversation model:', deleteError);
+      }
     } else {
       // For recruiters, do the same cleanup
-      await Applicant.deleteMany({ recruiterId: userId });
-      await Interview.deleteMany({ 'participants.1.userId': userId });
-      await Conversation.deleteMany({ 'participants.1.userId': userId });
-      await BotConversation.deleteMany({ email: user.email });
+      if (process.env.NODE_ENV !== 'production') console.log('Additional cleanup for Recruiter...');
+      
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from Applicant model...');
+      try {
+        const applicantResult = await Applicant.deleteMany({ recruiterId: userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${applicantResult.deletedCount} applicant records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from Applicant model:', deleteError);
+      }
+      
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from Interview model...');
+      try {
+        const interviewResult = await Interview.deleteMany({ 'participants.1.userId': userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${interviewResult.deletedCount} interview records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from Interview model:', deleteError);
+      }
+      
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from Conversation model...');
+      try {
+        const conversationResult = await Conversation.deleteMany({ 'participants.1.userId': userId });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${conversationResult.deletedCount} conversation records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from Conversation model:', deleteError);
+      }
+      
+      if (process.env.NODE_ENV !== 'production') console.log('Deleting from BotConversation model...');
+      try {
+        const botConvResult = await BotConversation.deleteMany({ email: user.email });
+        if (process.env.NODE_ENV !== 'production') console.log(`Deleted ${botConvResult.deletedCount} bot conversation records`);
+      } catch (deleteError) {
+        if (process.env.NODE_ENV !== 'production') console.error('Error deleting from BotConversation model:', deleteError);
+      }
     }
 
     // Finally, delete the user
-    await Schema.findByIdAndDelete(userId);
+    if (process.env.NODE_ENV !== 'production') console.log('Deleting user document...');
+    try {
+      await Schema.findByIdAndDelete(userId);
+      if (process.env.NODE_ENV !== 'production') console.log('User document deleted successfully');
+    } catch (deleteError) {
+      if (process.env.NODE_ENV !== 'production') console.error('Error deleting user document:', deleteError);
+      throw deleteError; // Re-throw to be caught by the outer catch
+    }
 
+    if (process.env.NODE_ENV !== 'production') console.log('User deletion process completed successfully');
     res.status(200).json({ message: 'User deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    if (process.env.NODE_ENV !== 'production') console.error('Error in deleteUser function:', error);
     res.status(500).json({ message: 'Failed to delete user.' });
   }
 };
