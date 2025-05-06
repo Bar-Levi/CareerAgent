@@ -10,7 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaComments, FaUser, FaCalendarCheck } from "react-icons/fa";
 
-const NavigationBar = ({ userType }) => {
+const NavigationBar = ({ userType, showOnlyDashboard }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const user = location.state?.user;
@@ -176,7 +176,13 @@ const NavigationBar = ({ userType }) => {
       
       {/* Footer links in the middle */}
       <div className="ml-4 mr-auto">
-        <FooterLinks user={user} navigate={navigate} location={location} />
+        {!showOnlyDashboard ? (
+          <FooterLinks user={user} navigate={navigate} location={location} />
+        ) : (
+          <div className="text-lg font-semibold text-brand-secondary">
+            Career Agent Platform
+          </div>
+        )}
       </div>
       
       {/* Navigation buttons on the right */}
@@ -191,13 +197,16 @@ const NavigationBar = ({ userType }) => {
           panelRef={panelRef}
           handleNotificationClick={handleNotificationClick}
           setNotifications={setNotifications}
+          showOnlyDashboard={showOnlyDashboard}
         />
-        <ProfileMenu
-          userType={userType}
-          user={user}
-          navigate={navigate}
-          location={location}
-        />
+        {!showOnlyDashboard && (
+          <ProfileMenu
+            userType={userType}
+            user={user}
+            navigate={navigate}
+            location={location}
+          />
+        )}
       </div>
       
       <ToastContainer />
