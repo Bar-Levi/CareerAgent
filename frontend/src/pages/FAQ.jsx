@@ -72,6 +72,9 @@ const FAQ_DATA = {
 const FAQ = () => {
   // If you use React Router's useLocation to get user info or state, uncomment:
   const { state } = useLocation();
+  
+  // Check if user came directly to the page (no state)
+  const isDirectNavigation = !state;
 
   // 1) We store a version of FAQ data that includes a unique `id` for each item.
   const [faqs, setFaqs] = useState({});
@@ -159,7 +162,7 @@ const FAQ = () => {
   return (
     <div className={`min-h-screen font-sans ${darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'}`}>
       {/* Optional Navigation & Botpress */}
-      <NavigationBar userType={state?.user?.role} />
+      <NavigationBar userType={state?.user?.role} showOnlyDashboard={isDirectNavigation} />
       <Botpress />
   
       {/* Page Header */}

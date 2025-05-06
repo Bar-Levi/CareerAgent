@@ -19,6 +19,7 @@ const NavigationLinks = ({
   panelRef,
   handleNotificationClick,
   setNotifications,
+  showOnlyDashboard
 }) => {
   const isActive = (path) =>
     location.pathname === path
@@ -31,15 +32,17 @@ const NavigationLinks = ({
 
   return (
     <nav className="flex space-x-4 items-center">
-      <NotificationBell
-        key={notifications.length}
-        panelOpen={panelOpen}
-        setPanelOpen={setPanelOpen}
-        notifications={notifications}
-        setNotifications={setNotifications}
-        panelRef={panelRef}
-        handleNotificationClick={handleNotificationClick}
-      />
+      {!showOnlyDashboard && (
+        <NotificationBell
+          key={notifications.length}
+          panelOpen={panelOpen}
+          setPanelOpen={setPanelOpen}
+          notifications={notifications}
+          setNotifications={setNotifications}
+          panelRef={panelRef}
+          handleNotificationClick={handleNotificationClick}
+        />
+      )}
       <button
         className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
           "/dashboard"
@@ -48,7 +51,7 @@ const NavigationLinks = ({
       >
         <FaTachometerAlt className="mr-2" /> Dashboard
       </button>
-      {userType === "JobSeeker" && (
+      {!showOnlyDashboard && userType === "JobSeeker" && (
         <>
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
@@ -79,7 +82,7 @@ const NavigationLinks = ({
       </>
       )}
 
-      {userType === "Recruiter" && (
+      {!showOnlyDashboard && userType === "Recruiter" && (
         <button
           className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
             "/recruiter-candidate-tracker"
@@ -90,14 +93,16 @@ const NavigationLinks = ({
         </button>
       )}
 
-      <button
-        className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
-          "/faq"
-        )}`}
-        onClick={() => handleNavClick("/faq")}
-      >
-        <FaQuestionCircle className="mr-2" /> FAQ
-      </button>
+      {!showOnlyDashboard && (
+        <button
+          className={`flex items-center px-4 py-2 rounded font-medium transition duration-300 ${isActive(
+            "/faq"
+          )}`}
+          onClick={() => handleNavClick("/faq")}
+        >
+          <FaQuestionCircle className="mr-2" /> FAQ
+        </button>
+      )}
     </nav>
   );
 };
