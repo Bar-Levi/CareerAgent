@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import VerificationPage from './pages/VerificationPage';
 import ResetPassword from './pages/ResetPassword';
 import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Contact from './pages/Contact';
 import ResetLoginAttempts from './pages/ResetLoginAttempts';
 import ChatsPage from './pages/ChatsPage';
 import JobListingPage from './pages/JobListingPage';
@@ -60,6 +62,8 @@ function App() {
                 <Route path="/verify" element={<VerificationPage />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/chats" element={
                     <ProtectedRoute>
                         <ChatsPage />
