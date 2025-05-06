@@ -264,19 +264,14 @@ const RecruiterApplicantsTracker = () => {
   };
 
   const exportToPDF = (applicants) => {
-    // Add column count check
-    const visibleColumnCount = Object.values(visibleColumns).filter(Boolean).length;
-    
-    if (visibleColumnCount > 6) {
-      const shouldProceed = window.confirm(
-        'Exporting many columns might affect PDF readability. Consider hiding some columns for better results.\n\nDo you want to proceed anyway?'
-      );
-      if (!shouldProceed) return;
-    }
-
+    // Remove the confirmation dialog check
     try {
       // Create PDF in landscape orientation with larger page size
-      const doc = new jsPDF();
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
       
       // Format the data for the table
       const tableData = applicants.map(applicant => [
@@ -298,45 +293,56 @@ const RecruiterApplicantsTracker = () => {
       doc.text('Candidates Report', 14, 15);
       doc.setFontSize(10);
       doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 25);
+      doc.text(`Total candidates: ${applicants.length}`, 14, 30);
 
       // Add copyright text
       doc.setTextColor(128, 128, 128);
       doc.setFontSize(8);
       doc.text(`© CareerAgent ${new Date().getFullYear()}. All rights reserved.`, 14, doc.internal.pageSize.height - 10);
 
+      // Dynamically calculate column widths based on available page width
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margins = 20; // 10mm on each side
+      const availableWidth = pageWidth - margins;
+      
+      // Adjust column widths to fit in landscape mode - proportional to content
+      const columnStyles = {
+        0: { cellWidth: availableWidth * 0.13 },  // Name - wider
+        1: { cellWidth: availableWidth * 0.16 },  // Email - wider for long addresses
+        2: { cellWidth: availableWidth * 0.10 },  // Phone
+        3: { cellWidth: availableWidth * 0.07 },  // LinkedIn - narrower (just Yes/No)
+        4: { cellWidth: availableWidth * 0.07 },  // GitHub - narrower (just Yes/No)
+        5: { cellWidth: availableWidth * 0.15 },  // Job Title - wider for long titles
+        6: { cellWidth: availableWidth * 0.11 },  // Status
+        7: { cellWidth: availableWidth * 0.09 },  // Application Date
+        8: { cellWidth: availableWidth * 0.12 }   // Interview
+      };
+
       // Generate the table with improved settings
       autoTable(doc, {
-        startY: 30,
+        startY: 35,
         head: [['Name', 'Email', 'Phone', 'LinkedIn', 'GitHub', 'Job Title', 'Status', 'Application Date', 'Interview']],
         body: tableData,
         theme: 'grid',
         styles: {
-          fontSize: 8,
-          cellPadding: 2,
+          fontSize: 7,  // Smaller font size to fit more data
+          cellPadding: 1,  // Reduced padding
           overflow: 'linebreak',
-          cellWidth: 'wrap'
+          lineWidth: 0.1,
+          halign: 'left'
         },
         headStyles: {
           fillColor: [66, 139, 202],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          halign: 'left'
+          halign: 'left',
+          fontSize: 8
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245]
         },
-        columnStyles: {
-          0: { cellWidth: 30 },  // Name
-          1: { cellWidth: 45 },  // Email
-          2: { cellWidth: 25 },  // Phone
-          3: { cellWidth: 15 },  // LinkedIn
-          4: { cellWidth: 15 },  // GitHub
-          5: { cellWidth: 35 },  // Job Title
-          6: { cellWidth: 20 },  // Status
-          7: { cellWidth: 25 },  // Application Date
-          8: { cellWidth: 35 }   // Interview
-        },
-        margin: { top: 30, left: 10, right: 10, bottom: 15 },
+        columnStyles: columnStyles,
+        margin: { top: 35, left: 10, right: 10, bottom: 15 },
         didDrawPage: function (data) {
           // Add copyright text on each page
           doc.setTextColor(128, 128, 128);
@@ -380,33 +386,125 @@ const RecruiterApplicantsTracker = () => {
               <h1 className={`text-xl md:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 Applicants Tracker
               </h1>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={toggleDarkMode}
-                  className={`p-1.5 rounded-full transition-all duration-300 ${
-                    darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
+                  className={`relative p-2 rounded-full overflow-hidden transition-all duration-300 shadow-lg ${
+                    darkMode ? 'bg-gray-800/80 text-yellow-300' : 'bg-white/90 text-indigo-600'
+                  } backdrop-blur-md border border-white/10`}
+                  style={{
+                    boxShadow: darkMode ? '0 0 20px rgba(255, 240, 150, 0.1)' : '0 0 20px rgba(66, 153, 225, 0.15)'
+                  }}
                   aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
                 >
-                  {darkMode ? <FiSun className="text-yellow-400 w-4 h-4" /> : <FiMoon className="text-gray-700 w-4 h-4" />}
-                </button>
-                <div className="group relative">
-                  <button
-                    onClick={() => exportToPDF(filteredApplicants)}
-                    className="flex items-center space-x-1 px-3 py-1.5 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                  <motion.div
+                    initial={false}
+                    animate={{ rotate: darkMode ? 0 : 180 }}
+                    transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
+                    className="relative z-10"
                   >
-                    <FaDownload className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline text-sm">PDF</span>
-                  </button>
+                    {darkMode ? 
+                      <FiSun className="w-5 h-5" /> : 
+                      <FiMoon className="w-5 h-5" />
+                    }
+                  </motion.div>
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-br rounded-full opacity-0"
+                    initial={false}
+                    whileHover={{ opacity: 0.15 }}
+                    style={{ 
+                      background: darkMode ? 
+                        'radial-gradient(circle at center, rgba(255, 225, 125, 0.25), transparent 70%)' : 
+                        'radial-gradient(circle at center, rgba(129, 140, 248, 0.25), transparent 70%)' 
+                    }}
+                  />
+                </button>
+                
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    onClick={() => exportToPDF(filteredApplicants)}
+                    className={`relative group flex items-center gap-3 px-5 py-2.5 rounded-xl overflow-hidden ${
+                      darkMode ? 'text-white' : 'text-white'
+                    } shadow-lg backdrop-blur-md`}
+                    initial={{ opacity: 1 }}
+                    whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
+                  >
+                    {/* Background layers */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-500/90 to-rose-600/90 dark:from-red-600/90 dark:to-rose-700/90" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 dark:from-transparent dark:via-white/5 dark:to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Glow effect */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
+                    
+                    {/* Border light */}
+                    <div className="absolute inset-0 rounded-xl border border-white/20 pointer-events-none" />
+                    
+                    {/* Button content with relative positioning */}
+                    <div className="relative flex items-center justify-center gap-3">
+                      <span className="relative">
+                        <FaDownload className="w-4 h-4" />
+                        <motion.div
+                          className="absolute inset-0 w-full h-full flex items-center justify-center"
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: [0, 1, 0], y: [-5, 0, 5], transition: { duration: 1.5, repeat: Infinity, repeatDelay: 5 } }}
+                        >
+                          <FaDownload className="w-4 h-4 text-white/80" />
+                        </motion.div>
+                      </span>
+                      <span className="text-sm font-medium">Export PDF</span>
+                      
+                      {/* Ripple effect */}
+                      <motion.div
+                        className="absolute inset-0 pointer-events-none"
+                        whileTap={{ 
+                          scale: [0, 1.5], 
+                          opacity: [0.5, 0],
+                          transition: { duration: 0.5 } 
+                        }}
+                      />
+                    </div>
+                  </motion.button>
+                  
+                  <motion.div
+                    className="relative group"
+                    whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.97, transition: { duration: 0.1 } }}
+                  >
+                    <CSVLink
+                      data={getCSVData(filteredApplicants)}
+                      filename={`candidates-${new Date().toISOString().split('T')[0]}.csv`}
+                      className={`relative flex items-center gap-3 px-5 py-2.5 rounded-xl overflow-hidden ${
+                        darkMode ? 'text-white' : 'text-white'
+                      } shadow-lg backdrop-blur-md`}
+                    >
+                      {/* Background layers */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/90 to-green-600/90 dark:from-emerald-600/90 dark:to-green-700/90" />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-white/20 dark:from-transparent dark:via-white/5 dark:to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      {/* Glow effect */}
+                      <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 to-green-600 dark:from-emerald-600 dark:to-green-700 opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300" />
+                      
+                      {/* Border light */}
+                      <div className="absolute inset-0 rounded-xl border border-white/20 pointer-events-none" />
+                      
+                      {/* Link content with relative positioning */}
+                      <div className="relative flex items-center justify-center gap-3">
+                        <span className="relative">
+                          <FaDownload className="w-4 h-4" />
+                          <motion.div
+                            className="absolute inset-0 w-full h-full flex items-center justify-center"
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: [0, 1, 0], y: [-5, 0, 5], transition: { duration: 1.5, repeat: Infinity, repeatDelay: 5 } }}
+                          >
+                            <FaDownload className="w-4 h-4 text-white/80" />
+                          </motion.div>
+                        </span>
+                        <span className="text-sm font-medium">Export CSV</span>
+                      </div>
+                    </CSVLink>
+                  </motion.div>
                 </div>
-                <CSVLink
-                  data={getCSVData(filteredApplicants)}
-                  filename="candidates.csv"
-                  className="flex items-center space-x-1 px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                >
-                  <FaDownload className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline text-sm">CSV</span>
-                </CSVLink>
               </div>
             </div>
 
