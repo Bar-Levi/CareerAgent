@@ -15,6 +15,7 @@ const conversationRoutes = require("./routes/conversationRoutes");
 const mailNotificationRoutes = require("./routes/mailNotificationsRoutes");
 const interviewRoutes = require('./routes/interviewRoutes');
 const saveJobListingRoutes = require('./routes/saveJobListingRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 require('./tasks/cleanupTokens');
 
@@ -52,6 +53,7 @@ app.use('/api/cloudinary', cloudinaryRoutes);
 app.use('/api/personal', personalDetailsRoutes);
 app.use('/api/recruiter-personal', recruiterPersonalDetailsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/contact', contactRoutes);
 app.use("/api/bot-conversations", botConversationRoutes);
 app.use("/api/joblistings", jobListingRoutes);
 app.use("/api/applicants", applicantsRoutes);

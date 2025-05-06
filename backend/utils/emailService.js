@@ -464,6 +464,39 @@ const sendInterviewScheduledEmailToRecruiter = async (email, recruiterName, jobS
     await transporter.sendMail(mailOptions);
 };
 
+const sendContactFormEmail = async (fullName, email, subject, message) => {
+    const mailOptions = {
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+        to: 'careeragentpro@gmail.com',
+        subject: `Contact Form: ${subject}`,
+        html: `
+            <div style="font-family: 'Roboto', Arial, sans-serif; color: #333; max-width: 600px; margin: auto; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+                <!-- Header -->
+                <div style="background-color: #2c2c54; color: #ffffff; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h1 style="margin: 0; font-size: 24px;">New Contact Form Submission</h1>
+                </div>
+                <!-- Body -->
+                <div style="padding: 20px; background-color: #ffffff; line-height: 1.6;">
+                    <p><strong>From:</strong> ${fullName} (${email})</p>
+                    <p><strong>Subject:</strong> ${subject}</p>
+                    <div style="margin-top: 20px; border-left: 4px solid #2c2c54; padding-left: 15px;">
+                        <p><strong>Message:</strong></p>
+                        <p>${message.replace(/\n/g, '<br>')}</p>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 12px; color: #777;">
+                        This message was sent via the CareerAgent contact form.
+                    </p>
+                </div>
+                <!-- Footer -->
+                <div style="background-color: #f0f0f0; text-align: center; padding: 10px; border-radius: 0 0 10px 10px; font-size: 12px; color: #555;">
+                    <p>&copy; ${new Date().getFullYear()} CareerAgent. All rights reserved.</p>
+                </div>
+            </div>
+        `,
+    };
+    await transporter.sendMail(mailOptions);
+};
+
 module.exports = {
     sendVerificationCode,
     sendResetPasswordEmail,
@@ -473,5 +506,6 @@ module.exports = {
     sendHiredEmail,
     sendApplicationInReviewEmail,
     sendInterviewScheduledEmailToJobSeeker,
-    sendInterviewScheduledEmailToRecruiter
+    sendInterviewScheduledEmailToRecruiter,
+    sendContactFormEmail
 };
