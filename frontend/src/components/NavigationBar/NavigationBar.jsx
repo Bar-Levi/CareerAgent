@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import NavigationLinks from "./NavigationLinks";
 import ProfileMenu from "./ProfileMenu";
+import FooterLinks from "./FooterLinks";
 import socket from "../../socket";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -173,8 +174,13 @@ const NavigationBar = ({ userType }) => {
         <img src={logo} alt="Logo" className="h-14 rounded" />
       </div>
       
+      {/* Footer links in the middle */}
+      <div className="ml-4 mr-auto">
+        <FooterLinks user={user} navigate={navigate} location={location} />
+      </div>
+      
       {/* Navigation buttons on the right */}
-      <div className="ml-auto flex items-center space-x-4">
+      <div className="flex items-center space-x-4">
         <NavigationLinks
           userType={userType}
           location={location}
