@@ -88,18 +88,32 @@ const scheduleInterview = async (req, res, next) => {
               interviewId: interview._id,
             },
           },
+          createdAt: new Date(),
         };
 
+        // Check if a similar notification already exists to prevent duplication
         if (!jobSeeker.notifications) {
           jobSeeker.notifications = [];
         }
-        jobSeeker.notifications.push(newNotification);
         
-        // Increment the number of interviews scheduled
-        jobSeeker.numOfInterviewsScheduled = (jobSeeker.numOfInterviewsScheduled || 0) + 1;
+        const duplicateNotification = jobSeeker.notifications.find(
+          notification => 
+            notification.type === "interview" && 
+            notification.extraData?.stateAddition?.interviewId?.toString() === interview._id.toString()
+        );
         
-        await jobSeeker.save();
-        console.log("Notification added to jobSeekerParticipant:", jobSeeker.email);
+        if (!duplicateNotification) {
+          // Only add notification if no duplicate exists
+          jobSeeker.notifications.push(newNotification);
+          
+          // Increment the number of interviews scheduled
+          jobSeeker.numOfInterviewsScheduled = (jobSeeker.numOfInterviewsScheduled || 0) + 1;
+          
+          await jobSeeker.save();
+          console.log("Notification added to jobSeekerParticipant:", jobSeeker.email);
+        } else {
+          console.log("Duplicate notification prevented for jobSeeker:", jobSeeker.email);
+        }
 
         // Validate email addresses before sending
         if (!jobSeeker.email) {
@@ -158,10 +172,14 @@ const scheduleInterview = async (req, res, next) => {
           console.log("Applicant status updated:", applicant.email);
         }
 
-        // Emit the notification in real-time
-        const io = req.app.get("io");
-        io.to(jobSeekerParticipant.userId.toString()).emit("newNotification", newNotification);
-        console.log("Emitting interview notification to:", jobSeekerParticipant.userId);
+        // Only emit real-time notification if we've added the notification to DB
+        // This prevents duplicate real-time notifications
+        if (!duplicateNotification) {
+          // Emit the notification in real-time
+          const io = req.app.get("io");
+          io.to(jobSeekerParticipant.userId.toString()).emit("newNotification", newNotification);
+          console.log("Emitting interview notification to:", jobSeekerParticipant.userId);
+        }
       }
     }
 

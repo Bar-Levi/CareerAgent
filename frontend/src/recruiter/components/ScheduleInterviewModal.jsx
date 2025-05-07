@@ -133,7 +133,9 @@ const ScheduleInterviewModal = ({
     }
   };
 
-  const handleOpenCalendar = () => {
+  const handleOpenCalendar = (e) => {
+    e.preventDefault(); // Prevent any form submission
+    e.stopPropagation(); // Stop event propagation
     if (calendarUrl) {
       window.open(calendarUrl, "_blank");
     }
@@ -404,6 +406,7 @@ const ScheduleInterviewModal = ({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={handleOpenCalendar}
+                        type="button"
                         className="w-full flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl font-medium transition-all"
                         style={{ 
                           background: `linear-gradient(to right, #10b981, #059669)`,
