@@ -12,7 +12,8 @@ import {
   FaChevronUp,
   FaMoon,
   FaSun,
-  FaArrowLeft
+  FaArrowLeft,
+  FaTimes
 } from "react-icons/fa";
 
 // Google Fonts CSS import
@@ -25,7 +26,7 @@ const GoogleFonts = () => {
 };
 
 const PrivacyPolicy = () => {
-  const [activeSection, setActiveSection] = useState(null);
+  const [expandedSections, setExpandedSections] = useState(new Set());
   const [isMobile, setIsMobile] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
@@ -57,15 +58,28 @@ const PrivacyPolicy = () => {
   }, [darkMode]);
 
   const toggleSection = (index) => {
-    if (activeSection === index) {
-      setActiveSection(null);
-    } else {
-      setActiveSection(index);
-    }
+    setExpandedSections(prevSections => {
+      const newSections = new Set(prevSections);
+      if (newSections.has(index)) {
+        newSections.delete(index);
+      } else {
+        newSections.add(index);
+      }
+      return newSections;
+    });
   };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  const handleClose = () => {
+    // Check if we have a history to go back to
+    if (window.history.length > 1) {
+      navigate(-1); // Go back to previous page if possible
+    } else {
+      navigate('/authentication');
+    }
   };
 
   // Animation variants
@@ -89,6 +103,15 @@ const PrivacyPolicy = () => {
     }
   };
 
+  const sectionVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { type: "spring", stiffness: 200, damping: 15 }
+    }
+  };
+
   const fadeIn = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.5 } }
@@ -99,95 +122,60 @@ const PrivacyPolicy = () => {
     {
       icon: <FaUserShield />,
       title: "Information We Collect",
-      content: (
-        <>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>
-            We collect information that you provide directly to us when you:
-          </p>
-          <ul className={`list-disc pl-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'} space-y-2`}>
-            <li>Create an account or update your profile</li>
-            <li>Upload your resume or CV</li>
-            <li>Apply for jobs through our platform</li>
-            <li>Communicate with our chatbots or other users</li>
-            <li>Submit feedback or contact our support team</li>
-          </ul>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-3`}>
-            This information may include your name, email address, phone number, employment history, education, and other information relevant to job applications.
-          </p>
-        </>
-      )
+      content: [
+        "We collect information that you provide directly to us when you create an account or update your profile.",
+        "We collect data when you upload your resume or CV through our platform.",
+        "Information is gathered when you apply for jobs or communicate with our chatbots.",
+        "We collect feedback and information you submit to our support team.",
+        "This information may include your name, email address, phone number, employment history, education, and other information relevant to job applications."
+      ]
     },
     {
       icon: <FaDatabase />,
       title: "How We Use Your Information",
-      content: (
-        <>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>We use the information we collect to:</p>
-          <ul className={`list-disc pl-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'} space-y-2`}>
-            <li>Provide, maintain, and improve our services</li>
-            <li>Process job applications and connect job seekers with recruiters</li>
-            <li>Personalize your experience and content</li>
-            <li>Communicate with you about our services, updates, and job opportunities</li>
-            <li>Analyze usage patterns to enhance user experience</li>
-            <li>Protect against fraudulent or unauthorized activity</li>
-          </ul>
-        </>
-      )
+      content: [
+        "We use your information to provide, maintain, and improve our services.",
+        "Your data helps us process job applications and connect job seekers with recruiters.",
+        "We personalize your experience and content based on your preferences and interactions.",
+        "We use your contact information to communicate with you about our services, updates, and job opportunities.",
+        "We analyze usage patterns to enhance user experience and optimize our platform.",
+        "We use data to protect against fraudulent or unauthorized activity on our platform."
+      ]
     },
     {
       icon: <FaCookieBite />,
       title: "Cookies and Tracking Technologies",
-      content: (
-        <>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>
-            We use cookies and similar tracking technologies to track activity on our service and hold certain information.
-            Cookies are files with a small amount of data which may include an anonymous unique identifier.
-          </p>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
-            However, if you do not accept cookies, you may not be able to use some portions of our service.
-          </p>
-        </>
-      )
+      content: [
+        "We use cookies and similar tracking technologies to track activity on our service and hold certain information.",
+        "Cookies are files with a small amount of data which may include an anonymous unique identifier.",
+        "You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.",
+        "However, if you do not accept cookies, you may not be able to use some portions of our service."
+      ]
     },
     {
       icon: <FaGlobeAmericas />,
       title: "Sharing Your Information",
-      content: (
-        <>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>We may share your personal information with:</p>
-          <ul className={`list-disc pl-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'} space-y-2`}>
-            <li>Recruiters and employers when you apply for jobs</li>
-            <li>Service providers who perform services on our behalf</li>
-            <li>Professional advisors such as lawyers, auditors, and insurers</li>
-            <li>Government authorities when required by law</li>
-          </ul>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-3`}>
-            We do not sell your personal information to third parties.
-          </p>
-        </>
-      )
+      content: [
+        "We may share your personal information with recruiters and employers when you apply for jobs.",
+        "We work with service providers who perform services on our behalf and may need access to your information.",
+        "In some cases, we may share data with professional advisors such as lawyers, auditors, and insurers.",
+        "We may disclose information to government authorities when required by law.",
+        "We do not sell your personal information to third parties for marketing purposes."
+      ]
     },
     {
       icon: <FaUserLock />,
       title: "Your Privacy Rights",
-      content: (
-        <>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mb-3`}>Depending on your location, you may have the right to:</p>
-          <ul className={`list-disc pl-5 ${darkMode ? 'text-gray-300' : 'text-gray-600'} space-y-2`}>
-            <li>Access the personal information we hold about you</li>
-            <li>Request correction of your personal information</li>
-            <li>Request deletion of your personal information</li>
-            <li>Object to processing of your personal information</li>
-            <li>Request restriction of processing your personal information</li>
-            <li>Request transfer of your personal information</li>
-            <li>Withdraw consent where we rely on consent to process your information</li>
-          </ul>
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-3`}>
-            To exercise any of these rights, please contact us through our contact page.
-          </p>
-        </>
-      )
+      content: [
+        "You have the right to access the personal information we hold about you.",
+        "You can request correction of your personal information if it is inaccurate.",
+        "In certain circumstances, you may request deletion of your personal information.",
+        "You can object to processing of your personal information in some cases.",
+        "You may request restriction of processing your personal information.",
+        "You can request transfer of your personal information in a machine-readable format.",
+        "You can withdraw consent where we rely on consent to process your information.",
+        "To exercise any of these rights, please contact us through our contact page."
+      ]
     }
   ];
 
@@ -212,7 +200,13 @@ const PrivacyPolicy = () => {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/authentication')}
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/authentication');
+                }
+              }}
               className={`flex items-center ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-800 hover:bg-gray-100'} py-2 px-4 rounded-lg shadow-md transition-colors duration-200`}
               style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 500 }}
             >
@@ -319,45 +313,63 @@ const PrivacyPolicy = () => {
           </motion.div>
           
           {/* Content Sections in Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-2 mb-8">
             {sections.map((section, index) => (
               <motion.div 
                 key={index}
-                variants={itemVariants}
+                variants={sectionVariants}
                 whileHover={{ y: -5 }}
                 className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} 
-                  rounded-2xl overflow-hidden transition-all duration-300 
-                  border shadow-lg ${darkMode ? 'shadow-blue-900/10' : 'shadow-gray-200/50'}
-                  ${index === sections.length - 1 && sections.length % 2 !== 0 ? 'md:col-span-2 lg:col-span-1' : ''}
-                `}
+                  rounded-2xl overflow-hidden 
+                  border shadow-lg ${darkMode ? 'shadow-blue-900/10' : 'shadow-gray-200/50'}`}
               >
-                <motion.div
-                  className={`p-5 ${darkMode ? 'bg-gray-800/90' : 'bg-white'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}
+                <div 
+                  className={`p-5 ${darkMode ? 'bg-gray-800/90' : 'bg-white'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'} cursor-pointer`}
+                  onClick={() => toggleSection(index)}
                 >
-                  <div className="flex items-center">
-                    <motion.div 
-                      whileHover={{ rotate: 15 }}
-                      className={`h-12 w-12 flex items-center justify-center rounded-xl ${darkMode ? 'bg-blue-700' : 'bg-blue-600'} text-white`}
-                    >
-                      {section.icon}
-                    </motion.div>
-                    <h2 
-                      className={`ml-3 text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}
-                      style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.01em' }}
-                    >
-                      {section.title}
-                    </h2>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <motion.div 
+                        whileHover={{ rotate: 15 }}
+                        className={`h-12 w-12 flex items-center justify-center rounded-xl ${darkMode ? 'bg-blue-700' : 'bg-blue-600'} text-white`}
+                      >
+                        {section.icon}
+                      </motion.div>
+                      <h2 
+                        className={`ml-3 text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}
+                        style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '-0.01em' }}
+                      >
+                        {section.title}
+                      </h2>
+                    </div>
+                    <div className={`${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                      {expandedSections.has(index) ? <FaChevronUp /> : <FaChevronDown />}
+                    </div>
                   </div>
-                </motion.div>
+                </div>
                 
                 <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
+                  initial={false}
+                  animate={{ 
+                    height: expandedSections.has(index) ? 'auto' : '0',
+                    opacity: expandedSections.has(index) ? 1 : 0
+                  }}
                   transition={{ duration: 0.3 }}
-                  className="p-5"
-                  style={{ fontFamily: "'Inter', sans-serif", lineHeight: 1.6 }}
+                  className="overflow-hidden"
                 >
-                  {section.content}
+                  <div 
+                    className="p-5"
+                    style={{ fontFamily: "'Inter', sans-serif", lineHeight: 1.6 }}
+                  >
+                    <ul className={`space-y-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {section.content.map((item, idx) => (
+                        <li key={idx} className="flex">
+                          <span className={`${darkMode ? 'text-blue-400' : 'text-blue-600'} mr-2`}>•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </motion.div>
               </motion.div>
             ))}
@@ -367,8 +379,8 @@ const PrivacyPolicy = () => {
           <motion.div 
             variants={itemVariants}
             className={`
-              mt-8 mx-2 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} 
-              rounded-2xl overflow-hidden transition-all duration-300 border shadow-lg 
+              mx-2 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} 
+              rounded-2xl overflow-hidden border shadow-lg mb-8
               ${darkMode ? 'shadow-blue-900/10' : 'shadow-gray-200/50'}
             `}
           >
@@ -400,10 +412,26 @@ const PrivacyPolicy = () => {
             </div>
           </motion.div>
           
+          {/* Close Button */}
+          <motion.div 
+            variants={itemVariants}
+            className="flex justify-center mb-8"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleClose}
+              className={`flex items-center ${darkMode ? 'bg-red-700 hover:bg-red-600' : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'} text-white py-3 px-8 rounded-xl font-bold transition-all duration-200 shadow-lg`}
+              style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600 }}
+            >
+              <FaTimes className="mr-2" /> Close Privacy Policy
+            </motion.button>
+          </motion.div>
+          
           {/* Copyright footer */}
           <motion.div 
             variants={itemVariants}
-            className="mt-8 text-center text-sm pb-8"
+            className="text-center text-sm pb-8"
           >
             <p 
               className={darkMode ? 'text-gray-400' : 'text-gray-500'}
@@ -418,4 +446,4 @@ const PrivacyPolicy = () => {
   );
 };
 
-export default PrivacyPolicy; 
+export default PrivacyPolicy;

@@ -237,7 +237,13 @@ const Contact = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/authentication')}
+                  onClick={() => {
+                    if (window.history.length > 1) {
+                      navigate(-1);
+                    } else {
+                      navigate('/authentication');
+                    }
+                  }}
                   className="flex items-center px-4 py-2 bg-gradient-to-r from-rose-400 to-red-400 hover:from-rose-500 hover:to-red-500 text-white rounded-full font-medium shadow-sm hover:shadow-md transition-all"
                 >
                   <FaArrowLeft className="mr-2" /> Return
