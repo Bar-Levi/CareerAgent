@@ -36,7 +36,7 @@ router.post("/verify", strictLimiter, verifyCode);
 router.post("/login", strictLimiter, loginUser);
 router.post("/resend", strictLimiter, resendVerificationCode);
 router.post("/reset-login-attempts", strictLimiter, resetLoginAttempts);
-router.post("/logout", protect,strictLimiter, logout);
+router.post("/logout", protect, strictLimiter, logout);
 router.post('/check-blacklist',strictLimiter, checkBlacklist);
 
 

@@ -1,5 +1,6 @@
 const express = require('express');
 const { submitContactForm } = require('../controllers/contactController');
+const { generalLimiter } = require("../middleware/rateLimiters");
 
 const {
     protect
@@ -8,6 +9,6 @@ const {
 const router = express.Router();
 
 // Submit contact form
-router.post('/', protect, submitContactForm);
+router.post('/', protect, generalLimiter, submitContactForm);
 
 module.exports = router; 

@@ -6,12 +6,12 @@ const {
   updateInterview,
   deleteInterview,
 } = require("../controllers/interviewController");
-
+const { generalLimiter } = require("../middleware/rateLimiters");
 const { protect } = require("../middleware/authMiddleware");
 
-router.post("/", protect, scheduleInterview);
-router.get("/:id", protect, getInterviewById);
-router.put("/:id", protect, updateInterview);
-router.delete("/:id", protect, deleteInterview);
+router.post("/", protect, generalLimiter, scheduleInterview);
+router.get("/:id", protect, generalLimiter, getInterviewById);
+router.put("/:id", protect, generalLimiter, updateInterview);
+router.delete("/:id", protect, generalLimiter, deleteInterview);
 
 module.exports = router;

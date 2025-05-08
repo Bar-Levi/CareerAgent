@@ -3,6 +3,8 @@ const multer = require('multer');
 const { uploadFileToCloudinary } = require('../controllers/cloudinaryController');
 
 const router = express.Router();
+const { generalLimiter } = require("../middleware/rateLimiters");
+
 
 // Configure multer for memory storage
 const upload = multer({
@@ -27,6 +29,6 @@ const upload = multer({
 });
 
 // Route for uploading files without authentication
-router.post('/upload', upload.single('file'), uploadFileToCloudinary);
+router.post('/upload', generalLimiter, upload.single('file'), uploadFileToCloudinary);
 
 module.exports = router;
