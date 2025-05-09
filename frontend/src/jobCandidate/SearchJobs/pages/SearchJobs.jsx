@@ -74,6 +74,55 @@ const SearchJobs = ({onlineUsers}) => {
     }
   }, [state]);
 
+  // Fetch saved job listings when component mounts
+  useEffect(() => {
+    const fetchSavedJobListings = async () => {
+      if (user && user.email) {
+        try {
+          const encodedEmail = encodeURIComponent(user.email);
+          // Add timestamp to avoid caching
+          const timestamp = new Date().getTime();
+          const response = await fetch(
+            `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/email/${encodedEmail}/saved?t=${timestamp}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                // Add cache control headers
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            // Force a complete state update with fresh data
+            const updatedUser = {
+              ...user,
+              savedJobListings: data.savedJobListings
+            };
+            setUser(updatedUser);
+            
+            // Also update state.user if it exists to ensure consistency
+            if (state && state.user) {
+              state.user.savedJobListings = data.savedJobListings;
+            }
+          } else {
+            console.error("Failed to fetch saved job listings");
+          }
+        } catch (error) {
+          console.error("Error fetching saved job listings:", error);
+        }
+      }
+    };
+
+    fetchSavedJobListings();
+    
+  }, [user?.email, state?.refreshToken]); // Run when email changes or page refreshes
+
   // Function to show notifications
   const showNotification = (type, message) => {
     setNotification({ type, message });
