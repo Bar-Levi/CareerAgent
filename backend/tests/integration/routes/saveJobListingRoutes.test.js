@@ -18,12 +18,38 @@ jest.mock('../../../middleware/authMiddleware', () => ({
 }));
 
 // Mock the JobSeeker model - focus specifically on the methods used by the controller
-jest.mock('../../../models/jobSeekerModel', () => ({
-  findByIdAndUpdate: jest.fn().mockImplementation(() => Promise.resolve({ 
-    _id: 'mockId', 
-    savedJobListings: [] 
-  }))
-}));
+jest.mock('../../../models/jobSeekerModel', () => {
+  const savedJobListings = ['existingJobId'];
+  
+  return {
+    findByIdAndUpdate: jest.fn().mockImplementation((id, update, options) => {
+      // If testing "not found" scenario
+      if (id === 'nonExistentUserId') {
+        return Promise.resolve(null);
+      }
+      
+      // Add jobId to savedJobListings for addToSet operations
+      if (update.$addToSet && update.$addToSet.savedJobListings) {
+        if (!savedJobListings.includes(update.$addToSet.savedJobListings)) {
+          savedJobListings.push(update.$addToSet.savedJobListings);
+        }
+      }
+      
+      // Remove jobId from savedJobListings for pull operations
+      if (update.$pull && update.$pull.savedJobListings) {
+        const index = savedJobListings.indexOf(update.$pull.savedJobListings);
+        if (index !== -1) {
+          savedJobListings.splice(index, 1);
+        }
+      }
+      
+      return Promise.resolve({
+        _id: id,
+        savedJobListings: [...savedJobListings]
+      });
+    })
+  };
+});
 
 // Increase timeout for this test suite
 jest.setTimeout(30000);
@@ -49,6 +75,7 @@ describe('Save Job Listing Routes', () => {
   // Mock data
   const testUserId = new mongoose.Types.ObjectId().toString();
   const testJobId = new mongoose.Types.ObjectId().toString();
+  const nonExistentUserId = 'nonExistentUserId';
 
   // Clean up after tests
   afterAll(() => {
@@ -64,19 +91,31 @@ describe('Save Job Listing Routes', () => {
     // Increasing timeouts for all tests in this block
     jest.setTimeout(15000);
     
-    it('should save a job listing for the user and return 200', async () => {
+    it('should save a job listing for the user and return 200 with savedJobListings', async () => {
       const response = await request(app)
         .post(`/api/users/${testUserId}/saved/${testJobId}`)
         .send();
       
       expect(response.statusCode).toBe(200);
       expect(response.body.message).toBe('Job saved successfully');
+      expect(response.body.savedJobListings).toBeDefined();
+      expect(Array.isArray(response.body.savedJobListings)).toBe(true);
       
       // Verify findByIdAndUpdate was called with correct parameters
       expect(JobSeeker.findByIdAndUpdate).toHaveBeenCalledWith(
         testUserId,
-        { $addToSet: { savedJobListings: testJobId } }
+        { $addToSet: { savedJobListings: testJobId } },
+        { new: true }
       );
+    });
+    
+    it('should return 404 if user is not found', async () => {
+      const response = await request(app)
+        .post(`/api/users/${nonExistentUserId}/saved/${testJobId}`)
+        .send();
+      
+      expect(response.statusCode).toBe(404);
+      expect(response.body.message).toBe('User not found');
     });
     
     it('should return 401 if protect middleware fails (simulated)', async () => {
@@ -97,19 +136,31 @@ describe('Save Job Listing Routes', () => {
     // Increasing timeouts for all tests in this block
     jest.setTimeout(15000);
     
-    it('should unsave a job listing for the user and return 200', async () => {
+    it('should unsave a job listing for the user and return 200 with savedJobListings', async () => {
       const response = await request(app)
         .delete(`/api/users/${testUserId}/saved/${testJobId}`)
         .send();
       
       expect(response.statusCode).toBe(200);
       expect(response.body.message).toBe('Job removed from saved');
+      expect(response.body.savedJobListings).toBeDefined();
+      expect(Array.isArray(response.body.savedJobListings)).toBe(true);
       
       // Verify findByIdAndUpdate was called with correct parameters
       expect(JobSeeker.findByIdAndUpdate).toHaveBeenCalledWith(
         testUserId,
-        { $pull: { savedJobListings: testJobId } }
+        { $pull: { savedJobListings: testJobId } },
+        { new: true }
       );
+    });
+    
+    it('should return 404 if user is not found', async () => {
+      const response = await request(app)
+        .delete(`/api/users/${nonExistentUserId}/saved/${testJobId}`)
+        .send();
+      
+      expect(response.statusCode).toBe(404);
+      expect(response.body.message).toBe('User not found');
     });
     
     it('should return 401 if protect middleware fails (simulated)', async () => {
