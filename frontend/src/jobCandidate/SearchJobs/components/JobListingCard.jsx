@@ -65,34 +65,54 @@ const JobListingCard = ({
     if (jobId) {
       let savedStatus = false;
       
+      // Get saved jobs from localStorage first
+      const savedJobsFromStorage = getSavedJobsFromStorage();
+      const savedInStorage = savedJobsFromStorage.some(id => id.toString() === jobId.toString());
+      
       // First check user object from state
       if (user && user.savedJobListings && Array.isArray(user.savedJobListings)) {
-        savedStatus = user.savedJobListings.some(id => id.toString() === jobId.toString());
-      }
-      
-      // If not found and user is logged in, check localStorage as fallback
-      if (!savedStatus && user && user._id) {
-        const savedJobsFromStorage = getSavedJobsFromStorage();
-        savedStatus = savedJobsFromStorage.some(id => id.toString() === jobId.toString());
+        const savedInState = user.savedJobListings.some(id => id.toString() === jobId.toString());
         
-        // If we found it in localStorage but not in user object, update user object
-        if (savedStatus && user.savedJobListings && !user.savedJobListings.some(id => id.toString() === jobId.toString())) {
-          const updatedSavedJobListings = [...user.savedJobListings, jobId];
-          
-          // Update parent component state
-          setUser({
-            ...user,
-            savedJobListings: updatedSavedJobListings
-          });
-          
-          // Update location state if it exists
-          if (state && state.user) {
-            state.user.savedJobListings = updatedSavedJobListings;
+        // Ensure user state and localStorage are in sync
+        if (savedInState !== savedInStorage) {
+          // If job is in state but not in storage, it means the user unsaved it in this session
+          // We should honor the localStorage value which represents the most recent user action
+          if (savedInState && !savedInStorage) {
+            const updatedSavedJobListings = user.savedJobListings.filter(
+              id => id.toString() !== jobId.toString()
+            );
+            
+            // Update parent component state
+            setUser({
+              ...user,
+              savedJobListings: updatedSavedJobListings
+            });
+            
+            // Update location state if it exists
+            if (state && state.user) {
+              state.user.savedJobListings = updatedSavedJobListings;
+            }
+          } 
+          // If job is in storage but not in state, add it to state
+          else if (!savedInState && savedInStorage) {
+            const updatedSavedJobListings = [...user.savedJobListings, jobId];
+            
+            // Update parent component state
+            setUser({
+              ...user,
+              savedJobListings: updatedSavedJobListings
+            });
+            
+            // Update location state if it exists
+            if (state && state.user) {
+              state.user.savedJobListings = updatedSavedJobListings;
+            }
           }
         }
       }
       
-      setIsSaved(savedStatus);
+      // Set the saved status based on localStorage which has the most recent user action
+      setIsSaved(savedInStorage);
     }
   }, [jobId, user, setUser, state]);
 
