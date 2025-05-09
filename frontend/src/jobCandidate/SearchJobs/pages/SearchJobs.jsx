@@ -77,13 +77,12 @@ const SearchJobs = ({onlineUsers}) => {
   // Fetch saved job listings when component mounts
   useEffect(() => {
     const fetchSavedJobListings = async () => {
-      if (user && user.email) {
+      if (user && user._id) {
         try {
-          const encodedEmail = encodeURIComponent(user.email);
           // Add timestamp to avoid caching
           const timestamp = new Date().getTime();
           const response = await fetch(
-            `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/email/${encodedEmail}/saved?t=${timestamp}`,
+            `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/${user._id}/saved?t=${timestamp}`,
             {
               method: "GET",
               headers: {
@@ -121,7 +120,7 @@ const SearchJobs = ({onlineUsers}) => {
 
     fetchSavedJobListings();
     
-  }, [user?.email, state?.refreshToken]); // Run when email changes or page refreshes
+  }, [user?._id, state?.refreshToken]); // Run when user ID changes or page refreshes
 
   // Function to show notifications
   const showNotification = (type, message) => {

@@ -64,22 +64,4 @@ const getSavedJobListings = async (req, res) => {
   }
 };
 
-const getSavedJobListingsByEmail = async (req, res) => {
-  try {
-    const { email } = req.params;
-    const jobSeeker = await JobSeeker.findOne({ email });
-    
-    if (!jobSeeker) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    return res.status(200).json({ 
-      savedJobListings: jobSeeker.savedJobListings || [] 
-    });
-  } catch (error) {
-    console.error('Error fetching saved jobs by email:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-};
-
-module.exports = { saveJobListing, unsaveJobListing, getSavedJobListings, getSavedJobListingsByEmail };
+module.exports = { saveJobListing, unsaveJobListing, getSavedJobListings };
