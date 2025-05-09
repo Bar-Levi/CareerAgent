@@ -56,6 +56,7 @@ const JobListingCardsList = ({
 
   // Update the count to reflect filtered results
   useEffect(() => {
+    // Extract only the savedJobListings IDs we need for comparison
     const savedIds = new Set((user.savedJobListings || []).map(id => id.toString()));
     const currentFilteredListings = sortingMethod === 'saved'
       ? jobListings.filter(job => savedIds.has(job._id.toString()))
@@ -165,7 +166,7 @@ const JobListingCardsList = ({
     }, 100);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, sortingMethod, user, user.cv, relevancePoints, user.relevancePoints]);
+  }, [filters, sortingMethod, user.cv, user.analyzed_cv_content, relevancePoints, user.relevancePoints]);
 
   useEffect(() => {
     try {

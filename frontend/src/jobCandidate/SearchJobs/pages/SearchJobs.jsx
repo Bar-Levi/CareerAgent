@@ -38,6 +38,11 @@ const SearchJobs = ({onlineUsers}) => {
   const descriptionRef = useRef(null);
   const sortingOptionsRef = useRef(null);
 
+  // Update user state handler - add this new function
+  const updateUserState = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   useEffect(() => {
     const stateAddition = localStorage.getItem("stateAddition");
     if (stateAddition) {
@@ -482,13 +487,12 @@ const SearchJobs = ({onlineUsers}) => {
               </div>
             </div>
             
-            {/* Job Listings */}
+            {/* Job listings */}
             <JobListingCardsList
-              key={`${user.cv}-${JSON.stringify(filters)}`}
               filters={filters}
               onJobSelect={setSelectedJob}
               user={user}
-              setUser={setUser}
+              setUser={updateUserState}
               setShowModal={setShowModal}
               showNotification={showNotification}
               setJobListingsCount={setJobListingsCount}

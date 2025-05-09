@@ -44,7 +44,8 @@ const JobListingCard = ({
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
   const [isSaved, setIsSaved] = useState(
-    user.savedJobListings?.map(id => id.toString()).includes(jobId.toString())
+    Array.isArray(user.savedJobListings) && 
+    user.savedJobListings.some(id => id.toString() === jobId.toString())
   );  
   const token = localStorage.getItem('token');
   const [isHovered, setIsHovered] = useState(false);
@@ -57,24 +58,42 @@ const JobListingCard = ({
     const url = `${process.env.REACT_APP_BACKEND_URL}/api/jobseeker/${user._id}/saved/${jobId}`;
   
     try {
-      await fetch(url, {
+      const response = await fetch(url, {
         method,
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-  
-      // Compute new saved list
-      const updatedSaved = isSaved
-        ? user.savedJobListings.filter(id => id.toString() !== jobId.toString())
-        : [...(user.savedJobListings || []), jobId];
-  
-      const updatedUser = { ...user, savedJobListings: updatedSaved };
-  
-      // Push new state into the same route
-      navigate(location.pathname, { state: { ...state, user: updatedUser } });
-  
+      
+      if (!response.ok) {
+        throw new Error("Failed to update saved jobs");
+      }
+      
+      // Get the updated user data from the server to ensure we have the latest savedJobListings
+      const updatedUserResponse = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      
+      if (!updatedUserResponse.ok) {
+        throw new Error("Failed to fetch updated user data");
+      }
+      
+      const updatedUserData = await updatedUserResponse.json();
+      
+      // Update the user with all the latest data from the server
+      setUser(updatedUserData);
+      
+      // Update location.state.user
+      if (state && state.user) {
+        state.user.savedJobListings = updatedUserData.savedJobListings;
+      }
+      
+      // Update the isSaved state based on the new data
       setIsSaved(!isSaved);
       showNotification("success", isSaved ? "Removed from Saved" : "Job Saved");
-    } catch {
+    } catch (error) {
+      console.error("Error updating saved jobs:", error);
       showNotification("error", "Unable to update saved jobs");
     }
   };  
@@ -239,15 +258,17 @@ const JobListingCard = ({
           setAppliedCounter((prev) => prev + 1);
           setApplyButtonEnabled(false);
 
-          // Update the user state with incremented numOfApplicationsSent
+          // Update the user state directly
           const updatedUser = {
             ...user,
             numOfApplicationsSent: (user.numOfApplicationsSent || 0) + 1
           };
           setUser(updatedUser);
           
-          // Navigate back to the same location with updated state
-          navigate(location.pathname, { state: { ...state, user: updatedUser } });
+          // Also update location.state.user
+          if (state && state.user) {
+            state.user.numOfApplicationsSent = (user.numOfApplicationsSent || 0) + 1;
+          }
         } else {
           showNotification("error", "Failed to update job listing with the new applicant.");
         }
