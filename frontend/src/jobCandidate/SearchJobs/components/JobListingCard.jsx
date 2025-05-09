@@ -43,14 +43,58 @@ const JobListingCard = ({
 
   const [appliedCounter, setAppliedCounter] = useState(applicants?.length || 0);
   const [applyButtonEnabled, setApplyButtonEnabled] = useState(true);
-  const [isSaved, setIsSaved] = useState(
-    Array.isArray(user.savedJobListings) && 
-    user.savedJobListings.some(id => id.toString() === jobId.toString())
-  );  
+  const [isSaved, setIsSaved] = useState(false);  
   const token = localStorage.getItem('token');
   const [isHovered, setIsHovered] = useState(false);
   const [showMatchDetails, setShowMatchDetails] = useState(false);
   const matchDetailsRef = useRef(null);
+
+  // Helper function to get saved jobs from localStorage
+  const getSavedJobsFromStorage = () => {
+    try {
+      const savedJobs = localStorage.getItem('savedJobListings');
+      return savedJobs ? JSON.parse(savedJobs) : [];
+    } catch (error) {
+      console.error("Error parsing savedJobListings from localStorage:", error);
+      return [];
+    }
+  };
+
+  // Initialize isSaved based on user data or localStorage
+  useEffect(() => {
+    if (jobId) {
+      let savedStatus = false;
+      
+      // First check user object from state
+      if (user && user.savedJobListings && Array.isArray(user.savedJobListings)) {
+        savedStatus = user.savedJobListings.some(id => id.toString() === jobId.toString());
+      }
+      
+      // If not found and user is logged in, check localStorage as fallback
+      if (!savedStatus && user && user._id) {
+        const savedJobsFromStorage = getSavedJobsFromStorage();
+        savedStatus = savedJobsFromStorage.some(id => id.toString() === jobId.toString());
+        
+        // If we found it in localStorage but not in user object, update user object
+        if (savedStatus && user.savedJobListings && !user.savedJobListings.some(id => id.toString() === jobId.toString())) {
+          const updatedSavedJobListings = [...user.savedJobListings, jobId];
+          
+          // Update parent component state
+          setUser({
+            ...user,
+            savedJobListings: updatedSavedJobListings
+          });
+          
+          // Update location state if it exists
+          if (state && state.user) {
+            state.user.savedJobListings = updatedSavedJobListings;
+          }
+        }
+      }
+      
+      setIsSaved(savedStatus);
+    }
+  }, [jobId, user, setUser, state]);
 
   const toggleSave = async (e) => {
     e.stopPropagation();
@@ -67,31 +111,44 @@ const JobListingCard = ({
         throw new Error("Failed to update saved jobs");
       }
       
-      // Get the updated user data from the server to ensure we have the latest savedJobListings
-      const updatedUserResponse = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(user.email)}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      // Update the saved state locally
+      const newSavedState = !isSaved;
+      setIsSaved(newSavedState);
+      
+      // Get updated saved jobs list
+      const updatedSavedJobListings = [...(user.savedJobListings || [])];
+      
+      if (newSavedState) {
+        // Add jobId if not already in the array
+        if (!updatedSavedJobListings.some(id => id.toString() === jobId.toString())) {
+          updatedSavedJobListings.push(jobId);
         }
-      );
-      
-      if (!updatedUserResponse.ok) {
-        throw new Error("Failed to fetch updated user data");
+      } else {
+        // Remove jobId from the array
+        const index = updatedSavedJobListings.findIndex(id => id.toString() === jobId.toString());
+        if (index !== -1) {
+          updatedSavedJobListings.splice(index, 1);
+        }
       }
       
-      const updatedUserData = await updatedUserResponse.json();
+      // Create updated user object
+      const updatedUser = {
+        ...user,
+        savedJobListings: updatedSavedJobListings
+      };
       
-      // Update the user with all the latest data from the server
-      setUser(updatedUserData);
+      // Update parent component state
+      setUser(updatedUser);
       
-      // Update location.state.user
+      // Update location state if it exists
       if (state && state.user) {
-        state.user.savedJobListings = updatedUserData.savedJobListings;
+        state.user.savedJobListings = updatedSavedJobListings;
       }
       
-      // Update the isSaved state based on the new data
-      setIsSaved(!isSaved);
-      showNotification("success", isSaved ? "Removed from Saved" : "Job Saved");
+      // Save to localStorage for persistence across refreshes
+      localStorage.setItem('savedJobListings', JSON.stringify(updatedSavedJobListings));
+      
+      showNotification("success", newSavedState ? "Job Saved" : "Removed from Saved");
     } catch (error) {
       console.error("Error updating saved jobs:", error);
       showNotification("error", "Unable to update saved jobs");
