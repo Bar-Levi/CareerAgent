@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FaSpinner, FaBriefcase, FaCheckCircle, FaTimesCircle, FaClock, FaUserTie, FaSearch, FaFilter } from "react-icons/fa";
 
-const JobApplications = ({ user }) => {
+const JobApplications = ({ user, highlightApplicationId, highlightApplication }) => {
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // A ref map for all applications
+  const appRefs = useRef({});
+
   // Add filter states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -80,6 +83,48 @@ const JobApplications = ({ user }) => {
     setFilteredApplications(filtered);
   }, [applications, searchTerm, statusFilter, startDate, endDate]);
 
+  // Scroll to highlighted application
+  useEffect(() => {
+    console.log("JobApplications props:", { highlightApplication, highlightApplicationId });
+    
+    if (highlightApplication && highlightApplicationId && filteredApplications.length > 0) {
+      console.log("Applications to check:", filteredApplications.length);
+      
+      // Find the application that matches the ID
+      const appToHighlight = filteredApplications.find(app => app._id === highlightApplicationId);
+      
+      if (appToHighlight) {
+        console.log("Found application to highlight:", appToHighlight.jobTitle);
+        
+        // Give time for applications to load and render
+        const timer = setTimeout(() => {
+          const ref = appRefs.current[highlightApplicationId];
+          
+          if (ref) {
+            console.log("Scrolling to highlighted application");
+            ref.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Add a temporary flash animation effect
+            ref.classList.add('highlight-pulse');
+            
+            // Remove the animation class after it completes
+            setTimeout(() => {
+              if (ref) {
+                ref.classList.remove('highlight-pulse');
+              }
+            }, 2000);
+          } else {
+            console.log("Highlighted application ref not found");
+          }
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      } else {
+        console.log("Application with ID not found in filtered applications:", highlightApplicationId);
+      }
+    }
+  }, [highlightApplication, highlightApplicationId, filteredApplications]);
+
   // Add reset filters function
   const resetFilters = () => {
     setSearchTerm("");
@@ -143,6 +188,12 @@ const JobApplications = ({ user }) => {
       console.error("Error formatting date:", error);
       return "N/A";
     }
+  };
+
+  // Function to check if an application should be highlighted
+  const isHighlighted = (app) => {
+    if (!highlightApplication || !highlightApplicationId) return false;
+    return app._id === highlightApplicationId;
   };
 
   return (
@@ -236,10 +287,33 @@ const JobApplications = ({ user }) => {
         ) : (
           <div className="overflow-y-auto h-full">
             <div className="p-4 space-y-2">
+              <style>
+                {`
+                  .highlight-pulse {
+                    animation: highlight-flash 2s ease-in-out;
+                    outline: 3px solid #4f46e5;
+                    box-shadow: 0 0 15px #4f46e5;
+                    position: relative;
+                    z-index: 10;
+                  }
+                  
+                  @keyframes highlight-flash {
+                    0%, 100% { outline-color: #4f46e5; box-shadow: 0 0 15px #4f46e5; }
+                    50% { outline-color: #818cf8; box-shadow: 0 0 25px #818cf8; }
+                  }
+                `}
+              </style>
               {filteredApplications.map((app) => (
                 <div
                   key={app._id}
-                  className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-200 hover:shadow-sm transition-all duration-200"
+                  ref={(node) => {
+                    appRefs.current[app._id] = node;
+                  }}
+                  className={`p-3 bg-gray-50 rounded-lg border ${
+                    isHighlighted(app) 
+                      ? 'border-indigo-500 transition-all duration-300' 
+                      : 'border-gray-200 hover:border-indigo-200'
+                  } hover:shadow-sm transition-all duration-200`}
                 >
                   <div className="flex justify-between items-start">
                     <div>

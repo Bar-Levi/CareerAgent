@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaComments, FaUser, FaCalendarCheck, FaTrash, FaBell } from 'react-icons/fa';
+import { FaComments, FaUser, FaCalendarCheck, FaTrash, FaBell, FaSearch, FaClipboardCheck, FaFileSearch } from 'react-icons/fa';
 import classNames from 'classnames';
 
 const NotificationPanel = ({ 
@@ -110,6 +110,8 @@ const NotificationPanel = ({
         return <FaUser className={`${iconClasses} text-green-500`} />;
       case 'interview':
         return <FaCalendarCheck className={`${iconClasses} text-purple-500`} />;
+      case 'application_review':
+        return <FaClipboardCheck className={`${iconClasses} text-amber-500`} />;
       default:
         return <FaBell className={`${iconClasses} text-gray-500`} />;
     }

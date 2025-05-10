@@ -232,6 +232,9 @@ const handleEmailUpdates = async (req, res) => {
                         goToRoute: '/dashboard',
                         stateAddition: {
                             applicantId: applicant._id,
+                            highlightApplication: true,
+                            jobTitle: applicant.jobTitle,
+                            jobId: applicant.jobId
                         },
                     },
                     createdAt: new Date(),
