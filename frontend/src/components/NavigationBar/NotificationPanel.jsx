@@ -141,7 +141,9 @@ const NotificationPanel = ({
       // For interview notifications, pass the interviewId for highlighting
       else if (notification.type === 'interview') {
         const interviewId = notification.extraData?.stateAddition?.interviewId;
-        console.log("Navigating with interviewId:", interviewId);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Navigating with interviewId:", interviewId);
+        }
         navigate(route, {
           state: {
             ...state,
@@ -153,6 +155,58 @@ const NotificationPanel = ({
             timestamp: Date.now() // Keep timestamp to ensure state object is different each time
           }
         });
+      }
+      // For chat notifications, preserve the chat data but clear other highlights
+      else if (notification.type === 'chat') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("=== CHAT NOTIFICATION CLICKED ===");
+          console.log("Notification data:", notification);
+        }
+        
+        const conversationId = notification.conversationId || notification.extraData?.stateAddition?.conversationId;
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Conversation ID:", conversationId);
+          console.log("State addition conversationId:", notification.extraData?.stateAddition?.conversationId);
+        }
+        
+        // Determine if this is a job seeker or recruiter based on state
+        const isRecruiter = state?.user?.role === 'Recruiter';
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Is recruiter:", isRecruiter);
+        }
+        
+        if (conversationId) {
+          if (isRecruiter) {
+            // Save the state addition to localStorage
+            if (notification.extraData?.stateAddition) {
+              localStorage.setItem("stateAddition", JSON.stringify(notification.extraData.stateAddition));
+            }
+            
+            // Navigate to the recruiter dashboard with the conversation ID
+            const navigationState = {
+              ...state,
+              viewMode: "messages",
+              selectedConversationId: conversationId,
+              forceConversationSelect: true,
+              refreshToken: Math.random().toString(36) // Force refresh
+            };
+            
+            if (process.env.NODE_ENV !== 'production') {
+              console.log("Navigation state:", navigationState);
+            }
+            
+            navigate("/recruiterdashboard", { state: navigationState });
+          } else {
+            // For job seekers, navigate to their messages page
+            navigate("/jobcandidatemessages", {
+              state: {
+                ...state,
+                conversationId,
+                refreshToken: Math.random().toString(36) // Force refresh
+              }
+            });
+          }
+        }
       }
       // For "apply" notifications (used in recruiter dashboard)
       else if (notification.type === 'apply') {

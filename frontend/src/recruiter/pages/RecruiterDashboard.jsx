@@ -107,7 +107,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
     if (stateAddition) {
       try {
         const parsedAddition = JSON.parse(stateAddition);
-        console.log("Parsed addition: ", parsedAddition);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Parsed addition: ", parsedAddition);
+        }
         setViewMode("messages");
         setSelectedConversationId(parsedAddition.conversationId);
         setSelectedCandidate(parsedAddition.candidate);
@@ -121,7 +123,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
           setMobileView("detail");
         }
       } catch (error) {
-        console.error("Error parsing stateAddition:", error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error("Error parsing stateAddition:", error);
+        }
       } finally {
         localStorage.removeItem("stateAddition");
       }
@@ -132,13 +136,17 @@ const RecruiterDashboard = ({onlineUsers}) => {
   useEffect(() => {
     // If coming from notification click, set the viewMode from state
     if (state?.viewMode) {
-      console.log("Setting viewMode from state:", state.viewMode);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Setting viewMode from state:", state.viewMode);
+      }
       setViewMode(state.viewMode);
     }
     
     // Handle candidate selection from notification
     if (state?.selectedCandidateId) {
-      console.log("Setting selected candidate from state:", state.selectedCandidateId);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Setting selected candidate from state:", state.selectedCandidateId);
+      }
       // Store in local state
       setHighlightData({
         selectedCandidateId: state.selectedCandidateId
@@ -156,7 +164,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
     
     // Handle job listing selection from notification
     if (state?.jobListing) {
-      console.log("Setting selected job listing from state:", state.jobListing);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Setting selected job listing from state:", state.jobListing);
+      }
       setSelectedJobListing(state.jobListing);
     }
   }, [state, navigate]);
@@ -217,7 +227,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 404) {
-          console.error(data.message);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error(data.message);
+          }
           return;
         }
         throw new Error("Failed to fetch recruiter's job listings.");
@@ -232,7 +244,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         activeListings: activeCount,
       }));
     } catch (error) {
-      console.error("Error fetching job listings:", error.message);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error fetching job listings:", error.message);
+      }
     }
   };
 
@@ -251,7 +265,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 404) {
-          console.error(data.message);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error(data.message);
+          }
           return;
         }
         throw new Error("Failed to fetch recruiter's job listings.");
@@ -266,7 +282,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         totalApplications: fetchedApplications.length || 0,
       }));
     } catch (error) {
-      console.error("Error fetching recent applications:", error.message);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error fetching recent applications:", error.message);
+      }
     }
   };
 
@@ -284,7 +302,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
       );
       if (!response.ok) {
         const errorMessage = `Error ${response.status}: ${response.statusText}`;
-        console.error(errorMessage);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error(errorMessage);
+        }
         throw new Error(errorMessage);
       }
       const data = await response.json();
@@ -298,7 +318,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         setTotalHired(state.user.totalHired);
       }
     } catch (error) {
-      console.error("Failed to fetch metrics:", error.message);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Failed to fetch metrics:", error.message);
+      }
       showNotification("error", "Failed to fetch metrics. Please try again later.");
     }
   };

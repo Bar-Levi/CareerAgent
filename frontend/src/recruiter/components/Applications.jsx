@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
@@ -22,6 +22,7 @@ const Applications = ({
 
   const selectedCandidateRef = useRef();
   const containerRef = useRef();
+  const applicationRefs = useRef({});
   
   // Handle applicant selection
   const handleApplicantClick = (app) => {
@@ -46,65 +47,88 @@ const Applications = ({
     }
   };
   
-  // This function will find an applicant by ID and set it as selected
-  const findAndSelectApplicant = (idToFind) => {
-    console.log("Finding applicant with ID:", idToFind);
+  // Helper function to find applicant by ID
+  const findApplicantById = useCallback((idToFind) => {
+    if (!idToFind || !applications || applications.length === 0) return null;
     
-    // First try by jobSeekerId (from notification)
-    let found = applications.find(app => app.jobSeekerId === idToFind);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Finding applicant with ID:", idToFind);
+    }
+    
+    // Try to find the applicant
+    const found = applications.find(app => 
+      app.applicantId._id === idToFind || 
+      app.applicantId._id.toString() === idToFind.toString()
+    );
     
     if (!found) {
-      // Try by applicant._id 
-      found = applications.find(app => app._id === idToFind);
-      
-      if (!found) {
+      if (process.env.NODE_ENV !== 'production') {
         console.log("Could not find applicant with ID:", idToFind);
-        return false;
       }
+      return null;
     }
     
-    console.log("Found applicant:", found.name);
-    setSelectedApplicant(found);
-    return true;
-  };
-
-  // Initialize from URL or state parameters
-  useEffect(() => {
-    if (selectedCandidateId && applications.length > 0) {
-      console.log("Selected candidate ID found:", selectedCandidateId);
-      console.log("Available applications:", applications.length);
-      
-      // Try to find and select the applicant
-      findAndSelectApplicant(selectedCandidateId);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Found applicant:", found.name);
     }
-  }, [selectedCandidateId, applications]);
-
-  // Separate useEffect for scrolling to ensure it happens after render
+    return found;
+  }, [applications]);
+  
+  // Auto-select and scroll to application if selectedCandidateId is provided
   useEffect(() => {
-    if (selectedApplicant) {
-      console.log("Attempting to scroll to applicant:", selectedApplicant.name);
+    if (selectedCandidateId && applications && applications.length > 0) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Selected candidate ID found:", selectedCandidateId);
+        console.log("Available applications:", applications.length);
+      }
       
-      // Try multiple times with increasing delays for reliability
-      const attemptScroll = (attempt = 1) => {
-        if (attempt > 5) return; // Max 5 attempts
+      // Find the application
+      const selectedApplicant = findApplicantById(selectedCandidateId);
+      
+      if (selectedApplicant) {
+        // Auto-select this applicant
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Attempting to scroll to applicant:", selectedApplicant.name);
+        }
         
-        setTimeout(() => {
-          if (selectedCandidateRef.current) {
-            console.log(`Scrolling to applicant element (attempt ${attempt})`);
-            selectedCandidateRef.current.scrollIntoView({ 
-              behavior: "smooth", 
-              block: "center" 
-            });
+        // Attempt to scroll to this element with retries
+        const scrollToElement = (attempt = 0) => {
+          if (attempt > 5) return; // Give up after 5 attempts
+          
+          const appElement = applicationRefs.current[selectedCandidateId];
+          
+          if (appElement) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log(`Scrolling to applicant element (attempt ${attempt})`);
+            }
+            
+            // Scroll to the element
+            appElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
           } else {
-            console.log(`Ref not available, retrying (attempt ${attempt})`);
-            attemptScroll(attempt + 1);
+            if (process.env.NODE_ENV !== 'production') {
+              console.log(`Ref not available, retrying (attempt ${attempt})`);
+            }
+            
+            // Retry after a delay
+            setTimeout(() => scrollToElement(attempt + 1), 500);
           }
-        }, 300 * attempt); // Increasing delays: 300ms, 600ms, 900ms, etc.
-      };
-      
-      attemptScroll();
+        };
+        
+        // Start the scroll attempt
+        scrollToElement();
+      }
     }
-  }, [selectedApplicant]);
+  }, [selectedCandidateId, applications, findApplicantById]);
+
+  // Add ref to each application card
+  const registerRef = useCallback((ref, app) => {
+    if (ref && app) {
+      applicationRefs.current[app.applicantId._id] = ref;
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Ref attached to:", app.name);
+      }
+    }
+  }, []);
 
   const getApplicantDataAsJobSeeker = async (application) => {
     const response = await fetch(
