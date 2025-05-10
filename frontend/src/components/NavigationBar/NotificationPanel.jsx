@@ -134,7 +134,20 @@ const NotificationPanel = ({
             ...notification.extraData.stateAddition
           } 
         });
-      } else {
+      } 
+      // For interview notifications, pass the interviewId for highlighting
+      else if (notification.type === 'interview') {
+        const interviewId = notification.extraData?.stateAddition?.interviewId;
+        console.log("Navigating with interviewId:", interviewId);
+        navigate(route, {
+          state: {
+            ...state,
+            interviewId: interviewId,
+            timestamp: Date.now() // Keep timestamp to ensure state object is different each time
+          }
+        });
+      }
+      else {
         // For other notification types, use the existing handling
         parentHandleNotificationClick(notification);
       }

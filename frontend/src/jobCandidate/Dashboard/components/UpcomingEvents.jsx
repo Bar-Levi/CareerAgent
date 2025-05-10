@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { FaCalendarAlt, FaClock, FaLink, FaChevronRight, FaStar, FaCalendarPlus, FaCheckCircle } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const UpcomingInterviews = ({ user }) => {
+const UpcomingInterviews = ({ user, highlightInterviewId, highlightCounter }) => {
   const [interviews, setInterviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -131,6 +131,26 @@ const UpcomingInterviews = ({ user }) => {
       console.log("No state addition found.");
     }
   }, [refreshToken, state]);
+
+  useEffect(() => {
+    if (highlightInterviewId) {
+      console.log("Setting selected event ID from highlightInterviewId:", highlightInterviewId);
+      setSelectedEventId(highlightInterviewId);
+      setRefreshToken(prev => prev + 1);
+    }
+  }, [highlightInterviewId]);
+
+  useEffect(() => {
+    if (highlightCounter > 0 && state?.interviewId) {
+      console.log("Re-highlighting interview with counter:", highlightCounter);
+      setSelectedEventId(null);
+      
+      setTimeout(() => {
+        setSelectedEventId(state.interviewId);
+        setRefreshToken(prev => prev + 1);
+      }, 50);
+    }
+  }, [highlightCounter, state]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

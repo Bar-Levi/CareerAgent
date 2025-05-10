@@ -13,7 +13,9 @@ const JobCandidateDashboard = ({onlineUsers}) => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const jobApplicationsRef = useRef(null);
+  const upcomingEventsRef = useRef(null);
   const [highlightData, setHighlightData] = useState(null);
+  const [highlightCounter, setHighlightCounter] = useState(0);
   
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -43,6 +45,33 @@ const JobCandidateDashboard = ({onlineUsers}) => {
           jobApplicationsRef.current.scrollIntoView({ behavior: 'smooth' });
         } else {
           console.log("Job applications ref not found");
+        }
+      }, 300);
+    }
+    
+    // Handle highlighting of specific interview
+    if (state?.interviewId) {
+      console.log("Should highlight interview:", state.interviewId);
+      
+      // Increment the highlight counter to force a re-highlight
+      setHighlightCounter(prev => prev + 1);
+      
+      // Clear the interviewId from state
+      navigate(window.location.pathname, { 
+        replace: true, 
+        state: { 
+          ...state, 
+          interviewId: undefined
+        } 
+      });
+      
+      // Add a small delay to ensure DOM elements are fully rendered
+      setTimeout(() => {
+        if (upcomingEventsRef.current) {
+          console.log("Scrolling to upcoming events section");
+          upcomingEventsRef.current.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          console.log("Upcoming events ref not found");
         }
       }, 300);
     }
@@ -76,8 +105,12 @@ const JobCandidateDashboard = ({onlineUsers}) => {
             </div>
           </div>
           <div className="grid grid-rows-2 gap-4 h-full min-h-0">
-            <div className="h-full overflow-hidden min-h-0">
-              <UpcomingEvents user={state?.user}/>
+            <div className="h-full overflow-hidden min-h-0" ref={upcomingEventsRef}>
+              <UpcomingEvents 
+                user={state?.user} 
+                highlightInterviewId={state?.interviewId}
+                highlightCounter={highlightCounter}
+              />
             </div>
             <div className="h-full overflow-hidden min-h-0">
               <PerformanceInsights />
