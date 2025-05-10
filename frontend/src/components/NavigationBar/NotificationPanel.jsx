@@ -215,11 +215,16 @@ const NotificationPanel = ({
             
             navigate("/recruiterdashboard", { state: navigationState });
           } else {
-            // For job seekers, navigate to their messages page
-            navigate("/jobcandidatemessages", {
+            // For job seekers, navigate to the searchjobs page instead of jobcandidatemessages
+            // Save conversation data to localStorage for MessagingBar to use
+            if (notification.extraData?.stateAddition) {
+              localStorage.setItem("stateAddition", JSON.stringify(notification.extraData.stateAddition));
+            }
+            
+            // Navigate to searchjobs with refreshToken to trigger useEffect in SearchJobs
+            navigate("/searchjobs", {
               state: {
                 ...state,
-                conversationId,
                 refreshToken: Math.random().toString(36) // Force refresh
               }
             });
