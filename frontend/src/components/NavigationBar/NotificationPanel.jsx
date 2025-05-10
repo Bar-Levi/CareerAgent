@@ -131,7 +131,10 @@ const NotificationPanel = ({
         navigate(route, { 
           state: { 
             ...state,
-            ...notification.extraData.stateAddition
+            // Include the application highlight data
+            ...notification.extraData.stateAddition,
+            // Clear any interview highlighting
+            interviewId: undefined
           } 
         });
       } 
@@ -142,18 +145,44 @@ const NotificationPanel = ({
         navigate(route, {
           state: {
             ...state,
+            // Clear any application highlighting
+            highlightApplication: undefined,
+            applicantId: undefined,
+            // Set only interview highlight
             interviewId: interviewId,
             timestamp: Date.now() // Keep timestamp to ensure state object is different each time
           }
         });
       }
+      // For "apply" notifications (used in recruiter dashboard)
+      else if (notification.type === 'apply') {
+        // Use existing state without modifying highlight properties
+        // This preserves the original behavior for recruiter dashboard
+        navigate(route, {
+          state: {
+            ...state,
+            ...notification.extraData.stateAddition
+          }
+        });
+      }
       else {
         // For other notification types, use the existing handling
-        parentHandleNotificationClick(notification);
+        // But first clear any highlight state to avoid unwanted highlights
+        navigate(route, {
+          state: {
+            ...state,
+            // Clear all highlights
+            highlightApplication: undefined,
+            applicantId: undefined,
+            interviewId: undefined
+          }
+        });
       }
     } else {
-      // If no goToRoute specified, use parent handler
-      parentHandleNotificationClick(notification);
+      // If no goToRoute specified, use parent handler but clear highlights
+      if (parentHandleNotificationClick) {
+        parentHandleNotificationClick(notification);
+      }
     }
   };
 

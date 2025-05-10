@@ -26,6 +26,7 @@ const JobCandidateDashboard = ({onlineUsers}) => {
   useEffect(() => {
     console.log("Dashboard state:", state);
     
+    // Handle application highlighting
     if (state?.highlightApplication) {
       console.log("Should highlight application:", state.applicantId);
       
@@ -34,6 +35,9 @@ const JobCandidateDashboard = ({onlineUsers}) => {
         applicantId: state.applicantId,
         highlightApplication: state.highlightApplication
       });
+      
+      // Clear any interview highlight counter
+      setHighlightCounter(0);
       
       // Clear the navigation state to prevent re-highlighting on refresh/navigation
       navigate(window.location.pathname, { replace: true, state: { ...state, highlightApplication: undefined, applicantId: undefined } });
@@ -52,6 +56,9 @@ const JobCandidateDashboard = ({onlineUsers}) => {
     // Handle highlighting of specific interview
     if (state?.interviewId) {
       console.log("Should highlight interview:", state.interviewId);
+      
+      // Clear application highlight data
+      setHighlightData(null);
       
       // Increment the highlight counter to force a re-highlight
       setHighlightCounter(prev => prev + 1);
