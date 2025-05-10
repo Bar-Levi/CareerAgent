@@ -66,12 +66,17 @@ const InputBox = ({ onSend, conversationId, senderId, selectedJobListingId }) =>
     // Allow sending if there's either text OR a file
     if (text.trim() || file) {
       setLoading(true);
-      setUploadStatus({ uploading: true, progress: 0 });
+      // Only set uploadStatus when there's a file
+      if (file) {
+        setUploadStatus({ uploading: true, progress: 0 });
+      }
       
       try {
         // Set up a progress event handler
         const handleProgress = (progress) => {
-          setUploadStatus(prev => ({ ...prev, progress }));
+          if (file) {
+            setUploadStatus(prev => ({ ...prev, progress }));
+          }
         };
         
         await onSend({ text: text || " ", file, onProgress: handleProgress });
