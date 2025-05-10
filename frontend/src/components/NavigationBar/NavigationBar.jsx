@@ -8,7 +8,7 @@ import FooterLinks from "./FooterLinks";
 import socket from "../../socket";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { FaComments, FaUser, FaCalendarCheck } from "react-icons/fa";
+import { FaComments, FaUser, FaCalendarCheck, FaClipboardCheck } from "react-icons/fa";
 
 const NavigationBar = ({ userType, showOnlyDashboard }) => {
   const navigate = useNavigate();
@@ -42,6 +42,10 @@ const NavigationBar = ({ userType, showOnlyDashboard }) => {
         ) : notificationData.type === "interview" ? (
           <div className="p-4 w-[10%] flex justify-center">
             <FaCalendarCheck className="w-8 h-8 text-red-500 flex-shrink-0" />
+          </div>
+        ) : notificationData.type === "application_review" ? (
+          <div className="p-4 w-[10%] flex justify-center">
+            <FaClipboardCheck className="w-8 h-8 text-amber-500 flex-shrink-0" />
           </div>
         ) : null}
           <span>
@@ -112,17 +116,22 @@ const NavigationBar = ({ userType, showOnlyDashboard }) => {
   }, [user]);
   
   const handleNotificationClick = (notificationData) => {
-    // Save extra data in localStorage and navigate accordingly.
-    localStorage.setItem(
-      "stateAddition",
-      JSON.stringify(notificationData.extraData.stateAddition)
-    );
+    // Create a properly merged state object instead of using localStorage
+    const stateAddition = notificationData.extraData?.stateAddition || {};
+    
+    // Create updated state with all necessary properties
     const updatedState = {
       ...location.state,
-      refreshToken: (location.state.refreshToken || 0) + 1,
+      ...stateAddition,
+      // Make sure these are passed from notification to state
+      highlightApplication: stateAddition.highlightApplication || false,
+      applicantId: stateAddition.applicantId,
+      jobId: stateAddition.jobId,
+      refreshToken: (location.state?.refreshToken || 0) + 1,
     };
-    console.log("Updated state:", updatedState);
-    navigate(notificationData.extraData.goToRoute, { state: updatedState });
+    
+    console.log("Notification clicked, navigating with state:", updatedState);
+    navigate(notificationData.extraData?.goToRoute || '/dashboard', { state: updatedState });
   };
 
   const fetchNotifications = async () => {
