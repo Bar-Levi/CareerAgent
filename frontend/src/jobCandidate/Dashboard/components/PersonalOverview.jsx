@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaBirthdayCake, FaLinkedin, FaGithub, FaFileAlt, FaTimes } from "react-icons/fa";
+import formatDate from "../../../utils/formatDate";
 
 const ProfilePicModal = ({ imageUrl, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -56,6 +57,7 @@ const PersonalOverview = ({ user }) => {
     { key: "githubUrl", label: "GitHub URL", icon: FaGithub },
     { key: "linkedinUrl", label: "LinkedIn URL", icon: FaLinkedin },
     { key: "phone", label: "Phone", icon: FaPhone },
+    { key: "dateOfBirth", label: "Date of Birth", icon: FaBirthdayCake },
     { 
       key: "profilePic", 
       label: "Profile Picture", 
@@ -146,6 +148,15 @@ const PersonalOverview = ({ user }) => {
                   </div>
                 );
               })}
+              
+              {user?.dateOfBirth && (
+                <div className="flex items-center space-x-2 p-1.5 bg-gray-50 rounded-lg">
+                  <FaBirthdayCake className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                  <span className="text-gray-700 text-base truncate">
+                    {formatDate(user.dateOfBirth)}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Right Column */}
@@ -154,7 +165,7 @@ const PersonalOverview = ({ user }) => {
                 const Icon = field.icon;
                 const value = user?.[field.key];
                 
-                if (!value || field.key === "profilePic" || field.key === "fullName") return null;
+                if (!value || field.key === "profilePic" || field.key === "fullName" || field.key === "dateOfBirth") return null;
 
                 return (
                   <div key={field.key} className="flex items-center space-x-2 p-1.5 bg-gray-50 rounded-lg">
@@ -176,19 +187,10 @@ const PersonalOverview = ({ user }) => {
                   </div>
                 );
               })}
-
-              {user?.dateOfBirth && (
-                <div className="flex items-center space-x-2 p-1.5 bg-gray-50 rounded-lg">
-                  <FaBirthdayCake className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                  <span className="text-gray-700 text-base truncate">
-                    {new Date(user.dateOfBirth).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
-          <div className="mt-2 flex-none">
+          <div className="mt-0.5 flex-none">
             {profileCompletion === 100 ? (
               <div className="relative overflow-hidden backdrop-blur-sm bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-200 rounded-xl p-3.5 shadow-lg transition-all duration-300 hover:shadow-emerald-100/30 group">
                 <div className="absolute inset-0 bg-emerald-100/30 opacity-20"></div>
@@ -229,24 +231,24 @@ const PersonalOverview = ({ user }) => {
                   ></div>
                 </div>
                 
-                <div className="mt-3 backdrop-blur-sm bg-gradient-to-r from-indigo-50/80 to-sky-50/80 border border-red-100 rounded-xl p-2 sm:p-2.5 shadow-md transition-all duration-300 overflow-hidden relative group">
+                <div className="mt-0.5 backdrop-blur-sm bg-gradient-to-r from-indigo-50/80 to-sky-50/80 border border-red-100 rounded-xl p-1.5 sm:p-2 shadow-md transition-all duration-300 overflow-hidden relative group">
                   <div className="absolute -top-8 -left-8 w-16 h-16 bg-red-200/20 rounded-full blur-xl"></div>
                   <div className="absolute -bottom-8 -right-8 w-16 h-16 bg-indigo-200/30 rounded-full blur-xl"></div>
                   
-                  <div className="flex items-start space-x-2">
+                  <div className="flex items-start space-x-1.5">
                     <div className="mt-0.5 flex-shrink-0 p-0.5 bg-white/80 rounded-lg shadow-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-indigo-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-indigo-600">
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
                       </svg>
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-display text-sm sm:text-base font-semibold text-indigo-950 mb-1 tracking-tight">Complete your profile</h4>
+                      <h4 className="font-display text-sm font-semibold text-indigo-950 mb-0.5 tracking-tight">Complete your profile</h4>
                       
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto">
                         {missingFields.map((field, index) => (
-                          <div key={index} className="flex items-center space-x-1.5 bg-white/60 rounded-lg p-1 border border-indigo-100/50 shadow-sm">
-                            <div className="w-1 h-1 rounded-full bg-indigo-500 flex-shrink-0"></div>
+                          <div key={index} className="flex items-center space-x-1 bg-white/60 rounded-md p-0.5 border border-indigo-100/50 shadow-sm">
+                            <div className="w-0.5 h-0.5 rounded-full bg-indigo-500 flex-shrink-0 ml-0.5"></div>
                             <span className="text-sm text-gray-800 truncate">{field}</span>
                           </div>
                         ))}
