@@ -375,6 +375,7 @@ const MessagingBar = ({
                     title={"Recruiting a " + chat.role}
                     currentOpenConversationId={chat.id}
                     user={user}
+                    onlineUsers={onlineUsers}
                   />
                 </div>
               </div>

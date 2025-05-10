@@ -208,6 +208,8 @@ const addMessageToConversation = async (req, res) => {
       type: "chat",
       message: `${senderName}: ${text}`,
       conversationId: conversation._id,
+      senderId: senderId,
+      senderRole: senderRole,
       extraData: {
         goToRoute: senderRole === "Recruiter" ? '/searchjobs' : '/dashboard',
         stateAddition: {
@@ -215,7 +217,8 @@ const addMessageToConversation = async (req, res) => {
           conversationId: conversation._id,
           secondParticipantProfilePic: senderRole === "Recruiter" ? conversation.participants[1].profilePic : conversation.participants[0].profilePic,
           jobListing,
-          viewMode: "messages"
+          viewMode: "messages",
+          chatHighlight: true
         },
       },
     };

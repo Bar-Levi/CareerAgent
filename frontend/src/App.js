@@ -18,6 +18,7 @@ import SearchJobs from './jobCandidate/SearchJobs/pages/SearchJobs';
 import ImproveCV from './jobCandidate/ImproveCV/pages/ImproveCV';
 import socket from "./socket";
 import RecruiterApplicantsTracker from './recruiter/pages/RecruiterApplicantsTracker';
+import RecruiterDashboard from './recruiter/pages/RecruiterDashboard';
 
 function App() {
     const [onlineUsers, setOnlineUsers] = useState([]);
@@ -83,6 +84,11 @@ function App() {
                 <Route path="/recruiter-candidate-tracker" element={
                     <ProtectedRoute>
                         <RecruiterApplicantsTracker onlineUsers={onlineUsers}/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/recruiterdashboard" element={
+                    <ProtectedRoute>
+                        <RecruiterDashboard onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
                 }/>
                 <Route path="*" element={<Navigate to="/dashboard"/>} />

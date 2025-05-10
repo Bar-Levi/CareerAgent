@@ -1,6 +1,6 @@
 // /pages/RecruiterDashboard.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiPlusCircle, 
@@ -28,6 +28,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const location = useLocation();
   const state = location.state;
   const user = state?.user;
+  const navigate = useNavigate();
 
   // Core state
   const [jobListings, setJobListings] = useState([]);
@@ -46,6 +47,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     localStorage.getItem("recruiterdashboard_sidebarCollapsed") === "true" || false
   );
+
+  // Local state for notification highlight data
+  const [highlightData, setHighlightData] = useState(null);
 
   // Conversation states
   const [selectedConversationId, setSelectedConversationId] = useState(null);
@@ -103,7 +107,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
     if (stateAddition) {
       try {
         const parsedAddition = JSON.parse(stateAddition);
-        console.log("Parsed addition: ", parsedAddition);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Parsed addition: ", parsedAddition);
+        }
         setViewMode("messages");
         setSelectedConversationId(parsedAddition.conversationId);
         setSelectedCandidate(parsedAddition.candidate);
@@ -117,12 +123,53 @@ const RecruiterDashboard = ({onlineUsers}) => {
           setMobileView("detail");
         }
       } catch (error) {
-        console.error("Error parsing stateAddition:", error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error("Error parsing stateAddition:", error);
+        }
       } finally {
         localStorage.removeItem("stateAddition");
       }
     }
   }, [state.refreshToken]);
+
+  // Initialize with state values (if present from notification click)
+  useEffect(() => {
+    // If coming from notification click, set the viewMode from state
+    if (state?.viewMode) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Setting viewMode from state:", state.viewMode);
+      }
+      setViewMode(state.viewMode);
+    }
+    
+    // Handle candidate selection from notification
+    if (state?.selectedCandidateId) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Setting selected candidate from state:", state.selectedCandidateId);
+      }
+      // Store in local state
+      setHighlightData({
+        selectedCandidateId: state.selectedCandidateId
+      });
+      
+      // Clear the navigation state to prevent re-highlighting on refresh/navigation
+      navigate(window.location.pathname, { 
+        replace: true, 
+        state: { 
+          ...state, 
+          selectedCandidateId: undefined 
+        } 
+      });
+    }
+    
+    // Handle job listing selection from notification
+    if (state?.jobListing) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Setting selected job listing from state:", state.jobListing);
+      }
+      setSelectedJobListing(state.jobListing);
+    }
+  }, [state, navigate]);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -180,7 +227,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 404) {
-          console.error(data.message);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error(data.message);
+          }
           return;
         }
         throw new Error("Failed to fetch recruiter's job listings.");
@@ -195,7 +244,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         activeListings: activeCount,
       }));
     } catch (error) {
-      console.error("Error fetching job listings:", error.message);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error fetching job listings:", error.message);
+      }
     }
   };
 
@@ -214,7 +265,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 404) {
-          console.error(data.message);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error(data.message);
+          }
           return;
         }
         throw new Error("Failed to fetch recruiter's job listings.");
@@ -229,7 +282,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         totalApplications: fetchedApplications.length || 0,
       }));
     } catch (error) {
-      console.error("Error fetching recent applications:", error.message);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error fetching recent applications:", error.message);
+      }
     }
   };
 
@@ -247,7 +302,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
       );
       if (!response.ok) {
         const errorMessage = `Error ${response.status}: ${response.statusText}`;
-        console.error(errorMessage);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error(errorMessage);
+        }
         throw new Error(errorMessage);
       }
       const data = await response.json();
@@ -261,7 +318,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         setTotalHired(state.user.totalHired);
       }
     } catch (error) {
-      console.error("Failed to fetch metrics:", error.message);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Failed to fetch metrics:", error.message);
+      }
       showNotification("error", "Failed to fetch metrics. Please try again later.");
     }
   };
@@ -339,14 +398,14 @@ const RecruiterDashboard = ({onlineUsers}) => {
           setSelectedCandidate={setSelectedCandidate}
           setTitle={setTitle}
           setViewMode={setViewMode}
-          selectedCandidateId={selectedCandidate?.senderId}
+          selectedCandidateId={highlightData?.selectedCandidateId || selectedCandidate?.senderId}
           user={user}
           updateTotalHired={updateTotalHired}
           darkMode={darkMode}
         />
       );
     }
-  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode]);
+  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode, highlightData]);
 
   return (
     <div 

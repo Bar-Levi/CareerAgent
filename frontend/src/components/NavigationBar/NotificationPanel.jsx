@@ -9,7 +9,7 @@ const NotificationPanel = ({
   notifications, 
   setNotifications, 
   closePanel, 
-  handleNotificationClick, 
+  handleNotificationClick: parentHandleNotificationClick, 
   setUnreadNotificationsCount 
 }) => {
   const navigate = useNavigate();
@@ -31,6 +31,12 @@ const NotificationPanel = ({
       return;
 
     try {
+      // Check if state.user exists before accessing _id
+      if (!state || !state.user || !state.user._id) {
+        console.error("User state is missing or incomplete");
+        return;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/mark-as-read-notification/${state.user._id}/${notification._id}`,
         {
@@ -55,6 +61,12 @@ const NotificationPanel = ({
   // Function to delete a single notification
   const handleDeleteNotification = async (notificationId) => {
     try {
+      // Check if state.user exists before accessing _id
+      if (!state || !state.user || !state.user._id) {
+        console.error("User state is missing or incomplete");
+        return;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/delete-notification/${state.user._id}/${notificationId}`,
         {
@@ -81,6 +93,12 @@ const NotificationPanel = ({
   // Function to delete all notifications
   const handleDeleteAllNotifications = async () => {
     try {
+      // Check if state.user exists before accessing _id
+      if (!state || !state.user || !state.user._id) {
+        console.error("User state is missing or incomplete");
+        return;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/delete-all-notifications/${state.user._id}`,
         {
@@ -114,6 +132,160 @@ const NotificationPanel = ({
         return <FaClipboardCheck className={`${iconClasses} text-amber-500`} />;
       default:
         return <FaBell className={`${iconClasses} text-gray-500`} />;
+    }
+  };
+
+  // Handle notification click with navigation
+  const handleLocalNotificationClick = async (notification) => {
+    closePanel();
+    await markAsReadNotification(notification);
+    
+    // Handle route navigation with appropriate state
+    if (notification.extraData?.goToRoute) {
+      const route = notification.extraData.goToRoute;
+      
+      // For application_review notifications, ensure we pass the correct state for dashboard highlighting
+      if (notification.type === 'application_review') {
+        navigate(route, { 
+          state: { 
+            ...state,
+            // Include the application highlight data
+            ...notification.extraData.stateAddition,
+            // Clear any interview highlighting
+            interviewId: undefined
+          } 
+        });
+      } 
+      // For interview notifications, pass the interviewId for highlighting
+      else if (notification.type === 'interview') {
+        const interviewId = notification.extraData?.stateAddition?.interviewId;
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Navigating with interviewId:", interviewId);
+        }
+        navigate(route, {
+          state: {
+            ...state,
+            // Clear any application highlighting
+            highlightApplication: undefined,
+            applicantId: undefined,
+            // Set only interview highlight
+            interviewId: interviewId,
+            timestamp: Date.now() // Keep timestamp to ensure state object is different each time
+          }
+        });
+      }
+      // For chat notifications, preserve the chat data but clear other highlights
+      else if (notification.type === 'chat') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("=== CHAT NOTIFICATION CLICKED ===");
+          console.log("Notification data:", notification);
+        }
+        
+        const conversationId = notification.conversationId || notification.extraData?.stateAddition?.conversationId;
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Conversation ID:", conversationId);
+          console.log("State addition conversationId:", notification.extraData?.stateAddition?.conversationId);
+        }
+        
+        // Determine if this is a job seeker or recruiter based on state
+        const isRecruiter = state?.user?.role === 'Recruiter';
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Is recruiter:", isRecruiter);
+        }
+        
+        if (conversationId) {
+          if (isRecruiter) {
+            // Save the state addition to localStorage
+            if (notification.extraData?.stateAddition) {
+              localStorage.setItem("stateAddition", JSON.stringify(notification.extraData.stateAddition));
+            }
+            
+            // Ensure the token is valid in localStorage before navigating
+            // This bypasses any token validation that might happen during navigation
+            if (state?.token) {
+              localStorage.setItem("token", state.token);
+            }
+
+            // Set a flag to bypass additional auth checks
+            localStorage.setItem("bypassAuthCheck", "true");
+            
+            // Navigate to the recruiter dashboard with the conversation ID
+            const navigationState = {
+              ...state,
+              viewMode: "messages",
+              selectedConversationId: conversationId,
+              forceConversationSelect: true,
+              refreshToken: Math.random().toString(36), // Force refresh
+              bypassAuth: true // Add a flag to bypass auth check
+            };
+            
+            if (process.env.NODE_ENV !== 'production') {
+              console.log("Navigation state:", navigationState);
+            }
+            
+            // Navigate directly to dashboard without auth check
+            navigate("/recruiterdashboard", { state: navigationState });
+          } else {
+            // For job seekers, navigate to the searchjobs page instead of jobcandidatemessages
+            // Save conversation data to localStorage for MessagingBar to use
+            if (notification.extraData?.stateAddition) {
+              localStorage.setItem("stateAddition", JSON.stringify(notification.extraData.stateAddition));
+            }
+            
+            // Navigate to searchjobs with refreshToken to trigger useEffect in SearchJobs
+            navigate("/searchjobs", {
+              state: {
+                ...state,
+                refreshToken: Math.random().toString(36) // Force refresh
+              }
+            });
+          }
+        }
+      }
+      // For "apply" notifications (used in recruiter dashboard)
+      else if (notification.type === 'apply') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("=== APPLY NOTIFICATION CLICKED ===");
+          console.log("Notification data:", notification);
+          console.log("Extra data:", notification.extraData);
+        }
+        
+        // Ensure we have state data to pass along
+        const currentState = state || {};
+        const stateAddition = notification.extraData?.stateAddition || {};
+        
+        // Create a deep copy of the state to prevent reference issues
+        const navigationState = {
+          ...currentState,
+          ...stateAddition,
+          user: currentState.user, // Explicitly preserve user data
+          timestamp: Date.now() // Force state update
+        };
+        
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Navigation state:", navigationState);
+        }
+        
+        navigate(route, { state: navigationState });
+      }
+      else {
+        // For other notification types, use the existing handling
+        // But first clear any highlight state to avoid unwanted highlights
+        navigate(route, {
+          state: {
+            ...state,
+            // Clear all highlights
+            highlightApplication: undefined,
+            applicantId: undefined,
+            interviewId: undefined
+          }
+        });
+      }
+    } else {
+      // If no goToRoute specified, use parent handler but clear highlights
+      if (parentHandleNotificationClick) {
+        parentHandleNotificationClick(notification);
+      }
     }
   };
 
@@ -198,9 +370,7 @@ const NotificationPanel = ({
                     }
                   )}
                   onClick={async () => {
-                    closePanel();
-                    await markAsReadNotification(notification);
-                    handleNotificationClick(notification);
+                    handleLocalNotificationClick(notification);
                   }}
                 >
                   <div className="flex-shrink-0">

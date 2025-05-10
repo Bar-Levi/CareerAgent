@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import convertMongoObject from "../../utils/convertMongoObject";
 import { getCandidateInfo } from "../../utils/auth";
-import ScheduleInterviewModal from "../components/ScheduleInterviewModal";
 
 const Applications = ({
   applications = [],
@@ -18,10 +17,26 @@ const Applications = ({
   const user = state?.user;
   const [applicantsData, setApplicantsData] = useState({});
   const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [processedCandidateId, setProcessedCandidateId] = useState(null);
+  const [currentJobListingId, setCurrentJobListingId] = useState(null);
   const navigate = useNavigate();
 
   const selectedCandidateRef = useRef();
   const containerRef = useRef();
+  const applicationRefs = useRef({});
+  
+  // Identify and save the current job listing ID
+  useEffect(() => {
+    if (applications && applications.length > 0 && applications[0].jobId) {
+      const jobId = applications[0].jobId;
+      if (jobId !== currentJobListingId) {
+        setCurrentJobListingId(jobId);
+        
+        // Reset processed flag when changing job listings
+        setProcessedCandidateId(null);
+      }
+    }
+  }, [applications, currentJobListingId]);
   
   // Handle applicant selection
   const handleApplicantClick = (app) => {
@@ -46,26 +61,156 @@ const Applications = ({
     }
   };
   
-  // Initialize selectedApplicant from selectedCandidateId when component mounts or selectedCandidateId changes
+  // Helper function to find applicant by ID
+  const findApplicantById = useCallback((idToFind) => {
+    if (!idToFind || !applications || applications.length === 0) return null;
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Finding applicant with ID:", idToFind);
+    }
+    
+    // Try to find the applicant
+    const found = applications.find(app => {
+      // Check if app.applicantId exists before accessing _id
+      if (!app || !app.applicantId) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Found application missing applicantId:", app);
+        }
+        return false;
+      }
+      
+      return app.applicantId._id === idToFind || 
+        app.applicantId._id.toString() === idToFind.toString();
+    });
+    
+    if (!found) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Could not find applicant with ID:", idToFind);
+      }
+      return null;
+    }
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Found applicant:", found.name);
+    }
+    return found;
+  }, [applications]);
+  
+  // Auto-select and scroll to application if selectedCandidateId is provided
   useEffect(() => {
-    if (selectedCandidateId && applications.length > 0) {
-      const selected = applications.find(app => app.jobSeekerId === selectedCandidateId);
-      if (selected) {
-        // Update the selected applicant to match the one from the notification
-        setSelectedApplicant(selected);
+    // Only process the selectedCandidateId if it's provided and not already processed for this job listing
+    if (selectedCandidateId && applications && applications.length > 0) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Selected candidate ID found:", selectedCandidateId);
+        console.log("Already processed this ID?", selectedCandidateId === processedCandidateId);
+        console.log("Available applications:", applications.length);
+      }
+      
+      // If we've already processed this ID for this job listing, skip
+      if (selectedCandidateId === processedCandidateId && currentJobListingId === applications[0]?.jobId) {
+        return;
+      }
+      
+      // Find the application
+      const selectedApplicant = findApplicantById(selectedCandidateId);
+      
+      if (selectedApplicant) {
+        // Auto-select this applicant
+        setSelectedApplicant(selectedApplicant);
+        
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Attempting to scroll to applicant:", selectedApplicant.name);
+        }
+        
+        // Attempt to scroll to this element with retries
+        const scrollToElement = (attempt = 0) => {
+          if (attempt > 5) return; // Give up after 5 attempts
+          
+          // Find the ref by looking for all possible ID formats that might have been used for storage
+          let appElement = null;
+          
+          // First try the selectedCandidateId directly
+          if (applicationRefs.current[selectedCandidateId]) {
+            appElement = applicationRefs.current[selectedCandidateId];
+          } 
+          // If that fails, try to find the right reference by checking all stored refs
+          else if (selectedApplicant && selectedApplicant.applicantId && selectedApplicant.applicantId._id) {
+            appElement = applicationRefs.current[selectedApplicant.applicantId._id];
+          }
+          
+          if (process.env.NODE_ENV !== 'production') {
+            console.log("Looking for element with candidate ID:", selectedCandidateId);
+            console.log("Selected applicant object:", selectedApplicant);
+            console.log("Available refs:", Object.keys(applicationRefs.current));
+          }
+          
+          if (appElement) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log(`Scrolling to applicant element (attempt ${attempt})`);
+            }
+            
+            // Scroll to the element
+            appElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Mark this candidate ID as processed after a delay to ensure the highlight is visible
+            setTimeout(() => {
+              setProcessedCandidateId(selectedCandidateId);
+            }, 3000); // Wait 3 seconds before marking as processed
+          } else {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log(`Ref not available, retrying (attempt ${attempt})`);
+              console.log("Current refs:", Object.keys(applicationRefs.current));
+            }
+            
+            // Retry after a delay
+            setTimeout(() => scrollToElement(attempt + 1), 500);
+          }
+        };
+        
+        // Start the scroll attempt
+        setTimeout(() => scrollToElement(), 300); // Slight delay to allow refs to be populated
+      } else {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Selected applicant not found in applications list");
+        }
+        // Even if we don't find the applicant, mark the ID as processed after a delay
+        setTimeout(() => {
+          setProcessedCandidateId(selectedCandidateId);
+        }, 1000);
       }
     }
-  }, [selectedCandidateId, applications]);
-
-  // Scroll to selected candidate when needed
+  }, [selectedCandidateId, applications, findApplicantById, processedCandidateId, currentJobListingId]);
+  
+  // Reset selectedApplicant when applications change (different job listing)
   useEffect(() => {
-    if (selectedApplicant && selectedCandidateRef.current) {
-      selectedCandidateRef.current.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "center" 
-      });
+    // Clear the selected applicant when applications array changes (different job listing loaded)
+    if (applications && Array.isArray(applications)) {
+      setSelectedApplicant(null);
     }
-  }, [selectedApplicant]);
+  }, [applications]);
+
+  // Add ref to each application card
+  const registerRef = useCallback((ref, app) => {
+    if (!ref || !app) return;
+    
+    // Store the ref under multiple possible ID keys to ensure we can find it later
+    if (app.applicantId && app.applicantId._id) {
+      applicationRefs.current[app.applicantId._id] = ref;
+    }
+    
+    if (app._id) {
+      applicationRefs.current[app._id] = ref;
+    }
+    
+    if (app.jobSeekerId) {
+      applicationRefs.current[app.jobSeekerId] = ref;
+    }
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("Ref attached to:", app.name);
+      console.log("Using IDs:", app.applicantId?._id, app._id, app.jobSeekerId);
+    }
+  }, []);
 
   const getApplicantDataAsJobSeeker = async (application) => {
     const response = await fetch(
@@ -221,12 +366,44 @@ const Applications = ({
           <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} overflow-y-auto flex-grow`} ref={containerRef}>
             {applications.map((app) => {
               const applicantData = applicantsData[app._id];
-              const isSelected = selectedApplicant?._id === app._id;
+              // Check by all possible IDs to ensure we catch the selected applicant
+              const isSelected = 
+                // Check if we have a selected applicant from manual click
+                (selectedApplicant && 
+                  // Check various ID matching possibilities
+                  (selectedApplicant._id === app._id || 
+                   selectedApplicant.jobSeekerId === app.jobSeekerId ||
+                   (selectedApplicant.applicantId && 
+                    app.applicantId && 
+                    selectedApplicant.applicantId._id === app.applicantId._id)
+                  )
+                ) || 
+                // Also check if this applicant's ID matches the selectedCandidateId prop
+                (selectedCandidateId && 
+                  (selectedCandidateId === app._id || 
+                   selectedCandidateId === app.jobSeekerId || 
+                   (app.applicantId && selectedCandidateId === app.applicantId._id)
+                  )
+                );
+
+              if (process.env.NODE_ENV !== 'production' && isSelected) {
+                console.log("Highlighting application:", app.name);
+              }
 
               return (
                 <div
                   key={app._id}
-                  ref={isSelected ? selectedCandidateRef : null}
+                  ref={el => {
+                    // Register the ref for scrolling
+                    registerRef(el, app);
+                    
+                    // Also attach to selectedCandidateRef for selection
+                    if (selectedApplicant && 
+                       (app._id === selectedApplicant._id || 
+                        app.jobSeekerId === selectedApplicant.jobSeekerId)) {
+                      selectedCandidateRef.current = el;
+                    }
+                  }}
                   className={`p-6 transition-colors duration-200 cursor-pointer relative ${
                     isSelected 
                       ? darkMode ? 'bg-indigo-900/30 border-l-4 border-indigo-500' : 'bg-indigo-50 border-l-4 border-indigo-500'
@@ -416,3 +593,4 @@ const Applications = ({
 };
 
 export default Applications;
+
