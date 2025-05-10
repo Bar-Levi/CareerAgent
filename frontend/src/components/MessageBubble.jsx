@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaCheckDouble, FaEye, FaRegPaperPlane, FaExternalLinkAlt } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MessageBubble = ({ message, currentUser, profilePics }) => {
+const MessageBubble = ({ message, currentUser, profilePics, onlineUsers }) => {
   const isSender = message.senderId === currentUser._id;
   const [hovered, setHovered] = useState(false);
 
@@ -10,6 +10,11 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
   const profilePic =
     profilePics?.find((item) => item.id === message.senderId)?.profilePic ||
     'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+
+  // Check if the message sender is online
+  const isOnline = onlineUsers?.some(
+    (onlineUser) => onlineUser.userId === message.senderId
+  );
 
   // Format the timestamp
   const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
@@ -178,11 +183,13 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
               whileHover={{ scale: 1.1, rotate: 5 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
             />
-            <motion.div 
-              className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: "loop", repeatDelay: 5 }}
-            />
+            {isOnline && (
+              <motion.div 
+                className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatType: "loop", repeatDelay: 5 }}
+              />
+            )}
           </div>
         </>
       ) : (
@@ -196,11 +203,13 @@ const MessageBubble = ({ message, currentUser, profilePics }) => {
               whileHover={{ scale: 1.1, rotate: -5 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
             />
-            <motion.div 
-              className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: "loop", repeatDelay: 5 }}
-            />
+            {isOnline && (
+              <motion.div 
+                className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatType: "loop", repeatDelay: 5 }}
+              />
+            )}
           </div>
           <div className="message-container flex flex-col items-start max-w-[75%] xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
             <motion.div 

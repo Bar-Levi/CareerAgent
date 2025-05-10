@@ -547,13 +547,14 @@ const CandidateMessages = ({
         profilePics={profilePics}
         title={title ? title : "Chat with Candidate"}
         currentOpenConversationId={selectedConversationId}
+        onlineUsers={onlineUsers}
       />
     ) : (
       <div className={`flex items-center justify-center h-full ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
         Select a candidate to view chat.
       </div>
     );
-  }, [selectedConversationId, jobListing, user, selectedCandidate, darkMode]);
+  }, [selectedConversationId, jobListing, user, selectedCandidate, darkMode, onlineUsers]);
 
   // Add debugging log on render to find any issues
   if (process.env.NODE_ENV !== 'production') {

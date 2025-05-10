@@ -33,7 +33,7 @@ const MessageSkeleton = ({ isSender }) => {
   );
 };
 
-const ChatWindow = ({ user, title, currentOpenConversationId }) => {
+const ChatWindow = ({ user, title, currentOpenConversationId, onlineUsers }) => {
   // How many messages to load per request.
   const MESSAGE_BATCH_SIZE = 20;
   const [messages, setMessages] = useState([]);
@@ -571,6 +571,7 @@ const ChatWindow = ({ user, title, currentOpenConversationId }) => {
                   message={msg}
                   currentUser={user}
                   profilePics={profilePics}
+                  onlineUsers={onlineUsers}
                 />
               </motion.div>
             ))
