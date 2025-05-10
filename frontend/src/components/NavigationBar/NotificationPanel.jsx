@@ -209,6 +209,23 @@ const NotificationPanel = ({
             // Set a flag to bypass additional auth checks
             localStorage.setItem("bypassAuthCheck", "true");
             
+            // Extract jobListingId from notification's extraData if available
+            const jobListingId = notification.extraData?.stateAddition?.jobListingId || 
+                                 notification.extraData?.jobListingId;
+                                 
+            // Extract complete job listing object if available
+            const jobListing = notification.extraData?.stateAddition?.jobListing || 
+                               notification.extraData?.jobListing;
+                               
+            if (process.env.NODE_ENV !== 'production') {
+              console.log("=== DEBUG CHAT NOTIFICATION ===");
+              console.log("Job listing ID from notification:", jobListingId);
+              console.log("Complete job listing object:", jobListing);
+              console.log("Candidate ID:", notification.extraData?.stateAddition?.candidateId);
+              console.log("Conversation ID:", conversationId);
+              console.log("Full notification:", notification);
+            }
+            
             // Navigate to the recruiter dashboard with the conversation ID
             const navigationState = {
               ...state,
@@ -216,7 +233,11 @@ const NotificationPanel = ({
               selectedConversationId: conversationId,
               forceConversationSelect: true,
               refreshToken: Math.random().toString(36), // Force refresh
-              bypassAuth: true // Add a flag to bypass auth check
+              bypassAuth: true, // Add a flag to bypass auth check
+              timestamp: Date.now(), // Add unique timestamp for each navigation
+              // Include both the job listing ID and the complete job listing object
+              jobListingId: jobListingId,
+              jobListing: jobListing
             };
             
             if (process.env.NODE_ENV !== 'production') {

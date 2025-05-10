@@ -163,13 +163,27 @@ const RecruiterDashboard = ({onlineUsers}) => {
     }
     
     // Handle job listing selection from notification
+    // First check if complete jobListing object is available
     if (state?.jobListing) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log("Setting selected job listing from state:", state.jobListing);
+        console.log("Setting selected job listing from complete object:", state.jobListing);
       }
       setSelectedJobListing(state.jobListing);
+    } 
+    // If no complete object but we have an ID, find the job listing by ID 
+    else if (state?.jobListingId && jobListings.length > 0) {
+      const foundJobListing = jobListings.find(job => job._id === state.jobListingId);
+      if (foundJobListing) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Found and setting job listing by ID:", foundJobListing);
+        }
+        setSelectedJobListing(foundJobListing);
+      } else if (process.env.NODE_ENV !== 'production') {
+        console.log("Could not find job listing with ID:", state.jobListingId);
+        console.log("Available job listings:", jobListings);
+      }
     }
-  }, [state, navigate]);
+  }, [state, navigate, jobListings]);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -392,7 +406,27 @@ const RecruiterDashboard = ({onlineUsers}) => {
     } else {
       return (
         <Applications
-          applications={applications.filter(app => app.jobId._id === selectedJobListing?._id)}
+          applications={applications.filter(app => {
+            // Handle different ways jobId might be stored
+            if (!selectedJobListing) return false;
+            
+            // Case 1: app.jobId is an object with _id property
+            if (app.jobId && app.jobId._id) {
+              return app.jobId._id === selectedJobListing._id;
+            }
+            
+            // Case 2: app.jobId is a string
+            if (app.jobId && typeof app.jobId === 'string') {
+              return app.jobId === selectedJobListing._id;
+            }
+            
+            // Case 3: app.jobId is directly the same object as selectedJobListing
+            if (app.jobId && app.jobId === selectedJobListing) {
+              return true;
+            }
+            
+            return false;
+          })}
           setSelectedConversationId={setSelectedConversationId}
           setSelectedJobListing={setSelectedJobListing}
           setSelectedCandidate={setSelectedCandidate}
