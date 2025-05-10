@@ -4,7 +4,18 @@ import CryptoJS from 'crypto-js';
 import { isAuthenticated } from '../utils/auth';
 import { parseJobDescription } from '../utils/parseJobDescription';
 import Notification from '../components/Notification';
+import { jwtDecode } from 'jwt-decode';
 
+// Create a helper function for conditional logging
+const log = (message, data) => {
+  if (process.env.NODE_ENV !== 'production') {
+    if (data) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
 
 const JobListingPage = () => {
   const { id } = useParams();
@@ -31,6 +42,7 @@ const JobListingPage = () => {
   const login = async e => {
     e.preventDefault();
     setLoginError('');
+    setDataError(''); // Clear data error when attempting a new login
     setLoadingLogin(true);
     try {
       const encryptedPassword = CryptoJS.AES.encrypt(
@@ -62,15 +74,56 @@ const JobListingPage = () => {
   useEffect(() => {
     // If there's no token or token is invalid/expired, do NOT fetch the job
     if (!token || !isAuthenticated(token)) {
+      log('No valid token found');
       setToken(null); // Clear any invalid token
       localStorage.removeItem('token');
       return;
     }
 
+    log('Token found, starting data fetch');
     setLoadingData(true);
 
     (async () => {
       try {
+        // Decode the token and get user ID
+        log('Decoding token');
+        const decoded = jwtDecode(token);
+        log('Decoded token:', decoded);
+        const userId = decoded.id;
+        log('User ID from token:', userId);
+        
+        // Fetch user details using user ID
+        log('Fetching user details');
+        const userRes = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?id=${userId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
+        
+        if (!userRes.ok) {
+          const err = await userRes.json();
+          throw new Error(err.message);
+        }
+        
+        const userData = await userRes.json();
+        log('User data received:', userData);
+        
+        // Log decoded token email
+        log('Decoded token email:', userData.email);
+        log('URL email parameter:', email);
+        
+        // Check if the user email from token matches the email in URL
+        if (userData.email !== email) {
+          setToken(null); // Clear token as it doesn't belong to the email in URL
+          localStorage.removeItem('token');
+          setDataError('Invalid access. Please log in with the correct credentials.');
+          setLoadingData(false);
+          return;
+        }
+        
+        setUser(userData);
+
         // Fetch job listing
         const jobRes = await fetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/getJobListing/${id}`,
@@ -82,22 +135,6 @@ const JobListingPage = () => {
         const { jobListing: listing } = await jobRes.json();
         setJobListing(listing);
 
-        // Fetch user details
-        const userRes = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/auth/user-details?email=${encodeURIComponent(
-            email
-          )}`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        );
-        if (!userRes.ok) {
-          const err = await userRes.json();
-          throw new Error(err.message);
-        }
-        const userData = await userRes.json();
-        setUser(userData);
-
         // Check if the user has already applied
         // We'll look for the user's ID in the job's applicants array (if it exists)
         if (listing && listing.applicants && Array.isArray(listing.applicants)) {
@@ -108,6 +145,8 @@ const JobListingPage = () => {
         }
       } catch (err) {
         setDataError(err.message);
+        setToken(null);
+        localStorage.removeItem('token');
       } finally {
         setLoadingData(false);
       }
