@@ -394,6 +394,21 @@ const updateJobSeekerPersonalDetails = async (req, res) => {
         if (dobDate > new Date()) {
           return res.status(400).json({ message: "Date of birth cannot be in the future." });
         }
+        
+        // Check if the user is at least 18 years old
+        const today = new Date();
+        let age = today.getFullYear() - dobDate.getFullYear();
+        const monthDiff = today.getMonth() - dobDate.getMonth();
+        
+        // Adjust age if birthday hasn't occurred yet this year
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
+          age--;
+        }
+        
+        if (age < 18) {
+          return res.status(400).json({ message: "You must be at least 18 years old." });
+        }
+        
         const formattedDate = dobDate.toLocaleDateString("en-US", {
           year: "numeric",
           month: "long",
