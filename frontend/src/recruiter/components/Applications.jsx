@@ -19,6 +19,7 @@ const Applications = ({
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [processedCandidateId, setProcessedCandidateId] = useState(null);
   const [currentJobListingId, setCurrentJobListingId] = useState(null);
+  const [notificationTimestamp, setNotificationTimestamp] = useState(null);
   const navigate = useNavigate();
 
   const selectedCandidateRef = useRef();
@@ -37,6 +38,37 @@ const Applications = ({
       }
     }
   }, [applications, currentJobListingId]);
+  
+  // Extract timestamp and jobListingId from state if available
+  useEffect(() => {
+    if (state) {
+      if (state.timestamp) {
+        setNotificationTimestamp(state.timestamp);
+      }
+      
+      // If a specific job listing ID is provided in the state (from notification),
+      // set it as the current job listing ID to ensure correct loading
+      if (state.jobListingId && state.jobListingId !== currentJobListingId) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Setting job listing ID from state:", state.jobListingId);
+          console.log("Current applications:", applications);
+        }
+        setCurrentJobListingId(state.jobListingId);
+        // Reset processed flag when changing job listings via notification
+        setProcessedCandidateId(null);
+        
+        // Look for applications with this job ID
+        const matchingApplications = applications.filter(app => 
+          (app.jobId && app.jobId._id === state.jobListingId) || 
+          app.jobId === state.jobListingId
+        );
+        
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Applications for this job listing:", matchingApplications);
+        }
+      }
+    }
+  }, [state, currentJobListingId, applications]);
   
   // Handle applicant selection
   const handleApplicantClick = (app) => {
@@ -98,16 +130,25 @@ const Applications = ({
   
   // Auto-select and scroll to application if selectedCandidateId is provided
   useEffect(() => {
-    // Only process the selectedCandidateId if it's provided and not already processed for this job listing
+    // Only process the selectedCandidateId if it's provided and applications exist
     if (selectedCandidateId && applications && applications.length > 0) {
       if (process.env.NODE_ENV !== 'production') {
         console.log("Selected candidate ID found:", selectedCandidateId);
         console.log("Already processed this ID?", selectedCandidateId === processedCandidateId);
+        console.log("Current notification timestamp:", notificationTimestamp);
         console.log("Available applications:", applications.length);
       }
       
-      // If we've already processed this ID for this job listing, skip
-      if (selectedCandidateId === processedCandidateId && currentJobListingId === applications[0]?.jobId) {
+      // Process the ID if either:
+      // 1. It hasn't been processed yet, OR
+      // 2. We have a new notification timestamp, OR
+      // 3. The job listing has changed
+      const shouldProcess = 
+        selectedCandidateId !== processedCandidateId || 
+        (state && state.timestamp && state.timestamp !== notificationTimestamp) ||
+        currentJobListingId !== applications[0]?.jobId;
+      
+      if (!shouldProcess) {
         return;
       }
       
@@ -179,7 +220,7 @@ const Applications = ({
         }, 1000);
       }
     }
-  }, [selectedCandidateId, applications, findApplicantById, processedCandidateId, currentJobListingId]);
+  }, [selectedCandidateId, applications, findApplicantById, processedCandidateId, currentJobListingId, notificationTimestamp, state]);
   
   // Reset selectedApplicant when applications change (different job listing)
   useEffect(() => {
