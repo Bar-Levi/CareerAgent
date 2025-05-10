@@ -9,7 +9,7 @@ const NotificationPanel = ({
   notifications, 
   setNotifications, 
   closePanel, 
-  handleNotificationClick, 
+  handleNotificationClick: parentHandleNotificationClick, 
   setUnreadNotificationsCount 
 }) => {
   const navigate = useNavigate();
@@ -117,6 +117,33 @@ const NotificationPanel = ({
     }
   };
 
+  // Handle notification click with navigation
+  const handleLocalNotificationClick = async (notification) => {
+    closePanel();
+    await markAsReadNotification(notification);
+    
+    // Handle route navigation with appropriate state
+    if (notification.extraData?.goToRoute) {
+      const route = notification.extraData.goToRoute;
+      
+      // For application_review notifications, ensure we pass the correct state for dashboard highlighting
+      if (notification.type === 'application_review') {
+        navigate(route, { 
+          state: { 
+            ...state,
+            ...notification.extraData.stateAddition
+          } 
+        });
+      } else {
+        // For other notification types, use the existing handling
+        parentHandleNotificationClick(notification);
+      }
+    } else {
+      // If no goToRoute specified, use parent handler
+      parentHandleNotificationClick(notification);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
@@ -198,9 +225,7 @@ const NotificationPanel = ({
                     }
                   )}
                   onClick={async () => {
-                    closePanel();
-                    await markAsReadNotification(notification);
-                    handleNotificationClick(notification);
+                    handleLocalNotificationClick(notification);
                   }}
                 >
                   <div className="flex-shrink-0">

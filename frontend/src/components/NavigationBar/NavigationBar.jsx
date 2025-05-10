@@ -127,6 +127,7 @@ const NavigationBar = ({ userType, showOnlyDashboard }) => {
       highlightApplication: stateAddition.highlightApplication || false,
       applicantId: stateAddition.applicantId,
       jobId: stateAddition.jobId,
+      selectedCandidateId: stateAddition.selectedCandidateId,
       refreshToken: (location.state?.refreshToken || 0) + 1,
     };
     

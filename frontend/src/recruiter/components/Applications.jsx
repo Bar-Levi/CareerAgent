@@ -46,24 +46,63 @@ const Applications = ({
     }
   };
   
-  // Initialize selectedApplicant from selectedCandidateId when component mounts or selectedCandidateId changes
+  // This function will find an applicant by ID and set it as selected
+  const findAndSelectApplicant = (idToFind) => {
+    console.log("Finding applicant with ID:", idToFind);
+    
+    // First try by jobSeekerId (from notification)
+    let found = applications.find(app => app.jobSeekerId === idToFind);
+    
+    if (!found) {
+      // Try by applicant._id 
+      found = applications.find(app => app._id === idToFind);
+      
+      if (!found) {
+        console.log("Could not find applicant with ID:", idToFind);
+        return false;
+      }
+    }
+    
+    console.log("Found applicant:", found.name);
+    setSelectedApplicant(found);
+    return true;
+  };
+
+  // Initialize from URL or state parameters
   useEffect(() => {
     if (selectedCandidateId && applications.length > 0) {
-      const selected = applications.find(app => app.jobSeekerId === selectedCandidateId);
-      if (selected) {
-        // Update the selected applicant to match the one from the notification
-        setSelectedApplicant(selected);
-      }
+      console.log("Selected candidate ID found:", selectedCandidateId);
+      console.log("Available applications:", applications.length);
+      
+      // Try to find and select the applicant
+      findAndSelectApplicant(selectedCandidateId);
     }
   }, [selectedCandidateId, applications]);
 
-  // Scroll to selected candidate when needed
+  // Separate useEffect for scrolling to ensure it happens after render
   useEffect(() => {
-    if (selectedApplicant && selectedCandidateRef.current) {
-      selectedCandidateRef.current.scrollIntoView({ 
-        behavior: "smooth", 
-        block: "center" 
-      });
+    if (selectedApplicant) {
+      console.log("Attempting to scroll to applicant:", selectedApplicant.name);
+      
+      // Try multiple times with increasing delays for reliability
+      const attemptScroll = (attempt = 1) => {
+        if (attempt > 5) return; // Max 5 attempts
+        
+        setTimeout(() => {
+          if (selectedCandidateRef.current) {
+            console.log(`Scrolling to applicant element (attempt ${attempt})`);
+            selectedCandidateRef.current.scrollIntoView({ 
+              behavior: "smooth", 
+              block: "center" 
+            });
+          } else {
+            console.log(`Ref not available, retrying (attempt ${attempt})`);
+            attemptScroll(attempt + 1);
+          }
+        }, 300 * attempt); // Increasing delays: 300ms, 600ms, 900ms, etc.
+      };
+      
+      attemptScroll();
     }
   }, [selectedApplicant]);
 
@@ -221,12 +260,23 @@ const Applications = ({
           <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} overflow-y-auto flex-grow`} ref={containerRef}>
             {applications.map((app) => {
               const applicantData = applicantsData[app._id];
-              const isSelected = selectedApplicant?._id === app._id;
+              // Check by both _id and jobSeekerId to ensure we catch the selected applicant
+              const isSelected = selectedApplicant && 
+                (selectedApplicant._id === app._id || 
+                 selectedApplicant.jobSeekerId === app.jobSeekerId);
 
               return (
                 <div
                   key={app._id}
-                  ref={isSelected ? selectedCandidateRef : null}
+                  ref={el => {
+                    // Properly attach the ref to the selected applicant's div
+                    if (selectedApplicant && 
+                       (app._id === selectedApplicant._id || 
+                        app.jobSeekerId === selectedApplicant.jobSeekerId)) {
+                      selectedCandidateRef.current = el;
+                      console.log("Ref attached to:", app.name);
+                    }
+                  }}
                   className={`p-6 transition-colors duration-200 cursor-pointer relative ${
                     isSelected 
                       ? darkMode ? 'bg-indigo-900/30 border-l-4 border-indigo-500' : 'bg-indigo-50 border-l-4 border-indigo-500'

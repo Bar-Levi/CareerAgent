@@ -6,24 +6,35 @@ import PerformanceInsights from "../components/PerformanceInsights";
 import Notification from "../../../components/Notification";
 import Botpress from "../../../botpress/Botpress";
 import NavigationBar from "../../../components/NavigationBar/NavigationBar";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const JobCandidateDashboard = ({onlineUsers}) => {
   const [notification, setNotification] = useState(null);
   const { state } = useLocation();
+  const navigate = useNavigate();
   const jobApplicationsRef = useRef(null);
+  const [highlightData, setHighlightData] = useState(null);
   
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
   };
 
-  // Scroll to job applications section if we have a highlightApplication flag in state
+  // Process highlighting state on initial render only
   useEffect(() => {
     console.log("Dashboard state:", state);
     
     if (state?.highlightApplication) {
       console.log("Should highlight application:", state.applicantId);
+      
+      // Store highlight data locally
+      setHighlightData({
+        applicantId: state.applicantId,
+        highlightApplication: state.highlightApplication
+      });
+      
+      // Clear the navigation state to prevent re-highlighting on refresh/navigation
+      navigate(window.location.pathname, { replace: true, state: { ...state, highlightApplication: undefined, applicantId: undefined } });
       
       // Add a small delay to ensure DOM elements are fully rendered
       setTimeout(() => {
@@ -35,7 +46,7 @@ const JobCandidateDashboard = ({onlineUsers}) => {
         }
       }, 300);
     }
-  }, [state]);
+  }, [state, navigate]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 animate-fade-in overflow-hidden">
@@ -54,19 +65,19 @@ const JobCandidateDashboard = ({onlineUsers}) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
           <div className="grid grid-rows-2 gap-4 h-full min-h-0">
             <div className="h-full overflow-hidden min-h-0">
-              <PersonalOverview user={state.user}/>
+              <PersonalOverview user={state?.user}/>
             </div>
             <div className="h-full overflow-hidden min-h-0" ref={jobApplicationsRef}>
               <JobApplications 
-                user={state.user} 
-                highlightApplicationId={state?.applicantId}
-                highlightApplication={state?.highlightApplication}
+                user={state?.user} 
+                highlightApplicationId={highlightData?.applicantId}
+                highlightApplication={highlightData?.highlightApplication}
               />
             </div>
           </div>
           <div className="grid grid-rows-2 gap-4 h-full min-h-0">
             <div className="h-full overflow-hidden min-h-0">
-              <UpcomingEvents user={state.user}/>
+              <UpcomingEvents user={state?.user}/>
             </div>
             <div className="h-full overflow-hidden min-h-0">
               <PerformanceInsights />

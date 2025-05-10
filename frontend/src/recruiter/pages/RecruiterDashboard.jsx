@@ -1,6 +1,6 @@
 // /pages/RecruiterDashboard.jsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiPlusCircle, 
@@ -28,6 +28,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const location = useLocation();
   const state = location.state;
   const user = state?.user;
+  const navigate = useNavigate();
 
   // Core state
   const [jobListings, setJobListings] = useState([]);
@@ -46,6 +47,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     localStorage.getItem("recruiterdashboard_sidebarCollapsed") === "true" || false
   );
+
+  // Local state for notification highlight data
+  const [highlightData, setHighlightData] = useState(null);
 
   // Conversation states
   const [selectedConversationId, setSelectedConversationId] = useState(null);
@@ -123,6 +127,39 @@ const RecruiterDashboard = ({onlineUsers}) => {
       }
     }
   }, [state.refreshToken]);
+
+  // Initialize with state values (if present from notification click)
+  useEffect(() => {
+    // If coming from notification click, set the viewMode from state
+    if (state?.viewMode) {
+      console.log("Setting viewMode from state:", state.viewMode);
+      setViewMode(state.viewMode);
+    }
+    
+    // Handle candidate selection from notification
+    if (state?.selectedCandidateId) {
+      console.log("Setting selected candidate from state:", state.selectedCandidateId);
+      // Store in local state
+      setHighlightData({
+        selectedCandidateId: state.selectedCandidateId
+      });
+      
+      // Clear the navigation state to prevent re-highlighting on refresh/navigation
+      navigate(window.location.pathname, { 
+        replace: true, 
+        state: { 
+          ...state, 
+          selectedCandidateId: undefined 
+        } 
+      });
+    }
+    
+    // Handle job listing selection from notification
+    if (state?.jobListing) {
+      console.log("Setting selected job listing from state:", state.jobListing);
+      setSelectedJobListing(state.jobListing);
+    }
+  }, [state, navigate]);
 
   const showNotification = (type, message) => {
     setNotification({ type, message });
@@ -339,14 +376,14 @@ const RecruiterDashboard = ({onlineUsers}) => {
           setSelectedCandidate={setSelectedCandidate}
           setTitle={setTitle}
           setViewMode={setViewMode}
-          selectedCandidateId={selectedCandidate?.senderId}
+          selectedCandidateId={highlightData?.selectedCandidateId || selectedCandidate?.senderId}
           user={user}
           updateTotalHired={updateTotalHired}
           darkMode={darkMode}
         />
       );
     }
-  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode]);
+  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode, highlightData]);
 
   return (
     <div 
