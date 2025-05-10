@@ -31,6 +31,12 @@ const NotificationPanel = ({
       return;
 
     try {
+      // Check if state.user exists before accessing _id
+      if (!state || !state.user || !state.user._id) {
+        console.error("User state is missing or incomplete");
+        return;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/mark-as-read-notification/${state.user._id}/${notification._id}`,
         {
@@ -55,6 +61,12 @@ const NotificationPanel = ({
   // Function to delete a single notification
   const handleDeleteNotification = async (notificationId) => {
     try {
+      // Check if state.user exists before accessing _id
+      if (!state || !state.user || !state.user._id) {
+        console.error("User state is missing or incomplete");
+        return;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/delete-notification/${state.user._id}/${notificationId}`,
         {
@@ -81,6 +93,12 @@ const NotificationPanel = ({
   // Function to delete all notifications
   const handleDeleteAllNotifications = async () => {
     try {
+      // Check if state.user exists before accessing _id
+      if (!state || !state.user || !state.user._id) {
+        console.error("User state is missing or incomplete");
+        return;
+      }
+
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/auth/delete-all-notifications/${state.user._id}`,
         {
@@ -210,14 +228,29 @@ const NotificationPanel = ({
       }
       // For "apply" notifications (used in recruiter dashboard)
       else if (notification.type === 'apply') {
-        // Use existing state without modifying highlight properties
-        // This preserves the original behavior for recruiter dashboard
-        navigate(route, {
-          state: {
-            ...state,
-            ...notification.extraData.stateAddition
-          }
-        });
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("=== APPLY NOTIFICATION CLICKED ===");
+          console.log("Notification data:", notification);
+          console.log("Extra data:", notification.extraData);
+        }
+        
+        // Ensure we have state data to pass along
+        const currentState = state || {};
+        const stateAddition = notification.extraData?.stateAddition || {};
+        
+        // Create a deep copy of the state to prevent reference issues
+        const navigationState = {
+          ...currentState,
+          ...stateAddition,
+          user: currentState.user, // Explicitly preserve user data
+          timestamp: Date.now() // Force state update
+        };
+        
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("Navigation state:", navigationState);
+        }
+        
+        navigate(route, { state: navigationState });
       }
       else {
         // For other notification types, use the existing handling
