@@ -220,6 +220,49 @@ const handleEmailUpdates = async (req, res) => {
                 applicant.jobSeekerId,
                 { $inc: { numOfReviewedApplications: 1 } }
             );
+
+            // Get the job seeker for notification
+            const jobSeeker = await JobSeeker.findById(applicant.jobSeekerId);
+            if (jobSeeker) {
+                // Create the application review notification
+                const newNotification = {
+                    type: "application_review",
+                    message: `Your application for ${applicant.jobTitle || 'the position'} is now being reviewed.`,
+                    extraData: {
+                        goToRoute: '/dashboard',
+                        stateAddition: {
+                            applicantId: applicant._id,
+                        },
+                    },
+                    createdAt: new Date(),
+                };
+
+                // Check if a similar notification already exists to prevent duplication
+                if (!jobSeeker.notifications) {
+                    jobSeeker.notifications = [];
+                }
+                
+                const duplicateNotification = jobSeeker.notifications.find(
+                    notification => 
+                        notification.type === "application_review" && 
+                        notification.extraData?.stateAddition?.applicantId?.toString() === applicant._id.toString()
+                );
+                
+                if (!duplicateNotification) {
+                    // Only add notification if no duplicate exists
+                    jobSeeker.notifications.push(newNotification);
+                    await jobSeeker.save();
+                    console.log("Review notification added to jobSeeker:", jobSeeker.email);
+                    
+                    // Only emit real-time notification if we've added the notification to DB
+                    // This prevents duplicate real-time notifications
+                    const io = req.app.get("io");
+                    io.to(jobSeeker._id.toString()).emit("newNotification", newNotification);
+                    console.log("Emitting application review notification to:", jobSeeker._id);
+                } else {
+                    console.log("Duplicate review notification prevented for jobSeeker:", jobSeeker.email);
+                }
+            }
         } else if (status === "Rejected") {
             await sendRejectionEmail(applicant.email, applicant.name, applicant.jobId);
         } else if (status === "Hired") {
