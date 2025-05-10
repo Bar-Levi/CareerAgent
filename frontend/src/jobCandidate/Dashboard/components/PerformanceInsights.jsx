@@ -51,9 +51,9 @@ const PerformanceInsights = () => {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg h-full flex flex-col overflow-hidden max-h-full">
-      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-3 rounded-t-lg flex-shrink-0">
-        <h2 className="text-xl font-bold text-white">Performance Insights</h2>
+    <div className="bg-white rounded-b-lg shadow-lg h-full flex flex-col overflow-hidden max-h-full">
+      <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-2 flex-none">
+        <h2 className="text-lg font-bold text-white">Performance Insights</h2>
       </div>
 
       <div className="flex-1 p-3 overflow-y-auto">
