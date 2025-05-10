@@ -51,16 +51,18 @@ const createApplicant = async (req, res) => {
             type: "apply",
             message: `${req.body.name} has applied for the ${req.body.jobTitle} position.`,
             extraData: {
-            goToRoute: '/dashboard',
-            stateAddition: {
-                viewMode: 'applications',
-                jobListing,
-                candidate: {
-                    profilePic: savedApplicant.profilePic,
-                    name: savedApplicant.name,
-                    senderId: savedApplicant.jobSeekerId,
-                  }, 
-            },
+                goToRoute: '/dashboard',
+                stateAddition: {
+                    viewMode: 'applications',
+                    jobListing,
+                    candidate: {
+                        profilePic: savedApplicant.profilePic,
+                        name: savedApplicant.name,
+                        senderId: savedApplicant.jobSeekerId,
+                    },
+                    applicantId: savedApplicant._id,
+                    selectedCandidateId: savedApplicant.jobSeekerId
+                },
             },
         };
         if (!reciever.notifications) {
