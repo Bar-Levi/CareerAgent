@@ -204,14 +204,14 @@ const JobApplications = ({ user, highlightApplicationId, highlightApplication })
 
       {/* Add Filter Section */}
       <div className="bg-gray-50 border-b border-gray-200 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="flex flex-wrap -mx-2">
           {/* Search Input */}
-          <div className="relative flex flex-col">
-            <label className="block text-sm text-gray-600 mb-1">Search Job Title</label>
-            <div className="relative flex-1">
+          <div className="w-full sm:w-1/2 lg:w-1/4 px-2 mb-3">
+            <label className="block text-sm text-gray-600 mb-1 whitespace-nowrap">Search Job Title</label>
+            <div className="relative">
               <input
                 type="text"
-                placeholder="Search by job title..."
+                placeholder="Search jobs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
@@ -221,8 +221,8 @@ const JobApplications = ({ user, highlightApplicationId, highlightApplication })
           </div>
           
           {/* Status Filter */}
-          <div className="flex flex-col">
-            <label className="block text-sm text-gray-600 mb-1">Status</label>
+          <div className="w-full sm:w-1/2 lg:w-1/4 px-2 mb-3">
+            <label className="block text-sm text-gray-600 mb-1 whitespace-nowrap">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -236,34 +236,44 @@ const JobApplications = ({ user, highlightApplicationId, highlightApplication })
           </div>
 
           {/* From Date */}
-          <div className="flex flex-col">
-            <label className="block text-sm text-gray-600 mb-1">From Date</label>
+          <div className="w-full sm:w-1/2 lg:w-1/4 px-2 mb-3">
+            <label className="block text-sm text-gray-600 mb-1 whitespace-nowrap">From Date</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
+              aria-label="From date"
             />
           </div>
 
           {/* To Date */}
-          <div className="flex flex-col">
-            <label className="block text-sm text-gray-600 mb-1">To Date</label>
+          <div className="w-full sm:w-1/2 lg:w-1/4 px-2 mb-3">
+            <label className="block text-sm text-gray-600 mb-1 whitespace-nowrap">To Date</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 h-10"
+              aria-label="To date"
             />
           </div>
         </div>
         
-        <div className="mt-2 flex justify-end">
+        <div className="flex flex-wrap justify-between items-center mt-1">
+          <div className="text-sm text-gray-600 mb-2 sm:mb-0">
+            <span className="font-medium text-indigo-700">{filteredApplications.length}</span> 
+            {filteredApplications.length === 1 ? ' job' : ' jobs'} found
+            {(searchTerm || statusFilter || startDate || endDate) && 
+              ` with applied filters${applications.length !== filteredApplications.length ? 
+                ` (${applications.length} total)` : ''}`
+            }
+          </div>
           <button
             onClick={resetFilters}
-            className="text-sm text-gray-600 hover:text-indigo-600 flex items-center gap-1"
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md flex items-center gap-2 transition-colors"
           >
-            <FaFilter className="w-4 h-4" />
+            <FaFilter className="w-3.5 h-3.5" />
             Reset Filters
           </button>
         </div>
