@@ -1,86 +1,346 @@
-import React, { useState, useMemo, memo } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { CanvasRevealEffect } from "./CanvasRevealEffect";
-import mockInterviewImage from "../assets/mock-interview.png";
-import cvScanningImage from "../assets/cv-scanning.png";
-import recruiterCandidateImage from "../assets/recruiter-candidate.png";
+import React, { useState, useRef, useEffect, memo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 import NavigationArrow from "./NavigationArrow";
 
+// Import videos directly using webpack
+import chatbotsVideo from "../assets/videos/chatbots.mp4";
+import cvVideo from "../assets/videos/cv.mp4";
+import chatVideo from "../assets/videos/chat.mp4";
+
 // Memoize ParticlesComponent to prevent re-renders
-const MemoizedParticles = memo(ParticlesComponent);
+const MemoizedParticles = React.memo(ParticlesComponent);
+
+// Video data
+const featuresData = [
+  {
+    id: 1,
+    title: "Customized Chatbots",
+    video: chatbotsVideo,
+    fallbackUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    description: "Experience two powerful AI-driven tools: an Interviewer chatbot to simulate real-world interview scenarios and a Career Advisor chatbot to guide your career journey."
+  },
+  {
+    id: 2,
+    title: "CV Scanning",
+    video: cvVideo,
+    fallbackUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    description: "Effortlessly extract key details from your CV with AI-powered scanning. Say goodbye to manual data entry and streamline your workflow in seconds."
+  },
+  {
+    id: 3,
+    title: "Recruiter-Candidate Chat",
+    video: chatVideo,
+    fallbackUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    description: "Enable direct communication between recruiters and candidates for specific job positions, making the hiring process faster and more personalized."
+  }
+];
+
+// Memoized video player component to prevent re-renders
+const CarouselVideo = memo(({ videoSrc, fallbackUrl, isActive, onLoadedData, onVideoEnded }) => {
+  const videoRef = useRef(null);
+  const playAttemptRef = useRef(null);
+  const hasLoadedRef = useRef(false);
+  
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    // Clear any pending play attempts
+    if (playAttemptRef.current) {
+      clearTimeout(playAttemptRef.current);
+      playAttemptRef.current = null;
+    }
+    
+    // Handle play/pause based on active state
+    if (isActive) {
+      // Only load the video if it hasn't been loaded before
+      if (!hasLoadedRef.current) {
+        video.load(); // Reset video state
+        hasLoadedRef.current = true;
+      }
+      
+      // Add a small delay before playing to avoid race conditions
+      playAttemptRef.current = setTimeout(() => {
+        // Check if video is still mounted and active before playing
+        if (videoRef.current && document.body.contains(videoRef.current)) {
+          const playPromise = video.play();
+          
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              // Only log errors that aren't abort errors from normal operation
+              if (error.name !== 'AbortError') {
+                console.error("Video play error:", error);
+              }
+              
+              // If format not supported, try the fallback URL directly
+              if (error.name === 'NotSupportedError') {
+                video.src = fallbackUrl;
+                video.load();
+                // Try again after loading the fallback
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.play().catch(e => {
+                      if (e.name !== 'AbortError') {
+                        console.error("Fallback video play error:", e);
+                      }
+                    });
+                  }
+                }, 100);
+              }
+            });
+          }
+        }
+      }, 100);
+    } else {
+      // Only pause if the video is actually playing to avoid unnecessary operations
+      if (!video.paused) {
+        video.pause();
+      }
+    }
+
+    // Add event listener for video ended
+    const handleEnded = () => {
+      if (isActive && onVideoEnded) {
+        onVideoEnded();
+      }
+    };
+
+    video.addEventListener('ended', handleEnded);
+    
+    return () => {
+      // Remove event listener
+      video.removeEventListener('ended', handleEnded);
+
+      // Clean up
+      if (playAttemptRef.current) {
+        clearTimeout(playAttemptRef.current);
+        playAttemptRef.current = null;
+      }
+      
+      if (video) {
+        video.pause();
+        video.removeAttribute('src'); // Safer than setting to empty string
+        video.load();
+      }
+    };
+  }, [videoSrc, fallbackUrl, isActive, onVideoEnded]);
+  
+  const handleCanPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    // Apply playback rate to smooth playback
+    video.playbackRate = 1.0;
+  }, []);
+  
+  return (
+    <video
+      ref={videoRef}
+      className="w-full h-full object-cover"
+      playsInline
+      muted
+      preload="auto"
+      onLoadedData={onLoadedData}
+      onCanPlay={handleCanPlay}
+      style={{
+        willChange: 'transform', // Hint for browser optimization
+        transform: 'translateZ(0)', // Hardware acceleration hint
+      }}
+    >
+      {/* Use type attribute to help browser identify formats */}
+      <source src={videoSrc} type="video/mp4" />
+      <source src={fallbackUrl} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  );
+});
 
 const Features = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeVideo, setActiveVideo] = useState(null);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const carouselRef = useRef(null);
+  
+  const nextSlide = useCallback(() => {
+    setIsVideoLoaded(false);
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % featuresData.length);
+  }, []);
+
+  const prevSlide = useCallback(() => {
+    setIsVideoLoaded(false);
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + featuresData.length) % featuresData.length);
+  }, []);
+
+  // Handle video ended event to advance to next slide
+  const handleVideoEnded = useCallback(() => {
+    // Only auto-advance if not hovering
+    if (!isHovering) {
+      nextSlide();
+    }
+  }, [isHovering, nextSlide]);
+
+  // Handle ESC key press to close modal
+  useEffect(() => {
+    const handleEsc = (event) => {
+      if (event.keyCode === 27) setActiveVideo(null);
+    };
+    window.addEventListener('keydown', handleEsc);
+    
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
+
+  const handleVideoLoad = useCallback(() => {
+    setIsVideoLoaded(true);
+  }, []);
+
+  // Memoize the carousel content to prevent unnecessary re-renders
+  const carouselContent = React.useMemo(() => (
+    <motion.div
+      key={currentIndex}
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      transition={{ duration: 0.5 }}
+      className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black border border-gray-800 shadow-xl"
+    >
+      {/* Loading Spinner */}
+      {!isVideoLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      )}
+      
+      {/* Video */}
+      <div 
+        className="relative w-full h-full cursor-pointer"
+        onClick={() => setActiveVideo(featuresData[currentIndex])}
+      >
+        <CarouselVideo
+          videoSrc={featuresData[currentIndex].video}
+          fallbackUrl={featuresData[currentIndex].fallbackUrl}
+          isActive={true}
+          onLoadedData={handleVideoLoad}
+          onVideoEnded={handleVideoEnded}
+        />
+        
+        {/* Content Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              {featuresData[currentIndex].title}
+            </h3>
+            <p className={`text-gray-200 text-base md:text-lg max-w-3xl transition-all duration-300 ${isHovering ? 'opacity-100 max-h-24' : 'opacity-0 max-h-0 overflow-hidden'}`}>
+              {featuresData[currentIndex].description}
+            </p>
+          </div>
+        </div>
+
+        {/* Play Button Overlay - Only visible on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+          <div className="w-16 h-16 bg-indigo-500/30 backdrop-blur-sm rounded-full flex items-center justify-center transform transition-all duration-300 hover:scale-110 hover:bg-indigo-500/50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  ), [currentIndex, isVideoLoaded, handleVideoLoad, handleVideoEnded, isHovering]);
+
   return (
     <section
       id="features-section"
-      className="relative w-full py-12 md:py-20 bg-black pb-24"
+      className="relative w-full py-16 md:py-24 bg-black min-h-screen overflow-hidden"
     >
-      <motion.h2
-        className="text-6xl md:text-6xl text-center font-bold mb-8 text-gray-200 font-display tracking-tight px-4 ml-[-100px]"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.8 }}
-      >
-        Our Features
-      </motion.h2>
-
-      <div className="my-8 md:my-20 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 px-4 md:px-8">
-        {/* Mock Interviews Card */}
-        <Card
-          title="Customized Chatbots"
-          icon={<AceternityIcon order="Customized Chatbots" />}
-          description="Experience two powerful AI-driven tools: an Interviewer chatbot to simulate real-world interview scenarios and a Career Advisor chatbot to guide your career journey."
-          image={mockInterviewImage}
-          index={3}
+      {/* Particles Background */}
+      <MemoizedParticles id="particles-features" />
+      
+      {/* Title with animation */}
+      <div className="container mx-auto px-4 mb-16 relative z-10">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="text-center"
         >
-          <CanvasRevealEffect
-            animationSpeed={2}
-            containerClassName="bg-black"
-            colors={[
-              [100, 170, 170],
-              [150, 220, 220],
-            ]}
-            dotSize={4}
-          />
-        </Card>
-
-        {/* Career Guidance Card */}
-        <Card
-          title="CV Scanning"
-          icon={<AceternityIcon order="CV Scanning" />}
-          description="Effortlessly extract key details from your CV with AI-powered scanning. Say goodbye to manual data entry and streamline your workflow in seconds."
-          image={cvScanningImage}
-          index={2}
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white font-display tracking-tight pb-2">
+            Key Features
+          </h2>
+          <p className="text-gray-400 text-lg mt-4 max-w-2xl mx-auto">
+            Discover the capabilities that make our platform stand out from the competition
+          </p>
+        </motion.div>
+      </div>
+      
+      {/* Carousel Container */}
+      <div className="container mx-auto px-4 relative z-10">
+        <div 
+          ref={carouselRef}
+          className="relative max-w-5xl mx-auto"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
         >
-          <CanvasRevealEffect
-            animationSpeed={2}
-            containerClassName="bg-black"
-            colors={[
-              [100, 170, 170],
-              [150, 220, 220],
-            ]}
-            dotSize={4}
-          />
-        </Card>
+          {/* Main Carousel */}
+          <AnimatePresence mode="wait">
+            {carouselContent}
+          </AnimatePresence>
 
-        {/* Recruiter-Candidate Chat Card */}
-        <Card
-          title="Recruiter-Candidate Chat"
-          icon={<AceternityIcon order="Recruiter-Candidate Chat" />}
-          description="Enable direct communication between recruiters and candidates for specific job positions, making the hiring process faster and more personalized."
-          image={recruiterCandidateImage}
-          index={1}
-        >
-          <CanvasRevealEffect
-            animationSpeed={2}
-            containerClassName="bg-purple"
-            colors={[[125, 211, 252]]}
-          />
-        </Card>
+          {/* Navigation Buttons */}
+          <button
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Dots Navigation */}
+          <div className="flex justify-center mt-6 gap-2">
+            {featuresData.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setIsVideoLoaded(false);
+                  setCurrentIndex(index);
+                }}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentIndex 
+                    ? 'bg-indigo-500 w-8' 
+                    : 'bg-gray-600 hover:bg-gray-500'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
+      {/* Fullscreen Video Modal */}
+      <AnimatePresence>
+        {activeVideo && (
+          <FullscreenVideoModal 
+            video={activeVideo.video} 
+            fallbackUrl={activeVideo.fallbackUrl}
+            title={activeVideo.title}
+            onClose={() => setActiveVideo(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Navigation Arrows */}
       <NavigationArrow 
         targetId="hero-section" 
         direction="up"
@@ -95,130 +355,150 @@ const Features = () => {
   );
 };
 
-const Card = ({ title, icon, children, description, image, index = 1 }) => {
-  const [hovered, setHovered] = React.useState(false);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  // Memoize the CanvasRevealEffect
-  const memoizedCanvasEffect = useMemo(() => children, [children]);
-
-  // Memoize the Particles component
-  const memoizedParticles = useMemo(() => (
-    <MemoizedParticles id={`particles-${title.toLowerCase().replace(/\s+/g, '-')}`} />
-  ), [title]);
-
-  const memoizedHoverEffect = useMemo(() => {
-    return (
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            {memoizedParticles}
-            {memoizedCanvasEffect}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  }, [hovered, memoizedParticles, memoizedCanvasEffect]);
-
-  return (
-    <motion.div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      initial={{ opacity: 0, scale: 0.1 }}
-      onViewportEnter={() => {
-        if (!hasAnimated) {
-          setHasAnimated(true);
+const FullscreenVideoModal = ({ video, fallbackUrl, title, onClose }) => {
+  const videoRef = useRef(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const playAttemptRef = useRef(null);
+  
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+    
+    // Apply performance optimizations
+    videoElement.style.transform = 'translateZ(0)';
+    videoElement.playsInline = true;
+    
+    // Load video
+    videoElement.load();
+    
+    // Clear any pending play attempts
+    if (playAttemptRef.current) {
+      clearTimeout(playAttemptRef.current);
+      playAttemptRef.current = null;
+    }
+    
+    // Only play when loaded
+    if (isLoaded) {
+      // Add delay to avoid race conditions
+      playAttemptRef.current = setTimeout(() => {
+        if (videoRef.current && document.body.contains(videoRef.current)) {
+          const playPromise = videoElement.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              // Only log non-abort errors
+              if (err.name !== 'AbortError') {
+                console.log("Video play error:", err);
+              }
+              
+              // Handle format not supported error
+              if (err.name === 'NotSupportedError') {
+                videoElement.src = fallbackUrl;
+                videoElement.load();
+                // Try again with fallback
+                setTimeout(() => {
+                  if (videoRef.current) {
+                    videoRef.current.play().catch(e => {
+                      if (e.name !== 'AbortError') {
+                        console.error("Fallback video play error:", e);
+                      }
+                    });
+                  }
+                }, 100);
+              } else {
+                // Try again after a short delay for other errors
+                setTimeout(() => {
+                  if (videoRef.current && isLoaded) {
+                    videoRef.current.play().catch(e => {
+                      if (e.name !== 'AbortError') {
+                        console.error("Retry play error:", e);
+                      }
+                    });
+                  }
+                }, 300);
+              }
+            });
+          }
         }
-      }}
-      animate={hasAnimated ? { opacity: 1, scale: 1 } : {}}
-      transition={{
-        duration: 0.1,
-        delay: index * 0.2,
-        ease: "easeInOut",
-      }}
-      className="border border-white/[0.5] group/canvas-card flex flex-col items-center w-[90vw] sm:w-[80vw] lg:w-[25vw] h-[40vh] sm:h-[50vh] lg:h-[60vh] p-[2vw] relative rounded-[2vw] overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:translate-y-[-10px] hover:border-white/80"
-    >
-      {/* Background Gradient */}
-      <div 
-        className={`absolute inset-0 bg-gradient-to-b from-black/50 via-black/70 to-black/90 transition-opacity duration-300 ${
-          hovered ? 'opacity-100' : 'opacity-0'
-        }`} 
-      />
+      }, 100);
+    }
+    
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+      
+      // Clean up play attempts
+      if (playAttemptRef.current) {
+        clearTimeout(playAttemptRef.current);
+        playAttemptRef.current = null;
+      }
+      
+      if (videoElement) {
+        videoElement.pause();
+        videoElement.removeAttribute('src');
+        videoElement.load();
+      }
+    };
+  }, [isLoaded, fallbackUrl]);
 
-      {/* Static Content */}
-      <div className="relative z-20 flex flex-col items-center h-full w-full">
-        {/* Icon with Title - Fixed position */}
-        <div className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-300 ${
-          hovered ? '-translate-y-8' : 'translate-y-0'
-        }`}>
-          <div className="transform transition-all duration-300 scale-90">
-            {icon}
+  const handleLoadedData = useCallback(() => {
+    setIsLoaded(true);
+  }, []);
+
+  return (
+    <motion.div 
+      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 md:p-10"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div 
+        className="relative w-full max-w-5xl max-h-[90vh] bg-gray-900 rounded-xl overflow-hidden"
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="absolute top-0 left-0 right-0 z-10 p-4 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+          <button 
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
+        {!isLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
+        )}
+        
+        <div className="w-full h-full aspect-video">
+          <video
+            ref={videoRef}
+            className={`w-full h-full object-contain ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            muted
+            loop
+            playsInline
+            controls
+            preload="auto"
+            onLoadedData={handleLoadedData}
+            style={{
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+            }}
+          >
+            <source src={video} type="video/mp4" />
+            <source src={fallbackUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
-
-        {/* Description and Image */}
-        <div className={`mt-24 flex-1 flex flex-col items-center justify-start transition-all duration-300 px-[2vw] ${
-          hovered ? 'opacity-100 translate-y-[-20px]' : 'opacity-0 translate-y-[2vh]'
-        }`}>
-          <p className="text-[2vw] sm:text-[1.6vw] lg:text-[1vw] text-white text-center mb-[2vh] max-w-[90%] leading-relaxed">
-            {description}
-          </p>
-
-          {image && (
-            <div className="w-full flex justify-center items-center">
-              <img
-                src={image}
-                alt={`${title} illustration`}
-                className={`w-auto max-w-[70%] h-auto max-h-[20vh] rounded-[1vw] object-contain transform transition-all duration-300 ${
-                  hovered ? 'scale-105 opacity-100' : 'scale-95 opacity-0'
-                }`}
-                style={{
-                  filter: "drop-shadow(0 0.5vw 1vw rgba(0,0,0,0.3))"
-                }}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Combined Effects */}
-      {memoizedHoverEffect}
+      </motion.div>
     </motion.div>
-  );
-};
-
-const AceternityIcon = ({ order }) => {
-  return (
-    <button className="relative inline-flex min-h-[3rem] w-auto min-w-[12rem] overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50">
-      <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-      <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-white backdrop-blur-3xl">
-        <span className="text-[1.15rem] sm:text-[1.25rem] font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
-          {order}
-        </span>
-      </span>
-    </button>
-  );
-};
-
-export const Icon = ({ className, ...rest }) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth="1.5"
-      stroke="currentColor"
-      className={className}
-      {...rest}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
-    </svg>
   );
 };
 
