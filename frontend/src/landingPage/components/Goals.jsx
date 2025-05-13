@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import NavigationArrow from "./NavigationArrow";
 import runningIcon from "../assets/goals/running.png";
 import preciseIcon from "../assets/goals/precise.png";
 import trackingIcon from "../assets/goals/tracking.png";
@@ -90,15 +89,6 @@ const Goals = () => {
       {/* Particles Background */}
       <ParticlesComponent id="particles-goals" />
 
-      {/* Up Arrow to Features - positioned for all screen sizes */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-20">
-        <NavigationArrow 
-          targetId="features-section" 
-          direction="up"
-          className="z-[100] backdrop-blur-sm bg-black/30 p-2 sm:p-3 rounded-full hover:bg-black/50 transition-colors" 
-        />
-      </div>
-
       <div className="w-full max-w-7xl mx-auto px-4 py-12 relative z-10">
         <motion.h2
           className="text-4xl sm:text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-6 sm:mb-8 leading-tight pb-2 tracking-tight font-display text-center"
@@ -126,15 +116,6 @@ const Goals = () => {
             />
           ))}
         </motion.div>
-      </div>
-
-      {/* Down Arrow to Testimonials */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
-        <NavigationArrow 
-          targetId="testimonials-section" 
-          direction="down"
-          className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
-        />
       </div>
     </section>
   );

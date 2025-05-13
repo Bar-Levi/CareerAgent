@@ -6,7 +6,6 @@ import "swiper/css/effect-coverflow";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { motion } from "framer-motion";
-import NavigationArrow from "./NavigationArrow";
 import ParticlesComponent from "./ParticleComponent";
 
 // Keep the original testimonials data
@@ -150,12 +149,6 @@ const Testimonials = () => {
         <div className="swiper-button-next custom-swiper-button-next"></div>
       </motion.div>
 
-      <NavigationArrow 
-        targetId="goals-section" 
-        direction="up"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors absolute top-4 left-1/2 transform -translate-x-1/2" 
-      />
-      
       <style jsx="true">{`
         .testimonial-swiper {
           width: 100%;

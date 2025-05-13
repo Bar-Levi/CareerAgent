@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, memo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
-import NavigationArrow from "./NavigationArrow";
 
 // Import videos directly using webpack
 import chatbotsVideo from "../assets/videos/chatbots.mp4";
@@ -266,17 +265,10 @@ const Features = () => {
   return (
     <section
       id="features-section"
-      className="relative w-full py-16 md:py-24 bg-black min-h-screen overflow-hidden flex flex-col pb-16 sm:pb-20"
+      className="relative w-full py-16 md:py-24 bg-black min-h-screen overflow-hidden flex flex-col"
     >
       {/* Particles Background */}
       <MemoizedParticles id="particles-features" />
-      
-      {/* Up arrow to Hero */}
-      <NavigationArrow 
-        targetId="hero-section" 
-        direction="up"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors absolute top-4 right-4" 
-      />
       
       {/* Title with animation - reduced bottom margin */}
       <div className="container mx-auto px-4 mb-8 md:mb-10 relative z-10">
@@ -340,15 +332,6 @@ const Features = () => {
           />
         )}
       </AnimatePresence>
-
-      {/* Navigation Arrow Container - Fixed at the bottom of the viewport */}
-      <div className="w-full relative z-20 mt-8 flex justify-center">
-        <NavigationArrow 
-          targetId="goals-section" 
-          direction="down"
-          className="z-[100] backdrop-blur-sm bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors" 
-        />
-      </div>
     </section>
   );
 };
