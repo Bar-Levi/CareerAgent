@@ -85,14 +85,23 @@ const Goals = () => {
   return (
     <section
       id="goals-section"
-      className="relative bg-black min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative bg-black min-h-screen flex items-center justify-center overflow-hidden pt-16"
     >
       {/* Particles Background */}
       <ParticlesComponent id="particles-goals" />
 
+      {/* Up Arrow to Features - positioned for all screen sizes */}
+      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-20">
+        <NavigationArrow 
+          targetId="features-section" 
+          direction="up"
+          className="z-[100] backdrop-blur-sm bg-black/30 p-2 sm:p-3 rounded-full hover:bg-black/50 transition-colors" 
+        />
+      </div>
+
       <div className="w-full max-w-7xl mx-auto px-4 py-12 relative z-10">
         <motion.h2
-          className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-8 leading-tight pb-2 tracking-tight font-display text-center"
+          className="text-4xl sm:text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-6 sm:mb-8 leading-tight pb-2 tracking-tight font-display text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -102,7 +111,7 @@ const Goals = () => {
         </motion.h2>
         
         <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 w-full py-8"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 w-full py-6 sm:py-8"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
