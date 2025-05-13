@@ -64,31 +64,34 @@ const CarouselVideo = memo(({ videoSrc, fallbackUrl, isActive, onLoadedData, onV
       playAttemptRef.current = setTimeout(() => {
         // Check if video is still mounted and active before playing
         if (videoRef.current && document.body.contains(videoRef.current)) {
-          const playPromise = video.play();
-          
-          if (playPromise !== undefined) {
-            playPromise.catch(error => {
-              // Only log errors that aren't abort errors from normal operation
-              if (error.name !== 'AbortError') {
-                console.error("Video play error:", error);
-              }
-              
-              // If format not supported, try the fallback URL directly
-              if (error.name === 'NotSupportedError') {
-                video.src = fallbackUrl;
-                video.load();
-                // Try again after loading the fallback
-                setTimeout(() => {
-                  if (videoRef.current) {
-                    videoRef.current.play().catch(e => {
-                      if (e.name !== 'AbortError') {
-                        console.error("Fallback video play error:", e);
-                      }
-                    });
-                  }
-                }, 100);
-              }
-            });
+          // Only play if video is paused to avoid restarting on hover
+          if (video.paused) {
+            const playPromise = video.play();
+            
+            if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                // Only log errors that aren't abort errors from normal operation
+                if (error.name !== 'AbortError') {
+                  console.error("Video play error:", error);
+                }
+                
+                // If format not supported, try the fallback URL directly
+                if (error.name === 'NotSupportedError') {
+                  video.src = fallbackUrl;
+                  video.load();
+                  // Try again after loading the fallback
+                  setTimeout(() => {
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(e => {
+                        if (e.name !== 'AbortError') {
+                          console.error("Fallback video play error:", e);
+                        }
+                      });
+                    }
+                  }, 100);
+                }
+              });
+            }
           }
         }
       }, 100);
@@ -163,6 +166,14 @@ const Features = () => {
   const [isHovering, setIsHovering] = useState(false);
   const carouselRef = useRef(null);
   
+  // Add stable reference for hover state to prevent unnecessary rerenders
+  const isHoveringRef = useRef(isHovering);
+  
+  // Update ref when state changes
+  useEffect(() => {
+    isHoveringRef.current = isHovering;
+  }, [isHovering]);
+  
   const nextSlide = useCallback(() => {
     setIsVideoLoaded(false);
     setCurrentIndex((prevIndex) => (prevIndex + 1) % featuresData.length);
@@ -176,10 +187,10 @@ const Features = () => {
   // Handle video ended event to advance to next slide
   const handleVideoEnded = useCallback(() => {
     // Only auto-advance if not hovering
-    if (!isHovering) {
+    if (!isHoveringRef.current) {
       nextSlide();
     }
-  }, [isHovering, nextSlide]);
+  }, [nextSlide]);
 
   // Handle ESC key press to close modal
   useEffect(() => {
@@ -241,10 +252,11 @@ const Features = () => {
 
         {/* Play Button Overlay - Only visible on hover */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-          <div className="w-16 h-16 bg-indigo-500/30 backdrop-blur-sm rounded-full flex items-center justify-center transform transition-all duration-300 hover:scale-110 hover:bg-indigo-500/50">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+          <div className="bg-black/60 backdrop-blur-sm rounded-lg px-4 py-3 flex items-center gap-2 transform transition-all duration-300 hover:scale-110 hover:bg-black/70">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
             </svg>
+            <span className="text-white font-medium">View Full Screen</span>
           </div>
         </div>
       </div>
