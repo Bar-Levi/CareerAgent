@@ -2,159 +2,130 @@ import React, { useState, useRef, useEffect, memo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
 
-// Import videos directly using webpack
-import chatbotsVideo from "../assets/videos/chatbots.mp4";
-import cvVideo from "../assets/videos/cv.mp4";
-import chatVideo from "../assets/videos/chat.mp4";
-
 // Memoize ParticlesComponent to prevent re-renders
 const MemoizedParticles = React.memo(ParticlesComponent);
 
-// Video data
+// Video data using YouTube IDs
 const featuresData = [
   {
     id: 1,
     title: "Customized Chatbots",
-    video: chatbotsVideo,
-    fallbackUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    videoId: "dceoQF2Esi8",
+    fallbackUrl: "https://youtu.be/dceoQF2Esi8",
     description: "Experience two powerful AI-driven tools: an Interviewer chatbot to simulate real-world interview scenarios and a Career Advisor chatbot to guide your career journey."
   },
   {
     id: 2,
     title: "CV Scanning",
-    video: cvVideo,
-    fallbackUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    videoId: "V-rC_rOkvC0",
+    fallbackUrl: "https://youtu.be/V-rC_rOkvC0",
     description: "Effortlessly extract key details from your CV with AI-powered scanning. Say goodbye to manual data entry and streamline your workflow in seconds."
   },
   {
     id: 3,
     title: "Recruiter-Candidate Chat",
-    video: chatVideo,
-    fallbackUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+    videoId: "B3DoO4LlEN4",
+    fallbackUrl: "https://youtu.be/B3DoO4LlEN4",
     description: "Enable direct communication between recruiters and candidates for specific job positions, making the hiring process faster and more personalized."
   }
 ];
 
-// Memoized video player component to prevent re-renders
-const CarouselVideo = memo(({ videoSrc, fallbackUrl, isActive, onLoadedData, onVideoEnded }) => {
-  const videoRef = useRef(null);
-  const playAttemptRef = useRef(null);
-  const hasLoadedRef = useRef(false);
+// YouTube API loader
+const loadYouTubeAPI = () => {
+  if (window.YT) return Promise.resolve(window.YT);
+  
+  return new Promise((resolve) => {
+    // Create script tag
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    
+    // When YouTube API is ready, resolve promise
+    window.onYouTubeIframeAPIReady = () => {
+      resolve(window.YT);
+    };
+  });
+};
+
+// Memoized YouTube player component
+const CarouselVideo = memo(({ videoId, isActive, onLoadedData, onVideoEnded }) => {
+  const playerContainerRef = useRef(null);
+  const playerRef = useRef(null);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
   
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    // Clear any pending play attempts
-    if (playAttemptRef.current) {
-      clearTimeout(playAttemptRef.current);
-      playAttemptRef.current = null;
-    }
-    
-    // Handle play/pause based on active state
-    if (isActive) {
-      // Only load the video if it hasn't been loaded before
-      if (!hasLoadedRef.current) {
-        video.load(); // Reset video state
-        hasLoadedRef.current = true;
-      }
-      
-      // Add a small delay before playing to avoid race conditions
-      playAttemptRef.current = setTimeout(() => {
-        // Check if video is still mounted and active before playing
-        if (videoRef.current && document.body.contains(videoRef.current)) {
-          // Only play if video is paused to avoid restarting on hover
-          if (video.paused) {
-            const playPromise = video.play();
-            
-            if (playPromise !== undefined) {
-              playPromise.catch(error => {
-                // Only log errors that aren't abort errors from normal operation
-                if (error.name !== 'AbortError') {
-                  console.error("Video play error:", error);
-                }
-                
-                // If format not supported, try the fallback URL directly
-                if (error.name === 'NotSupportedError') {
-                  video.src = fallbackUrl;
-                  video.load();
-                  // Try again after loading the fallback
-                  setTimeout(() => {
-                    if (videoRef.current) {
-                      videoRef.current.play().catch(e => {
-                        if (e.name !== 'AbortError') {
-                          console.error("Fallback video play error:", e);
-                        }
-                      });
-                    }
-                  }, 100);
-                }
-              });
+    let player = null;
+
+    const setupPlayer = async () => {
+      try {
+        // Load YouTube API
+        const YT = await loadYouTubeAPI();
+        
+        // Create player instance
+        player = new YT.Player(playerContainerRef.current, {
+          videoId: videoId,
+          playerVars: {
+            autoplay: isActive ? 1 : 0,
+            mute: 1,
+            controls: 0,
+            rel: 0,
+            showinfo: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            loop: 0
+          },
+          events: {
+            onReady: (event) => {
+              setIsPlayerReady(true);
+              playerRef.current = event.target;
+              if (isActive && event.target.playVideo) {
+                event.target.playVideo();
+              }
+              if (onLoadedData) onLoadedData();
+            },
+            onStateChange: (event) => {
+              // When video ends
+              if (event.data === YT.PlayerState.ENDED) {
+                if (onVideoEnded) onVideoEnded();
+              }
+            },
+            onError: (event) => {
+              console.error("YouTube player error:", event.data);
             }
           }
-        }
-      }, 100);
-    } else {
-      // Only pause if the video is actually playing to avoid unnecessary operations
-      if (!video.paused) {
-        video.pause();
+        });
+      } catch (error) {
+        console.error("Error setting up YouTube player:", error);
+      }
+    };
+
+    if (playerContainerRef.current && !playerRef.current) {
+      setupPlayer();
+    }
+
+    // Control playback based on isActive
+    if (playerRef.current && isPlayerReady) {
+      if (isActive) {
+        playerRef.current.playVideo();
+      } else {
+        playerRef.current.pauseVideo();
       }
     }
 
-    // Add event listener for video ended
-    const handleEnded = () => {
-      if (isActive && onVideoEnded) {
-        onVideoEnded();
-      }
-    };
-
-    video.addEventListener('ended', handleEnded);
-    
+    // Clean up
     return () => {
-      // Remove event listener
-      video.removeEventListener('ended', handleEnded);
-
-      // Clean up
-      if (playAttemptRef.current) {
-        clearTimeout(playAttemptRef.current);
-        playAttemptRef.current = null;
-      }
-      
-      if (video) {
-        video.pause();
-        video.removeAttribute('src'); // Safer than setting to empty string
-        video.load();
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
       }
     };
-  }, [videoSrc, fallbackUrl, isActive, onVideoEnded]);
-  
-  const handleCanPlay = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    
-    // Apply playback rate to smooth playback
-    video.playbackRate = 1.0;
-  }, []);
-  
+  }, [videoId, isActive, onLoadedData, onVideoEnded, isPlayerReady]);
+
   return (
-    <video
-      ref={videoRef}
-      className="w-full h-full object-cover"
-      playsInline
-      muted
-      preload="auto"
-      onLoadedData={onLoadedData}
-      onCanPlay={handleCanPlay}
-      style={{
-        willChange: 'transform', // Hint for browser optimization
-        transform: 'translateZ(0)', // Hardware acceleration hint
-      }}
-    >
-      {/* Use type attribute to help browser identify formats */}
-      <source src={videoSrc} type="video/mp4" />
-      <source src={fallbackUrl} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
+    <div className="w-full h-full">
+      <div ref={playerContainerRef} className="w-full h-full"></div>
+    </div>
   );
 });
 
@@ -230,8 +201,7 @@ const Features = () => {
         onClick={() => setActiveVideo(featuresData[currentIndex])}
       >
         <CarouselVideo
-          videoSrc={featuresData[currentIndex].video}
-          fallbackUrl={featuresData[currentIndex].fallbackUrl}
+          videoId={featuresData[currentIndex].videoId}
           isActive={true}
           onLoadedData={handleVideoLoad}
           onVideoEnded={handleVideoEnded}
@@ -325,8 +295,7 @@ const Features = () => {
       <AnimatePresence>
         {activeVideo && (
           <FullscreenVideoModal 
-            video={activeVideo.video} 
-            fallbackUrl={activeVideo.fallbackUrl}
+            videoId={activeVideo.videoId}
             title={activeVideo.title}
             onClose={() => setActiveVideo(null)}
           />
@@ -336,94 +305,58 @@ const Features = () => {
   );
 };
 
-const FullscreenVideoModal = ({ video, fallbackUrl, title, onClose }) => {
-  const videoRef = useRef(null);
+const FullscreenVideoModal = ({ videoId, title, onClose }) => {
+  const playerContainerRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const playAttemptRef = useRef(null);
   
   useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-    
-    // Apply performance optimizations
-    videoElement.style.transform = 'translateZ(0)';
-    videoElement.playsInline = true;
-    
-    // Load video
-    videoElement.load();
-    
-    // Clear any pending play attempts
-    if (playAttemptRef.current) {
-      clearTimeout(playAttemptRef.current);
-      playAttemptRef.current = null;
-    }
-    
-    // Only play when loaded
-    if (isLoaded) {
-      // Add delay to avoid race conditions
-      playAttemptRef.current = setTimeout(() => {
-        if (videoRef.current && document.body.contains(videoRef.current)) {
-          const playPromise = videoElement.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(err => {
-              // Only log non-abort errors
-              if (err.name !== 'AbortError') {
-                console.log("Video play error:", err);
-              }
-              
-              // Handle format not supported error
-              if (err.name === 'NotSupportedError') {
-                videoElement.src = fallbackUrl;
-                videoElement.load();
-                // Try again with fallback
-                setTimeout(() => {
-                  if (videoRef.current) {
-                    videoRef.current.play().catch(e => {
-                      if (e.name !== 'AbortError') {
-                        console.error("Fallback video play error:", e);
-                      }
-                    });
-                  }
-                }, 100);
-              } else {
-                // Try again after a short delay for other errors
-                setTimeout(() => {
-                  if (videoRef.current && isLoaded) {
-                    videoRef.current.play().catch(e => {
-                      if (e.name !== 'AbortError') {
-                        console.error("Retry play error:", e);
-                      }
-                    });
-                  }
-                }, 300);
-              }
-            });
+    let player = null;
+
+    const setupPlayer = async () => {
+      try {
+        // Load YouTube API
+        const YT = await loadYouTubeAPI();
+        
+        // Create player instance
+        player = new YT.Player(playerContainerRef.current, {
+          videoId: videoId,
+          playerVars: {
+            autoplay: 1,
+            controls: 1,
+            rel: 0,
+            showinfo: 0,
+            modestbranding: 1,
+            playsinline: 1
+          },
+          events: {
+            onReady: (event) => {
+              event.target.playVideo();
+              setIsLoaded(true);
+            },
+            onError: (event) => {
+              console.error("YouTube player error:", event.data);
+            }
           }
-        }
-      }, 100);
+        });
+      } catch (error) {
+        console.error("Error setting up YouTube player:", error);
+      }
+    };
+
+    if (playerContainerRef.current) {
+      setupPlayer();
     }
     
     document.body.style.overflow = 'hidden';
+    
+    // Clean up
     return () => {
       document.body.style.overflow = 'auto';
-      
-      // Clean up play attempts
-      if (playAttemptRef.current) {
-        clearTimeout(playAttemptRef.current);
-        playAttemptRef.current = null;
-      }
-      
-      if (videoElement) {
-        videoElement.pause();
-        videoElement.removeAttribute('src');
-        videoElement.load();
+      if (player) {
+        player.destroy();
       }
     };
-  }, [isLoaded, fallbackUrl]);
-
-  const handleLoadedData = useCallback(() => {
-    setIsLoaded(true);
-  }, []);
+  }, [videoId]);
 
   return (
     <motion.div 
@@ -459,24 +392,7 @@ const FullscreenVideoModal = ({ video, fallbackUrl, title, onClose }) => {
         )}
         
         <div className="w-full h-full aspect-video">
-          <video
-            ref={videoRef}
-            className={`w-full h-full object-contain ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-            muted
-            loop
-            playsInline
-            controls
-            preload="auto"
-            onLoadedData={handleLoadedData}
-            style={{
-              willChange: 'transform',
-              transform: 'translateZ(0)',
-            }}
-          >
-            <source src={video} type="video/mp4" />
-            <source src={fallbackUrl} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          <div ref={playerContainerRef} className="w-full h-full"></div>
         </div>
       </motion.div>
     </motion.div>
@@ -484,3 +400,4 @@ const FullscreenVideoModal = ({ video, fallbackUrl, title, onClose }) => {
 };
 
 export default Features;
+
