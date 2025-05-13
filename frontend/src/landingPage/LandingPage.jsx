@@ -1,7 +1,7 @@
 import React from "react";
 import Hero from "./components/Hero";
 import Features from "./components/Features";
-import DemoSection from "./components/DemoSection";
+import Goals from "./components/Goals";
 import Testimonials from "./components/Testimonials";
 import Botpress from "../botpress/Botpress";
 
@@ -15,8 +15,8 @@ const LandingPage = () => {
       <section className="w-full h-screen flex-shrink-0 snap-start" id="features-section">
         <Features />
       </section>
-      <section className="w-full h-screen flex-shrink-0 snap-start">
-        <DemoSection />
+      <section className="w-full h-screen flex-shrink-0 snap-start" id="goals-section">
+        <Goals />
       </section>
       <section className="w-full h-screen flex-shrink-0 snap-start">
         <Testimonials />

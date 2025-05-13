@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { SplineScene } from "../../components/ui/spline";
 import { AnimatedButton } from "../../components/ui/AnimatedButton";
 import { ChevronRight, ArrowRight } from "lucide-react";
-import NavigationArrow from "./NavigationArrow";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -86,12 +85,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-
-      <NavigationArrow 
-        targetId="features-section" 
-        direction="down"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
-      />
     </section>
   );
 };

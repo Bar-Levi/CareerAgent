@@ -1,11 +1,8 @@
-import React, { useState, memo, useCallback, useMemo } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import ParticlesComponent from "./ParticleComponent";
-import NavigationArrow from "./NavigationArrow";
 
-// Memoize ParticlesComponent to prevent re-renders
-const MemoizedParticles = memo(ParticlesComponent);
-
+// Updated testimonials data with more professional testimonials
 const testimonials = [
   {
     id: 1,
@@ -29,10 +26,7 @@ const testimonials = [
   }
 ];
 
-const TestimonialCard = memo(({ handleShuffle, testimonial, position, id, author }) => {
-  const dragRef = React.useRef(0);
-  const isFront = position === 0;
-
+const TestimonialCard = ({ id, testimonial, author }) => {
   const getImagePath = () => {
     try {
       return require(`../assets/testimonials/${id}.jpg`);
@@ -46,168 +40,90 @@ const TestimonialCard = memo(({ handleShuffle, testimonial, position, id, author
   };
 
   const imagePath = getImagePath();
-  
-  const { rotation, xOffset, yOffset, scale } = useMemo(() => ({
-    rotation: position * 5,
-    xOffset: position * 25,
-    yOffset: position * 10,
-    scale: 1 - (position * 0.05)
-  }), [position]);
-
-  const handleDragStart = useCallback((e) => {
-    dragRef.current = e.clientX;
-  }, []);
-
-  const handleDragEnd = useCallback((e) => {
-    if (dragRef.current - e.clientX > 150) {
-      handleShuffle();
-    }
-    dragRef.current = 0;
-  }, [handleShuffle]);
-
-  const motionStyles = useMemo(() => ({
-    zIndex: testimonials.length - position
-  }), [position]);
-
-  const motionAnimate = useMemo(() => ({
-    rotate: `${-rotation}deg`,
-    x: `${xOffset}%`,
-    y: `${yOffset}px`,
-    scale
-  }), [rotation, xOffset, yOffset, scale]);
 
   return (
-    <motion.div
-      style={motionStyles}
-      animate={motionAnimate}
-      whileHover={isFront ? { scale: 1.02, rotate: 0 } : {}}
-      drag={true}
-      dragElastic={0.35}
-      dragListener={isFront}
-      dragConstraints={{
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0
-      }}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      transition={{ 
-        duration: 0.4,
-        ease: "easeOut"
-      }}
-      className={`absolute left-0 top-0 grid h-[450px] w-[350px] select-none place-content-center space-y-6 rounded-3xl border border-slate-700/50 bg-slate-900/40 p-8 backdrop-blur-lg shadow-2xl ${
-        isFront ? "cursor-grab active:cursor-grabbing hover:border-indigo-500/50" : ""
-      }`}
-    >
-      <img
-        src={imagePath}
-        alt={`Avatar of ${author}`}
-        className="pointer-events-none mx-auto h-32 w-32 rounded-full border-2 border-slate-700/50 bg-slate-800 object-cover ring-2 ring-slate-600/50 ring-offset-2 ring-offset-slate-900"
-      />
-      <span className="text-center text-xl italic text-slate-200 font-light leading-relaxed">"{testimonial}"</span>
-      <span className="text-center text-sm font-medium bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">{author}</span>
-    </motion.div>
-  );
-});
-
-const ArrowButton = memo(({ onClick }) => {
-  return (
-    <div className="absolute left-[-200px] top-1/2 -translate-y-1/2 z-20">
-      <motion.button
-        onClick={onClick}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        className="group"
-      >
-        <div className="relative">
-          <motion.div
-            className="absolute inset-0 bg-purple-500/30 rounded-full blur-xl opacity-70 group-hover:opacity-100 transition-opacity"
-            animate={{
-              scale: [1, 1.4, 1],
-              opacity: [0.3, 0.5, 0.3],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+    <div className="group relative transition-all duration-500 h-full rounded-xl overflow-hidden bg-gradient-to-b from-slate-800/90 to-slate-900/90 border border-slate-700/30 backdrop-blur-sm shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer">
+      {/* Enhanced gradient overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-30 group-hover:opacity-70 transition-opacity duration-500"></div>
+      
+      {/* Animated decorative element */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      
+      <div className="p-6 flex flex-col items-center h-full relative z-10">
+        {/* Enhanced avatar with hover effect */}
+        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-400/20 shadow-md mb-6 group-hover:border-indigo-400/50 group-hover:shadow-indigo-500/20 transition-all duration-500">
+          <img
+            src={imagePath}
+            alt={`Avatar of ${author}`}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-          <div className="relative flex items-center justify-center w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-sm border border-purple-500/30 group-hover:border-purple-500/50 transition-colors">
-            <svg
-              className="w-6 h-6 text-purple-400 group-hover:text-purple-300 transition-colors"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <motion.path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  ease: "easeInOut",
-                }}
-              />
-            </svg>
-          </div>
         </div>
-      </motion.button>
+        
+        <div className="w-8 h-1 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full mb-6 group-hover:w-12 transition-all duration-500"></div>
+        
+        <p className="text-base text-white/90 text-center mb-4 flex-grow group-hover:text-white transition-colors duration-300">
+          "{testimonial}"
+        </p>
+        
+        <div className="mt-auto">
+          <span className="block text-sm font-medium text-center text-indigo-300 group-hover:text-indigo-200 transition-colors duration-300">
+            {author}
+          </span>
+        </div>
+      </div>
+      
+      {/* Corner accent */}
+      <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-tl from-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-tl-xl"></div>
     </div>
   );
-});
+};
 
 const Testimonials = () => {
-  const [positions, setPositions] = useState(testimonials.map((_, index) => index));
-
-  const handleShuffle = useCallback(() => {
-    const newPositions = [...positions];
-    newPositions.unshift(newPositions.pop());
-    setPositions(newPositions);
-  }, [positions]);
-
   return (
     <section
       id="testimonials-section"
-      className="relative bg-black bg-cover bg-center min-h-screen flex items-center justify-center overflow-hidden py-20"
+      className="relative bg-black min-h-screen py-16 sm:py-20 px-4 overflow-hidden flex items-center"
     >
-      <MemoizedParticles id="particles-testimonials" />
-
-      <div className="max-w-6xl mx-auto text-center px-4 z-10 relative">
-        <motion.h2 
+      {/* Subtle Particles Background */}
+      <div className="absolute inset-0 opacity-30">
+        <ParticlesComponent id="particles-testimonials" />
+      </div>
+      
+      {/* Subtle gradient backgrounds */}
+      <div className="absolute top-40 left-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-[120px] -z-10"></div>
+      <div className="absolute bottom-40 right-10 w-72 h-72 bg-purple-600/10 rounded-full blur-[120px] -z-10"></div>
+      
+      <div className="container mx-auto max-w-6xl relative z-10 py-16">
+        <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-6xl font-bold mb-16 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 font-display tracking-tight"
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
         >
-          What Our Users Say
-        </motion.h2>
-        <div className="relative h-[450px] w-[350px] mx-auto">
-          <div className="absolute inset-0">
-            <ArrowButton onClick={handleShuffle} />
-            {testimonials.map((testimonial, index) => (
-              <TestimonialCard
-                key={testimonial.id}
-                {...testimonial}
-                handleShuffle={handleShuffle}
-                position={positions[index]}
-              />
-            ))}
-          </div>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 font-display tracking-tight">
+            What Our Users Say
+          </h2>
+          <p className="text-slate-400 max-w-xl mx-auto">
+            Don't just take our word for it — hear from some of our satisfied users who found success with our platform.
+          </p>
+        </motion.div>
+
+        {/* Bento Grid Layout for Testimonials */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={testimonial.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              viewport={{ once: true }}
+            >
+              <TestimonialCard {...testimonial} />
+            </motion.div>
+          ))}
         </div>
       </div>
-
-      <NavigationArrow 
-        targetId="demo-section" 
-        direction="up"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
-      />
     </section>
   );
 };
