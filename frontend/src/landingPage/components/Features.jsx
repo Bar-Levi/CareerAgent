@@ -320,22 +320,13 @@ const Features = () => {
             </svg>
           </button>
 
-          {/* Dots Navigation */}
-          <div className="flex justify-center mt-6 gap-2">
-            {featuresData.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setIsVideoLoaded(false);
-                  setCurrentIndex(index);
-                }}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentIndex 
-                    ? 'bg-indigo-500 w-8' 
-                    : 'bg-gray-600 hover:bg-gray-500'
-                }`}
-              />
-            ))}
+          {/* Goals Navigation Arrow (replacing dots) */}
+          <div className="flex justify-center mt-6">
+            <NavigationArrow 
+              targetId="goals-section" 
+              direction="down"
+              className="z-[100] backdrop-blur-sm bg-black/30 p-3 rounded-full hover:bg-black/50 transition-colors" 
+            />
           </div>
         </div>
       </div>
@@ -356,12 +347,7 @@ const Features = () => {
       <NavigationArrow 
         targetId="hero-section" 
         direction="up"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
-      />
-      <NavigationArrow 
-        targetId="demo-section" 
-        direction="down"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors absolute top-4 right-4" 
       />
     </section>
   );

@@ -151,7 +151,7 @@ const Testimonials = () => {
       </motion.div>
 
       <NavigationArrow 
-        targetId="demo-section" 
+        targetId="goals-section" 
         direction="up"
         className="z-[100] mt-10 backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
       />
