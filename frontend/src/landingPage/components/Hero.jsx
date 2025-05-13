@@ -90,7 +90,7 @@ const Hero = () => {
       <NavigationArrow 
         targetId="features-section" 
         direction="down"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors" 
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors absolute bottom-4 left-1/2 transform -translate-x-1/2" 
       />
     </section>
   );

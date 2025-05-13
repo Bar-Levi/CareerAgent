@@ -266,13 +266,20 @@ const Features = () => {
   return (
     <section
       id="features-section"
-      className="relative w-full py-16 md:py-24 bg-black min-h-screen overflow-hidden"
+      className="relative w-full py-16 md:py-24 bg-black min-h-screen overflow-hidden flex flex-col pb-16 sm:pb-20"
     >
       {/* Particles Background */}
       <MemoizedParticles id="particles-features" />
       
-      {/* Title with animation */}
-      <div className="container mx-auto px-4 mb-16 relative z-10">
+      {/* Up arrow to Hero */}
+      <NavigationArrow 
+        targetId="hero-section" 
+        direction="up"
+        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors absolute top-4 right-4" 
+      />
+      
+      {/* Title with animation - reduced bottom margin */}
+      <div className="container mx-auto px-4 mb-8 md:mb-10 relative z-10">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -283,14 +290,14 @@ const Features = () => {
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white font-display tracking-tight pb-2">
             Key Features
           </h2>
-          <p className="text-gray-400 text-lg mt-4 max-w-2xl mx-auto">
+          <p className="text-gray-400 text-lg mt-3 max-w-2xl mx-auto">
             Discover the capabilities that make our platform stand out from the competition
           </p>
         </motion.div>
       </div>
       
       {/* Carousel Container */}
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 relative z-10 flex-grow">
         <div 
           ref={carouselRef}
           className="relative max-w-5xl mx-auto"
@@ -319,15 +326,6 @@ const Features = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
-
-          {/* Goals Navigation Arrow (replacing dots) */}
-          <div className="flex justify-center mt-6">
-            <NavigationArrow 
-              targetId="goals-section" 
-              direction="down"
-              className="z-[100] backdrop-blur-sm bg-black/30 p-3 rounded-full hover:bg-black/50 transition-colors" 
-            />
-          </div>
         </div>
       </div>
 
@@ -343,12 +341,14 @@ const Features = () => {
         )}
       </AnimatePresence>
 
-      {/* Navigation Arrows */}
-      <NavigationArrow 
-        targetId="hero-section" 
-        direction="up"
-        className="z-[100] backdrop-blur-sm bg-black/30 p-2 rounded-full hover:bg-black/50 transition-colors absolute top-4 right-4" 
-      />
+      {/* Navigation Arrow Container - Fixed at the bottom of the viewport */}
+      <div className="w-full relative z-20 mt-8 flex justify-center">
+        <NavigationArrow 
+          targetId="goals-section" 
+          direction="down"
+          className="z-[100] backdrop-blur-sm bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors" 
+        />
+      </div>
     </section>
   );
 };
