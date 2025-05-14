@@ -84,38 +84,44 @@ const Goals = () => {
   return (
     <section
       id="goals-section"
-      className="relative bg-black min-h-screen flex items-center justify-center overflow-hidden pt-16"
+      className="relative bg-black min-h-screen flex flex-col overflow-hidden"
     >
       {/* Particles Background */}
       <ParticlesComponent id="particles-goals" />
 
-      <div className="w-full max-w-7xl mx-auto px-4 py-12 relative z-10">
+      {/* Header Section - Positioned at the top */}
+      <div className="w-full pt-16 sm:pt-20 md:pt-24 px-4 relative z-10">
         <motion.h2
-          className="text-4xl sm:text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-6 sm:mb-8 leading-tight pb-2 tracking-tight font-display text-center"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-3 sm:mb-4 md:mb-6 leading-tight tracking-tight font-display text-center mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
           transition={{ duration: 0.8 }}
         >
           Our Goals
         </motion.h2>
-        
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 w-full py-6 sm:py-8"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {goals.map((goal, index) => (
-            <GoalItem
-              key={index}
-              image={goal.image}
-              text={goal.text}
-              index={index}
-            />
-          ))}
-        </motion.div>
+      </div>
+      
+      {/* Content Section */}
+      <div className="flex-grow flex items-center justify-center w-full">
+        <div className="w-full max-w-7xl mx-auto px-4 py-8 md:py-12 relative z-10">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 lg:gap-10 w-full py-6 sm:py-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            {goals.map((goal, index) => (
+              <GoalItem
+                key={index}
+                image={goal.image}
+                text={goal.text}
+                index={index}
+              />
+            ))}
+          </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -82,7 +82,7 @@ const Testimonials = () => {
   return (
     <section
       id="testimonials-section"
-      className="relative bg-black min-h-screen py-16 sm:py-20 px-4 overflow-hidden flex items-center"
+      className="relative bg-black min-h-screen flex flex-col overflow-hidden"
     >
       {/* Subtle Particles Background */}
       <div className="absolute inset-0 opacity-30">
@@ -93,35 +93,39 @@ const Testimonials = () => {
       <div className="absolute top-40 left-10 w-64 h-64 bg-indigo-600/10 rounded-full blur-[120px] -z-10"></div>
       <div className="absolute bottom-40 right-10 w-72 h-72 bg-purple-600/10 rounded-full blur-[120px] -z-10"></div>
       
-      <div className="container mx-auto max-w-6xl relative z-10 py-16">
-        <motion.div 
+      {/* Header Section - Positioned at the top */}
+      <div className="w-full pt-16 sm:pt-20 md:pt-24 px-4 relative z-10">
+        <motion.h2
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 via-blue-100 to-gray-200 mb-3 sm:mb-4 md:mb-6 leading-tight tracking-tight font-display text-center mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
+          viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
+          transition={{ duration: 0.8 }}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 font-display tracking-tight">
-            What Our Users Say
-          </h2>
-          <p className="text-slate-400 max-w-xl mx-auto">
-            Don't just take our word for it — hear from some of our satisfied users who found success with our platform.
-          </p>
-        </motion.div>
+          What Our Users Say
+        </motion.h2>
+        <p className="text-slate-400 max-w-xl mx-auto text-center px-4">
+          Don't just take our word for it — hear from some of our satisfied users who found success with our platform.
+        </p>
+      </div>
 
-        {/* Bento Grid Layout for Testimonials */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              viewport={{ once: true }}
-            >
-              <TestimonialCard {...testimonial} />
-            </motion.div>
-          ))}
+      {/* Content Section */}
+      <div className="flex-grow flex items-center justify-center w-full">
+        <div className="container mx-auto max-w-6xl px-4 py-8 md:py-12 relative z-10">
+          {/* Bento Grid Layout for Testimonials */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={testimonial.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <TestimonialCard {...testimonial} />
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
