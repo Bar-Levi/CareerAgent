@@ -24,6 +24,6 @@ export const parseJobDescription = (description = "") => {
   const descriptionMain = match[1].trim();
 
   return (
-    <p>{descriptionMain}</p>
+    <p>{descriptionMain.split("company: ")[0]}</p>
   );
 };
