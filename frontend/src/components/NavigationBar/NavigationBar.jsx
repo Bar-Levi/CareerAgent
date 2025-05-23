@@ -88,7 +88,7 @@ const NavigationBar = ({ userType, showOnlyDashboard }) => {
           onClick: () => {
             handleNotificationClick({
               extraData: {
-                goToRoute: `/interviews`, // Optional: navigate to interviews page
+                goToRoute: `/interviews`,
                 stateAddition: { interviewId: data.interview._id },
               },
             });
@@ -104,7 +104,7 @@ const NavigationBar = ({ userType, showOnlyDashboard }) => {
         }
       );
     
-      fetchNotifications(); // Optionally update notifications
+      fetchNotifications();
     });
     
     fetchNotifications();

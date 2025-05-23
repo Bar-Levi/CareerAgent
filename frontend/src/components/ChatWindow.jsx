@@ -277,8 +277,9 @@ const ChatWindow = ({ user, title, currentOpenConversationId, onlineUsers }) => 
       }
     };
   
-    socket.on("newNotification", handleNewNotification);
     socket.on("updateReadMessages", handleUpdateReadMessages);
+
+    socket.on("newNotification", handleNewNotification);
     
     return () => {
       socket.off("newNotification", handleNewNotification);

@@ -8,20 +8,20 @@ const MySwal = withReactContent(Swal);
 const showEditRelevancePointsModal = async (user, navigate, location) => {
   // Current relevance points for matching criteria (state variable)
   const currentPoints = user.relevancePoints || {
-    matchedJobRolePoints: 10,
-    matchedSecurityClearancePoints: 20,
-    matchedEducationPoints: 20,
-    matchedSkillPoints: 3,
-    matchedWorkExperiencePoints: 30,
+    matchedJobRolePoints: 24,
+    matchedSecurityClearancePoints: 15,
+    matchedEducationPoints: 22,
+    matchedSkillPoints: 22,
+    matchedWorkExperiencePoints: 18,
   };
 
   // Default values for relevance points (used in reset)
   const defaultPoints = {
-    matchedJobRolePoints: 10,
-    matchedSecurityClearancePoints: 20,
-    matchedEducationPoints: 20,
-    matchedSkillPoints: 3,
-    matchedWorkExperiencePoints: 30,
+    matchedJobRolePoints: 24,
+    matchedSecurityClearancePoints: 15,
+    matchedEducationPoints: 22,
+    matchedSkillPoints: 22,
+    matchedWorkExperiencePoints: 18,
   };
 
   // Use the nullish coalescing operator so that a value of 0 is valid
@@ -315,14 +315,14 @@ const showEditRelevancePointsModal = async (user, navigate, location) => {
           <!-- Skill Points Slider -->
           <div class="relevance-slider-group">
             <div class="relevance-slider-label">
-              <span class="relevance-slider-text">Skills (per match)</span>
+              <span class="relevance-slider-text">Skills (for at least 3 matches)</span>
               <span id="skillPointsVal" class="relevance-slider-value">${currentPoints.matchedSkillPoints}</span>
             </div>
             <input 
               id="skillPoints" 
               type="range" 
               min="0" 
-              max="10" 
+              max="50" 
               value="${currentPoints.matchedSkillPoints}"
               class="relevance-slider relevance-slider-skill"
               oninput="document.getElementById('skillPointsVal').innerText = this.value" 

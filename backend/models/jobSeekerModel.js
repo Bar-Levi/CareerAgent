@@ -118,12 +118,12 @@ const jobSeekerSchema = new mongoose.Schema({
     relevancePoints: {
         type: Object,
         default: {
-            matchedJobRolePoints: 10,
-            matchedSecurityClearancePoints: 20,
-            matchedEducationPoints: 20,
-            matchedSkillPoints: 3,
-            matchedWorkExperiencePoints: 30,
-        },
+            matchedJobRolePoints: 24,
+            matchedSecurityClearancePoints: 15,
+            matchedEducationPoints: 22,
+            matchedSkillPoints: 22,
+            matchedWorkExperiencePoints: 18,
+          },
     },
     minPointsForUpdate: {
         type: Number,

@@ -11,7 +11,8 @@ const JobListingCard = ({
   setRenderingConversationKey,
   setRenderingConversationData,
   showOnlyApply = false,
-  setUser
+  setUser,
+  relevancePoints
 }) => {
   const {
     jobRole,
@@ -558,37 +559,37 @@ const JobListingCard = ({
               <ul className="list-none pl-0 space-y-3">
                 {matchedData?.jobRole?.length > 0 && (
                   <li className="p-2 bg-blue-50 rounded-lg">
-                    <strong className="block text-blue-800 text-sm mb-1">Job Role</strong>
+                    <strong className="block text-blue-800 text-sm mb-1">Job Role ({relevancePoints.matchedJobRolePoints})</strong>
                     <span className="block text-sm text-gray-700">{matchedData.jobRole.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.jobType?.length > 0 && (
                   <li className="p-2 bg-purple-50 rounded-lg">
-                    <strong className="block text-purple-800 text-sm mb-1">Job Type</strong>
-                    <span className="block text-sm text-gray-700">{matchedData.jobType.join(", ")}</span>
+                    <strong className="block text-purple-800 text-sm mb-1">Job Type ({matchedData.jobType[0].split(',')[1]})</strong>
+                    <span className="block text-sm text-gray-700">{matchedData.jobType[0].split(',')[0]}</span>
                   </li>
                 )}
                 {matchedData?.securityClearance !== null && (
                   <li className="p-2 bg-amber-50 rounded-lg">
-                    <strong className="block text-amber-800 text-sm mb-1">Security Clearance</strong>
+                    <strong className="block text-amber-800 text-sm mb-1">Security Clearance ({relevancePoints.matchedSecurityClearancePoints})</strong>
                     <span className="block text-sm text-gray-700">{matchedData.securityClearance}</span>
                   </li>
                 )}
                 {matchedData?.education?.length > 0 && (
                   <li className="p-2 bg-green-50 rounded-lg">
-                    <strong className="block text-green-800 text-sm mb-1">Education</strong>
+                    <strong className="block text-green-800 text-sm mb-1">Education ({relevancePoints.matchedEducationPoints})</strong>
                     <span className="block text-sm text-gray-700">{matchedData.education.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.workExperience?.length > 0 && (
                   <li className="p-2 bg-indigo-50 rounded-lg">
-                    <strong className="block text-indigo-800 text-sm mb-1">Work Experience</strong>
+                    <strong className="block text-indigo-800 text-sm mb-1">Work Experience ({relevancePoints.matchedWorkExperiencePoints})</strong>
                     <span className="block text-sm text-gray-700">{matchedData.workExperience.join(", ")}</span>
                   </li>
                 )}
                 {matchedData?.skills?.length > 0 && (
                   <li className="p-2 bg-gray-50 rounded-lg">
-                    <strong className="block text-gray-800 text-sm mb-1">Skills</strong>
+                    <strong className="block text-gray-800 text-sm mb-1">Skills ({relevancePoints.matchedSkillPoints})</strong>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {matchedData.skills.map((skill, idx) => (
                         <span key={idx} className="text-xs px-2 py-1 bg-white border border-gray-200 rounded-full text-gray-700">
