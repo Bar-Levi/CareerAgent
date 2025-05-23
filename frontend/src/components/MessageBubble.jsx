@@ -113,7 +113,7 @@ const MessageBubble = ({ message, currentUser, profilePics, onlineUsers }) => {
         <>
           <div className="message-container flex flex-col items-end max-w-[75%] xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
             <motion.div 
-              className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800 p-4 rounded-2xl rounded-tr-sm shadow-lg backdrop-blur-sm border border-blue-400/30 dark:border-blue-500/30 text-white"
+              className="bg-gradient-to-br from-green-400 to-green-500 dark:from-green-600 dark:to-green-800 p-4 rounded-2xl rounded-tr-sm shadow-lg backdrop-blur-sm border border-blue-400/30 dark:border-blue-500/30 text-white"
               whileHover={{ scale: 1.01, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.2), 0 8px 10px -6px rgba(59, 130, 246, 0.1)" }}
               transition={{ duration: 0.2 }}
               layout
@@ -160,13 +160,13 @@ const MessageBubble = ({ message, currentUser, profilePics, onlineUsers }) => {
                 >
                   <FaCheckDouble
                     size={12}
-                    className={message.read ? "text-blue-200" : "text-blue-100 opacity-70"}
+                    className={message.read ? "text-blue-600" : "text-gray-100"}
                   />
                 </motion.div>
               </div>
 
               <motion.div 
-                className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-0.5 opacity-0"
+                className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 opacity-0"
                 initial={{ scale: 0 }}
                 animate={hovered ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
