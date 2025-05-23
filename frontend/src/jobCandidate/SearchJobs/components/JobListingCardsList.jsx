@@ -25,11 +25,11 @@ const JobListingCardsList = ({
   const [itemsPerPage] = useState(5);
 
   const defaultRelevancePoints = {
-    matchedJobRolePoints: 10,
-    matchedSecurityClearancePoints: 20,
-    matchedEducationPoints: 20,
-    matchedSkillPoints: 3,
-    matchedWorkExperiencePoints: 30,
+    matchedJobRolePoints: 24,
+    matchedSecurityClearancePoints: 15,
+    matchedEducationPoints: 22,
+    matchedSkillPoints: 22,
+    matchedWorkExperiencePoints: 18,
   };
 
   const [relevancePoints, setRelevancePoints] = useState(defaultRelevancePoints);
@@ -237,32 +237,43 @@ const JobListingCardsList = ({
       for (const job of userData.job_role) {
         if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
           score += matchedJobRolePoints;
-          matchedData.jobRole.push(`${job} (${matchedJobRolePoints})`);
+          matchedData.jobRole.push(`${job}`);
         }
       }
     }
   
     // Job Types match
+    const STUDENT_JOB_MATCH_POINTS = 25;    
+    const PART_TIME_JOB_FOR_STUDENT_POINTS = 18; 
+    const FULL_TIME_JOB_FOR_NON_STUDENT_POINTS = 24;
+    
     if (userData.job_role && Array.isArray(userData.job_role)) {
-      if (userData.job_role.includes('Student')) {
+      const isStudent = userData.job_role.includes('Student');
+
+      if (isStudent) {
         if (jobListing.jobType.includes('Student')) {
-          score += 20;
-          matchedData.jobType.push(`Student (20)`);
+          score += STUDENT_JOB_MATCH_POINTS;
+          matchedData.jobType.push(`Student,${STUDENT_JOB_MATCH_POINTS}`);
         } else if (jobListing.jobType.includes('Part Time')) {
-          score += 15;
-          matchedData.jobType.push(`Part Time (15)`);
+          score += PART_TIME_JOB_FOR_STUDENT_POINTS;
+          matchedData.jobType.push(`Part Time,${PART_TIME_JOB_FOR_STUDENT_POINTS}`);
         }
-      } else if (jobListing.jobType.includes('Full Time')) {
-        score += 20;
-        matchedData.jobType.push(`Full Time (20)`);
+        // No points for students applying to full-time jobs
+      } else {
+        if (jobListing.jobType.includes('Full Time')) {
+          score += FULL_TIME_JOB_FOR_NON_STUDENT_POINTS;
+          matchedData.jobType.push(`Full Time,${FULL_TIME_JOB_FOR_NON_STUDENT_POINTS}`);
+        }
+        // No points for non-students applying to part-time or student positions
       }
     }
-  
+
+
     // Security clearance match
     if (userData.security_clearance && jobListing.securityClearance) {
       if (userData.security_clearance <= jobListing.securityClearance) {
         score += matchedSecurityClearancePoints;
-        matchedData.securityClearance = `${userData.security_clearance} (${matchedSecurityClearancePoints})`;
+        matchedData.securityClearance = `${userData.security_clearance}`;
       }
     }
   
@@ -272,7 +283,7 @@ const JobListingCardsList = ({
       userData.education.forEach(edu => {
         if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
           score += matchedEducationPoints;
-          matchedData.education.push(`${edu.degree} (${matchedEducationPoints})`);
+          matchedData.education.push(`${edu.degree}`);
         }
       });
     }
@@ -283,7 +294,7 @@ const JobListingCardsList = ({
       : { matchedJobs: [], experienceScore: 0 };
 
     if (workExperienceResult.experienceScore > 0) {
-      matchedData.workExperience.push(...workExperienceResult.matchedJobs.map(job => `${job} (${matchedWorkExperiencePoints})`));
+      matchedData.workExperience.push(...workExperienceResult.matchedJobs.map(job => `${job}`));
     }
     score += workExperienceResult.experienceScore;
   
@@ -292,9 +303,9 @@ const JobListingCardsList = ({
       const matchedSkills = jobListing.skills.filter(skill =>
         userData.skills.includes(skill)
       );
-      const skillsScore = matchedSkills.length * matchedSkillPoints;
+      const skillsScore = matchedSkills.length >= 3 ? matchedSkillPoints : 0;
       score += skillsScore;
-      matchedData.skills = matchedSkills.map(skill => `${skill} (${matchedSkillPoints})`);
+      matchedData.skills = matchedSkills.map(skill => `${skill}`);
     }
   
     return { score, matchedData };
@@ -532,6 +543,7 @@ const JobListingCardsList = ({
               showNotification={showNotification}
               setRenderingConversationKey={setRenderingConversationKey}
               setRenderingConversationData={setRenderingConversationData}
+              relevancePoints={relevancePoints}
             />
           </div>
         ))}

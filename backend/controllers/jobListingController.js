@@ -144,7 +144,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
       const matchedSkills = jobListing.skills.filter(skill =>
         userData.skills.includes(skill)
       );
-      const skillsScore = matchedSkills.length * matchedSkillPoints;
+      const skillsScore = matchedSkills.length  >= 3 ? matchedSkillPoints : 0; // Giving points if more than 3 skills match
       score += skillsScore;
       matchedData.skills = matchedSkills.map(skill => `${skill} (${matchedSkillPoints})`);
     }
@@ -164,11 +164,11 @@ async function getCandidatesToNotify(newJobListing, jobSeekers) {
     for (const candidate of jobSeekers) {
       // Use candidate's own relevancePoints configuration.
       const relevancePoints = candidate.relevancePoints || {
-        matchedJobRolePoints: 10,
-        matchedSecurityClearancePoints: 20,
-        matchedEducationPoints: 20,
-        matchedSkillPoints: 3,
-        matchedWorkExperiencePoints: 30,
+        matchedJobRolePoints: 24,
+        matchedSecurityClearancePoints: 15,
+        matchedEducationPoints: 22,
+        matchedSkillPoints: 22,
+        matchedWorkExperiencePoints: 18,
       };
       
       // Calculate the match score for this candidate.
