@@ -49,6 +49,13 @@ const ImproveCV = () => {
   const responseModalRef = useRef(null);
   const confettiRef = useRef(null);
   
+  // Sync currentUser when location.state.user changes
+  useEffect(() => {
+    if (location.state?.user) {
+      setCurrentUser(location.state.user);
+    }
+  }, [location.state?.user]);
+  
   // Check if the user has CV content
   useEffect(() => {
     if (currentUser?.cv && !currentUser?.cvContent) {
