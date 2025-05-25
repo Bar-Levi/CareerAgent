@@ -26,8 +26,9 @@ const CandidateMessages = ({
   // Get access to state to check for forceConversationSelect flag
   const { state } = useLocation();
   
-  // Use conversation ID from props or from navigation state
-  const selectedConversationId = propSelectedConversationId || state?.selectedConversationId;
+  // Only use state.selectedConversationId if it comes from a notification (indicated by forceConversationSelect)
+  // This prevents remembering selectedConversationId when manually navigating via Messages button
+  const selectedConversationId = propSelectedConversationId || (state?.forceConversationSelect ? state?.selectedConversationId : null);
   
   // When a candidate is selected, update conversation and candidate state
   const handleCandidateSelect = useCallback(async (conversation) => {
@@ -539,7 +540,12 @@ const CandidateMessages = ({
         profilePic: selectedCandidate?.profilePic
       }
     ] || [];
-    return selectedConversationId ? (
+
+    // Only show chat window if there are actual conversations for this job listing
+    // This prevents showing a chat from a different job listing via notification
+    const hasConversationsForThisJob = conversations.length > 0;
+    
+    return (selectedConversationId && hasConversationsForThisJob) ? (
       <ChatWindow
         key={jobListing ? jobListing._id : "none"}
         jobId={jobListing ? jobListing._id : null}
@@ -554,7 +560,7 @@ const CandidateMessages = ({
         Select a candidate to view chat.
       </div>
     );
-  }, [selectedConversationId, jobListing, user, selectedCandidate, darkMode, onlineUsers]);
+  }, [selectedConversationId, jobListing, user, selectedCandidate, darkMode, onlineUsers, conversations]);
 
   // Add debugging log on render to find any issues
   if (process.env.NODE_ENV !== 'production') {
