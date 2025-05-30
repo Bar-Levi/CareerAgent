@@ -81,10 +81,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 [name]: files[0],
             }));
             
-            // Process CV file immediately to extract content
-            if (name === 'cv' && files[0]) {
-                await processCVFile(files[0]);
-            }
+            
         } catch (error) {
             console.error('Error handling file change:', error.message);
             if (name === 'cv') {
@@ -97,7 +94,7 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         }
     };
     
-    // New function to process the CV file
+    // Function to process the CV file
     const processCVFile = async (file) => {
         try {
             setIsProcessingCV(true);
@@ -143,9 +140,12 @@ const OptionalDetailsForm = ({ onSubmit }) => {
                 analyzed_cv_content: prettyJson,
                 cvContent: cvContent
             }));
+
+            return { prettyJson, cvContent };
         } catch (error) {
             console.error('Error analyzing CV:', error.message);
             setCvError('Error analyzing CV. Please try again.');
+            throw error;
         } finally {
             setIsProcessingCV(false);
         }
@@ -162,15 +162,32 @@ const OptionalDetailsForm = ({ onSubmit }) => {
         setIsLoading(true); // Set loading to true when the request starts
     
         try {
-            // No need to process CV here since we do it immediately on file selection
+            // Process CV at submission time if a file is selected
+            let submissionData = {...formData};
             
-            console.log("Submitting form data:", JSON.stringify(formData, (key, value) => {
+            if (formData.cv) {
+                try {
+                    const cvResult = await processCVFile(formData.cv);
+                    // Use the returned data directly for submission instead of relying on state update
+                    submissionData = {
+                        ...submissionData,
+                        analyzed_cv_content: cvResult.prettyJson,
+                        cvContent: cvResult.cvContent
+                    };
+                } catch (error) {
+                    // If CV processing fails, stop the submission
+                    setIsLoading(false);
+                    return;
+                }
+            }
+            
+            console.log("Submitting form data:", JSON.stringify(submissionData, (key, value) => {
                 if (key === 'cv' || key === 'profilePic') {
                     return value ? value.name : value;
                 }
                 return value;
             }, 2));
-            await onSubmit(formData); // Submit the form data via the parent handler
+            await onSubmit(submissionData); // Submit the form data via the parent handler
         } catch (error) {
             console.error('Error submitting form:', error.message);
         } finally {
