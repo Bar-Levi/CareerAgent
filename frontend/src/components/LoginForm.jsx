@@ -1,37 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
 import { useNavigate } from 'react-router-dom';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import Swal from 'sweetalert2';
 import CryptoJS from 'crypto-js';
-import 'animate.css';
-
-// Add custom animations
-const customStyles = document.createElement('style');
-customStyles.textContent = `
-  @keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    50% { transform: translateX(5px); }
-    75% { transform: translateX(-5px); }
-    100% { transform: translateX(0); }
-  }
-  
-  @keyframes ping-once {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  .animate-shake {
-    animation: shake 0.4s linear;
-  }
-  
-  .animate-ping-once {
-    animation: ping-once 0.3s linear;
-  }
-`;
-document.head.appendChild(customStyles);
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'JobSeeker' });
@@ -86,267 +58,401 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         },
                     });
                 } else if (response.status === 405) {
-                    // Modern animated account blocked modal for 2025
-                    const result = await Swal.fire({
-                        title: '<div class="flex items-center gap-3"><i class="fas fa-shield-alt text-red-500 animate-pulse"></i><span>Security Alert</span></div>',
+                    // Modern 2025 Swal for blocked accounts
+                    
+                    // Inject required CSS for the modern design before showing the dialog
+                    const styleId = 'swal-modern-styles';
+                    if (document.getElementById(styleId)) {
+                        document.getElementById(styleId).remove();
+                    }
+                    
+                    const styleSheet = document.createElement('style');
+                    styleSheet.id = styleId;
+                    styleSheet.innerHTML = `
+                        .swal-modern-container {
+                            /* Remove perspective property */
+                        }
+                        .swal-modern-popup {
+                            border-radius: 20px;
+                            padding: 0;
+                            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                            overflow: hidden;
+                            transition: all 0.3s ease;
+                        }
+                        .swal-modern-show {
+                            transform: scale(1);
+                        }
+                        .swal-modern-hide {
+                            transform: scale(0.95);
+                        }
+                        .swal-modern-title {
+                            padding: 1.75rem 1.75rem 0;
+                            font-weight: 800;
+                        }
+                        .text-gradient {
+                            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                            -webkit-background-clip: text;
+                            background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            font-weight: 800;
+                        }
+                        .text-gradient-error {
+                            background: linear-gradient(135deg, #ef4444, #b91c1c);
+                            -webkit-background-clip: text;
+                            background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            font-weight: 800;
+                        }
+                        .swal-blocked-container {
+                            padding: 1rem 1.75rem 1.75rem;
+                        }
+                        .swal-icon-container {
+                            margin: 2rem auto;
+                            width: 90px;
+                            height: 90px;
+                            background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            position: relative;
+                        }
+                        .swal-icon-container:before {
+                            content: '';
+                            position: absolute;
+                            inset: 0;
+                            border-radius: 50%;
+                            padding: 3px;
+                            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                            -webkit-mask-composite: xor;
+                            mask-composite: exclude;
+                        }
+                        .swal-icon-container i {
+                            font-size: 2.75rem;
+                            color: #6366f1;
+                            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                            -webkit-background-clip: text;
+                            background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                        }
+                        .complete {
+                            animation: vibrate 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+                            transform: scale(1.2);
+                        }
+                        @keyframes vibrate {
+                            0%, 100% { transform: scale(1.2) rotate(0); }
+                            20% { transform: scale(1.3) rotate(-3deg); }
+                            40% { transform: scale(1.3) rotate(3deg); }
+                            60% { transform: scale(1.3) rotate(-2deg); }
+                            80% { transform: scale(1.3) rotate(2deg); }
+                        }
+                        .swal-message {
+                            color: #64748b;
+                            font-size: 1.05rem;
+                            text-align: center;
+                            margin-bottom: 2rem;
+                            line-height: 1.5;
+                        }
+                        .swal-pin-input-container {
+                            margin-top: 1.25rem;
+                        }
+                        .swal-pin-input-container label {
+                            display: block;
+                            font-size: 0.95rem;
+                            color: #64748b;
+                            margin-bottom: 0.75rem;
+                            font-weight: 500;
+                        }
+                        .pin-input-wrapper {
+                            position: relative;
+                        }
+                        .pin-input {
+                            width: 100%;
+                            padding: 1rem 1.25rem;
+                            border-radius: 16px;
+                            border: 2px solid #e2e8f0;
+                            background-color: #f8fafc;
+                            font-size: 1.2rem;
+                            letter-spacing: 4px;
+                            text-align: center;
+                            transition: all 0.2s;
+                            caret-color: #6366f1;
+                        }
+                        .pin-input:focus {
+                            border-color: #818cf8;
+                            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+                            outline: none;
+                        }
+                        #toggle-pin-visibility {
+                            position: absolute;
+                            right: 16px;
+                            top: 50%;
+                            transform: translateY(-50%);
+                            background: transparent;
+                            border: none;
+                            color: #94a3b8;
+                            cursor: pointer;
+                            transition: color 0.2s;
+                            width: 40px;
+                            height: 40px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 50%;
+                        }
+                        #toggle-pin-visibility:hover {
+                            color: #64748b;
+                            background-color: rgba(100, 116, 139, 0.1);
+                        }
+                        .pin-digit-display {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 1rem;
+                            gap: 8px;
+                        }
+                        .pin-digit-display span {
+                            height: 12px;
+                            width: 12px;
+                            border-radius: 50%;
+                            background-color: #e2e8f0;
+                            position: relative;
+                            flex: 1;
+                            transition: background-color 0.3s;
+                            overflow: hidden;
+                        }
+                        .pin-digit-display span:before {
+                            content: '';
+                            position: absolute;
+                            inset: 0;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                            transform: scale(0);
+                            transition: transform 0.15s ease;
+                        }
+                        .pin-digit-display span.filled:before {
+                            transform: scale(1);
+                        }
+                        .swal-modern-html-container {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .swal-modern-confirm-btn {
+                            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+                            border-radius: 14px;
+                            font-weight: 600;
+                            padding: 14px 28px;
+                            border: none;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            position: relative;
+                            overflow: hidden;
+                            transition: transform 0.3s, box-shadow 0.3s;
+                        }
+                        .swal-modern-confirm-btn:hover {
+                            background: linear-gradient(135deg, #2563eb, #7c3aed);
+                            transform: translateY(-2px);
+                            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+                        }
+                        .swal-modern-confirm-btn:after {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+                            opacity: 0;
+                            transition: opacity 0.3s;
+                        }
+                        .swal-modern-confirm-btn:hover:after {
+                            opacity: 1;
+                        }
+                        .swal-modern-confirm-btn:focus {
+                            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+                        }
+                        .swal-modern-cancel-btn {
+                            background: #f1f5f9;
+                            color: #475569;
+                            border-radius: 14px;
+                            font-weight: 600;
+                            padding: 14px 28px;
+                            border: none;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            transition: background-color 0.3s, transform 0.3s;
+                        }
+                        .swal-modern-cancel-btn:hover {
+                            background: #e2e8f0;
+                            transform: translateY(-2px);
+                        }
+                        .swal-validation-message {
+                            background-color: rgba(239, 68, 68, 0.05) !important;
+                            color: #ef4444;
+                            border-radius: 12px;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            padding: 12px 16px !important;
+                            margin: 1.25rem 0 !important;
+                            border-left: 4px solid #ef4444;
+                        }
+                    `;
+                    document.head.appendChild(styleSheet);
+                    
+                    const { value: pin } = await Swal.fire({
+                        title: '<span class="text-gradient">Account Locked</span>',
                         html: `
-                            <div class="space-y-6">
-                                <div class="flex justify-center">
-                                    <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
-                                        <i class="fas fa-lock text-red-500 text-3xl animate-bounce"></i>
+                            <div class="swal-blocked-container">
+                                <div class="swal-icon-container">
+                                    <i class="fas fa-shield-halved"></i>
+                                </div>
+                                <p class="swal-message">Your account has been temporarily locked due to multiple failed login attempts.</p>
+                                <div class="swal-pin-input-container">
+                                    <label for="pin-input">Enter your 6-digit security PIN</label>
+                                    <div class="pin-input-wrapper">
+                                        <input id="pin-input" type="password" class="pin-input" placeholder="• • • • • •" maxlength="6">
+                                        <button id="toggle-pin-visibility" type="button">
+                                            <i class="fas fa-eye-slash"></i>
+                                        </button>
                                     </div>
-                                </div>
-                                
-                                <div class="text-left space-y-3 mt-4">
-                                    <p class="text-gray-700 font-medium">Your account has been temporarily locked due to multiple failed login attempts.</p>
-                                    <p class="text-gray-600 text-sm">To protect your account, we've implemented this security measure.</p>
-                                </div>
-                                
-                                <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-3">
-                                    <div class="bg-gradient-to-r from-red-500 to-orange-500 h-full account-unlock-progress"></div>
-                                </div>
-
-                                <div class="flex gap-4 mt-6 flex-col">
-                                    <p class="text-gray-800 text-sm font-semibold">Enter your 6-digit security PIN to unlock:</p>
-                                    <div id="pin-container" class="flex justify-center gap-2"></div>
-                                    <div id="pin-error" class="text-red-500 text-xs hidden mt-2"></div>
-                                </div>
-                                
-                                <div class="mt-4 text-xs text-gray-500 bg-blue-50 p-3 rounded-lg flex items-start">
-                                    <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
-                                    <span>If you've forgotten your PIN, please contact support at <a href="mailto:careeragentpro@gmail.com" class="text-blue-600 hover:underline">support@careeragent.com</a></span>
+                                    <div class="pin-digit-display">
+                                        <span></span><span></span><span></span>
+                                        <span></span><span></span><span></span>
+                                    </div>
                                 </div>
                             </div>
                         `,
-                        showConfirmButton: true,
                         showCancelButton: true,
-                        confirmButtonText: 'Unlock Account',
-                        cancelButtonText: 'Cancel',
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        allowOutsideClick: false,
+                        confirmButtonText: '<i class="fas fa-unlock-alt"></i> Unlock Account',
+                        cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+                        customClass: {
+                            container: 'swal-modern-container',
+                            popup: 'swal-modern-popup',
+                            title: 'swal-modern-title',
+                            htmlContainer: 'swal-modern-html-container',
+                            confirmButton: 'swal-modern-confirm-btn',
+                            cancelButton: 'swal-modern-cancel-btn'
+                        },
                         backdrop: `
-                            rgba(0,0,23,0.65)
-                            url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M26.8 38.5c0-2.7 2.2-4.8 4.9-4.8h36.4c2.7 0 4.9 2.2 4.9 4.8v25.9c0 2.7-2.2 4.8-4.9 4.8H31.7c-2.7 0-4.9-2.2-4.9-4.8V38.5zm39.6 2.4c0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5v6c0 .8-.7 1.5-1.5 1.5s-1.5-.7-1.5-1.5v-6zm-6.5 18l3.2-3.2c.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1l-4.2 4.2c-.6.6-1.5.6-2.1 0l-4.2-4.2c-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0l3.1 3.2z' fill='rgba(255,255,255,.03)'/%3E%3C/svg%3E")
-                            center center/60px no-repeat
+                            rgba(15, 23, 42, 0.85)
+                            url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5z' fill='%239C92AC' fill-opacity='0.1'/%3E%3C/svg%3E")
+                            no-repeat
                         `,
+                        showClass: {
+                            popup: 'swal-modern-show'
+                        },
+                        hideClass: {
+                            popup: 'swal-modern-hide'
+                        },
                         didOpen: () => {
-                            // Create individual PIN input boxes
-                            const pinContainer = document.getElementById('pin-container');
-                            let pin = '';
-                            const totalDigits = 6;
+                            // Add modern interactive elements
+                            const pinInput = document.getElementById('pin-input');
+                            const toggleBtn = document.getElementById('toggle-pin-visibility');
+                            const digitDisplay = document.querySelector('.pin-digit-display');
+                            const digits = digitDisplay.querySelectorAll('span');
                             
-                            // Clear existing content
-                            pinContainer.innerHTML = '';
-                            
-                            // Create the digit inputs
-                            for (let i = 0; i < totalDigits; i++) {
-                                const input = document.createElement('div');
-                                input.className = 'w-10 h-12 border-2 rounded-lg flex items-center justify-center text-xl font-bold cursor-pointer transition-all duration-300 border-gray-300 bg-white hover:border-blue-500 pin-digit';
-                                input.dataset.position = i;
-                                pinContainer.appendChild(input);
-                            }
-                            
-                            // Create invisible input for actual typing
-                            const hiddenInput = document.createElement('input');
-                            hiddenInput.type = 'tel';
-                            hiddenInput.className = 'opacity-0 absolute h-1 w-1 -z-10';
-                            hiddenInput.maxLength = totalDigits;
-                            hiddenInput.pattern = '[0-9]*';
-                            hiddenInput.inputMode = 'numeric';
-                            pinContainer.appendChild(hiddenInput);
-                            
-                            // Focus hidden input and make pin boxes clickable
-                            hiddenInput.focus();
-                            
-                            document.querySelectorAll('.pin-digit').forEach(box => {
-                                box.addEventListener('click', () => {
-                                    hiddenInput.focus();
-                                });
+                            toggleBtn.addEventListener('click', () => {
+                                const type = pinInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                                pinInput.setAttribute('type', type);
+                                toggleBtn.innerHTML = type === 'text' ? 
+                                    '<i class="fas fa-eye"></i>' : 
+                                    '<i class="fas fa-eye-slash"></i>';
                             });
                             
-                            // Handle key input
-                            hiddenInput.addEventListener('input', (e) => {
-                                pin = e.target.value.replace(/[^0-9]/g, '').slice(0, totalDigits);
-                                e.target.value = pin;
+                            pinInput.addEventListener('input', (e) => {
+                                const value = e.target.value;
+                                const length = value.length;
                                 
-                                // Update the display
-                                document.querySelectorAll('.pin-digit').forEach((box, index) => {
-                                    if (index < pin.length) {
-                                        box.textContent = '•';
-                                        box.classList.add('border-blue-500', 'bg-blue-50', 'scale-110');
+                                // Update digit display with immediate fill
+                                Array.from(digits).forEach((digit, index) => {
+                                    if (index < length) {
+                                        digit.classList.add('filled');
+                                        digit.style.setProperty('--fill-delay', '0s'); // Remove delay
                                     } else {
-                                        box.textContent = '';
-                                        box.classList.remove('border-blue-500', 'bg-blue-50', 'scale-110');
+                                        digit.classList.remove('filled');
                                     }
                                 });
                                 
-                                // Hide error message when typing
-                                document.getElementById('pin-error').classList.add('hidden');
-                                
-                                // Add typing animation
-                                if (pin.length > 0) {
-                                    const lastDigitBox = document.querySelector(`.pin-digit[data-position="${pin.length - 1}"]`);
-                                    lastDigitBox.classList.add('animate-ping-once');
-                                    setTimeout(() => lastDigitBox.classList.remove('animate-ping-once'), 300);
+                                // Add vibration effect to icon on complete
+                                const iconElement = document.querySelector('.swal-icon-container i');
+                                if (length === 6) {
+                                    iconElement.classList.add('complete');
+                                    // Add haptic feedback simulation
+                                    if (window.navigator && window.navigator.vibrate) {
+                                        window.navigator.vibrate(100);
+                                    }
+                                } else {
+                                    iconElement.classList.remove('complete');
                                 }
-                            });
-                            
-                            // Add keydown for backspace and arrow keys
-                            hiddenInput.addEventListener('keydown', (e) => {
-                                if (e.key === 'Backspace' && pin.length > 0) {
-                                    const boxToHighlight = document.querySelector(`.pin-digit[data-position="${pin.length - 1}"]`);
-                                    boxToHighlight.classList.add('border-red-300', 'bg-red-50');
-                                    setTimeout(() => boxToHighlight.classList.remove('border-red-300', 'bg-red-50'), 200);
-                                }
-                            });
-                            
-                            // Add progress bar animation
-                            const progressBar = document.querySelector('.account-unlock-progress');
-                            progressBar.style.width = '0%';
-                            let progress = 0;
-                            
-                            const animateProgress = () => {
-                                progress += 1;
-                                progressBar.style.width = `${progress}%`;
-                                
-                                if (progress < 100) {
-                                    requestAnimationFrame(animateProgress);
-                                }
-                            };
-                            
-                            requestAnimationFrame(animateProgress);
-                            
-                            // Keep focus on hidden input
-                            document.addEventListener('click', function() {
-                                hiddenInput.focus();
                             });
                         },
                         preConfirm: () => {
-                            const pin = document.querySelector('#pin-container input').value;
-                            const errorElement = document.getElementById('pin-error');
-                            
-                            if (!pin || pin.length !== 6 || !/^\d+$/.test(pin)) {
-                                errorElement.textContent = 'Please enter a valid 6-digit PIN';
-                                errorElement.classList.remove('hidden');
-                                
-                                // Shake animation on error
-                                document.querySelectorAll('.pin-digit').forEach(box => {
-                                    box.classList.add('animate-shake');
-                                    setTimeout(() => box.classList.remove('animate-shake'), 500);
-                                });
-                                
+                            const pin = document.getElementById('pin-input').value;
+                            if (!pin || pin.length !== 6) {
+                                Swal.showValidationMessage(`
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    Please enter your complete 6-digit PIN
+                                `);
                                 return false;
                             }
-                            
-                            // Create a loading state while validating
-                            Swal.showLoading();
-                            document.querySelector('.swal2-confirm').disabled = true;
-                            
                             return pin;
                         }
                     });
-                
-                    if (result.isConfirmed && result.value) {
-                        const pin = result.value;
-                        
-                        // Show validation progress modal
-                        Swal.fire({
-                            title: 'Validating PIN',
-                            html: `
-                                <div class="flex flex-col items-center">
-                                    <div class="w-16 h-16 relative">
-                                        <div class="absolute inset-0 rounded-full border-4 border-blue-100 animate-ping opacity-75"></div>
-                                        <div class="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
-                                    </div>
-                                    <p class="mt-4 text-gray-600">Verifying credentials and unlocking your account...</p>
-                                </div>
-                            `,
-                            showConfirmButton: false,
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
+                    
+                    if (pin) {
+                        // Encrypt the PIN before sending it
+                        const encryptedPin = CryptoJS.AES.encrypt(pin, process.env.REACT_APP_SECRET_KEY).toString();
+                        const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ pin: encryptedPin, email: formData.email }),
                         });
-                        
-                        try {
-                            // Encrypt the PIN before sending it
-                            const encryptedPin = CryptoJS.AES.encrypt(pin, process.env.REACT_APP_SECRET_KEY).toString();
-                            const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ pin: encryptedPin, email: formData.email }),
+                
+                        const resetData = await resetResponse.json();
+                
+                        if (resetResponse.ok) {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: '<span class="text-gradient">Account Unlocked</span>',
+                                html: '<p class="swal-message">Your account has been successfully unlocked. You may now login.</p>',
+                                confirmButtonText: '<i class="fas fa-check-circle"></i> Continue',
+                                customClass: {
+                                    popup: 'swal-modern-popup',
+                                    title: 'swal-modern-title',
+                                    htmlContainer: 'swal-modern-html-container',
+                                    confirmButton: 'swal-modern-confirm-btn'
+                                },
+                                showClass: {
+                                    popup: 'swal-modern-show'
+                                },
+                                hideClass: {
+                                    popup: 'swal-modern-hide'
+                                }
                             });
-                    
-                            const resetData = await resetResponse.json();
-                    
-                            if (resetResponse.ok) {
-                                await Swal.fire({
-                                    icon: 'success',
-                                    title: '<div class="flex items-center gap-3"><i class="fas fa-unlock-alt text-green-500"></i><span>Account Unlocked!</span></div>',
-                                    html: `
-                                        <div class="space-y-4">
-                                            <div class="flex justify-center">
-                                                <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                                                    <div class="relative">
-                                                        <i class="fas fa-shield-alt text-green-500 text-3xl"></i>
-                                                        <i class="fas fa-check absolute bottom-0 right-0 text-white bg-green-500 rounded-full p-1 text-xs"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p>${resetData.message}</p>
-                                            <p class="text-sm text-gray-600 mt-2">You may now attempt to log in again.</p>
-                                        </div>
-                                    `,
-                                    confirmButtonText: '<i class="fas fa-sign-in-alt mr-2"></i>Log In Again',
-                                    confirmButtonColor: '#4CAF50',
-                                    allowOutsideClick: false,
-                                    showClass: {
-                                        popup: 'animate__animated animate__fadeInUp animate__faster'
-                                    },
-                                    hideClass: {
-                                        popup: 'animate__animated animate__fadeOutDown animate__faster'
-                                    }
-                                });
-                            } else {
-                                await Swal.fire({
-                                    icon: 'error',
-                                    title: '<div class="flex items-center gap-3"><i class="fas fa-exclamation-triangle text-red-500"></i><span>Verification Failed</span></div>',
-                                    html: `
-                                        <div class="space-y-4">
-                                            <div class="flex justify-center">
-                                                <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
-                                                    <i class="fas fa-times text-red-500 text-3xl"></i>
-                                                </div>
-                                            </div>
-                                            <p>${resetData.message}</p>
-                                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mt-4">
-                                                <div class="flex items-start">
-                                                    <div class="flex-shrink-0">
-                                                        <i class="fas fa-info-circle text-red-500"></i>
-                                                    </div>
-                                                    <div class="ml-3">
-                                                        <p class="text-sm text-red-700">
-                                                            If you've forgotten your PIN, please reset it through the "Forgot PIN" option in your profile settings or contact support.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `,
-                                    confirmButtonText: 'Try Again',
-                                    confirmButtonColor: '#ef4444',
-                                    showClass: {
-                                        popup: 'animate__animated animate__headShake'
-                                    }
-                                });
-                            }
-                        } catch (error) {
+                        } else {
                             await Swal.fire({
                                 icon: 'error',
-                                title: 'Connection Error',
-                                text: 'Failed to connect to the server. Please check your internet connection and try again.',
-                                confirmButtonColor: '#3085d6'
+                                title: '<span class="text-gradient-error">Verification Failed</span>',
+                                html: `<p class="swal-message">${resetData.message}</p>`,
+                                confirmButtonText: '<i class="fas fa-redo"></i> Try Again',
+                                customClass: {
+                                    popup: 'swal-modern-popup',
+                                    title: 'swal-modern-title',
+                                    htmlContainer: 'swal-modern-html-container',
+                                    confirmButton: 'swal-modern-confirm-btn'
+                                },
+                                showClass: {
+                                    popup: 'swal-modern-show'
+                                },
+                                hideClass: {
+                                    popup: 'swal-modern-hide'
+                                }
                             });
                         }
                     }
