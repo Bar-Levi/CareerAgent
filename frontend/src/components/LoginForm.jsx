@@ -1,9 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '@fortawesome/fontawesome-free/css/all.css';
 import { useNavigate } from 'react-router-dom';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import Swal from 'sweetalert2';
 import CryptoJS from 'crypto-js';
+import 'animate.css';
+
+// Add custom animations
+const customStyles = document.createElement('style');
+customStyles.textContent = `
+  @keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+  }
+  
+  @keyframes ping-once {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  .animate-shake {
+    animation: shake 0.4s linear;
+  }
+  
+  .animate-ping-once {
+    animation: ping-once 0.3s linear;
+  }
+`;
+document.head.appendChild(customStyles);
 
 const LoginForm = ({ toggleForm, setUserType }) => {
     const [formData, setFormData] = useState({ email: '', password: '', role: 'JobSeeker' });
@@ -58,53 +86,267 @@ const LoginForm = ({ toggleForm, setUserType }) => {
                         },
                     });
                 } else if (response.status === 405) {
-                    // Show the alert asking for the secret PIN
-                    const { value: pin } = await Swal.fire({
-                        title: 'Account Blocked',
-                        text: `Please enter your secret PIN to reset your login attempts.`,
-                        input: 'password',
-                        inputPlaceholder: 'Enter your secret PIN',
-                        inputAttributes: {
-                            maxlength: 6,
-                            autocapitalize: 'off',
-                            autocorrect: 'off',
-                        },
+                    // Modern animated account blocked modal for 2025
+                    const result = await Swal.fire({
+                        title: '<div class="flex items-center gap-3"><i class="fas fa-shield-alt text-red-500 animate-pulse"></i><span>Security Alert</span></div>',
+                        html: `
+                            <div class="space-y-6">
+                                <div class="flex justify-center">
+                                    <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+                                        <i class="fas fa-lock text-red-500 text-3xl animate-bounce"></i>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-left space-y-3 mt-4">
+                                    <p class="text-gray-700 font-medium">Your account has been temporarily locked due to multiple failed login attempts.</p>
+                                    <p class="text-gray-600 text-sm">To protect your account, we've implemented this security measure.</p>
+                                </div>
+                                
+                                <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden mt-3">
+                                    <div class="bg-gradient-to-r from-red-500 to-orange-500 h-full account-unlock-progress"></div>
+                                </div>
+
+                                <div class="flex gap-4 mt-6 flex-col">
+                                    <p class="text-gray-800 text-sm font-semibold">Enter your 6-digit security PIN to unlock:</p>
+                                    <div id="pin-container" class="flex justify-center gap-2"></div>
+                                    <div id="pin-error" class="text-red-500 text-xs hidden mt-2"></div>
+                                </div>
+                                
+                                <div class="mt-4 text-xs text-gray-500 bg-blue-50 p-3 rounded-lg flex items-start">
+                                    <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                                    <span>If you've forgotten your PIN, please contact support at <a href="mailto:careeragentpro@gmail.com" class="text-blue-600 hover:underline">support@careeragent.com</a></span>
+                                </div>
+                            </div>
+                        `,
+                        showConfirmButton: true,
                         showCancelButton: true,
-                        confirmButtonText: 'Submit',
+                        confirmButtonText: 'Unlock Account',
+                        cancelButtonText: 'Cancel',
                         confirmButtonColor: '#3085d6',
                         cancelButtonColor: '#d33',
-                        preConfirm: (pin) => {
-                            if (!pin) {
-                                Swal.showValidationMessage('Please enter your secret PIN');
+                        allowOutsideClick: false,
+                        backdrop: `
+                            rgba(0,0,23,0.65)
+                            url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M26.8 38.5c0-2.7 2.2-4.8 4.9-4.8h36.4c2.7 0 4.9 2.2 4.9 4.8v25.9c0 2.7-2.2 4.8-4.9 4.8H31.7c-2.7 0-4.9-2.2-4.9-4.8V38.5zm39.6 2.4c0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5v6c0 .8-.7 1.5-1.5 1.5s-1.5-.7-1.5-1.5v-6zm-6.5 18l3.2-3.2c.6-.6 1.5-.6 2.1 0 .6.6.6 1.5 0 2.1l-4.2 4.2c-.6.6-1.5.6-2.1 0l-4.2-4.2c-.6-.6-.6-1.5 0-2.1.6-.6 1.5-.6 2.1 0l3.1 3.2z' fill='rgba(255,255,255,.03)'/%3E%3C/svg%3E")
+                            center center/60px no-repeat
+                        `,
+                        didOpen: () => {
+                            // Create individual PIN input boxes
+                            const pinContainer = document.getElementById('pin-container');
+                            let pin = '';
+                            const totalDigits = 6;
+                            
+                            // Clear existing content
+                            pinContainer.innerHTML = '';
+                            
+                            // Create the digit inputs
+                            for (let i = 0; i < totalDigits; i++) {
+                                const input = document.createElement('div');
+                                input.className = 'w-10 h-12 border-2 rounded-lg flex items-center justify-center text-xl font-bold cursor-pointer transition-all duration-300 border-gray-300 bg-white hover:border-blue-500 pin-digit';
+                                input.dataset.position = i;
+                                pinContainer.appendChild(input);
                             }
-                            return pin;
+                            
+                            // Create invisible input for actual typing
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'tel';
+                            hiddenInput.className = 'opacity-0 absolute h-1 w-1 -z-10';
+                            hiddenInput.maxLength = totalDigits;
+                            hiddenInput.pattern = '[0-9]*';
+                            hiddenInput.inputMode = 'numeric';
+                            pinContainer.appendChild(hiddenInput);
+                            
+                            // Focus hidden input and make pin boxes clickable
+                            hiddenInput.focus();
+                            
+                            document.querySelectorAll('.pin-digit').forEach(box => {
+                                box.addEventListener('click', () => {
+                                    hiddenInput.focus();
+                                });
+                            });
+                            
+                            // Handle key input
+                            hiddenInput.addEventListener('input', (e) => {
+                                pin = e.target.value.replace(/[^0-9]/g, '').slice(0, totalDigits);
+                                e.target.value = pin;
+                                
+                                // Update the display
+                                document.querySelectorAll('.pin-digit').forEach((box, index) => {
+                                    if (index < pin.length) {
+                                        box.textContent = '•';
+                                        box.classList.add('border-blue-500', 'bg-blue-50', 'scale-110');
+                                    } else {
+                                        box.textContent = '';
+                                        box.classList.remove('border-blue-500', 'bg-blue-50', 'scale-110');
+                                    }
+                                });
+                                
+                                // Hide error message when typing
+                                document.getElementById('pin-error').classList.add('hidden');
+                                
+                                // Add typing animation
+                                if (pin.length > 0) {
+                                    const lastDigitBox = document.querySelector(`.pin-digit[data-position="${pin.length - 1}"]`);
+                                    lastDigitBox.classList.add('animate-ping-once');
+                                    setTimeout(() => lastDigitBox.classList.remove('animate-ping-once'), 300);
+                                }
+                            });
+                            
+                            // Add keydown for backspace and arrow keys
+                            hiddenInput.addEventListener('keydown', (e) => {
+                                if (e.key === 'Backspace' && pin.length > 0) {
+                                    const boxToHighlight = document.querySelector(`.pin-digit[data-position="${pin.length - 1}"]`);
+                                    boxToHighlight.classList.add('border-red-300', 'bg-red-50');
+                                    setTimeout(() => boxToHighlight.classList.remove('border-red-300', 'bg-red-50'), 200);
+                                }
+                            });
+                            
+                            // Add progress bar animation
+                            const progressBar = document.querySelector('.account-unlock-progress');
+                            progressBar.style.width = '0%';
+                            let progress = 0;
+                            
+                            const animateProgress = () => {
+                                progress += 1;
+                                progressBar.style.width = `${progress}%`;
+                                
+                                if (progress < 100) {
+                                    requestAnimationFrame(animateProgress);
+                                }
+                            };
+                            
+                            requestAnimationFrame(animateProgress);
+                            
+                            // Keep focus on hidden input
+                            document.addEventListener('click', function() {
+                                hiddenInput.focus();
+                            });
                         },
+                        preConfirm: () => {
+                            const pin = document.querySelector('#pin-container input').value;
+                            const errorElement = document.getElementById('pin-error');
+                            
+                            if (!pin || pin.length !== 6 || !/^\d+$/.test(pin)) {
+                                errorElement.textContent = 'Please enter a valid 6-digit PIN';
+                                errorElement.classList.remove('hidden');
+                                
+                                // Shake animation on error
+                                document.querySelectorAll('.pin-digit').forEach(box => {
+                                    box.classList.add('animate-shake');
+                                    setTimeout(() => box.classList.remove('animate-shake'), 500);
+                                });
+                                
+                                return false;
+                            }
+                            
+                            // Create a loading state while validating
+                            Swal.showLoading();
+                            document.querySelector('.swal2-confirm').disabled = true;
+                            
+                            return pin;
+                        }
                     });
                 
-                    if (pin) {
-                        // Encrypt the PIN before sending it
-                        const encryptedPin = CryptoJS.AES.encrypt(pin, process.env.REACT_APP_SECRET_KEY).toString();
-                        const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ pin: encryptedPin, email: formData.email }),
+                    if (result.isConfirmed && result.value) {
+                        const pin = result.value;
+                        
+                        // Show validation progress modal
+                        Swal.fire({
+                            title: 'Validating PIN',
+                            html: `
+                                <div class="flex flex-col items-center">
+                                    <div class="w-16 h-16 relative">
+                                        <div class="absolute inset-0 rounded-full border-4 border-blue-100 animate-ping opacity-75"></div>
+                                        <div class="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                                    </div>
+                                    <p class="mt-4 text-gray-600">Verifying credentials and unlocking your account...</p>
+                                </div>
+                            `,
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
                         });
-                
-                        const resetData = await resetResponse.json();
-                
-                        if (resetResponse.ok) {
-                            await Swal.fire({
-                                title: 'Success!',
-                                text: resetData.message,
-                                icon: 'success',
-                                confirmButtonColor: '#3085d6',
+                        
+                        try {
+                            // Encrypt the PIN before sending it
+                            const encryptedPin = CryptoJS.AES.encrypt(pin, process.env.REACT_APP_SECRET_KEY).toString();
+                            const resetResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/reset-login-attempts`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ pin: encryptedPin, email: formData.email }),
                             });
-                        } else {
+                    
+                            const resetData = await resetResponse.json();
+                    
+                            if (resetResponse.ok) {
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: '<div class="flex items-center gap-3"><i class="fas fa-unlock-alt text-green-500"></i><span>Account Unlocked!</span></div>',
+                                    html: `
+                                        <div class="space-y-4">
+                                            <div class="flex justify-center">
+                                                <div class="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                                                    <div class="relative">
+                                                        <i class="fas fa-shield-alt text-green-500 text-3xl"></i>
+                                                        <i class="fas fa-check absolute bottom-0 right-0 text-white bg-green-500 rounded-full p-1 text-xs"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p>${resetData.message}</p>
+                                            <p class="text-sm text-gray-600 mt-2">You may now attempt to log in again.</p>
+                                        </div>
+                                    `,
+                                    confirmButtonText: '<i class="fas fa-sign-in-alt mr-2"></i>Log In Again',
+                                    confirmButtonColor: '#4CAF50',
+                                    allowOutsideClick: false,
+                                    showClass: {
+                                        popup: 'animate__animated animate__fadeInUp animate__faster'
+                                    },
+                                    hideClass: {
+                                        popup: 'animate__animated animate__fadeOutDown animate__faster'
+                                    }
+                                });
+                            } else {
+                                await Swal.fire({
+                                    icon: 'error',
+                                    title: '<div class="flex items-center gap-3"><i class="fas fa-exclamation-triangle text-red-500"></i><span>Verification Failed</span></div>',
+                                    html: `
+                                        <div class="space-y-4">
+                                            <div class="flex justify-center">
+                                                <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center">
+                                                    <i class="fas fa-times text-red-500 text-3xl"></i>
+                                                </div>
+                                            </div>
+                                            <p>${resetData.message}</p>
+                                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mt-4">
+                                                <div class="flex items-start">
+                                                    <div class="flex-shrink-0">
+                                                        <i class="fas fa-info-circle text-red-500"></i>
+                                                    </div>
+                                                    <div class="ml-3">
+                                                        <p class="text-sm text-red-700">
+                                                            If you've forgotten your PIN, please reset it through the "Forgot PIN" option in your profile settings or contact support.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `,
+                                    confirmButtonText: 'Try Again',
+                                    confirmButtonColor: '#ef4444',
+                                    showClass: {
+                                        popup: 'animate__animated animate__headShake'
+                                    }
+                                });
+                            }
+                        } catch (error) {
                             await Swal.fire({
-                                title: 'Error',
-                                text: resetData.message,
                                 icon: 'error',
-                                confirmButtonColor: '#d33',
+                                title: 'Connection Error',
+                                text: 'Failed to connect to the server. Please check your internet connection and try again.',
+                                confirmButtonColor: '#3085d6'
                             });
                         }
                     }
