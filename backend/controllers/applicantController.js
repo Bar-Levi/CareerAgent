@@ -118,21 +118,36 @@ const getApplicantById = async (req, res) => {
 
 // Get all applicants for a specific recruiter by recruiterId
 const getRecruiterApplicants = async (req, res) => {
+    console.log('DEBUG: getRecruiterApplicants called');
     const { recruiterId } = req.params;
+    console.log('DEBUG: recruiterId param:', recruiterId);
+    
     try {
-        // Find applicants where the recruiterId matches
-        const applicants = await Applicant.find({ recruiterId }).hint({ recruiterId: 1 })
+        console.log('DEBUG: Starting to query database for recruiterId:', recruiterId);
+        
+        // Try first without hint to check if index exists
+        console.log('DEBUG: Executing MongoDB query');
+        const applicants = await Applicant.find({ recruiterId })
             .populate('interviewId jobId');
+        console.log('DEBUG: Query executed successfully');
+        console.log('DEBUG: Found applicants count:', applicants ? applicants.length : 0);
 
         if (!applicants || applicants.length === 0) {
+            console.log('DEBUG: No applicants found');
             return res.status(404).json({ message: 'No applicants found for this recruiter' });
         }
         
+        console.log('DEBUG: Preparing response');
         res.status(200).json({
             message: 'Applicants fetched successfully',
             applications: applicants,
         });
+        console.log('DEBUG: Response sent successfully');
     } catch (error) {
+        console.error('DEBUG ERROR DETAILS:', error);
+        console.error('DEBUG ERROR NAME:', error.name);
+        console.error('DEBUG ERROR CODE:', error.code);
+        console.error('DEBUG ERROR STACK:', error.stack);
         console.error('Error fetching applicants:', error);
         res.status(500).json({ message: 'Failed to fetch applicants', error: error.message });
     }
