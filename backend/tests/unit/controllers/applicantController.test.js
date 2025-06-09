@@ -334,11 +334,14 @@ describe('Applicant Controller', () => {
   describe('getRecruiterApplicants', () => {
     it('should return applicants for a specific recruiter', async () => {
       // Setup mocks
-      const hintMock = jest.fn().mockReturnThis();
-      const populateMock = jest.fn().mockResolvedValue([mockApplicant]);
+      const populate1 = jest.fn().mockReturnThis();
+      const populate2 = jest.fn().mockResolvedValue([mockApplicant]);
       Applicant.find.mockReturnValue({
-        hint: hintMock,
-        populate: populateMock
+        populate: populate1
+      });
+      
+      populate1.mockReturnValue({
+        populate: populate2
       });
       
       // Execute
@@ -356,16 +359,11 @@ describe('Applicant Controller', () => {
   describe('getJobSeekerApplicants', () => {
     it('should return applicants for a specific job seeker', async () => {
       // Setup mocks with proper chaining
-      const hintMock = jest.fn().mockReturnThis();
       const populate1 = jest.fn().mockReturnThis();
       const populate2 = jest.fn().mockReturnThis();
       const populate3 = jest.fn().mockResolvedValue([mockApplicant]);
       
       Applicant.find.mockReturnValue({
-        hint: hintMock
-      });
-      
-      hintMock.mockReturnValue({
         populate: populate1
       });
       
@@ -390,16 +388,11 @@ describe('Applicant Controller', () => {
 
     it('should return 404 if no applicants found for job seeker', async () => {
       // Setup mocks with proper chaining
-      const hintMock = jest.fn().mockReturnThis();
       const populate1 = jest.fn().mockReturnThis();
       const populate2 = jest.fn().mockReturnThis();
       const populate3 = jest.fn().mockResolvedValue([]);
       
       Applicant.find.mockReturnValue({
-        hint: hintMock
-      });
-      
-      hintMock.mockReturnValue({
         populate: populate1
       });
       
