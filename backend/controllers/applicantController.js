@@ -51,7 +51,7 @@ const createApplicant = async (req, res) => {
             type: "apply",
             message: `${req.body.name} has applied for the ${req.body.jobTitle} position.`,
             extraData: {
-                goToRoute: '/dashboard',
+                goToRoute: '/dashboard?refresh=' + new Date().getTime(),
                 stateAddition: {
                     viewMode: 'applications',
                     jobListing,
@@ -61,7 +61,8 @@ const createApplicant = async (req, res) => {
                         senderId: savedApplicant.jobSeekerId,
                     },
                     applicantId: savedApplicant._id,
-                    selectedCandidateId: savedApplicant.jobSeekerId
+                    selectedCandidateId: savedApplicant.jobSeekerId,
+                    forceRefresh: true
                 },
             },
         };

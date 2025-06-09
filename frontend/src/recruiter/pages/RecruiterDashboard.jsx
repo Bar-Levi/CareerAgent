@@ -26,9 +26,18 @@ import convertMongoObject from "../../utils/convertMongoObject";
 
 const RecruiterDashboard = ({onlineUsers}) => {
   const location = useLocation();
-  const state = location.state;
+  const state = location.state || {};
   const user = state?.user;
   const navigate = useNavigate();
+  
+  // Extract refresh parameter from URL to force refresh when needed
+  const searchParams = new URLSearchParams(location.search);
+  const refreshParam = searchParams.get('refresh');
+  
+  // If there's a refresh parameter, use it to create a unique key for re-rendering
+  if (refreshParam && !state.refreshToken) {
+    state.refreshToken = refreshParam;
+  }
 
   // Core state
   const [jobListings, setJobListings] = useState([]);
@@ -159,6 +168,23 @@ const RecruiterDashboard = ({onlineUsers}) => {
           ...state, 
           selectedCandidateId: undefined 
         } 
+      });
+    }
+    
+    // If forceRefresh is true in state, refresh the applications data
+    if (state?.forceRefresh) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Force refreshing applications data");
+      }
+      fetchApplications();
+      
+      // Clear the forceRefresh flag
+      navigate(window.location.pathname, {
+        replace: true,
+        state: {
+          ...state,
+          forceRefresh: undefined
+        }
       });
     }
     
