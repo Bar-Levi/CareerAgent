@@ -287,10 +287,37 @@ const CandidateTable = ({
     name: 'w-[20%] min-w-[180px]',
     jobTitle: 'w-[15%] min-w-[150px]',
     applicationDate: 'w-[15%] min-w-[130px]', 
-    status: 'w-[10%] min-w-[120px]',
-    interview: 'w-[15%] min-w-[180px]',
-    nextStep: 'w-[15%] min-w-[150px]',
+    status: 'w-[14%] min-w-[150px]',
+    interview: 'w-[14%] min-w-[180px]',
+    nextStep: 'w-[12%] min-w-[150px]',
     actions: 'w-[10%] min-w-[100px]'
+  };
+
+  // Get status color for current status
+  const getStatusColor = (status) => {
+    if (darkMode) {
+      switch (status) {
+        case "Applied": return "bg-blue-900/30 text-blue-300";
+        case "In Review": return "bg-yellow-900/30 text-yellow-300";
+        case "Interview Scheduled": return "bg-purple-900/30 text-purple-300";
+        case "Interview Done": return "bg-indigo-900/30 text-indigo-300";
+        case "Accepted": return "bg-green-900/30 text-green-300";
+        case "Hired": return "bg-emerald-900/30 text-emerald-300";
+        case "Rejected": return "bg-red-900/30 text-red-300";
+        default: return "bg-gray-700 text-gray-300";
+      }
+    } else {
+      switch (status) {
+        case "Applied": return "bg-blue-100 text-blue-800";
+        case "In Review": return "bg-yellow-100 text-yellow-800";
+        case "Interview Scheduled": return "bg-purple-100 text-purple-800";
+        case "Interview Done": return "bg-indigo-100 text-indigo-800";
+        case "Accepted": return "bg-green-100 text-green-800";
+        case "Hired": return "bg-emerald-100 text-emerald-800";
+        case "Rejected": return "bg-red-100 text-red-800";
+        default: return "bg-gray-100 text-gray-800";
+      }
+    }
   };
 
   return (
@@ -312,10 +339,10 @@ const CandidateTable = ({
                           ? 'cursor-pointer hover:bg-gray-700' 
                           : 'cursor-pointer hover:bg-gray-100'
                         : ''
-                    }`}
+                    } ${key === 'status' ? 'text-center' : ''}`}
                     onClick={() => handleSort(key)}
                   >
-                    <div className="flex items-center">
+                    <div className={`flex items-center ${key === 'status' ? 'justify-center' : ''}`}>
                       {label}
                       {renderSortIcon(key)}
                     </div>
@@ -327,33 +354,6 @@ const CandidateTable = ({
           <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
             {applicants && applicants.length > 0 ? applicants.map((app) => {
               const statusAction = getStatusAction(app);
-
-              // Get status color for current status
-              const getStatusColor = (status) => {
-                if (darkMode) {
-                  switch (status) {
-                    case "Applied": return "bg-blue-900/30 text-blue-300";
-                    case "In Review": return "bg-yellow-900/30 text-yellow-300";
-                    case "Interview Scheduled": return "bg-purple-900/30 text-purple-300";
-                    case "Interview Done": return "bg-indigo-900/30 text-indigo-300";
-                    case "Accepted": return "bg-green-900/30 text-green-300";
-                    case "Hired": return "bg-emerald-900/30 text-emerald-300";
-                    case "Rejected": return "bg-red-900/30 text-red-300";
-                    default: return "bg-gray-700 text-gray-300";
-                  }
-                } else {
-                  switch (status) {
-                    case "Applied": return "bg-blue-100 text-blue-800";
-                    case "In Review": return "bg-yellow-100 text-yellow-800";
-                    case "Interview Scheduled": return "bg-purple-100 text-purple-800";
-                    case "Interview Done": return "bg-indigo-100 text-indigo-800";
-                    case "Accepted": return "bg-green-100 text-green-800";
-                    case "Hired": return "bg-emerald-100 text-emerald-800";
-                    case "Rejected": return "bg-red-100 text-red-800";
-                    default: return "bg-gray-100 text-gray-800";
-                  }
-                }
-              };
 
               return (
                 <tr
@@ -387,6 +387,16 @@ const CandidateTable = ({
                           <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>
                             {app.email}
                           </div>
+                          {app.notes && (
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center mt-1`} title={app.notes}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span className="truncate max-w-[150px]">
+                                {app.notes.length > 20 ? `${app.notes.substring(0, 20)}...` : app.notes}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -410,8 +420,8 @@ const CandidateTable = ({
 
                   {/* Status */}
                   {visibleColumns.status && (
-                    <td className="px-4 py-4 whitespace-nowrap text-center">
-                      <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
+                    <td className="px-2 py-3 text-center">
+                      <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)} w-full mx-auto text-center whitespace-normal`}>
                         {app.status}
                       </span>
                     </td>
@@ -589,9 +599,13 @@ const CandidateTable = ({
             onSuccess={() => {
               refetchApplicants?.();
               setShowNotesModal(false);
+              setRenderKey(prev => prev + 1); // Force re-render
             }}
             darkMode={darkMode}
-            onNotesUpdated={() => refetchApplicants?.()}
+            onNotesUpdated={() => {
+              refetchApplicants?.();
+              setRenderKey(prev => prev + 1); // Force re-render
+            }}
           />
         </div>
       )}

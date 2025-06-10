@@ -221,13 +221,13 @@ const getActiveRecruiterApplicants = async (req, res) => {
 // Update a specific applicant by ID
 const updateApplicant = async (req, res) => {
     const { id } = req.params;
-    let { status, interviewId } = req.body;
+    const updateData = req.body;
     let otherApplicants = [];
 
     try {
         const updatedApplicant = await Applicant.findByIdAndUpdate(
             id, 
-            { status, interviewId: status === "Interview Done" ? null : interviewId}, 
+            updateData, 
             { new: true, runValidators: true }
         ).populate('jobId');
 
@@ -235,14 +235,14 @@ const updateApplicant = async (req, res) => {
             return res.status(404).json({ message: 'Applicant not found' });
         }
 
-        
-        if (status === "Interview Done") {
-            await Interview.findByIdAndDelete(interviewId);
-        } else if (status === "Rejected") {
+        // Handle specific status-related logic
+        if (updateData.status === "Interview Done" && updateData.interviewId) {
+            await Interview.findByIdAndDelete(updateData.interviewId);
+        } else if (updateData.status === "Rejected" && updateData.interviewId) {
             await Applicant.findByIdAndUpdate(id, { interviewId: null });
             
-            await Interview.findByIdAndDelete(interviewId);
-        } else if (status === "Hired") {
+            await Interview.findByIdAndDelete(updateData.interviewId);
+        } else if (updateData.status === "Hired") {
             // Increment the recruiter's totalHired counter
             await Recruiter.findByIdAndUpdate(
                 updatedApplicant.recruiterId,
