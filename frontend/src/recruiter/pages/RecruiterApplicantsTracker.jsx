@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import Botpress from "../../botpress/Botpress";
 import NavigationBar from "../../components/NavigationBar/NavigationBar";
@@ -29,6 +29,30 @@ const fetchApplicants = async (user, setAllApplicants) => {
   }
 };
 
+// Add function to fetch active applications
+const fetchActiveApplicants = async (user, setActiveApplicationsCount) => {
+  try {
+    const response = await fetch(
+      `${process.env.REACT_APP_BACKEND_URL}/api/applicants/getActiveRecruiterApplicants/${user._id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    if (response.ok) {
+      const data = await response.json();
+      setActiveApplicationsCount(data.applications?.length || 0);
+    } else if (response.status === 404) {
+      // No active applications found
+      setActiveApplicationsCount(0);
+    }
+  } catch (error) {
+    console.error("Failed to fetch active candidates:", error);
+    setActiveApplicationsCount(0);
+  }
+};
+
 const RecruiterApplicantsTracker = () => {
   // 1) Retrieve user from router state
   const { state } = useLocation();
@@ -55,6 +79,9 @@ const RecruiterApplicantsTracker = () => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("careeragent_darkmode") === "true" || false
   );
+
+  // Add state for active applications count
+  const [activeApplicationsCount, setActiveApplicationsCount] = useState(0);
 
   // Function to update totalHired count when a candidate is marked as hired
   const updateTotalHired = () => {
@@ -108,11 +135,19 @@ const RecruiterApplicantsTracker = () => {
     actions: true
   });
 
+  // Define a refreshMetrics function that will refresh the active applications count
+  const refreshMetrics = useCallback(() => {
+    if (user && user._id) {
+      fetchActiveApplicants(user, setActiveApplicationsCount);
+    }
+  }, [user]);
+
   // -- Fetch data from backend on mount
   useEffect(() => {
     if (!user?._id) return;
 
     fetchApplicants(user, setAllApplicants);
+    fetchActiveApplicants(user, setActiveApplicationsCount); // Fetch active applications count
   }, [user?._id]);
 
   // -- Apply filtering, then sorting, then compute sidebar data
@@ -230,6 +265,7 @@ const RecruiterApplicantsTracker = () => {
 
   const refetchApplicants = async () => {
     await fetchApplicants(user, setAllApplicants);
+    await fetchActiveApplicants(user, setActiveApplicationsCount); // Refresh active applications count
   };
 
   const getCSVData = (applicants) => {
@@ -526,6 +562,7 @@ const RecruiterApplicantsTracker = () => {
                 darkMode={darkMode}
                 user={user}
                 updateTotalHired={updateTotalHired}
+                refreshMetrics={refreshMetrics}
               />
             </div>
           </div>

@@ -11,7 +11,8 @@ const Applications = ({
   setTitle,
   setViewMode,
   selectedCandidateId,
-  darkMode,  
+  darkMode,
+  refreshMetrics,
 }) => {
   const { state } = useLocation();
   const user = state?.user;
@@ -382,12 +383,20 @@ const Applications = ({
         }
       }
       setApplicantsData(newApplicantsData);
+      
+      // Refresh metrics after applicant data is loaded
+      if (refreshMetrics) {
+        refreshMetrics();
+      }
     };
 
     if (applications.length > 0) {
       fetchApplicantsData();
+    } else if (refreshMetrics) {
+      // If no applications, still refresh metrics to show zero
+      refreshMetrics();
     }
-  }, [applications]);
+  }, [applications, refreshMetrics]);
 
   return (
     <div className="mx-auto h-full flex flex-col">

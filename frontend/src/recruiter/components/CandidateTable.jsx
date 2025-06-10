@@ -100,6 +100,7 @@ const CandidateTable = ({
   darkMode = false,
   user, // Add user prop
   updateTotalHired, // Add function to update totalHired count
+  refreshMetrics, // Add refreshMetrics function
 }) => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -157,7 +158,7 @@ const CandidateTable = ({
   };
 
   const patchStatus = async (applicant, status) => {
-    await updateApplicantStatus(applicant, status, refetchApplicants);
+    await updateApplicantStatus(applicant, status, refetchApplicants, refreshMetrics);
     
     // When status is changed to Hired, increment totalHired counter
     if (status === "Hired" && updateTotalHired) {
@@ -283,20 +284,20 @@ const CandidateTable = ({
 
   // Column width classes for each column
   const columnWidthClasses = {
-    name: 'min-w-[180px]',
-    jobTitle: 'min-w-[150px]',
-    applicationDate: 'min-w-[130px]', 
-    status: 'min-w-[140px]',
-    interview: 'min-w-[200px]',
-    nextStep: 'min-w-[170px]',
-    actions: 'min-w-[100px]'
+    name: 'w-[20%] min-w-[180px]',
+    jobTitle: 'w-[15%] min-w-[150px]',
+    applicationDate: 'w-[15%] min-w-[130px]', 
+    status: 'w-[10%] min-w-[120px]',
+    interview: 'w-[15%] min-w-[180px]',
+    nextStep: 'w-[15%] min-w-[150px]',
+    actions: 'w-[10%] min-w-[100px]'
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       {/* Scrollable Table Container */}
-      <div className="flex-1 overflow-auto">
-        <table className={`w-max divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+      <div className="flex-1 overflow-auto w-full">
+        <table className={`w-full table-fixed divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
           <thead className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} sticky top-0 z-10`}>
             <tr>
               {columns.map(({ key, label }) => 
@@ -370,7 +371,7 @@ const CandidateTable = ({
                 >
                   {/* Candidate Details */}
                   {visibleColumns.name && (
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 overflow-hidden">
                       <div className="flex items-start space-x-3">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden">
                           <img
@@ -379,11 +380,11 @@ const CandidateTable = ({
                             alt={app.name}
                           />
                         </div>
-                        <div>
-                          <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <div className="min-w-0 flex-1">
+                          <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'} truncate`}>
                             {app.name}
                           </div>
-                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>
                             {app.email}
                           </div>
                         </div>
@@ -393,14 +394,14 @@ const CandidateTable = ({
 
                   {/* Job Title */}
                   {visibleColumns.jobTitle && (
-                    <td className={`px-4 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <td className={`px-4 py-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'} truncate`}>
                       {app.jobTitle}
                     </td>
                   )}
 
                   {/* Application Date */}
                   {visibleColumns.applicationDate && (
-                    <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} whitespace-nowrap`}>
                       {app.applicationDate
                         ? new Date(app.applicationDate).toLocaleDateString()
                         : "N/A"}
@@ -409,7 +410,7 @@ const CandidateTable = ({
 
                   {/* Status */}
                   {visibleColumns.status && (
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
                       <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
                         {app.status}
                       </span>
@@ -418,9 +419,9 @@ const CandidateTable = ({
 
                   {/* Interview */}
                   {visibleColumns.interview && (
-                    <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <td className={`px-4 py-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'} overflow-hidden`}>
                       {app.interviewId ? (
-                        <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        <div className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} truncate`}>
                           <div>
                             {new Date(app.interviewId.scheduledTime).toLocaleString()}
                           </div>
@@ -441,11 +442,11 @@ const CandidateTable = ({
 
                   {/* Next Step */}
                   {visibleColumns.nextStep && (
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 overflow-hidden text-center">
                       {statusAction ? (
                         <>
                           {compactView ? (
-                            <div className="flex space-x-2">
+                            <div className="flex flex-wrap justify-center items-center mx-auto">
                               {statusAction.map((action, idx) => (
                                 <ActionButton
                                   key={idx}
@@ -459,7 +460,7 @@ const CandidateTable = ({
                               ))}
                             </div>
                           ) : (
-                            <div className="flex flex-col space-y-1">
+                            <div className="flex flex-col items-center space-y-1">
                               {statusAction.map((action, idx) => (
                                 <ActionButton
                                   key={idx}
@@ -483,7 +484,7 @@ const CandidateTable = ({
 
                   {/* Actions */}
                   {visibleColumns.actions && (
-                    <td className="px-4 py-4 text-right text-sm font-medium">
+                    <td className="px-4 py-4 text-center text-sm font-medium">
                       <div className="flex space-x-2 justify-center">
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -544,9 +545,17 @@ const CandidateTable = ({
               <tr>
                 <td 
                   colSpan={Object.values(visibleColumns).filter(Boolean).length} 
-                  className={`px-4 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  className={`px-4 py-16 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'} text-lg font-medium w-full`}
                 >
-                  No candidates found matching your filters.
+                  {applicants.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      <span>No applicants found</span>
+                      <span className="text-sm font-normal">Try adjusting your search filters</span>
+                    </div>
+                  ) : "Loading applicants..."}
                 </td>
               </tr>
             )}
