@@ -118,32 +118,12 @@ const MyJobListings = ({
   }, []);
 
   const getNewApplicantsCount = (jobId) => {
-    const jobApplicants = applications.filter(app => app.jobId?._id === jobId || app.jobId === jobId);
-    
-    const viewedAppIds = viewedApplications[jobId] || [];
-    
-    return jobApplicants.filter(app => !viewedAppIds.includes(app._id)).length;
+    // Show total number of applicants for the job listing
+    return applications.filter(app => app.jobId?._id === jobId || app.jobId === jobId).length;
   };
 
-  useEffect(() => {
-    if (selectedJobListing && selectedJobListing._id) {
-      const updatedViewedApps = { ...viewedApplications };
-      
-      const jobApplicants = applications.filter(
-        app => app.jobId?._id === selectedJobListing._id || app.jobId === selectedJobListing._id
-      );
-      
-      updatedViewedApps[selectedJobListing._id] = [
-        ...(updatedViewedApps[selectedJobListing._id] || []),
-        ...jobApplicants.map(app => app._id)
-      ];
-      
-      updatedViewedApps[selectedJobListing._id] = [...new Set(updatedViewedApps[selectedJobListing._id])];
-      
-      setViewedApplications(updatedViewedApps);
-      localStorage.setItem('viewedApplications', JSON.stringify(updatedViewedApps));
-    }
-  }, [selectedJobListing, applications]);
+  // Removed automatic marking of applicants as viewed when job listing is selected
+  // This ensures the applicant count badge remains visible at all times
 
   useEffect(() => {
     if (selectedJobListing && jobListings && selectedJobListingRef.current) {
