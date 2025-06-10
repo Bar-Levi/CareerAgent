@@ -34,16 +34,20 @@ const Applications = ({
   const containerRef = useRef();
   const applicationRefs = useRef({});
   
-  // Identify and save the current job listing ID
+  // Identify and save the current job listing ID, and reset selection on change
   useEffect(() => {
     if (applications && applications.length > 0 && applications[0].jobId) {
       const jobId = applications[0].jobId;
       if (jobId !== currentJobListingId) {
         setCurrentJobListingId(jobId);
         
-        // Reset processed flag when changing job listings
+        // Reset processed flag and selection when changing job listings
         setProcessedCandidateId(null);
+        setSelectedApplicant(null);
       }
+    } else {
+      // If there are no applications, clear the selection
+      setSelectedApplicant(null);
     }
   }, [applications, currentJobListingId]);
   
@@ -81,8 +85,15 @@ const Applications = ({
   // Handle applicant selection
   const handleApplicantClick = (app) => {
     // Check if this app is currently selected
-    const isCurrentlySelected = selectedApplicant && selectedApplicant._id === app._id;
-    
+    const isCurrentlySelected =
+      selectedApplicant &&
+      (selectedApplicant._id === app._id ||
+        (selectedApplicant.jobSeekerId &&
+          selectedApplicant.jobSeekerId === app.jobSeekerId) ||
+        (selectedApplicant.applicantId &&
+          app.applicantId &&
+          selectedApplicant.applicantId._id === app.applicantId._id));
+
     // Toggle selection - if clicking the same applicant, deselect it
     if (isCurrentlySelected) {
       setSelectedApplicant(null);
@@ -229,14 +240,6 @@ const Applications = ({
       }
     }
   }, [selectedCandidateId, applications, findApplicantById, processedCandidateId, currentJobListingId, notificationTimestamp, state]);
-  
-  // Reset selectedApplicant when applications change (different job listing)
-  useEffect(() => {
-    // Clear the selected applicant when applications array changes (different job listing loaded)
-    if (applications && Array.isArray(applications)) {
-      setSelectedApplicant(null);
-    }
-  }, [applications]);
 
   // Add ref to each application card
   const registerRef = useCallback((ref, app) => {
@@ -574,7 +577,7 @@ const Applications = ({
             </p>
           </div>
         ) : (
-          <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} overflow-y-auto flex-grow`} ref={containerRef}>
+          <div className={`overflow-y-auto flex-grow`} ref={containerRef}>
             {getFilteredApplications().map((app) => {
               const applicantData = applicantsData[app._id];
               // Check by all possible IDs to ensure we catch the selected applicant
@@ -583,7 +586,7 @@ const Applications = ({
                 (selectedApplicant && 
                   // Check various ID matching possibilities
                   (selectedApplicant._id === app._id || 
-                   selectedApplicant.jobSeekerId === app.jobSeekerId ||
+                   (selectedApplicant.jobSeekerId && selectedApplicant.jobSeekerId === app.jobSeekerId) ||
                    (selectedApplicant.applicantId && 
                     app.applicantId && 
                     selectedApplicant.applicantId._id === app.applicantId._id)
@@ -592,7 +595,7 @@ const Applications = ({
                 // Also check if this applicant's ID matches the selectedCandidateId prop
                 (selectedCandidateId && 
                   (selectedCandidateId === app._id || 
-                   selectedCandidateId === app.jobSeekerId || 
+                   (app.jobSeekerId && selectedCandidateId === app.jobSeekerId) || 
                    (app.applicantId && selectedCandidateId === app.applicantId._id)
                   )
                 );
@@ -609,21 +612,25 @@ const Applications = ({
                     registerRef(el, app);
                     
                     // Also attach to selectedCandidateRef for selection
-                    if (selectedApplicant && 
-                       (app._id === selectedApplicant._id || 
-                        app.jobSeekerId === selectedApplicant.jobSeekerId)) {
+                    if (isSelected) {
                       selectedCandidateRef.current = el;
                     }
                   }}
                   className={`p-6 transition-colors duration-200 cursor-pointer relative ${
-                    isSelected 
-                      ? darkMode ? 'bg-indigo-900/30 border-l-4 border-indigo-500' : 'bg-indigo-50 border-l-4 border-indigo-500'
-                      : darkMode ? 'hover:bg-indigo-900/20 hover:border-l-4 hover:border-indigo-500' : 'hover:bg-indigo-50 hover:border-l-4 hover:border-indigo-500'
+                    isSelected
+                      ? `border-l-4 border-indigo-500 ${
+                          darkMode ? "bg-indigo-900/30" : "bg-indigo-50"
+                        }`
+                      : `border-l-4 hover:border-indigo-500 ${
+                          darkMode
+                            ? "border-gray-800 hover:bg-indigo-900/20"
+                            : "border-white hover:bg-indigo-50"
+                        }`
                   }`}
                   onClick={() => handleApplicantClick(app)}
                 >
                   {/* Create a full clickable area overlay */}
-                  <div className="absolute inset-0" onClick={() => handleApplicantClick(app)}></div>
+                  <div className="absolute inset-0"></div>
                   
                   <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6 relative z-10">
                     {/* Profile Picture */}
