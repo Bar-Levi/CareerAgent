@@ -22,6 +22,12 @@ const Applications = ({
   const [currentJobListingId, setCurrentJobListingId] = useState(null);
   const [notificationTimestamp, setNotificationTimestamp] = useState(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  
+  // Filter states
+  const [nameFilter, setNameFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  
   const navigate = useNavigate();
 
   const selectedCandidateRef = useRef();
@@ -398,6 +404,43 @@ const Applications = ({
     }
   }, [applications, refreshMetrics]);
 
+  // Get filtered applications
+  const getFilteredApplications = useCallback(() => {
+    if (!applications || applications.length === 0) return [];
+    
+    return applications.filter(app => {
+      // Filter by name
+      const nameMatch = !nameFilter || 
+        app.name.toLowerCase().includes(nameFilter.toLowerCase());
+      
+      // Filter by date
+      const appDate = new Date(app.applicationDate || app.date);
+      const dateMatch = !dateFilter || 
+        appDate.toISOString().split('T')[0] === dateFilter;
+      
+      // Filter by status
+      const statusMatch = !statusFilter || 
+        app.status === statusFilter;
+      
+      return nameMatch && dateMatch && statusMatch;
+    });
+  }, [applications, nameFilter, dateFilter, statusFilter]);
+  
+  // Get all unique statuses from applications
+  const getUniqueStatuses = useCallback(() => {
+    if (!applications || applications.length === 0) return [];
+    
+    const statuses = applications.map(app => app.status);
+    return [...new Set(statuses)].filter(Boolean);
+  }, [applications]);
+  
+  // Reset all filters
+  const resetFilters = () => {
+    setNameFilter("");
+    setDateFilter("");
+    setStatusFilter("");
+  };
+
   return (
     <div className="mx-auto h-full flex flex-col">
       <div className={`relative w-full ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} rounded-lg border shadow-lg flex-grow flex flex-col overflow-hidden`}>
@@ -411,15 +454,15 @@ const Applications = ({
                 ? 'bg-gray-800 text-gray-300' 
                 : 'bg-white text-gray-700'
             } font-medium flex items-center shadow-sm`}>
-              <span className="mr-1.5">{applications.length}</span>
+              <span className="mr-1.5">{getFilteredApplications().length}</span>
               <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {applications.length === 1 ? 'applicant' : 'applicants'}
+                {getFilteredApplications().length === 1 ? 'applicant' : 'applicants'}
               </span>
             </div>
           </div>
-          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} font-medium`}>
+          <div className="flex items-center gap-3">
             {applications.length > 0 && 
-              <div className="flex gap-2 items-center">
+              <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} font-medium flex gap-2 items-center`}>
                 <div className={`w-2 h-2 rounded-full ${darkMode ? 'bg-indigo-400' : 'bg-indigo-500'}`}></div>
                 <span>Latest: {new Date(
                   Math.max(...applications.map(app => new Date(app.applicationDate || app.date)))
@@ -429,13 +472,110 @@ const Applications = ({
           </div>
         </div>
 
-        {applications.length === 0 ? (
+        {/* Filter Bar - always visible */}
+        <div className={`px-6 py-4 border-b ${darkMode ? 'bg-gray-750 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+            {/* Search by name */}
+            <div className="w-full md:w-auto flex-grow">
+              <div className={`relative rounded-md shadow-sm`}>
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={nameFilter}
+                  onChange={(e) => setNameFilter(e.target.value)}
+                  placeholder="Search by name"
+                  className={`block w-full rounded-md border-0 py-2.5 pl-10 text-sm ${
+                    darkMode 
+                      ? 'bg-gray-700 text-white placeholder-gray-400 focus:ring-indigo-500'
+                      : 'bg-white text-gray-900 placeholder-gray-400 focus:ring-indigo-600'
+                  } shadow-sm ring-1 ring-inset ${
+                    darkMode ? 'ring-gray-600' : 'ring-gray-300'
+                  } focus:ring-2 focus:ring-inset`}
+                />
+              </div>
+            </div>
+            
+            {/* Filter by date */}
+            <div className="w-full md:w-auto">
+              <div className={`relative rounded-md shadow-sm`}>
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                  </svg>
+                </div>
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className={`block w-full rounded-md border-0 py-2.5 pl-10 pr-8 text-sm ${
+                    darkMode 
+                      ? 'bg-gray-700 text-white focus:ring-indigo-500'
+                      : 'bg-white text-gray-900 focus:ring-indigo-600'
+                  } shadow-sm ring-1 ring-inset ${
+                    darkMode ? 'ring-gray-600' : 'ring-gray-300'
+                  } focus:ring-2 focus:ring-inset`}
+                />
+              </div>
+            </div>
+            
+            {/* Filter by status */}
+            <div className="w-full md:w-auto">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={`block w-full rounded-md border-0 py-2.5 pl-3 pr-10 text-sm ${
+                  darkMode 
+                    ? 'bg-gray-700 text-white focus:ring-indigo-500'
+                    : 'bg-white text-gray-900 focus:ring-indigo-600'
+                } shadow-sm ring-1 ring-inset ${
+                  darkMode ? 'ring-gray-600' : 'ring-gray-300'
+                } focus:ring-2 focus:ring-inset`}
+                style={{ paddingRight: '2.5rem' }}
+              >
+                <option value="">All Statuses</option>
+                {getUniqueStatuses().map(status => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Reset filters button */}
+            <button
+              onClick={resetFilters}
+              className={`px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
+                darkMode 
+                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              } shadow-sm border ${darkMode ? 'border-gray-600' : 'border-gray-300'}`}
+            >
+              Reset
+            </button>
+          </div>
+          
+          {/* Filter info */}
+          {(nameFilter || dateFilter || statusFilter) && (
+            <div className={`mt-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <span className="font-semibold">Active filters:</span> 
+              {nameFilter && <span className="ml-2">Name: {nameFilter}</span>}
+              {dateFilter && <span className="ml-2">Date: {new Date(dateFilter).toLocaleDateString()}</span>}
+              {statusFilter && <span className="ml-2">Status: {statusFilter}</span>}
+            </div>
+          )}
+        </div>
+
+        {getFilteredApplications().length === 0 ? (
           <div className="flex justify-center items-center p-16 text-gray-500 flex-grow">
-            <p className={`text-lg font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No recent applications.</p>
+            <p className={`text-lg font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              {applications.length > 0 ? 'No applications match your filter criteria.' : 'No recent applications.'}
+            </p>
           </div>
         ) : (
           <div className={`divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} overflow-y-auto flex-grow`} ref={containerRef}>
-            {applications.map((app) => {
+            {getFilteredApplications().map((app) => {
               const applicantData = applicantsData[app._id];
               // Check by all possible IDs to ensure we catch the selected applicant
               const isSelected = 
@@ -523,7 +663,7 @@ const Applications = ({
                               ? "bg-blue-100 text-blue-800"
                               : app.status.includes("Interview")
                               ? "bg-purple-100 text-purple-800"
-                              : app.status === "Accepted"
+                              : app.status === "Accepted" || app.status === "Hired"
                               ? "bg-green-100 text-green-800"
                               : app.status === "Rejected"
                               ? "bg-red-100 text-red-800"
