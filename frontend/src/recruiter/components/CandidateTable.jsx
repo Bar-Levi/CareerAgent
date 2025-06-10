@@ -442,11 +442,11 @@ const CandidateTable = ({
 
                   {/* Next Step */}
                   {visibleColumns.nextStep && (
-                    <td className="px-4 py-4 overflow-hidden text-center">
+                    <td className="px-4 py-4 overflow-hidden">
                       {statusAction ? (
                         <>
                           {compactView ? (
-                            <div className="flex flex-wrap justify-center items-center mx-auto">
+                            <div className="flex flex-wrap justify-start items-center">
                               {statusAction.map((action, idx) => (
                                 <ActionButton
                                   key={idx}
@@ -460,7 +460,7 @@ const CandidateTable = ({
                               ))}
                             </div>
                           ) : (
-                            <div className="flex flex-col items-center space-y-1">
+                            <div className="flex flex-col items-start space-y-1">
                               {statusAction.map((action, idx) => (
                                 <ActionButton
                                   key={idx}
