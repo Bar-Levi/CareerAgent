@@ -43,6 +43,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const [jobListings, setJobListings] = useState([]);
   const [applications, setApplications] = useState([]);
   const [activeApplications, setActiveApplications] = useState([]);
+  const [conversations, setConversations] = useState([]);
   const [isLoadingMetrics, setIsLoadingMetrics] = useState(true); // Add loading state
   const [totalHired, setTotalHired] = useState(state?.user?.totalHired || 0); // Separate state for totalHired
   const [metrics, setMetrics] = useState({
@@ -499,6 +500,9 @@ const RecruiterDashboard = ({onlineUsers}) => {
         }
         await fetchActiveApplications();
         
+        // Finally, fetch conversations
+        await fetchConversations();
+        
       } catch (error) {
         if (process.env.NODE_ENV !== 'production') {
           console.error("Error loading dashboard data:", error);
@@ -518,13 +522,91 @@ const RecruiterDashboard = ({onlineUsers}) => {
     };
   }, [user?._id, location.pathname, refreshParam]); // Include pathname and refreshParam to react to navigation
 
+  // Separate effect to fetch conversations whenever job listings change
+  // This ensures conversations are loaded correctly after job listings are available
+  useEffect(() => {
+    if (jobListings && jobListings.length > 0) {
+      // Small delay to ensure this executes after the job listings are properly rendered
+      const timer = setTimeout(() => {
+        fetchConversations();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [jobListings]);
+
+  // Function to fetch all conversations
+  const fetchConversations = async () => {
+    try {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("Fetching all conversations...");
+      }
+      
+      if (!jobListings || jobListings.length === 0) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("No job listings found, skipping conversation fetch");
+        }
+        setConversations([]); // Reset conversations to empty array to avoid displaying stale data
+        return;
+      }
+      
+      // More reliable approach - fetch all conversations for the recruiter
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Filter conversations to only include those related to our job listings
+      const jobListingIds = new Set(jobListings.map(job => job._id.toString()));
+      
+      const filteredConversations = data.filter(conv => {
+        // Check if conversation has a jobListingId that matches one of our job listings
+        if (!conv.jobListingId) {
+          return false;
+        }
+        
+        const convJobId = typeof conv.jobListingId === 'object' && conv.jobListingId._id 
+          ? conv.jobListingId._id.toString() 
+          : conv.jobListingId.toString();
+          
+        return jobListingIds.has(convJobId);
+      });
+      
+      setConversations(filteredConversations);
+      
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`Fetched ${filteredConversations.length} conversations for ${jobListings.length} job listings`);
+        console.log("Job listing IDs:", Array.from(jobListingIds));
+        console.log("First few conversations:", filteredConversations.slice(0, 3));
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("Error fetching conversations:", error);
+      }
+      setConversations([]); // Reset to empty array in case of error
+    }
+  };
+  
   // Add handler to refresh metrics after status updates
   const refreshMetrics = useCallback(() => {
     if (user && user._id) {
       console.log("Refreshing metrics called");
       fetchActiveApplications();
+      fetchConversations(); // Also refresh conversations
     }
-  }, [user]);
+  }, [user, jobListings]);
 
   const handlePostSuccess = () => {
     showNotification("success", "Job listing posted successfully!");
@@ -967,6 +1049,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                     setViewMode={setViewMode}
                     darkMode={darkMode}
                     applications={applications}
+                    conversations={conversations}
                   />
                 </div>
               </motion.div>
@@ -1014,6 +1097,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                 darkMode={darkMode}
                 applications={applications}
                 collapsed={sidebarCollapsed}
+                conversations={conversations}
               />
             </motion.div>
 
