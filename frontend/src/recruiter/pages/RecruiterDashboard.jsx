@@ -1,5 +1,5 @@
 // /pages/RecruiterDashboard.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -42,10 +42,13 @@ const RecruiterDashboard = ({onlineUsers}) => {
   // Core state
   const [jobListings, setJobListings] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [activeApplications, setActiveApplications] = useState([]);
+  const [isLoadingMetrics, setIsLoadingMetrics] = useState(true); // Add loading state
   const [totalHired, setTotalHired] = useState(state?.user?.totalHired || 0); // Separate state for totalHired
   const [metrics, setMetrics] = useState({
     activeListings: 0,
     totalApplications: 0,
+    activeApplications: 0, // Add this metric for active applications
   });
   const [notification, setNotification] = useState(null);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
@@ -251,6 +254,17 @@ const RecruiterDashboard = ({onlineUsers}) => {
     }));
   }, [applications]);
 
+  // Update metrics when activeApplications change
+  useEffect(() => {
+    // Update activeApplications count based on active applications
+    if (activeApplications && activeApplications.length !== undefined) {
+      setMetrics(prevMetrics => ({
+        ...prevMetrics,
+        activeApplications: activeApplications.length || 0,
+      }));
+    }
+  }, [activeApplications]);
+
   // Fetch functions
   const fetchJobListings = async () => {
     try {
@@ -328,6 +342,66 @@ const RecruiterDashboard = ({onlineUsers}) => {
     }
   };
 
+  // Fetch active applications (not Hired or Rejected)
+  const fetchActiveApplications = async () => {
+    if (!user || !user._id) return;
+    
+    setIsLoadingMetrics(true); // Start loading state
+    try {
+      console.log("Fetching active applications for user:", user._id);
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/applicants/getActiveRecruiterApplicants/${user._id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          // Add cache control to prevent browser caching
+          cache: "no-store"
+        }
+      );
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log("No active applications found (404)");
+          }
+          // Set empty array if no active applications found
+          setActiveApplications([]);
+          setMetrics(prevMetrics => ({
+            ...prevMetrics,
+            activeApplications: 0,
+          }));
+          return;
+        }
+        throw new Error("Failed to fetch active applications.");
+      }
+
+      const data = await response.json();
+      const fetchedActiveApplications = data.applications;
+      console.log("Active applications fetched:", fetchedActiveApplications.length);
+      
+      setActiveApplications(fetchedActiveApplications);
+      
+      // Update activeApplications count in metrics
+      setMetrics(prevMetrics => ({
+        ...prevMetrics,
+        activeApplications: fetchedActiveApplications.length || 0,
+      }));
+    } catch (error) {
+      console.error("Error fetching active applications:", error);
+      // Set empty array if error
+      setActiveApplications([]);
+      setMetrics(prevMetrics => ({
+        ...prevMetrics,
+        activeApplications: 0,
+      }));
+    } finally {
+      setIsLoadingMetrics(false); // End loading state
+    }
+  };
+
   const fetchMetrics = async () => {
     try {
       const response = await fetch(
@@ -366,10 +440,53 @@ const RecruiterDashboard = ({onlineUsers}) => {
   };
 
   useEffect(() => {
-    fetchJobListings();
-    fetchApplications();
-    fetchMetrics();
-  }, []);
+    let isMounted = true;
+    
+    const loadAllData = async () => {
+      if (!user || !user._id) return;
+      
+      setIsLoadingMetrics(true);
+      
+      // First load immediate data
+      await Promise.all([
+        fetchJobListings(),
+        fetchApplications(),
+        fetchMetrics()
+      ]);
+      
+      // Then ensure active applications are loaded (with a slight delay to ensure other operations complete)
+      if (isMounted) {
+        // Try fetching immediately
+        await fetchActiveApplications();
+        
+        // And also schedule a second fetch after a delay to ensure we get the latest data
+        setTimeout(async () => {
+          if (isMounted) {
+            await fetchActiveApplications();
+          }
+        }, 1000);
+      }
+      
+      if (isMounted) {
+        setIsLoadingMetrics(false);
+      }
+    };
+    
+    loadAllData();
+    
+    // Clean up function to prevent updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [user?._id, location.pathname, refreshParam]); // Include pathname and refreshParam to react to navigation
+
+  // Add handler to refresh metrics after status updates
+  const refreshMetrics = useCallback(() => {
+    if (user && user._id) {
+      console.log("Refreshing metrics called");
+      fetchActiveApplications();
+    }
+  }, [user]);
 
   const handlePostSuccess = () => {
     showNotification("success", "Job listing posted successfully!");
@@ -378,6 +495,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
     // that watches jobListings array
     
     fetchJobListings();
+    fetchActiveApplications(); // Fetch active applications when job listings are updated
   };
 
   // Handle job or candidate selection on mobile
@@ -461,11 +579,12 @@ const RecruiterDashboard = ({onlineUsers}) => {
           selectedCandidateId={highlightData?.selectedCandidateId || selectedCandidate?.senderId}
           user={user}
           updateTotalHired={updateTotalHired}
+          refreshMetrics={refreshMetrics}
           darkMode={darkMode}
         />
       );
     }
-  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode, highlightData]);
+  }, [viewMode, selectedJobListing, selectedConversationId, selectedCandidate, applications, onlineUsers, title, user, darkMode, highlightData, refreshMetrics]);
 
   return (
     <div 
@@ -670,7 +789,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
                   className="mx-4 mt-4 overflow-hidden"
                 >
                   <div className={`hidden sm:block ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-4 backdrop-blur-md bg-opacity-80`}>
-                    <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
+                    <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} isLoading={isLoadingMetrics} />
                   </div>
               </motion.div>
             </div>
@@ -741,7 +860,7 @@ const RecruiterDashboard = ({onlineUsers}) => {
               
               {/* Desktop metrics - shifted to the left */}
               <div className="w-auto">
-                <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} />
+                <MetricsOverview metrics={metrics} totalHired={totalHired} darkMode={darkMode} isLoading={isLoadingMetrics} />
               </div>
             </div>
           </div>

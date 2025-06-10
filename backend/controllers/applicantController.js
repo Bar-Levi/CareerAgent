@@ -190,6 +190,34 @@ const getJobSeekerApplicants = async (req, res) => {
     }
 };
 
+// Get active applicants (not Hired or Rejected) for a specific recruiter by recruiterId
+const getActiveRecruiterApplicants = async (req, res) => {
+    console.log('DEBUG: getActiveRecruiterApplicants called');
+    const { recruiterId } = req.params;
+    
+    try {
+        // Find applications that are not in Hired or Rejected status
+        const applicants = await Applicant.find({ 
+            recruiterId,
+            status: { $nin: ['Hired', 'Rejected'] }
+        }).populate('interviewId jobId');
+        
+        console.log('DEBUG: Found active applicants count:', applicants ? applicants.length : 0);
+
+        if (!applicants || applicants.length === 0) {
+            return res.status(404).json({ message: 'No active applicants found for this recruiter' });
+        }
+        
+        res.status(200).json({
+            message: 'Active applicants fetched successfully',
+            applications: applicants,
+        });
+    } catch (error) {
+        console.error('Error fetching active applicants:', error);
+        res.status(500).json({ message: 'Failed to fetch active applicants', error: error.message });
+    }
+};
+
 // Update a specific applicant by ID
 const updateApplicant = async (req, res) => {
     const { id } = req.params;
@@ -367,6 +395,7 @@ module.exports = {
     deleteApplicant,
     getRecruiterApplicants,
     getJobSeekerApplicants,
+    getActiveRecruiterApplicants,
     handleEmailUpdates
 };
 

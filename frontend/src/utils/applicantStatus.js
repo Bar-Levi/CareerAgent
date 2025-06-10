@@ -1,4 +1,4 @@
-export const updateApplicantStatus = async (applicant, status, refetchApplicants) => {
+export const updateApplicantStatus = async (applicant, status, refetchApplicants, refreshMetrics) => {
     try {
         // First, update the status
         const updateResponse = await fetch(
@@ -24,6 +24,10 @@ export const updateApplicantStatus = async (applicant, status, refetchApplicants
         // Optionally refetch or refresh the data
         if (refetchApplicants) await refetchApplicants();
         
+        // Refresh metrics if the callback is provided
+        if (refreshMetrics) {
+            refreshMetrics();
+        }
 
         // After successful status update, handle the status logic
         const logicResponse = await fetch(

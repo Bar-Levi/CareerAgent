@@ -7,6 +7,7 @@ const {
     deleteApplicant,
     getRecruiterApplicants,
     getJobSeekerApplicants,
+    getActiveRecruiterApplicants,
     handleEmailUpdates
 } = require('../controllers/applicantController');
 
@@ -27,6 +28,9 @@ router.get('/:id', protect, getApplicantById);
 
 // Get a specific applicant by ID
 router.get('/getRecruiterApplicants/:recruiterId', protect, getRecruiterApplicants);
+
+// Get active applicants (not Hired or Rejected) for a specific recruiter
+router.get('/getActiveRecruiterApplicants/:recruiterId', protect, getActiveRecruiterApplicants);
 
 // Get all applicants for a specific job seeker
 router.get('/getJobSeekerApplications/:jobSeekerId', protect, getJobSeekerApplicants);
