@@ -387,6 +387,16 @@ const CandidateTable = ({
                           <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} truncate`}>
                             {app.email}
                           </div>
+                          {app.notes && (
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center mt-1`} title={app.notes}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span className="truncate max-w-[150px]">
+                                {app.notes.length > 20 ? `${app.notes.substring(0, 20)}...` : app.notes}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -589,9 +599,13 @@ const CandidateTable = ({
             onSuccess={() => {
               refetchApplicants?.();
               setShowNotesModal(false);
+              setRenderKey(prev => prev + 1); // Force re-render
             }}
             darkMode={darkMode}
-            onNotesUpdated={() => refetchApplicants?.()}
+            onNotesUpdated={() => {
+              refetchApplicants?.();
+              setRenderKey(prev => prev + 1); // Force re-render
+            }}
           />
         </div>
       )}
