@@ -257,7 +257,14 @@ const RecruiterDashboard = ({onlineUsers}) => {
   // Update metrics when activeApplications change
   useEffect(() => {
     // Update activeApplications count based on active applications
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("DEBUG: useEffect for activeApplications triggered", activeApplications);
+    }
+    
     if (activeApplications && activeApplications.length !== undefined) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Setting metrics activeApplications to", activeApplications.length);
+      }
       setMetrics(prevMetrics => ({
         ...prevMetrics,
         activeApplications: activeApplications.length || 0,
@@ -346,9 +353,10 @@ const RecruiterDashboard = ({onlineUsers}) => {
   const fetchActiveApplications = async () => {
     if (!user || !user._id) return;
     
-    setIsLoadingMetrics(true); // Start loading state
     try {
-      console.log("Fetching active applications for user:", user._id);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Fetching active applications for user:", user._id);
+      }
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/applicants/getActiveRecruiterApplicants/${user._id}`,
         {
@@ -365,14 +373,19 @@ const RecruiterDashboard = ({onlineUsers}) => {
       if (!response.ok) {
         if (response.status === 404) {
           if (process.env.NODE_ENV !== 'production') {
-            console.log("No active applications found (404)");
+            console.log("DEBUG: No active applications found (404)");
           }
           // Set empty array if no active applications found
           setActiveApplications([]);
-          setMetrics(prevMetrics => ({
-            ...prevMetrics,
-            activeApplications: 0,
-          }));
+          setMetrics(prevMetrics => {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log("DEBUG: Setting activeApplications to 0 (404 response)");
+            }
+            return {
+              ...prevMetrics,
+              activeApplications: 0,
+            };
+          });
           return;
         }
         throw new Error("Failed to fetch active applications.");
@@ -380,30 +393,40 @@ const RecruiterDashboard = ({onlineUsers}) => {
 
       const data = await response.json();
       const fetchedActiveApplications = data.applications;
-      console.log("Active applications fetched:", fetchedActiveApplications.length);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Active applications fetched:", fetchedActiveApplications.length, fetchedActiveApplications);
+      }
       
       setActiveApplications(fetchedActiveApplications);
       
       // Update activeApplications count in metrics
-      setMetrics(prevMetrics => ({
-        ...prevMetrics,
-        activeApplications: fetchedActiveApplications.length || 0,
-      }));
+      setMetrics(prevMetrics => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("DEBUG: Updating metrics with activeApplications:", fetchedActiveApplications.length);
+        }
+        return {
+          ...prevMetrics,
+          activeApplications: fetchedActiveApplications.length || 0,
+        };
+      });
     } catch (error) {
-      console.error("Error fetching active applications:", error);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error("DEBUG: Error fetching active applications:", error);
+      }
       // Set empty array if error
       setActiveApplications([]);
       setMetrics(prevMetrics => ({
         ...prevMetrics,
         activeApplications: 0,
       }));
-    } finally {
-      setIsLoadingMetrics(false); // End loading state
     }
   };
 
   const fetchMetrics = async () => {
     try {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Fetching metrics");
+      }
       const response = await fetch(
         `${process.env.REACT_APP_BACKEND_URL}/api/joblistings/metrics/${user._id}`,
         {
@@ -424,8 +447,23 @@ const RecruiterDashboard = ({onlineUsers}) => {
       const data = await response.json();
       const dashboardMetrics = data.metrics;
       
-      // Update metrics but don't change totalHired
-      setMetrics(dashboardMetrics);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log("DEBUG: Metrics received from API:", dashboardMetrics);
+      }
+      
+      // Save current activeApplications value to preserve it
+      const currentActiveApplications = metrics.activeApplications;
+      
+      // Update metrics but preserve activeApplications value
+      setMetrics(prevMetrics => {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("DEBUG: Setting metrics from fetchMetrics, preserving activeApplications:", currentActiveApplications);
+        }
+        return {
+          ...dashboardMetrics,
+          activeApplications: currentActiveApplications // Preserve the current activeApplications value
+        };
+      });
       
       // Separately update totalHired from the user object in state
       if (state?.user?.totalHired !== undefined) {
@@ -447,28 +485,28 @@ const RecruiterDashboard = ({onlineUsers}) => {
       
       setIsLoadingMetrics(true);
       
-      // First load immediate data
-      await Promise.all([
-        fetchJobListings(),
-        fetchApplications(),
-        fetchMetrics()
-      ]);
-      
-      // Then ensure active applications are loaded (with a slight delay to ensure other operations complete)
-      if (isMounted) {
-        // Try fetching immediately
+      try {
+        // First load base data
+        await Promise.all([
+          fetchJobListings(),
+          fetchApplications(),
+          fetchMetrics()
+        ]);
+        
+        // Then fetch active applications separately to ensure it completes
+        if (process.env.NODE_ENV !== 'production') {
+          console.log("DEBUG: Fetching active applications separately");
+        }
         await fetchActiveApplications();
         
-        // And also schedule a second fetch after a delay to ensure we get the latest data
-        setTimeout(async () => {
-          if (isMounted) {
-            await fetchActiveApplications();
-          }
-        }, 1000);
-      }
-      
-      if (isMounted) {
-        setIsLoadingMetrics(false);
+      } catch (error) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.error("Error loading dashboard data:", error);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingMetrics(false);
+        }
       }
     };
     

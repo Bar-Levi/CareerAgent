@@ -16,7 +16,7 @@ const MetricsOverview = ({ metrics = {}, totalHired = 0, darkMode = false, isLoa
                 setDisplayMetrics(metrics);
                 setDisplayTotalHired(totalHired);
                 setLocalLoading(false);
-            }, 300);
+            }, 100);
             return () => clearTimeout(timer);
         } else {
             setLocalLoading(true);
