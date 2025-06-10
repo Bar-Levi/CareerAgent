@@ -93,7 +93,8 @@ const MyJobListings = ({
   setViewMode,
   darkMode = false,
   collapsed = false,
-  applications = []
+  applications = [],
+  conversations = []
 }) => {
   const [menuOpen, setMenuOpen] = useState(null);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(null);
@@ -105,10 +106,49 @@ const MyJobListings = ({
   const [sortField, setSortField] = useState("jobRole");
   const [sortDirection, setSortDirection] = useState("asc");
   const [viewedApplications, setViewedApplications] = useState({});
+  const [conversationCounts, setConversationCounts] = useState({});
 
   const handleSortToggle = () => setSortDirection(prev => prev === "asc" ? "desc" : "asc");
 
   const selectedJobListingRef = useRef();
+  
+  // Re-calculate conversation counts when conversations change
+  useEffect(() => {
+    if (conversations && conversations.length > 0 && jobListings && jobListings.length > 0) {
+      // Recalculate counts for all job listings at once
+      const newCounts = {};
+      
+      jobListings.forEach(listing => {
+        if (listing && listing._id) {
+          const jobIdString = listing._id.toString();
+          
+          // Only calculate if we don't already have a count
+          if (!conversationCounts[`${jobIdString}_count`]) {
+            const count = conversations.filter(conv => {
+              // Skip if conversation doesn't exist or doesn't have a jobListingId
+              if (!conv || !conv.jobListingId) return false;
+              
+              // Check if the conversation has any messages
+              if (!conv.messages || conv.messages.length === 0) return false;
+              
+              const convJobId = conv.jobListingId._id 
+                ? conv.jobListingId._id.toString() 
+                : conv.jobListingId.toString();
+                
+              return convJobId === jobIdString;
+            }).length;
+            
+            newCounts[`${jobIdString}_count`] = count;
+          }
+        }
+      });
+      
+      // Update state with all new counts at once
+      if (Object.keys(newCounts).length > 0) {
+        setConversationCounts(prev => ({ ...prev, ...newCounts }));
+      }
+    }
+  }, [conversations, jobListings]);
 
   useEffect(() => {
     const storedViewedApps = localStorage.getItem('viewedApplications');
@@ -121,6 +161,59 @@ const MyJobListings = ({
     // Show total number of applicants for the job listing
     return applications.filter(app => app.jobId?._id === jobId || app.jobId === jobId).length;
   };
+  
+  // Function to count conversations for a specific job listing
+  const getConversationsCount = (jobId) => {
+    // Use memoization for performance and consistency across renders
+    const memoKey = `${jobId}_count`;
+    if (conversationCounts && conversationCounts[memoKey] !== undefined) {
+      return conversationCounts[memoKey];
+    }
+    
+    // In case conversations is undefined or empty
+    if (!conversations || conversations.length === 0 || !jobId) {
+      return 0;
+    }
+
+    try {
+      // Convert jobId to string for comparison
+      const jobIdString = jobId.toString();
+      
+      // Check for different possible formats of jobListingId
+      const count = conversations.filter(conv => {
+        // Skip if no jobListingId exists
+        if (!conv || !conv.jobListingId) {
+          return false;
+        }
+        
+        // Skip conversations with no messages
+        if (!conv.messages || conv.messages.length === 0) {
+          return false;
+        }
+        
+        // If it's an object with _id property
+        if (conv.jobListingId._id) {
+          return conv.jobListingId._id.toString() === jobIdString;
+        }
+        
+        // Direct match - convert both to string for safe comparison
+        return conv.jobListingId.toString() === jobIdString;
+      }).length;
+      
+      // Store in memo for next time
+      setConversationCounts(prev => ({
+        ...prev,
+        [memoKey]: count
+      }));
+      
+      return count;
+    } catch (error) {
+      console.error("Error calculating conversation count:", error);
+      return 0;
+    }
+  };
+  
+  // Function returns conversation count
 
   // Removed automatic marking of applicants as viewed when job listing is selected
   // This ensures the applicant count badge remains visible at all times
@@ -465,7 +558,7 @@ const MyJobListings = ({
                               setSelectedConversationId(null);
                               setSelectedCandidate(null);
                             }}
-                            className={`px-3 py-1.5 ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-600 hover:bg-gray-700'} text-white text-xs font-medium rounded-lg transition flex items-center`}
+                            className={`px-3 py-1.5 ${darkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-600 hover:bg-gray-700'} text-white text-xs font-medium rounded-lg transition flex items-center relative`}
                           >
                             <svg
                             className="w-3.5 h-3.5 mr-1"
@@ -481,6 +574,14 @@ const MyJobListings = ({
                             ></path>
                           </svg>
                            Messages
+                          
+                          {getConversationsCount(listing._id) > 0 && (
+                            <span className={`absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full ${
+                              darkMode ? 'bg-red-500 text-white' : 'bg-red-600 text-white'
+                            } text-[10px] font-bold`}>
+                              {getConversationsCount(listing._id) > 99 ? '99+' : getConversationsCount(listing._id)}
+                            </span>
+                          )}
                           </button>
 
                           <button
