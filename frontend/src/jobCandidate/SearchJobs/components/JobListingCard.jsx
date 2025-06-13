@@ -62,6 +62,13 @@ const JobListingCard = ({
     }
   }, [jobId, user, user?.savedJobListings]); // Add explicit dependency on user.savedJobListings
 
+  // Non-blocking notification helper
+  const notifyWithoutBlocking = (type, message) => {
+    setTimeout(() => {
+      showNotification(type, message);
+    }, 0);
+  };
+
   const toggleSave = async (e) => {
     e.stopPropagation();
     const method = isSaved ? "DELETE" : "POST";
@@ -101,10 +108,10 @@ const JobListingCard = ({
         state.user.savedJobListings = data.savedJobListings;
       }
       
-      showNotification("success", newSavedState ? "Job Saved" : "Removed from Saved");
+      notifyWithoutBlocking("success", newSavedState ? "Job Saved" : "Removed from Saved");
     } catch (error) {
       console.error("Error updating saved jobs:", error);
-      showNotification("error", "Unable to update saved jobs");
+      notifyWithoutBlocking("error", "Unable to update saved jobs");
     }
   };  
 
@@ -195,7 +202,7 @@ const JobListingCard = ({
 
     } catch (error) {
       console.error('Error creating conversation:', error);
-      showNotification("error", "Failed to create chat. Please try again later.");
+      notifyWithoutBlocking("error", "Failed to create chat. Please try again later.");
     }
   };
 
@@ -264,7 +271,7 @@ const JobListingCard = ({
         );
 
         if (updateJobResponse.ok) {
-          showNotification("success", "Application submitted successfully!");
+          notifyWithoutBlocking("success", "Application submitted successfully!");
           setAppliedCounter((prev) => prev + 1);
           setApplyButtonEnabled(false);
 
@@ -280,14 +287,14 @@ const JobListingCard = ({
             state.user.numOfApplicationsSent = (user.numOfApplicationsSent || 0) + 1;
           }
         } else {
-          showNotification("error", "Failed to update job listing with the new applicant.");
+          notifyWithoutBlocking("error", "Failed to update job listing with the new applicant.");
         }
       } else {
-        showNotification("error", applicantData.message);
+        notifyWithoutBlocking("error", applicantData.message);
       }
     } catch (error) {
       console.error("Error applying for the job:", error);
-      showNotification("error", "An error occurred. Please try again.");
+      notifyWithoutBlocking("error", "An error occurred. Please try again.");
     }
   };
 
