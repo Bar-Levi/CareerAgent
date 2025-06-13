@@ -214,6 +214,7 @@ const SearchFilters = ({ filters, setFilters, clearFilters, educationListedOptio
     "Data Engineering Manager",
     "UI Developer",
     "UX Developer",
+    "UI/UX Developer",
     "UI/UX Designer",
     "Product Designer",
     "Interaction Designer",
