@@ -1,12 +1,16 @@
-
 import React, { useState } from "react";
 import { FaSync, FaBan } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ProfileSyncedToggle = ({ isProfileSynced, chatId, token, email }) => {
   const [isSynched, setIsSynched] = useState(isProfileSynced);
   const [isProcessing, setIsProcessing] = useState(false); // New state to track processing
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if CV exists in user data
+  const user = location.state?.user;
+  const hasCv = user?.cv && user?.cvContent;
 
   const buildSyncProfilePrompt = (user) => {
     const {
@@ -179,9 +183,9 @@ const ProfileSyncedToggle = ({ isProfileSynced, chatId, token, email }) => {
   return (
     <button
       onClick={handleToggle}
-      disabled={isSynched || isProcessing} // Disable while processing or already synced
+      disabled={isSynched || isProcessing || !hasCv} // Disable while processing or already synced or no CV
       className={`flex items-center px-4 py-2 rounded-full border-2 transition-colors ${
-        isSynched ? "bg-brand-primary border-brand-accent" : "bg-green-600 border-green-500"
+        isSynched ? "bg-brand-primary border-brand-accent" : !hasCv ? "bg-gray-500 border-gray-400" : "bg-green-600 border-green-500"
       }`}
     >
       {isSynched ? (
@@ -190,7 +194,7 @@ const ProfileSyncedToggle = ({ isProfileSynced, chatId, token, email }) => {
         <FaSync className="text-white mr-2" />
       )}
       <span className="text-white font-medium">
-        {isSynched ? "Profile is Synced" : isProcessing ? "Syncing..." : "Sync Profile"}
+        {isSynched ? "Profile is Synced" : isProcessing ? "Syncing..." : !hasCv ? "No CV Available" : "Sync Profile"}
       </span>
     </button>
   );
