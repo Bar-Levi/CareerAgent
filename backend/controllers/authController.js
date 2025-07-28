@@ -107,8 +107,10 @@ const registerJobSeeker = async (req, res) => {
             }
         }
 
-        if (profilePic)
-            userData.profilePic = profilePic;
+        // Set default profile image if not provided
+        const defaultProfileImage = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+        const finalProfilePic = profilePic || defaultProfileImage;
+        userData.profilePic = finalProfilePic;
         
         const user = await JobSeeker.create(userData);
         
@@ -148,6 +150,14 @@ const registerRecruiter = async (req, res) => {
         const hashedPin = await bcrypt.hash(decryptedPin, 10);
         const verificationCode = crypto.randomInt(100000, 999999);
 
+        // Set default company logo if not provided
+        const defaultCompanyLogo = 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png';
+        const finalCompanyLogo = companyLogo || defaultCompanyLogo;
+
+        // Set default profile image if not provided
+        const defaultProfileImage = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+        const finalProfilePic = profilePic || defaultProfileImage;
+
         const user = await Recruiter.create({
             fullName,
             email,
@@ -161,8 +171,8 @@ const registerRecruiter = async (req, res) => {
             companyWebsite,
             dateOfBirth,
             pin: hashedPin,
-            companyLogo, 
-            profilePic
+            companyLogo: finalCompanyLogo, 
+            profilePic: finalProfilePic
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);

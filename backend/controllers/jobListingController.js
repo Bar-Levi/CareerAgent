@@ -268,13 +268,21 @@ const saveJobListing = async (req, res) => {
             return res.status(400).json({ message: "Missing required fields.", jsonToFill: normalizedBody});
         }
 
+        // Set default company logo if not provided
+        const defaultCompanyLogo = 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png';
+        const finalCompanyLogo = companyLogo || defaultCompanyLogo;
+        
+        // Set default profile image if not provided
+        const defaultProfileImage = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+        const finalRecruiterProfileImage = recruiterProfileImage || defaultProfileImage;
+        
+        // Set default company size if not provided
+        const finalCompanySize = companySize || 'Unknown';
+
         education?.forEach((edu) => {
           edu = checkAndInsertIn(edu);
         });
         
-        
-        
-
         // Create a new job listing document
         const newJobListing = new JobListing({
             jobRole,
@@ -283,7 +291,7 @@ const saveJobListing = async (req, res) => {
             experienceLevel: toTitleCase(experienceLevel),
             jobType: toTitleCase(jobType),
             remote: toTitleCase(remote),
-            companySize,
+            companySize: finalCompanySize,
             description,
             companyWebsite,
             securityClearance,
@@ -293,8 +301,8 @@ const saveJobListing = async (req, res) => {
             languages,
             recruiterId,
             recruiterName,
-            recruiterProfileImage,
-            companyLogo,
+            recruiterProfileImage: finalRecruiterProfileImage,
+            companyLogo: finalCompanyLogo,
         });
 
         console.log("description: ",description);
