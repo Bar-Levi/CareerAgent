@@ -16,7 +16,8 @@ const jobListingSchema = new mongoose.Schema({
     },
     companySize: {
         type: String,
-        required: true
+        required: true,
+        default: 'Unknown'
     },
     companyWebsite: {
         type: String,
@@ -83,11 +84,13 @@ const jobListingSchema = new mongoose.Schema({
     recruiterProfileImage: {
         type: String,
         required: true,
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png',
         ref: 'Recruiter'
     },
     companyLogo: {
         type: String,
         required: true,
+        default: 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png',
         ref: 'Recruiter'
     },
     applicants: [

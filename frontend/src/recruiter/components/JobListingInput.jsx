@@ -52,14 +52,26 @@ const JobListingInput = ({ user, onPostSuccess, jobListings, setJobListings }) =
     const saveJobListing = async (jobListingData) => {
         try {
             console.log("jobListingData:", jobListingData)
+            
+            // Set default company logo if not provided
+            const defaultCompanyLogo = 'https://res.cloudinary.com/careeragent/image/upload/v1742730089/defaultCompanyLogo_lb5fsj.png';
+            const finalCompanyLogo = user.companyLogo || defaultCompanyLogo;
+            
+            // Set default profile image if not provided
+            const defaultProfileImage = 'https://res.cloudinary.com/careeragent/image/upload/v1735084555/default_profile_image.png';
+            const finalRecruiterProfileImage = user.profilePic || defaultProfileImage;
+            
+            // Set default company size if not provided
+            const finalCompanySize = user.companySize || 'Unknown';
+            
             const updatedJobListingData = { 
                 ...jobListingData, 
                 recruiterId: user._id, 
                 recruiterName: user.fullName, 
-                recruiterProfileImage: user.profilePic, 
-                companyLogo: user.companyLogo,
+                recruiterProfileImage: finalRecruiterProfileImage, 
+                companyLogo: finalCompanyLogo,
                 companyWebsite: user.companyWebsite,
-                companySize: user.companySize,
+                companySize: finalCompanySize,
                 company: user.companyName,
             };
             console.log("updatedJobListingData:", updatedJobListingData)
