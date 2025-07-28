@@ -27,6 +27,11 @@ const calculateWorkExperienceMatch = (userData, jobListing, matchedWorkExperienc
   let counter = 0; // Initialize counter for matching years of experience
   const matchedJobs = [];
 
+  // Check if work_experience exists and is not null
+  if (!userData.work_experience || !Array.isArray(userData.work_experience)) {
+    return 0;
+  }
+
   const normalizedJobListingRole = normalizeText(jobListing.jobRole);
   const listingTokens = new Set(normalizedJobListingRole.split(" "));
 
@@ -86,7 +91,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
     } = relevancePoints;
 
     // Job Roles match
-    if (userData.job_role) {
+    if (userData.job_role && Array.isArray(userData.job_role)) {
       for (const job of userData.job_role) {
         if (job.toLowerCase() === jobListing.jobRole.toLowerCase()) {
           score += matchedJobRolePoints;
@@ -96,7 +101,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
     }
 
     // Job Types match
-    if (userData.job_role) {
+    if (userData.job_role && Array.isArray(userData.job_role)) {
       if (userData.job_role.includes('Student')) {
         if (jobListing.jobType.includes('Student')) {
           score += 20;
@@ -120,9 +125,9 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
     }
 
     // Education match
-    if (userData.education.length > 0 && jobListing.education.length > 0) {
+    if (userData.education && userData.education.length > 0 && jobListing.education && jobListing.education.length > 0) {
       userData.education.forEach(edu => {
-        if (jobListing.education.includes(edu.degree) && !userData.job_role.includes('Student')) {
+        if (jobListing.education.includes(edu.degree) && (!userData.job_role || !userData.job_role.includes('Student'))) {
           score += matchedEducationPoints;
           matchedData.education.push(`${edu.degree} (${matchedEducationPoints})`);
         }
@@ -140,7 +145,7 @@ async function calculateRelevanceScore(jobListing, user, relevancePoints) {
     score += experienceScore;
 
     // Skills match
-    if (userData.skills) {
+    if (userData.skills && jobListing.skills) {
       const matchedSkills = jobListing.skills.filter(skill =>
         userData.skills.includes(skill)
       );
