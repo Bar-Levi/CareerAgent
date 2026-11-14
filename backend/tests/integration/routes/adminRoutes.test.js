@@ -1,6 +1,9 @@
+const { MongoMemoryServer } = require('mongodb-memory-server');
+const mongoose = require('mongoose');
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
 const { app } = require('../../../server');
+const { cleanupTask } = require('../../../tasks/cleanupTokens');
 const Admin = require('../../../models/adminModel');
 const emailService = require('../../../utils/emailService');
 
@@ -10,12 +13,33 @@ jest.mock('../../../utils/emailService', () => ({
 }));
 
 process.env.ADMIN_JWT_SECRET = 'test-admin-secret';
-jest.setTimeout(60000); // in-memory Mongo start is slow on first run
 const EMAIL = 'admin@test.com';
 const PASSWORD = 'CorrectHorse1!';
 
+let mongoServer;
+
+beforeAll(async () => {
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+  mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri());
+});
+
 beforeEach(async () => {
+  jest.clearAllMocks();
+  await Admin.deleteMany({});
   await Admin.create({ email: EMAIL, passwordHash: await bcrypt.hash(PASSWORD, 4) });
+});
+
+afterAll(async () => {
+  if (cleanupTask && cleanupTask.stop) {
+    cleanupTask.stop();
+  }
+  await mongoose.disconnect();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });
 
 const login = (password = PASSWORD) => request(app).post('/api/admin/login').send({ email: EMAIL, password });
