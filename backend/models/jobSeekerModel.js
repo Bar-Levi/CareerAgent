@@ -160,5 +160,18 @@ jobSeekerSchema.pre('save', function (next) {
     next();
 });
 
+// Never serialize secret fields into API JSON responses
+const stripSecrets = (_doc, ret) => {
+    delete ret.password;
+    delete ret.pin;
+    delete ret.verificationCode;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpires;
+    delete ret.resetLoginAttemptsToken;
+    return ret;
+};
+jobSeekerSchema.set('toJSON', { transform: stripSecrets });
+jobSeekerSchema.set('toObject', { transform: stripSecrets });
+
 module.exports = mongoose.models.JobSeeker ||
 mongoose.model('JobSeeker', jobSeekerSchema);

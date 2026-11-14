@@ -207,7 +207,8 @@ const verifyCode = async (req, res) => {
             return res.status(400).json({ message: 'Verification code has expired. Request a new code.' });
         }
 
-        if (user.verificationCode !== parseInt(code)) {
+        const codeNum = parseInt(code, 10);
+        if (!user.verificationCode || Number.isNaN(codeNum) || user.verificationCode !== codeNum) {
             return res.status(400).json({ message: 'Incorrect verification code.' });
         }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { AuthShell, LoginStep, OtpStep } from '../components/AdminAuth';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api/admin`;
@@ -76,9 +76,10 @@ const MOBILE = {
     },
 };
 
-const MobileCard = ({ u, type }) => {
+const MobileCard = ({ u, type, onDelete, deletingId }) => {
     const { facts, links } = MOBILE[type];
     const shown = links.filter(([, k]) => safeUrl(u[k]));
+    const busy = deletingId === u._id;
     return (
         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100">
             <div className="flex items-center gap-3">
@@ -96,6 +97,15 @@ const MobileCard = ({ u, type }) => {
                 >
                     {u.isVerified ? 'Verified' : 'Unverified'}
                 </span>
+                <button
+                    type="button"
+                    aria-label="Delete user"
+                    disabled={busy}
+                    onClick={() => onDelete(u)}
+                    className="shrink-0 rounded-lg p-1.5 text-red-600 hover:bg-red-50 disabled:opacity-40"
+                >
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </button>
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                 {facts.map(([label, get]) => {
@@ -148,11 +158,13 @@ const MobileSkeleton = () => (
     </div>
 );
 
-const UserList = ({ type, onUnauthorized }) => {
+const UserList = ({ type, onUnauthorized, onChanged }) => {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [data, setData] = useState({ users: [], pages: 1, total: 0 });
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => setPage(1), [type, search]);
 
@@ -170,7 +182,22 @@ const UserList = ({ type, onUnauthorized }) => {
             stale = true;
             clearTimeout(t);
         };
-    }, [type, page, search, onUnauthorized]);
+    }, [type, page, search, refreshKey, onUnauthorized]);
+
+    const handleDelete = async (u) => {
+        if (!window.confirm(`Delete ${u.fullName} (${u.email})? This cannot be undone.`)) return;
+        const userType = type === 'recruiters' ? 'Recruiter' : 'JobSeeker';
+        setDeletingId(u._id);
+        const r = await api(`/users/${userType}/${u._id}`, { method: 'DELETE' });
+        setDeletingId(null);
+        if (r.status === 401) return onUnauthorized();
+        if (r.ok) {
+            setRefreshKey((k) => k + 1);
+            onChanged();
+        } else {
+            window.alert(r.data.message || 'Failed to delete user.');
+        }
+    };
 
     const cols = COLUMNS[type];
     // Desktop table: placeholder rows while loading.
@@ -189,7 +216,7 @@ const UserList = ({ type, onUnauthorized }) => {
             <div className="space-y-3 md:hidden">
                 {loading
                     ? [0, 1, 2, 3, 4].map((i) => <MobileSkeleton key={i} />)
-                    : data.users.map((u) => <MobileCard key={u._id} u={u} type={type} />)}
+                    : data.users.map((u) => <MobileCard key={u._id} u={u} type={type} onDelete={handleDelete} deletingId={deletingId} />)}
             </div>
             <div className="hidden overflow-x-auto rounded-xl bg-white shadow md:block">
                 <table className="min-w-full text-left text-sm">
@@ -198,6 +225,7 @@ const UserList = ({ type, onUnauthorized }) => {
                             {cols.map((c) => (
                                 <th key={c.label} className="whitespace-nowrap px-3 py-2">{c.label}</th>
                             ))}
+                            <th className="whitespace-nowrap px-3 py-2 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -206,6 +234,22 @@ const UserList = ({ type, onUnauthorized }) => {
                                 {cols.map((c) => (
                                     <td key={c.label} className="px-3 py-2">{cell(c, u)}</td>
                                 ))}
+                                <td className="px-3 py-2 text-right">
+                                    {loading ? (
+                                        <Sk className="ml-auto h-4 w-8" />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            aria-label="Delete user"
+                                            disabled={deletingId === u._id}
+                                            onClick={() => handleDelete(u)}
+                                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-40"
+                                        >
+                                            {deletingId === u._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                            Delete
+                                        </button>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -233,9 +277,13 @@ const Dashboard = ({ email, onLogout, onUnauthorized }) => {
     const [stats, setStats] = useState(null);
     const [tab, setTab] = useState('jobseekers');
 
-    useEffect(() => {
+    const loadOverview = useCallback(() => {
         api('/overview').then((r) => (r.status === 401 ? onUnauthorized() : r.ok && setStats(r.data)));
     }, [onUnauthorized]);
+
+    useEffect(() => {
+        loadOverview();
+    }, [loadOverview]);
 
     const stat = (label, value, sub, cls = '') => (
         <div className={`rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:p-4 ${cls}`}>
@@ -276,7 +324,7 @@ const Dashboard = ({ email, onLogout, onUnauthorized }) => {
                     ))}
                 </div>
 
-                <UserList type={tab} onUnauthorized={onUnauthorized} />
+                <UserList type={tab} onUnauthorized={onUnauthorized} onChanged={loadOverview} />
             </div>
         </div>
     );
