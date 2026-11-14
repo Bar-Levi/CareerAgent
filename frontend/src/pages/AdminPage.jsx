@@ -358,7 +358,7 @@ const AdminPage = () => {
         return (
             <AuthShell>
                 <div className="flex justify-center py-6">
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                    <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
                 </div>
             </AuthShell>
         );

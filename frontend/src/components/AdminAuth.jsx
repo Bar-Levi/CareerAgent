@@ -1,61 +1,78 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, Loader2, ArrowLeft } from 'lucide-react';
 
-// Same look as the public auth pages: indigo/purple gradient, glowing orbs, grid, glass card.
-export const AuthShell = ({ step, children }) => (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-blue-800 to-purple-900 p-4">
-        <style>{'@keyframes admin-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}'}</style>
-        <div
-            className="absolute inset-0 opacity-40"
-            style={{
-                backgroundImage:
-                    'linear-gradient(rgba(50,138,241,.15) 1px,transparent 1px),linear-gradient(90deg,rgba(50,138,241,.15) 1px,transparent 1px)',
-                backgroundSize: '40px 40px',
-            }}
-        />
-        <div className="absolute left-1/4 top-1/4 h-72 w-72 animate-float rounded-full bg-gradient-to-r from-blue-500/30 to-indigo-500/30 blur-2xl" />
-        <div className="absolute bottom-1/4 right-1/4 h-56 w-56 animate-pulse rounded-full bg-gradient-to-r from-purple-500/30 to-pink-500/30 blur-2xl" />
+const STEPS = {
+    1: ['Sign in', 'Restricted area. Authorized administrators only.'],
+    2: ['Two-step verification', null],
+};
 
-        <div className="relative z-10 w-full max-w-md animate-slide-in rounded-3xl bg-white/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-            <div className="mb-6 flex flex-col items-center text-center">
-                <div className="relative mb-3">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-indigo-400/40" />
-                    <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg">
-                        <ShieldCheck className="h-7 w-7" />
-                    </div>
-                </div>
-                <h1 className="font-heading text-3xl font-extrabold text-gray-800">
-                    Career
-                    <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Agent</span>
-                </h1>
-                <span className="mt-1 rounded-full bg-indigo-100 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-indigo-700">
-                    Admin access
-                </span>
-                {step && (
-                    <div className="mt-4 flex w-24 gap-1.5">
-                        {[1, 2].map((n) => (
-                            <div
-                                key={n}
-                                className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                                    n <= step ? 'bg-gradient-to-r from-indigo-600 to-purple-600' : 'bg-gray-300'
-                                }`}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
-            {children}
+const Brand = ({ className = '' }) => (
+    <div className={`flex items-center gap-2.5 ${className}`}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+            <ShieldCheck className="h-5 w-5 text-zinc-200" />
         </div>
+        <span className="font-heading text-lg font-semibold tracking-tight text-zinc-100">
+            CareerAgent <span className="font-normal text-zinc-500">Admin</span>
+        </span>
     </div>
 );
 
+// Dark, neutral surfaces with one muted accent, used only for the primary action and focus.
+export const AuthShell = ({ step, children }) => {
+    const [title, subtitle] = STEPS[step] || [];
+    return (
+        <div className="relative min-h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+            <style>{'@keyframes admin-shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}'}</style>
+            <div
+                className="pointer-events-none absolute inset-0"
+                style={{ background: 'radial-gradient(60% 50% at 50% 0%, rgba(99,102,241,.14), transparent 70%)' }}
+            />
+            <div
+                className="pointer-events-none absolute inset-0 opacity-[0.07]"
+                style={{
+                    backgroundImage:
+                        'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)',
+                    backgroundSize: '48px 48px',
+                    WebkitMaskImage: 'radial-gradient(70% 60% at 50% 30%, #000, transparent)',
+                    maskImage: 'radial-gradient(70% 60% at 50% 30%, #000, transparent)',
+                }}
+            />
+
+            <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:px-8">
+                <div className="w-full max-w-md animate-fade-in-fast sm:max-w-lg">
+                    <Brand className="mb-8 justify-center" />
+                    <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-10">
+                        {title && (
+                            <div className="mb-8">
+                                <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+                                    Step {step} of 2
+                                </p>
+                                <h1 className="font-heading text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl">{title}</h1>
+                                {subtitle && <p className="mt-2 text-sm text-zinc-400">{subtitle}</p>}
+                            </div>
+                        )}
+                        {children}
+                    </div>
+                    <p className="mt-6 flex items-center justify-center gap-2 text-xs text-zinc-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        Encrypted connection
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
 const Message = ({ text, kind = 'error' }) =>
     text ? (
         <p
             key={text}
             role="alert"
-            className={`rounded-lg px-3 py-2 text-sm ${kind === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}
-            style={kind === 'error' ? { animation: 'admin-shake .4s' } : undefined}
+            className={`rounded-lg border px-3 py-2 text-sm ${
+                kind === 'error'
+                    ? 'border-red-500/20 bg-red-500/10 text-red-300'
+                    : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+            }`}
+            style={kind === 'error' ? { animation: 'admin-shake .35s' } : undefined}
         >
             {text}
         </p>
@@ -64,21 +81,27 @@ const Message = ({ text, kind = 'error' }) =>
 const SubmitButton = ({ busy, disabled, children }) => (
     <button
         disabled={busy || disabled}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 py-3 font-bold text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
     >
-        {busy && <Loader2 className="h-5 w-5 animate-spin" />}
+        {busy && <Loader2 className="h-4 w-4 animate-spin" />}
         {children}
     </button>
 );
 
-const Field = ({ icon: Icon, right, ...props }) => (
-    <div className="group relative">
-        <Icon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-indigo-600" />
-        <input
-            {...props}
-            className="w-full rounded-xl border border-gray-300 bg-gray-50 py-3 pl-11 pr-11 text-base text-gray-800 placeholder-gray-500 transition-all duration-300 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/60"
-        />
-        {right}
+const Field = ({ label, icon: Icon, right, id, ...props }) => (
+    <div>
+        <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-zinc-400">
+            {label}
+        </label>
+        <div className="group relative">
+            <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500 transition-colors group-focus-within:text-zinc-300" />
+            <input
+                id={id}
+                {...props}
+                className="w-full rounded-lg border border-white/10 bg-zinc-950/70 py-2.5 pl-10 pr-10 text-base text-zinc-100 placeholder-zinc-600 transition-colors focus:border-indigo-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 sm:text-sm"
+            />
+            {right}
+        </div>
     </div>
 );
 
@@ -86,20 +109,23 @@ export const LoginStep = ({ form, setForm, onSubmit, busy, msg }) => {
     const [show, setShow] = useState(false);
     return (
         <form onSubmit={onSubmit} className="space-y-4">
-            <p className="text-center text-gray-600">Sign in to continue</p>
             <Field
+                id="admin-email"
+                label="Email"
                 icon={Mail}
                 type="email"
-                placeholder="Email"
+                placeholder="you@company.com"
                 autoComplete="username"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
             />
             <Field
+                id="admin-password"
+                label="Password"
                 icon={Lock}
                 type={show ? 'text' : 'password'}
-                placeholder="Password"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -109,9 +135,9 @@ export const LoginStep = ({ form, setForm, onSubmit, busy, msg }) => {
                         type="button"
                         aria-label={show ? 'Hide password' : 'Show password'}
                         onClick={() => setShow(!show)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-indigo-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 transition-colors hover:text-zinc-200"
                     >
-                        {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                 }
             />
@@ -168,8 +194,7 @@ export const OtpStep = ({ email, onSubmit, onResend, onBack, busy, msg, info }) 
         const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
         if (!text) return;
         e.preventDefault();
-        const next = EMPTY.map((_, i) => text[i] || '');
-        update(next);
+        update(EMPTY.map((_, i) => text[i] || ''));
         refs.current[Math.min(text.length, 5)]?.focus();
     };
 
@@ -183,12 +208,12 @@ export const OtpStep = ({ email, onSubmit, onResend, onBack, busy, msg, info }) 
                 e.preventDefault();
                 if (digits.every(Boolean)) onSubmit(digits.join(''));
             }}
-            className="space-y-4"
+            className="space-y-5"
         >
-            <p className="text-center text-gray-600">
-                Enter the 6-digit code sent to <span className="break-all font-semibold text-gray-800">{email}</span>
+            <p className="text-sm text-zinc-400">
+                Enter the 6-digit code sent to <span className="break-all font-medium text-zinc-200">{email}</span>. It expires in 5 minutes.
             </p>
-            <div className="flex justify-center gap-2 sm:gap-3" onPaste={paste}>
+            <div className="flex justify-between gap-2" onPaste={paste}>
                 {digits.map((d, i) => (
                     <input
                         key={i}
@@ -202,8 +227,8 @@ export const OtpStep = ({ email, onSubmit, onResend, onBack, busy, msg, info }) 
                         maxLength={1}
                         aria-label={`Digit ${i + 1}`}
                         disabled={busy}
-                        className={`h-12 min-w-0 max-w-[3rem] flex-1 rounded-xl border text-center text-2xl font-bold text-gray-800 transition-all duration-200 focus:scale-110 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/60 sm:h-14 ${
-                            d ? 'border-indigo-400 bg-white' : 'border-gray-300 bg-gray-50'
+                        className={`h-12 min-w-0 flex-1 rounded-lg border bg-zinc-950/70 text-center text-xl font-semibold text-zinc-100 transition-colors focus:border-indigo-400/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:opacity-50 sm:h-14 ${
+                            d ? 'border-white/30' : 'border-white/10'
                         }`}
                     />
                 ))}
@@ -211,17 +236,17 @@ export const OtpStep = ({ email, onSubmit, onResend, onBack, busy, msg, info }) 
             <Message text={msg} />
             <Message text={info} kind="info" />
             <SubmitButton busy={busy} disabled={!digits.every(Boolean)}>
-                {busy ? 'Verifying...' : 'Verify'}
+                {busy ? 'Verifying...' : 'Verify and continue'}
             </SubmitButton>
             <div className="flex items-center justify-between text-sm">
-                <button type="button" onClick={onBack} className="flex items-center gap-1 text-gray-600 hover:text-indigo-600">
+                <button type="button" onClick={onBack} className="flex items-center gap-1 text-zinc-400 transition-colors hover:text-zinc-100">
                     <ArrowLeft className="h-4 w-4" /> Back
                 </button>
                 <button
                     type="button"
                     onClick={resend}
                     disabled={cooldown > 0}
-                    className="font-semibold text-indigo-600 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline"
+                    className="font-medium text-indigo-300 transition-colors hover:text-indigo-200 disabled:cursor-not-allowed disabled:text-zinc-600"
                 >
                     {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
                 </button>
