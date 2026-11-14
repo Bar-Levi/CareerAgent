@@ -129,4 +129,17 @@ recruiterSchema.pre('save', function (next) {
     next();
 });
 
+// Never serialize secret fields into API JSON responses
+const stripSecrets = (_doc, ret) => {
+    delete ret.password;
+    delete ret.pin;
+    delete ret.verificationCode;
+    delete ret.resetPasswordToken;
+    delete ret.resetPasswordExpires;
+    delete ret.resetLoginAttemptsToken;
+    return ret;
+};
+recruiterSchema.set('toJSON', { transform: stripSecrets });
+recruiterSchema.set('toObject', { transform: stripSecrets });
+
 module.exports = mongoose.model('Recruiter', recruiterSchema);

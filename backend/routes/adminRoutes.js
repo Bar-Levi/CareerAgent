@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const c = require('../controllers/adminController');
+const { deleteUser } = require('../controllers/authController');
 const { adminProtect } = require('../middleware/adminAuth');
 
 const limiter = (windowMs, limit) =>
@@ -25,5 +26,6 @@ router.get('/me', c.me);
 router.get('/overview', c.overview);
 router.get('/jobseekers', c.listJobSeekers);
 router.get('/recruiters', c.listRecruiters);
+router.delete('/users/:userType/:userId', deleteUser);
 
 module.exports = router;
