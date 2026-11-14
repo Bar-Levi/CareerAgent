@@ -122,7 +122,6 @@ const registerJobSeeker = async (req, res) => {
         const user = await JobSeeker.create(userData);
         
         await sendVerificationCode(user.email, user.fullName, verificationCode);
-        notifyAdminsOfSignup(user);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
     } catch (error) {
         console.error(error);
@@ -184,7 +183,6 @@ const registerRecruiter = async (req, res) => {
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
-        notifyAdminsOfSignup(user);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
     } catch (error) {
         console.error(error);
@@ -216,6 +214,7 @@ const verifyCode = async (req, res) => {
         user.isVerified = true;
         user.verificationCode = null;
         await user.save();
+        notifyAdminsOfSignup(user);
 
         res.status(200).json({ message: 'Account verified successfully!' });
     } catch (error) {
