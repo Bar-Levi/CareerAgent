@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { Loader2 } from 'lucide-react';
+import { AuthShell, LoginStep, OtpStep } from '../components/AdminAuth';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api/admin`;
 
@@ -13,9 +15,11 @@ const api = async (path, options = {}) => {
 };
 
 const date = (d) => (d ? new Date(d).toLocaleDateString() : '-');
+// User-supplied links: only http(s), so a javascript: URL can never run in the admin's session.
+const safeUrl = (u) => (typeof u === 'string' && /^https?:\/\//i.test(u) ? u : null);
 const link = (u) =>
-    u ? (
-        <a href={u} target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline break-all">
+    safeUrl(u) ? (
+        <a href={safeUrl(u)} target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline break-all">
             Open
         </a>
     ) : (
@@ -48,12 +52,99 @@ const COLUMNS = {
 
 const inputCls =
     'w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500';
-const btnCls =
-    'w-full rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50';
 
-const Card = ({ children }) => (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-        <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 shadow-lg">{children}</div>
+const Sk = ({ className }) => <div className={`animate-pulse rounded bg-gray-200 ${className}`} />;
+
+// Phone layout: a compact card per user, different from the desktop table.
+const MOBILE = {
+    jobseekers: {
+        facts: [
+            ['Phone', (u) => u.phone],
+            ['Born', (u) => date(u.dateOfBirth)],
+            ['Signed up', (u) => date(u.signedUpAt)],
+        ],
+        links: [['CV', 'cv'], ['LinkedIn', 'linkedinUrl'], ['GitHub', 'githubUrl']],
+    },
+    recruiters: {
+        facts: [
+            ['Company', (u) => u.companyName],
+            ['Size', (u) => u.companySize],
+            ['Hired', (u) => u.totalHired ?? 0],
+            ['Signed up', (u) => date(u.signedUpAt)],
+        ],
+        links: [['Website', 'companyWebsite']],
+    },
+};
+
+const MobileCard = ({ u, type }) => {
+    const { facts, links } = MOBILE[type];
+    const shown = links.filter(([, k]) => safeUrl(u[k]));
+    return (
+        <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100">
+            <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 font-bold text-white">
+                    {(u.fullName || '?')[0].toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="truncate font-semibold text-gray-800">{u.fullName}</div>
+                    <div className="truncate text-xs text-gray-500">{u.email}</div>
+                </div>
+                <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        u.isVerified ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                    }`}
+                >
+                    {u.isVerified ? 'Verified' : 'Unverified'}
+                </span>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                {facts.map(([label, get]) => {
+                    const v = get(u);
+                    return (
+                        <div key={label} className="min-w-0">
+                            <dt className="text-[10px] uppercase tracking-wide text-gray-400">{label}</dt>
+                            <dd className="truncate text-gray-800">{v === undefined || v === null || v === '' ? '-' : v}</dd>
+                        </div>
+                    );
+                })}
+            </dl>
+            {shown.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                    {shown.map(([label, k]) => (
+                        <a
+                            key={k}
+                            href={safeUrl(u[k])}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 active:bg-indigo-100"
+                        >
+                            {label}
+                        </a>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const MobileSkeleton = () => (
+    <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100">
+        <div className="flex items-center gap-3">
+            <Sk className="h-10 w-10 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-2">
+                <Sk className="h-4 w-2/3" />
+                <Sk className="h-3 w-1/2" />
+            </div>
+            <Sk className="h-5 w-16 rounded-full" />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+            {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="space-y-1.5">
+                    <Sk className="h-2.5 w-1/3" />
+                    <Sk className="h-3.5 w-3/4" />
+                </div>
+            ))}
+        </div>
     </div>
 );
 
@@ -82,10 +173,9 @@ const UserList = ({ type, onUnauthorized }) => {
     }, [type, page, search, onUnauthorized]);
 
     const cols = COLUMNS[type];
-    // While loading, render placeholder rows in place of the real ones.
+    // Desktop table: placeholder rows while loading.
     const rows = loading ? Array.from({ length: 5 }, (_, i) => ({ _id: `sk${i}` })) : data.users;
-    const bar = <div className="h-4 w-full max-w-[8rem] animate-pulse rounded bg-gray-200" />;
-    const cell = (c, u) => (loading ? bar : c.render(u));
+    const cell = (c, u) => (loading ? <Sk className="h-4 w-24" /> : c.render(u));
     return (
         <div className="space-y-3">
             <input
@@ -95,18 +185,11 @@ const UserList = ({ type, onUnauthorized }) => {
                 onChange={(e) => setSearch(e.target.value)}
             />
 
-            {/* Phones: one card per user. md and up: a table. */}
+            {/* Phones: cards. md and up: a table. */}
             <div className="space-y-3 md:hidden">
-                {rows.map((u) => (
-                    <div key={u._id} className="space-y-1 rounded-xl bg-white p-4 text-sm shadow">
-                        {cols.map((c) => (
-                            <div key={c.label} className="flex justify-between gap-3">
-                                <span className="text-gray-500">{c.label}</span>
-                                <span className="break-all text-right">{cell(c, u)}</span>
-                            </div>
-                        ))}
-                    </div>
-                ))}
+                {loading
+                    ? [0, 1, 2, 3, 4].map((i) => <MobileSkeleton key={i} />)
+                    : data.users.map((u) => <MobileCard key={u._id} u={u} type={type} />)}
             </div>
             <div className="hidden overflow-x-auto rounded-xl bg-white shadow md:block">
                 <table className="min-w-full text-left text-sm">
@@ -130,14 +213,15 @@ const UserList = ({ type, onUnauthorized }) => {
             </div>
 
             {!loading && data.users.length === 0 && <p className="py-6 text-center text-gray-500">No users found.</p>}
-            <div className="flex items-center justify-between">
-                <button className="rounded-lg bg-white px-3 py-2 shadow disabled:opacity-40" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            <div className="flex items-center justify-between gap-2">
+                <button className="min-h-[44px] rounded-xl bg-white px-4 shadow-sm ring-1 ring-gray-100 disabled:opacity-40" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                     Prev
                 </button>
-                <span className="text-sm text-gray-600">
-                    Page {page} of {data.pages || 1} ({data.total})
+                <span className="text-center text-xs text-gray-600 sm:text-sm">
+                    Page {page} of {data.pages || 1}
+                    <br className="sm:hidden" /> <span className="text-gray-400">({data.total} total)</span>
                 </span>
-                <button className="rounded-lg bg-white px-3 py-2 shadow disabled:opacity-40" disabled={page >= data.pages} onClick={() => setPage(page + 1)}>
+                <button className="min-h-[44px] rounded-xl bg-white px-4 shadow-sm ring-1 ring-gray-100 disabled:opacity-40" disabled={page >= data.pages} onClick={() => setPage(page + 1)}>
                     Next
                 </button>
             </div>
@@ -153,10 +237,10 @@ const Dashboard = ({ email, onLogout, onUnauthorized }) => {
         api('/overview').then((r) => (r.status === 401 ? onUnauthorized() : r.ok && setStats(r.data)));
     }, [onUnauthorized]);
 
-    const stat = (label, value, sub) => (
-        <div className="rounded-xl bg-white p-4 shadow">
-            <div className="text-sm text-gray-500">{label}</div>
-            <div className="text-3xl font-bold">{value ?? '-'}</div>
+    const stat = (label, value, sub, cls = '') => (
+        <div className={`rounded-2xl bg-white p-3 shadow-sm ring-1 ring-gray-100 sm:p-4 ${cls}`}>
+            <div className="text-xs text-gray-500 sm:text-sm">{label}</div>
+            {stats ? <div className="text-2xl font-bold sm:text-3xl">{value}</div> : <Sk className="mt-1 h-8 w-16" />}
             {sub && <div className="text-xs text-gray-400">{sub}</div>}
         </div>
     );
@@ -164,28 +248,28 @@ const Dashboard = ({ email, onLogout, onUnauthorized }) => {
     return (
         <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
             <div className="mx-auto max-w-6xl space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2">
                     <h1 className="text-xl font-bold sm:text-2xl">Admin</h1>
-                    <div className="flex items-center gap-3 text-sm">
-                        <span className="break-all text-gray-600">{email}</span>
-                        <button className="rounded-lg bg-gray-800 px-3 py-2 text-white" onClick={onLogout}>
+                    <div className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
+                        <span className="min-w-0 truncate text-gray-600">{email}</span>
+                        <button className="shrink-0 rounded-lg bg-gray-800 px-3 py-2 text-white" onClick={onLogout}>
                             Log out
                         </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    {stat('Total users', stats?.totalUsers)}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {stat('Total users', stats?.totalUsers, null, 'col-span-2 sm:col-span-1')}
                     {stat('Job seekers', stats?.jobSeekers.total, stats && `${stats.jobSeekers.verified} verified`)}
                     {stat('Recruiters', stats?.recruiters.total, stats && `${stats.recruiters.verified} verified`)}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-1 rounded-xl bg-white p-1 shadow-sm ring-1 ring-gray-100 sm:inline-flex">
                     {[['jobseekers', 'Job Seekers'], ['recruiters', 'Recruiters']].map(([k, label]) => (
                         <button
                             key={k}
                             onClick={() => setTab(k)}
-                            className={`flex-1 rounded-lg px-4 py-2 font-semibold sm:flex-none ${tab === k ? 'bg-indigo-600 text-white' : 'bg-white shadow'}`}
+                            className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold transition-colors sm:flex-none sm:px-6 ${tab === k ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
                         >
                             {label}
                         </button>
@@ -202,14 +286,13 @@ const AdminPage = () => {
     const [stage, setStage] = useState('loading'); // loading | login | otp | dashboard
     const [adminEmail, setAdminEmail] = useState('');
     const [form, setForm] = useState({ email: '', password: '' });
-    const [otp, setOtp] = useState('');
     const [challenge, setChallenge] = useState('');
     const [msg, setMsg] = useState('');
+    const [info, setInfo] = useState('');
     const [busy, setBusy] = useState(false);
 
     const toLogin = useCallback(() => {
         setStage('login');
-        setOtp('');
         setChallenge('');
         setForm({ email: '', password: '' });
     }, []);
@@ -225,8 +308,13 @@ const AdminPage = () => {
 
     const submit = (fn) => async (e) => {
         e.preventDefault();
+        await run(fn);
+    };
+
+    const run = async (fn) => {
         setBusy(true);
         setMsg('');
+        setInfo('');
         await fn();
         setBusy(false);
     };
@@ -240,21 +328,25 @@ const AdminPage = () => {
         } else setMsg(r.data.message || 'Login failed');
     });
 
-    const verify = submit(async () => {
-        const r = await api('/verify-otp', { method: 'POST', body: JSON.stringify({ challengeToken: challenge, otp }) });
-        if (r.ok) {
-            setAdminEmail(r.data.email);
-            setStage('dashboard');
-        } else {
-            setMsg(r.data.message || 'Verification failed');
-            // A voided code needs a fresh login.
-            if (r.status === 401) setTimeout(toLogin, 2500);
-        }
-    });
+    const verify = (otp) =>
+        run(async () => {
+            const r = await api('/verify-otp', { method: 'POST', body: JSON.stringify({ challengeToken: challenge, otp }) });
+            if (r.ok) {
+                setAdminEmail(r.data.email);
+                setStage('dashboard');
+            } else {
+                setMsg(r.data.message || 'Verification failed');
+                // A voided code needs a fresh login.
+                if (r.status === 401) setTimeout(toLogin, 2500);
+            }
+        });
 
+    // Returns true when a new code was sent, so the form can restart its cooldown.
     const resend = async () => {
         const r = await api('/resend-otp', { method: 'POST', body: JSON.stringify({ challengeToken: challenge }) });
-        setMsg(r.data.message || 'Could not resend');
+        setMsg(r.ok ? '' : r.data.message || 'Could not resend');
+        setInfo(r.ok ? 'New code sent.' : '');
+        return r.ok;
     };
 
     const logout = async () => {
@@ -262,42 +354,27 @@ const AdminPage = () => {
         toLogin();
     };
 
-    if (stage === 'loading') return <Card><p className="text-center text-gray-500">Loading...</p></Card>;
+    if (stage === 'loading')
+        return (
+            <AuthShell>
+                <div className="flex justify-center py-6">
+                    <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+                </div>
+            </AuthShell>
+        );
     if (stage === 'dashboard') return <Dashboard email={adminEmail} onLogout={logout} onUnauthorized={toLogin} />;
 
     if (stage === 'otp')
         return (
-            <Card>
-                <form onSubmit={verify} className="space-y-4">
-                    <h1 className="text-xl font-bold">Enter code</h1>
-                    <p className="text-sm text-gray-600">We emailed a 6-digit code to {form.email}.</p>
-                    <input
-                        className={`${inputCls} text-center tracking-widest`}
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    />
-                    {msg && <p className="text-sm text-red-600">{msg}</p>}
-                    <button className={btnCls} disabled={busy || otp.length !== 6}>Verify</button>
-                    <button type="button" className="w-full text-sm text-indigo-600" onClick={resend}>Resend code</button>
-                </form>
-            </Card>
+            <AuthShell step={2}>
+                <OtpStep email={form.email} onSubmit={verify} onResend={resend} onBack={toLogin} busy={busy} msg={msg} info={info} />
+            </AuthShell>
         );
 
     return (
-        <Card>
-            <form onSubmit={login} className="space-y-4">
-                <h1 className="text-xl font-bold">Admin login</h1>
-                <input className={inputCls} type="email" placeholder="Email" autoComplete="username" value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-                <input className={inputCls} type="password" placeholder="Password" autoComplete="current-password" value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-                {msg && <p className="text-sm text-red-600">{msg}</p>}
-                <button className={btnCls} disabled={busy}>Continue</button>
-            </form>
-        </Card>
+        <AuthShell step={1}>
+            <LoginStep form={form} setForm={setForm} onSubmit={login} busy={busy} msg={msg} />
+        </AuthShell>
     );
 };
 
