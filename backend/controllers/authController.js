@@ -2,7 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const BlacklistedToken = require('../models/BlacklistedTokenModel');
 const crypto = require('crypto');
-const { sendVerificationCode, sendResetPasswordEmail, generateResetToken, sendJobNotificationEmail } = require('../utils/emailService');
+const { sendVerificationCode, sendResetPasswordEmail, generateResetToken, sendJobNotificationEmail, sendAdminNewSignupEmail } = require('../utils/emailService');
+const Admin = require('../models/adminModel');
 const JobSeeker = require('../models/jobSeekerModel');
 const Recruiter = require('../models/recruiterModel');
 const CryptoJS = require("crypto-js");
@@ -32,6 +33,12 @@ const getPasswordStrength = (password) => {
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
     return strength;
 };
+
+// Non-blocking: admin email failure must never break user registration.
+const notifyAdminsOfSignup = (user) =>
+    Admin.find().select('email').lean()
+        .then((admins) => sendAdminNewSignupEmail(admins, user))
+        .catch((err) => console.error('Admin signup alert error:', err.message));
 
 // Register JobSeeker
 const registerJobSeeker = async (req, res) => {
@@ -115,6 +122,7 @@ const registerJobSeeker = async (req, res) => {
         const user = await JobSeeker.create(userData);
         
         await sendVerificationCode(user.email, user.fullName, verificationCode);
+        notifyAdminsOfSignup(user);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
     } catch (error) {
         console.error(error);
@@ -176,6 +184,7 @@ const registerRecruiter = async (req, res) => {
         });
 
         await sendVerificationCode(user.email, user.fullName, verificationCode);
+        notifyAdminsOfSignup(user);
         res.status(201).json({ message: 'Registration successful. Verification code sent to email.' });
     } catch (error) {
         console.error(error);

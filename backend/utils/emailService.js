@@ -517,8 +517,36 @@ const sendAdminOtpEmail = async (email, otp) => {
     });
 };
 
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const sendAdminNewSignupEmail = async (admins, user) => {
+    const to = admins.map((a) => a.email).filter(Boolean);
+    if (!to.length) return;
+    const roleLabel = user.role === 'Recruiter' ? 'Recruiter' : 'Job Seeker';
+    const extra = user.role === 'Recruiter' && user.companyName ? `<p><strong>Company:</strong> ${esc(user.companyName)}</p>` : '';
+    await transporter.sendMail({
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+        to,
+        subject: `New ${roleLabel} sign-up: ${user.fullName}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 480px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
+                <div style="background-color: #2c2c54; color: #fff; padding: 16px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h2 style="margin: 0;">New ${roleLabel} Sign-up</h2>
+                </div>
+                <div style="padding: 20px; line-height: 1.6;">
+                    <p><strong>Name:</strong> ${esc(user.fullName)}</p>
+                    <p><strong>Email:</strong> ${esc(user.email)}</p>
+                    <p><strong>Role:</strong> ${roleLabel}</p>
+                    ${extra}
+                </div>
+            </div>
+        `,
+    });
+};
+
 module.exports = {
     sendAdminOtpEmail,
+    sendAdminNewSignupEmail,
     sendVerificationCode,
     sendResetPasswordEmail,
     generateResetToken,
