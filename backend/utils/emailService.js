@@ -497,7 +497,28 @@ const sendContactFormEmail = async (fullName, email, subject, message) => {
     await transporter.sendMail(mailOptions);
 };
 
+const sendAdminOtpEmail = async (email, otp) => {
+    await transporter.sendMail({
+        from: `"CareerAgent Team" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'CareerAgent admin login code',
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #333; max-width: 480px; margin: auto; border: 1px solid #ddd; border-radius: 10px;">
+                <div style="background-color: #2c2c54; color: #fff; padding: 16px; text-align: center; border-radius: 10px 10px 0 0;">
+                    <h2 style="margin: 0;">Admin login code</h2>
+                </div>
+                <div style="padding: 20px; text-align: center;">
+                    <p>Your one-time code. It expires in 5 minutes.</p>
+                    <p style="font-size: 32px; letter-spacing: 8px; font-weight: bold; margin: 16px 0;">${otp}</p>
+                    <p style="font-size: 12px; color: #777;">If you did not try to log in, someone knows your admin password. Change it now.</p>
+                </div>
+            </div>
+        `,
+    });
+};
+
 module.exports = {
+    sendAdminOtpEmail,
     sendVerificationCode,
     sendResetPasswordEmail,
     generateResetToken,

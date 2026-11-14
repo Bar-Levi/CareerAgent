@@ -19,6 +19,7 @@ import ImproveCV from './jobCandidate/ImproveCV/pages/ImproveCV';
 import socket from "./socket";
 import RecruiterApplicantsTracker from './recruiter/pages/RecruiterApplicantsTracker';
 import RecruiterDashboard from './recruiter/pages/RecruiterDashboard';
+import AdminPage from './pages/AdminPage';
 
 function App() {
     const [onlineUsers, setOnlineUsers] = useState([]);
@@ -91,6 +92,7 @@ function App() {
                         <RecruiterDashboard onlineUsers={onlineUsers}/>
                     </ProtectedRoute>
                 }/>
+                <Route path="/admin" element={<AdminPage />} />
                 <Route path="*" element={<Navigate to="/dashboard"/>} />
         </Routes>
         </Router>
